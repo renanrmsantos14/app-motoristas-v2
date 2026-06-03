@@ -1,0 +1,391 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  TelaPreviewFotoManutenção:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |
+        =Reset(PenInputPas);
+        Set(varLoading, true);
+        Set(
+            varOrientacao,
+            If(App.Width > App.Height, "Paisagem", "Retrato")
+        );
+        Set(
+            varDetalheAtual,
+            {
+                Tipo:       varServicoSelecionado.Tipo,
+                HasServico: !IsBlank(varServicoSelecionado.Servico) && varServicoSelecionado.Tipo = "SERVICO",
+                HasTroca:   !IsBlank(varServicoSelecionado.Troca)   && varServicoSelecionado.Tipo = "TROCA",
+                HasManut:   !IsBlank(varServicoSelecionado.Manut)   && varServicoSelecionado.Tipo = "MANUTENCAO",
+                Servico:    varServicoSelecionado.Servico,
+                Troca:      varServicoSelecionado.Troca,
+                Manut:      varServicoSelecionado.Manut,
+                ManutGeral: varServicoSelecionado.ManutGeral
+            }
+        );
+
+        Set(varLoading, false);
+    Children:
+      - Container1_8:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(240, 240, 240, 1)
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - ContainerRetrato_3:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =8
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  Visible: =varOrientacao = "Retrato"
+                  X: =40
+                  Y: =40
+                Children:
+                  - Menu_8:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =0
+                        Height: =70
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =16
+                        LayoutMaxHeight: =70
+                        LayoutMinHeight: =70
+                        LayoutMinWidth: =16
+                        PaddingBottom: =16
+                        PaddingLeft: =16
+                        PaddingRight: =16
+                        PaddingTop: =16
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - Container7_16:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                            Children:
+                              - ButtonCanvas1_9:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                    BorderRadius: =0
+                                    FontSize: =40
+                                    Height: =Parent.Height
+                                    Icon: ="ArrowLeft"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Outline
+                                    Layout: ='ButtonCanvas.Layout'.IconOnly
+                                    OnSelect: |
+                                      =Set(varFotoTirada,Blank());
+                                      Navigate(TelaFinalizar, ScreenTransition.Fade)
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: =
+                                    Width: =Parent.Width
+                        - TextCanvas6_5:
+                            Control: Text@0.0.51
+                            Properties:
+                              Align: ='TextCanvas.Align'.Center
+                              AlignInContainer: =AlignInContainer.Stretch
+                              AutoHeight: =true
+                              FillPortions: =1
+                              Font: =Font.'Open Sans'
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Size: =20
+                              Text: =Switch(varCameraAtualManutenção, "NOTAFISCAL", "Foto da nota fiscal", "FOTO1", "Foto 1 de 3", "FOTO2", "Foto 2 de 3", "FOTO3", "Foto 3 de 3")
+                              VerticalAlign: =VerticalAlign.Middle
+                              Weight: ='TextCanvas.Weight'.Semibold
+                              Wrap: =false
+                        - Container7_17:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =42
+                              LayoutMinHeight: =0
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                              X: =40
+                              Y: =40
+                  - Main_8:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =9
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        PaddingTop: =8
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - ContainerDetalhesSERVICO_5:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                            Children:
+                              - Container14_11:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    ContentLanguage: =
+                                    Fill: =RGBA(0, 14, 35, 1)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_11.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_11:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: ="A foto está legível e ideal?"
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_11:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - Image1:
+                                        Control: Image@2.2.3
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          DisplayMode: =DisplayMode.View
+                                          FillPortions: =1
+                                          FocusedBorderThickness: =4
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Image: =varFotoTirada
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                    - ContainerConfirmarFotoNotaFIscalManitunção:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.SetByContainer
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =0
+                                          Height: =50
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          LayoutGap: =16
+                                          LayoutJustifyContent: =LayoutJustifyContent.End
+                                          LayoutMaxHeight: =
+                                          LayoutMaxWidth: =200
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Width: =If(Parent.Width > 400, Parent.Width * 0.7, Parent.Width)
+                                          X: =40
+                                          Y: =40
+                                        Children:
+                                          - ButtonRefazerFotoNotaFiscalManutenção:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                Fill: =RGBA(70, 84, 105, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: =Navigate(TelaFotoManutenção, ScreenTransition.Fade)
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =14
+                                                Text: ="Não, refazer"
+                                                Visible: =varDetalheAtual.Servico.Cliente.'Nome do cliente' <> "Tenaris"
+                                          - ButtonConfirmarFotoNotaFiscalmanutenção:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                DisplayMode: =
+                                                Fill: =RGBA(0, 14, 35, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: |-
+                                                  =Switch(
+                                                      varCameraAtualManutenção,
+                                                      "NOTAFISCAL",
+                                                      Set(varFotoNotaFiscalManutenção, Image1.Image),
+                                                      "FOTO1",
+                                                      Set(varFoto1Manutenção, Image1.Image),
+                                                      "FOTO2",
+                                                      Set(varFoto2Manutenção, Image1.Image),
+                                                      "FOTO3",
+                                                      Set(varFoto3Manutenção, Image1.Image)
+                                                  );
+                                                  Navigate(TelaFinalizar, ScreenTransition.Fade)
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =14
+                                                Text: ="Sim, Confirmar"
+      - ContainerLoading_8:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(186, 186, 186, 0.61)
+            Height: =Parent.Height
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Visible: =varLoading
+            Width: =Parent.Width
+          Children:
+            - Spinner1_8:
+                Control: Spinner@1.4.6
+                Properties:
+                  Appearance: ='Spinner.Appearance'.Primary
+                  BasePaletteColor: =RGBA(5, 102, 178, 1)
+                  Font: =Font.'Open Sans'
+                  FontSize: =20
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.Height
+                  Label: ="Carregando..."
+                  LabelPosition: ='Spinner.LabelPosition'.After
+                  SpinnerSize: ='Spinner.SpinnerSize'.Huge
+                  Width: =Parent.Width

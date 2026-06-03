@@ -1,0 +1,1281 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design System - Tela Formulário Geral</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      :root {
+        --ds-max: 1480px;
+        --ds-nav: 252px;
+        --ds-gap: 12px;
+        --ds-doc-bg: #f5f6f8;
+        --ds-card: #ffffff;
+        --ds-code-bg: #f8fafc;
+        --ds-rule: color-mix(in srgb, var(--line) 88%, #ffffff);
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        height: auto;
+      }
+
+      body {
+        overflow: auto;
+        background: linear-gradient(180deg, #fafafa 0%, var(--ds-doc-bg) 100%);
+      }
+
+      .ds-page {
+        width: min(var(--ds-max), 100%);
+        margin: 0 auto;
+        padding: 12px;
+        display: grid;
+        gap: var(--ds-gap);
+      }
+
+      .ds-hero,
+      .ds-nav,
+      .ds-section,
+      .ds-panel,
+      .ds-example {
+        border: 1px solid var(--ds-rule);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .ds-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(250px, 360px);
+        gap: 18px;
+        align-items: end;
+        padding: 18px;
+      }
+
+      .ds-kicker {
+        margin: 0 0 6px;
+        color: #7f8ea3;
+        font-size: 10px;
+        font-weight: 820;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .ds-hero h1 {
+        white-space: normal;
+        font-size: clamp(24px, 3vw, 34px);
+        line-height: 1.05;
+        font-weight: 820;
+      }
+
+      .ds-hero p,
+      .ds-copy,
+      .ds-note,
+      .ds-list,
+      .ds-table {
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .ds-copy {
+        max-width: 980px;
+        margin-top: 8px;
+      }
+
+      .ds-meta {
+        display: grid;
+        gap: 6px;
+      }
+
+      .ds-meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: var(--surface-soft);
+        color: var(--text-soft);
+        font-size: 12px;
+        font-weight: 780;
+      }
+
+      .ds-meta-row strong {
+        color: var(--text);
+        text-align: right;
+      }
+
+      .ds-layout {
+        display: grid;
+        grid-template-columns: var(--ds-nav) minmax(0, 1fr);
+        gap: var(--ds-gap);
+        align-items: start;
+      }
+
+      .ds-nav {
+        position: sticky;
+        top: 12px;
+        display: grid;
+        gap: 5px;
+        padding: 10px;
+        max-height: calc(100vh - 24px);
+        overflow: auto;
+      }
+
+      .ds-nav-title {
+        padding: 4px 8px 8px;
+        border-bottom: 1px solid var(--line);
+        color: #7b8da8;
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .ds-nav a {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border-radius: var(--radius-sm);
+        color: var(--text-soft);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 780;
+      }
+
+      .ds-nav a:hover,
+      .ds-nav a:focus-visible {
+        outline: 0;
+        color: var(--text);
+        background: var(--surface-active);
+        box-shadow: var(--shadow-focus);
+      }
+
+      .ds-main {
+        display: grid;
+        gap: var(--ds-gap);
+        min-width: 0;
+      }
+
+      .ds-section {
+        display: grid;
+        gap: 14px;
+        padding: 14px;
+      }
+
+      .ds-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ds-section-head h2 {
+        font-size: 19px;
+      }
+
+      .ds-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface-soft);
+        color: var(--text-soft);
+        font-size: 11px;
+        font-weight: 820;
+        white-space: nowrap;
+      }
+
+      .ds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 10px;
+      }
+
+      .ds-grid-wide {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 10px;
+      }
+
+      .ds-panel {
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+        padding: 10px;
+        box-shadow: var(--shadow-control);
+      }
+
+      .ds-panel-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 820;
+      }
+
+      .ds-example {
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+        padding: 10px;
+        background: var(--surface-soft);
+        box-shadow: var(--shadow-control);
+      }
+
+      .ds-do-dont {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ds-do,
+      .ds-dont {
+        display: grid;
+        gap: 7px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: #ffffff;
+      }
+
+      .ds-do strong {
+        color: var(--success);
+      }
+
+      .ds-dont strong {
+        color: var(--danger);
+      }
+
+      .ds-swatch-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 10px;
+      }
+
+      .ds-swatch {
+        display: grid;
+        gap: 7px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: #ffffff;
+      }
+
+      .ds-color {
+        min-height: 54px;
+        border: 1px solid rgb(15 23 37 / 0.12);
+        border-radius: var(--radius-xs);
+      }
+
+      .ds-swatch strong,
+      .ds-swatch span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .ds-swatch strong {
+        font-size: 12px;
+        font-weight: 820;
+      }
+
+      .ds-swatch span {
+        color: var(--text-soft);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .ds-token-table {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: #ffffff;
+      }
+
+      .ds-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 620px;
+      }
+
+      .ds-table th,
+      .ds-table td {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .ds-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .ds-table th {
+        color: var(--text-soft);
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        background: var(--surface-soft);
+      }
+
+      .ds-code,
+      .ds-code-block {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xs);
+        background: var(--ds-code-bg);
+        color: var(--text);
+        font-family: "Manrope", "Aptos", "Segoe UI", system-ui, sans-serif;
+        font-weight: 760;
+      }
+
+      .ds-code {
+        display: inline-flex;
+        max-width: 100%;
+        padding: 2px 6px;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+      }
+
+      .ds-code-block {
+        width: 100%;
+        margin: 0;
+        padding: 10px;
+        overflow: auto;
+        white-space: pre;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .ds-list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .ds-list li + li {
+        margin-top: 5px;
+      }
+
+      .ds-mini-shell {
+        display: grid;
+        grid-template-columns: 62px minmax(0, 1fr);
+        gap: 8px;
+        min-height: 360px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      }
+
+      .ds-mini-topbar {
+        grid-column: 1 / -1;
+        min-height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 9px;
+        border: 1px solid rgb(148 163 184 / 0.3);
+        border-radius: var(--radius-lg);
+        background: #ffffff;
+        box-shadow: var(--shadow-shell);
+      }
+
+      .ds-mini-tabs {
+        display: grid;
+        align-content: start;
+        gap: 5px;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgb(255 255 255 / 0.98);
+        box-shadow: var(--shadow-shell);
+      }
+
+      .ds-mini-tab {
+        min-height: 38px;
+        display: grid;
+        place-items: center;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        color: #64748b;
+        background: transparent;
+      }
+
+      .ds-mini-tab.is-active {
+        border-color: var(--line-strong);
+        background: var(--surface-active);
+        color: var(--accent);
+        box-shadow: 0 0 0 1px rgb(33 89 210 / 0.1);
+      }
+
+      .ds-mini-content {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: #ffffff;
+        box-shadow: var(--shadow-panel);
+        overflow: hidden;
+      }
+
+      .ds-mini-content .form-section {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .ds-mini-topbar .top-actions {
+        flex: 0 1 auto;
+      }
+
+      .ds-mini-topbar .status-select {
+        min-width: 136px;
+        max-width: 150px;
+      }
+
+      .ds-component-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .ds-field-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 8px;
+      }
+
+      .ds-custom-select-demo {
+        position: relative;
+        min-height: 192px;
+      }
+
+      .ds-custom-select-demo .custom-select-panel {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: none;
+        max-height: 170px;
+        z-index: 1;
+      }
+
+      .ds-passenger-demo .passenger-row {
+        grid-template-columns: minmax(180px, max-content) minmax(0, 1fr);
+      }
+
+      .ds-passenger-demo .passenger-preview-floating,
+      .ds-passenger-demo .passenger-photo-hover-zoom {
+        display: none;
+      }
+
+      .ds-dialog-stage {
+        display: grid;
+        place-items: center;
+        min-height: 360px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgb(15 23 37 / 0.54);
+      }
+
+      .ds-dialog-stage .dialog {
+        animation: none;
+      }
+
+      .ds-dialog-stage .passenger-picker-dialog,
+      .ds-dialog-stage .passenger-edit-dialog {
+        width: min(100%, 640px);
+        max-height: none;
+      }
+
+      .ds-dialog-stage .passenger-edit-fields {
+        max-height: none;
+      }
+
+      .ds-toast-preview {
+        position: static;
+        right: auto;
+        bottom: auto;
+        z-index: auto;
+        display: grid;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .ds-toast-preview .toast {
+        position: static;
+        width: 100%;
+        animation: none;
+      }
+
+      .ds-icon {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .ds-source-list a {
+        color: var(--accent);
+        font-weight: 780;
+        text-decoration: none;
+      }
+
+      .ds-source-list a:hover,
+      .ds-source-list a:focus-visible {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 1020px) {
+        .ds-hero,
+        .ds-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .ds-nav {
+          position: static;
+          max-height: none;
+        }
+
+        .ds-nav {
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+
+        .ds-nav-title {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .ds-page {
+          padding: 8px;
+        }
+
+        .ds-section,
+        .ds-hero {
+          padding: 10px;
+        }
+
+        .ds-section-head,
+        .ds-do-dont {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+
+        .ds-mini-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .ds-mini-tabs {
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .ds-passenger-demo .passenger-row {
+          grid-template-columns: 1fr;
+          padding-right: 46px;
+        }
+
+        .ds-passenger-demo .passenger-row .address-cell {
+          grid-column: 1 / -1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="ds-page">
+      <header class="ds-hero" id="topo">
+        <div>
+          <p class="ds-kicker">Betinhos Executive Service</p>
+          <h1>Design System - Tela Formulário Geral</h1>
+          <p class="ds-copy">
+            Sistema documentado a partir da tela principal e da tela de cadastro/edição de passageiro.
+            O objetivo é preservar a linguagem real do formulário: operacional, densa, clara e sem ilha visual.
+          </p>
+        </div>
+        <div class="ds-meta" aria-label="Metadados do design system">
+          <div class="ds-meta-row"><span>Fonte local</span><strong>index.html, styles.css, app.js</strong></div>
+          <div class="ds-meta-row"><span>Referência externa</span><strong>Figma, Material, DTCG, WCAG</strong></div>
+          <div class="ds-meta-row"><span>Tipografia</span><strong>Manrope</strong></div>
+          <div class="ds-meta-row"><span>Escopo</span><strong>Formulário + Passageiros</strong></div>
+        </div>
+      </header>
+
+      <div class="ds-layout">
+        <nav class="ds-nav" aria-label="Navegação do design system">
+          <span class="ds-nav-title">Conteúdo</span>
+          <a href="#principios">Princípios</a>
+          <a href="#arquitetura">Arquitetura</a>
+          <a href="#tokens">Tokens</a>
+          <a href="#layout">Layout</a>
+          <a href="#tipografia">Tipografia</a>
+          <a href="#componentes">Componentes</a>
+          <a href="#formularios">Formulários</a>
+          <a href="#passageiros">Passageiros</a>
+          <a href="#modais">Modais</a>
+          <a href="#feedback">Feedback</a>
+          <a href="#padroes">Padrões</a>
+          <a href="#acessibilidade">Acessibilidade</a>
+          <a href="#governanca">Governanca</a>
+          <a href="#fontes">Fontes</a>
+        </nav>
+
+        <div class="ds-main">
+          <section class="ds-section" id="principios">
+            <div class="ds-section-head">
+              <div>
+                <h2>Princípios</h2>
+                <p class="ds-note">O sistema nasce do produto real, não de uma landing page.</p>
+              </div>
+              <span class="ds-tag">Uso diario</span>
+            </div>
+
+            <div class="ds-grid">
+              <article class="ds-panel">
+                <div class="ds-panel-title">1. Operacional primeiro</div>
+                <p class="ds-note">A interface existe para criar, revisar e salvar serviços com pouco atrito. Densidade e previsibilidade valem mais que decoração.</p>
+              </article>
+              <article class="ds-panel">
+                <div class="ds-panel-title">2. Passageiro pertence ao formulário</div>
+                <p class="ds-note">Seleção, cadastro, edição, foto e duplicidade usam a mesma casca visual: campos claros, borda sutil, foco azul e estados fortes.</p>
+              </article>
+              <article class="ds-panel">
+                <div class="ds-panel-title">3. Estado e comportamento são design</div>
+                <p class="ds-note">Vazio, incompleto, erro, foco, hover, bloqueado e salvo precisam ser documentados. Não são detalhe cosmético.</p>
+              </article>
+            </div>
+
+            <div class="ds-do-dont">
+              <div class="ds-do">
+                <strong>Fazer</strong>
+                <ul class="ds-list">
+                  <li>Usar tokens reais de <span class="ds-code">styles.css</span>.</li>
+                  <li>Manter campos compactos e alinhados.</li>
+                  <li>Usar modal do sistema para decisão crítica.</li>
+                  <li>Usar verde apenas para ação positiva.</li>
+                </ul>
+              </div>
+              <div class="ds-dont">
+                <strong>Não fazer</strong>
+                <ul class="ds-list">
+                  <li>Não criar componente premium isolado.</li>
+                  <li>Não trocar o formulário por hero/landing.</li>
+                  <li>Não usar <span class="ds-code">confirm()</span> do navegador.</li>
+                  <li>Não destacar valor de select com peso/cor própria.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="ds-section" id="arquitetura">
+            <div class="ds-section-head">
+              <div>
+                <h2>Arquitetura</h2>
+                <p class="ds-note">Documentação atual de mercado: fundamentos, tokens, componentes, padrões, acessibilidade, código e governança.</p>
+              </div>
+              <span class="ds-tag">3 camadas</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <article class="ds-panel">
+                <div class="ds-panel-title">Modelo de tokens</div>
+                <pre class="ds-code-block">Primitive  -> valores brutos: #2159d2, 8px, Manrope
+Semantic   -> uso: accent, surface, danger, line
+Component  -> aplicação: field, tab, button, passenger-row</pre>
+                <p class="ds-note">O CSS atual usa nomes semanticamente planos. Mantenha os nomes existentes e documente novas variáveis nessa hierarquia.</p>
+              </article>
+
+              <article class="ds-panel">
+                <div class="ds-panel-title">Fonte de verdade local</div>
+                <table class="ds-table">
+                  <tr><th>Arquivo</th><th>Papel</th></tr>
+                  <tr><td><span class="ds-code">styles.css</span></td><td>Tokens, layout, componentes, responsivo.</td></tr>
+                  <tr><td><span class="ds-code">index.html</span></td><td>Estrutura real das abas, tela principal e cadastro.</td></tr>
+                  <tr><td><span class="ds-code">app.js</span></td><td>Estados, campos dinâmicos e contratos de passageiro.</td></tr>
+                  <tr><td><span class="ds-code">webresource.html</span></td><td>Bundle publicado. Atualizar só via build.</td></tr>
+                </table>
+              </article>
+            </div>
+          </section>
+
+          <section class="ds-section" id="tokens">
+            <div class="ds-section-head">
+              <div>
+                <h2>Tokens</h2>
+                <p class="ds-note">Esses tokens são a linguagem visual atual. Não substitua por paleta nova.</p>
+              </div>
+              <span class="ds-tag">styles.css</span>
+            </div>
+
+            <div class="ds-swatch-grid">
+              <div class="ds-swatch"><div class="ds-color" style="background:#f0f0f0"></div><strong>--bg</strong><span>#f0f0f0 | fundo do shell</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#fafafa"></div><strong>--bg-2 / --surface-soft</strong><span>#fafafa | superfície secundária</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#ffffff"></div><strong>--surface</strong><span>#ffffff | painéis, campos internos</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#0f172a"></div><strong>--text</strong><span>#0f172a | texto principal</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#64748b"></div><strong>--muted</strong><span>#64748b | metadado e apoio</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#e0e0e0"></div><strong>--line</strong><span>#e0e0e0 | borda padrão</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#2159d2"></div><strong>--accent</strong><span>#2159d2 | foco e ação primária</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#168f57"></div><strong>--success</strong><span>#168f57 | sucesso e adicionar</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#b17a00"></div><strong>--warning</strong><span>#b17a00 | vazio, pendente, revisar</span></div>
+              <div class="ds-swatch"><div class="ds-color" style="background:#c12f45"></div><strong>--danger</strong><span>#c12f45 | erro e ação destrutiva</span></div>
+            </div>
+
+            <div class="ds-token-table">
+              <table class="ds-table">
+                <tr><th>Categoria</th><th>Tokens reais</th><th>Regra</th></tr>
+                <tr><td>Raio</td><td><span class="ds-code">--radius-xs 6px</span>, <span class="ds-code">--radius-sm 8px</span>, <span class="ds-code">--radius-md 10px</span>, <span class="ds-code">--radius-lg 12px</span></td><td>Cards e campos usam 6-12px. Evitar cantos grandes sem funcao.</td></tr>
+                <tr><td>Altura</td><td><span class="ds-code">--field-control-height 34px</span>, <span class="ds-code">--topbar-height 46px</span></td><td>Formulário e toolbar ficam compactos.</td></tr>
+                <tr><td>Largura</td><td><span class="ds-code">--date-field-width 150px</span>, <span class="ds-code">--datetime-field-width 194px</span></td><td>Data/hora não deve crescer como campo de texto livre.</td></tr>
+                <tr><td>Sombra</td><td><span class="ds-code">--shadow-control</span>, <span class="ds-code">--shadow-panel</span>, <span class="ds-code">--shadow-focus</span></td><td>Sombra indica camada e foco. Não usar sombra decorativa pesada.</td></tr>
+                <tr><td>Movimento</td><td><span class="ds-code">--ease-out</span>, <span class="ds-code">--ease-standard</span>, <span class="ds-code">--menu-motion</span></td><td>Microinteração curta. Respeitar reduced motion.</td></tr>
+              </table>
+            </div>
+          </section>
+
+          <section class="ds-section" id="layout">
+            <div class="ds-section-head">
+              <div>
+                <h2>Layout</h2>
+                <p class="ds-note">A tela principal é um app operacional: topbar, menu lateral, conteúdo rolável e painéis densos.</p>
+              </div>
+              <span class="ds-tag">Shell</span>
+            </div>
+
+            <div class="ds-example">
+              <div class="ds-mini-shell" aria-label="Amostra do shell principal">
+                <div class="ds-mini-topbar">
+                  <div class="brand">
+                    <div class="brand-mark" aria-hidden="true"><span class="brand-mark-fallback">B</span></div>
+                    <div class="brand-text">
+                      <p class="eyebrow">Betinhos Executive Service</p>
+                      <h1>Formulário de Agendamento</h1>
+                    </div>
+                  </div>
+                  <div class="top-actions">
+                    <label class="status-select">
+                      <span>Status</span>
+                      <select aria-label="Status da operação"><option>Solicitado</option></select>
+                    </label>
+                    <button class="secondary-action" type="button">Importar XLSX</button>
+                    <button class="primary-action" type="button">Agendar serviços</button>
+                  </div>
+                </div>
+                <div class="ds-mini-tabs">
+                  <div class="ds-mini-tab">BD</div>
+                  <div class="ds-mini-tab is-active">DET</div>
+                  <div class="ds-mini-tab">RET</div>
+                  <div class="ds-mini-tab">REP</div>
+                </div>
+                <div class="ds-mini-content">
+                  <section class="form-section">
+                    <div class="form-grid">
+                      <label class="field datetime-field required"><span>Data e horário de saída</span><input type="datetime-local"></label>
+                      <label class="field required"><span>Cliente</span><input value="Betinhos Executive Service"></label>
+                      <label class="field required"><span>Solicitante</span><input value="Renan Oliveira"></label>
+                      <label class="field span-2 required"><span>Trajeto</span><input value="GRU > Av. Paulista"></label>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-token-table">
+              <table class="ds-table">
+                <tr><th>Parte</th><th>Classe</th><th>Comportamento</th></tr>
+                <tr><td>Shell</td><td><span class="ds-code">.app-shell</span></td><td>Grid full height. Desktop: tabs laterais. Tablet/mobile: tabs horizontais ou ocultas conforme breakpoint.</td></tr>
+                <tr><td>Topbar</td><td><span class="ds-code">.topbar</span></td><td>Altura compacta, fundo branco, ações globais e status.</td></tr>
+                <tr><td>Tabs</td><td><span class="ds-code">.tabs</span>, <span class="ds-code">.tab</span></td><td>Desktop colapsado com ícones. Expandir no hover/focus. Ativo tem fundo cinza e ícone azul.</td></tr>
+                <tr><td>Conteúdo</td><td><span class="ds-code">.content</span>, <span class="ds-code">.panel</span></td><td>Painel branco, borda sutil e scroll próprio.</td></tr>
+                <tr><td>Seção</td><td><span class="ds-code">.form-section</span></td><td>Na tela principal, a seção perde card externo para reduzir ruído visual.</td></tr>
+              </table>
+            </div>
+          </section>
+
+          <section class="ds-section" id="tipografia">
+            <div class="ds-section-head">
+              <div>
+                <h2>Tipografia</h2>
+                <p class="ds-note">Manrope é a fonte funcional do formulário. Select e valor selecionado não recebem destaque especial.</p>
+              </div>
+              <span class="ds-tag">Manrope</span>
+            </div>
+
+            <div class="ds-grid">
+              <div class="ds-panel">
+                <div class="ds-panel-title">Escala real</div>
+                <table class="ds-table">
+                  <tr><th>Uso</th><th>Tamanho</th><th>Peso</th></tr>
+                  <tr><td>H1 topbar</td><td>16px</td><td>760</td></tr>
+                  <tr><td>H2 painel</td><td>19px</td><td>780</td></tr>
+                  <tr><td>H3 seção</td><td>13px</td><td>780</td></tr>
+                  <tr><td>Label campo</td><td>12px</td><td>820</td></tr>
+                  <tr><td>Campo/select</td><td>14px</td><td>400</td></tr>
+                  <tr><td>Metadado</td><td>11-12px</td><td>560-760</td></tr>
+                </table>
+              </div>
+              <div class="ds-panel">
+                <div class="ds-panel-title">Regras</div>
+                <ul class="ds-list">
+                  <li>Usar <span class="ds-code">font-family: inherit</span> em controles.</li>
+                  <li>Letter spacing normal em texto operacional.</li>
+                  <li>Texto de botão curto. Preferir ícone quando a ação for familiar.</li>
+                  <li>Campos compactos não podem usar título grande.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="ds-section" id="componentes">
+            <div class="ds-section-head">
+              <div>
+                <h2>Componentes</h2>
+                <p class="ds-note">Componentes base usados na tela principal e no cadastro de passageiro.</p>
+              </div>
+              <span class="ds-tag">Estados</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <article class="ds-panel">
+                <div class="ds-panel-title">Ações</div>
+                <div class="ds-component-row">
+                  <button type="button" class="primary-action">Primária</button>
+                  <button type="button" class="secondary-action">Secundária</button>
+                  <button type="button" class="secondary-action passenger-toolbar-action success">+</button>
+                  <button type="button" class="secondary-action warning">Revisar</button>
+                  <span class="passenger-match-actions"><button type="button" class="danger">Criar novo</button></span>
+                  <button type="button" class="icon-button" aria-label="Fechar">×</button>
+                </div>
+                <p class="ds-note">Primária salva ou confirma. Secundária revisa/cancela. Perigo fica escopado ao modal. Sucesso de adicionar usa o padrão do toolbar de passageiros.</p>
+              </article>
+
+              <article class="ds-panel">
+                <div class="ds-panel-title">Segmented e toggle</div>
+                <div class="field obs-field">
+                  <span>Observação operacional</span>
+                  <div class="segmented" role="tablist" aria-label="Tipo de observação">
+                    <button type="button" class="seg is-active">Mot</button>
+                    <button type="button" class="seg">Interna</button>
+                    <button type="button" class="seg">Final</button>
+                    <button type="button" class="seg">Pref Pax</button>
+                  </div>
+                  <textarea rows="2">Sem paradas. Rota direta.</textarea>
+                </div>
+                <label class="toggle-field"><input type="checkbox" checked><span>Receber?</span></label>
+              </article>
+            </div>
+
+            <div class="ds-token-table">
+              <table class="ds-table">
+                <tr><th>Componente</th><th>Default</th><th>Hover/focus</th><th>Disabled/erro</th></tr>
+                <tr><td>Primary action</td><td>Azul <span class="ds-code">--accent</span>, texto branco</td><td>Eleva 1px, borda azul clara</td><td>Opacidade 0.58</td></tr>
+                <tr><td>Secondary action</td><td>Branco, texto azul, borda neutra</td><td>Fundo <span class="ds-code">--surface-muted</span></td><td>Tom sem sombra</td></tr>
+                <tr><td>Field</td><td>Fundo <span class="ds-code">--surface-soft</span>, borda <span class="ds-code">--line</span></td><td>Foco azul com <span class="ds-code">--shadow-focus</span></td><td>Erro vermelho + mensagem via <span class="ds-code">data-validation-message</span></td></tr>
+                <tr><td>Custom select</td><td>Trigger 34px, valor 14px/400</td><td>Panel fixo, busca interna, item ativo cinza</td><td>Placeholder preto 28% ou empty state</td></tr>
+              </table>
+            </div>
+          </section>
+
+          <section class="ds-section" id="formularios">
+            <div class="ds-section-head">
+              <div>
+                <h2>Formulários</h2>
+                <p class="ds-note">Campos são pequenas unidades de trabalho. A casca <span class="ds-code">.field</span> é obrigatória.</p>
+              </div>
+              <span class="ds-tag">Grid flex</span>
+            </div>
+
+            <div class="ds-example">
+              <div class="form-grid database-passenger-grid">
+                <label class="field span-2 required"><span>Nome do passageiro</span><input value="Maria Santos"></label>
+                <label class="field"><span>Telefone</span><div class="phone-field"><input value="+55"><input value="11 99999-9999"></div></label>
+                <label class="field span-2"><span>Email</span><input value="maria@empresa.com.br"></label>
+                <label class="field required"><span>Classificação</span><select><option>Executivo</option></select></label>
+                <label class="field required"><span>Cliente</span><select><option>Cliente executivo</option></select></label>
+                <label class="field"><span>CR</span><input value="CR-001"></label>
+                <label class="field span-2"><span>Perfil do passageiro</span><input value="Prefere silencio durante o trajeto"></label>
+                <div class="field span-2 passenger-photo-field" tabindex="0" role="button" aria-label="Anexar ou colar foto do passageiro">
+                  <div class="passenger-photo-head">
+                    <span>Foto do passageiro</span>
+                    <small>JPG, PNG ou WebP até 5 MB</small>
+                  </div>
+                  <div class="passenger-photo-body">
+                    <div class="passenger-photo-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M12 3.5 7.8 7.7l1.4 1.4L11 7.3V15h2V7.3l1.8 1.8 1.4-1.4L12 3.5ZM5 14v4.2c0 .5.2.9.5 1.3.4.3.8.5 1.3.5h10.4c.5 0 .9-.2 1.3-.5.3-.4.5-.8.5-1.3V14h-2v4H7v-4H5Z"></path>
+                      </svg>
+                    </div>
+                    <div class="passenger-photo-copy">
+                      <strong>Clique para anexar foto</strong>
+                      <span>ou cole a imagem com Ctrl+V</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-grid-wide">
+              <article class="ds-panel">
+                <div class="ds-panel-title">Cadastro de passageiro</div>
+                <ul class="ds-list">
+                  <li>Classe raiz: <span class="ds-code">.database-passenger-grid</span>.</li>
+                  <li>Campos obrigatórios: nome, classificação, cliente e idioma.</li>
+                  <li>Telefone usa <span class="ds-code">.phone-field</span> com país + número.</li>
+                  <li>Foto usa <span class="ds-code">.passenger-photo-field</span>.</li>
+                  <li>Botão final usa <span class="ds-code">.primary-action</span>.</li>
+                </ul>
+              </article>
+
+              <article class="ds-panel">
+                <div class="ds-panel-title">Custom select</div>
+                <div class="ds-custom-select-demo">
+                  <div class="custom-select">
+                    <button class="custom-select-trigger" type="button">
+                      <span class="custom-select-value">Executivo</span>
+                      <span class="custom-select-caret"></span>
+                    </button>
+                    <div class="custom-select-panel is-open">
+                      <input class="custom-select-search" placeholder="Pesquisar">
+                      <div class="custom-select-options">
+                        <button class="custom-select-option is-active" type="button">Executivo</button>
+                        <button class="custom-select-option" type="button">Blindado</button>
+                        <button class="custom-select-option" type="button">Van</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="ds-section" id="passageiros">
+            <div class="ds-section-head">
+              <div>
+                <h2>Passageiros</h2>
+                <p class="ds-note">O bloco de passageiros é parte funcional do agendamento. Não redesenhar como componente separado.</p>
+              </div>
+              <span class="ds-tag">Core flow</span>
+            </div>
+
+            <div class="ds-example ds-passenger-demo">
+              <section class="passenger-block" aria-label="Passageiros selecionados">
+                <div class="block-title">
+                  <div><h3>Passageiros selecionados</h3></div>
+                  <div class="passenger-toolbar">
+                    <div class="icon-actions">
+                      <button type="button" class="secondary-action passenger-toolbar-action" aria-pressed="true">Endereço único</button>
+                      <button type="button" class="secondary-action passenger-toolbar-action success" aria-label="Adicionar passageiro">+</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="passenger-address-grid">
+                  <div class="passenger-stack">
+                    <span class="passenger-field-label">Passageiros</span>
+                    <div class="passenger-rows">
+                      <article class="passenger-row">
+                        <button type="button" class="remove-row" aria-label="Remover passageiro">×</button>
+                        <div class="row-label">
+                          <span class="row-index">1</span>
+                          <div class="row-title-wrap">
+                            <button type="button" class="row-title passenger-name-button">Maria Santos</button>
+                          </div>
+                        </div>
+                        <label class="field address-cell"><span>Endereço de saída</span><textarea class="passenger-address" rows="2">Av. Paulista, 1000</textarea></label>
+                      </article>
+                      <article class="passenger-row is-incomplete">
+                        <button type="button" class="remove-row" aria-label="Remover passageiro">×</button>
+                        <div class="row-label">
+                          <span class="row-index">2</span>
+                          <div class="row-title-wrap">
+                            <button type="button" class="row-title passenger-name-button">Selecionar passageiro</button>
+                          </div>
+                        </div>
+                        <label class="field address-cell"><span>Endereço de saída</span><textarea class="passenger-address" rows="2"></textarea></label>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="ds-token-table">
+              <table class="ds-table">
+                <tr><th>Elemento</th><th>Classe</th><th>Regra</th></tr>
+                <tr><td>Bloco</td><td><span class="ds-code">.passenger-block</span></td><td>Mesmo ritmo das seções. Margem superior de 12px. Borda e sombra controladas.</td></tr>
+                <tr><td>Toolbar</td><td><span class="ds-code">.passenger-toolbar-action</span></td><td>Ação compacta. O adicionar real é <span class="ds-code">+</span>, não texto longo.</td></tr>
+                <tr><td>Vazio</td><td><span class="ds-code">.passenger-empty</span></td><td>Botão amarelo claro com texto "Selecionar Passageiro". Deve abrir o picker.</td></tr>
+                <tr><td>Linha</td><td><span class="ds-code">.passenger-row</span></td><td>Nome forte, endereço editável, remover no canto. Hover eleva levemente.</td></tr>
+                <tr><td>Incompleto</td><td><span class="ds-code">.is-incomplete</span></td><td>Warning sem bloquear o fluxo. Não esconder a ação de selecionar.</td></tr>
+                <tr><td>Endereço único</td><td><span class="ds-code">.is-shared-address</span></td><td>Lista compacta + campo único. Evita duplicar endereço por passageiro.</td></tr>
+              </table>
+            </div>
+          </section>
+
+          <section class="ds-section" id="modais">
+            <div class="ds-section-head">
+              <div>
+                <h2>Modais</h2>
+                <p class="ds-note">Modais substituem diálogos nativos. Usar para picker, edição, duplicidade, confirmação e foto.</p>
+              </div>
+              <span class="ds-tag">Overlay</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <div class="ds-dialog-stage">
+                <div class="dialog passenger-picker-dialog" role="dialog" aria-label="Selecionar passageiro">
+                  <header class="passenger-picker-head">
+                    <div class="passenger-picker-head-text">
+                      <span class="passenger-picker-eyebrow">Banco de dados</span>
+                      <h3>Selecionar passageiro</h3>
+                    </div>
+                    <button class="passenger-picker-icon-action" type="button" aria-label="Fechar">&times;</button>
+                  </header>
+                  <label class="passenger-picker-field">
+                    <span class="passenger-picker-label">Busca</span>
+                    <span class="passenger-picker-input-wrap">
+                      <svg class="passenger-picker-search-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.8 4a6.8 6.8 0 0 1 5.4 10.9l3.4 3.4-1.3 1.3-3.4-3.4A6.8 6.8 0 1 1 10.8 4Zm0 1.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"></path></svg>
+                      <input value="Maria" aria-label="Busca">
+                    </span>
+                  </label>
+                  <section class="passenger-picker-list">
+                    <div class="passenger-picker-results">
+                      <button type="button" class="passenger-picker-item is-active">
+                        <span class="passenger-picker-name">Maria Santos</span>
+                        <span class="passenger-picker-meta">+55 11 99999-9999 &middot; Cliente executivo</span>
+                      </button>
+                      <button type="button" class="passenger-picker-item">
+                        <span class="passenger-picker-name">Maria Oliveira</span>
+                        <span class="passenger-picker-meta">Sem telefone &middot; Banco de Dados</span>
+                      </button>
+                    </div>
+                  </section>
+                  <footer class="picker-actions"><button class="passenger-picker-cancel" type="button">Cancelar</button></footer>
+                </div>
+              </div>
+
+              <div class="ds-dialog-stage">
+                <div class="dialog passenger-edit-dialog" role="dialog" aria-label="Editar passageiro">
+                  <div class="passenger-edit-head">
+                    <div>
+                      <p class="passenger-picker-eyebrow">Passageiro</p>
+                      <h3>Editar passageiro</h3>
+                      <p class="passenger-edit-status" data-status="saved">Salvo</p>
+                    </div>
+                    <div class="passenger-edit-actions">
+                      <button class="icon-button passenger-edit-toggle is-active" type="button" aria-label="Bloquear edição">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h1Z"></path></svg>
+                      </button>
+                      <button class="icon-button" type="button" aria-label="Fechar">&times;</button>
+                    </div>
+                  </div>
+                  <div class="passenger-edit-fields">
+                    <div class="passenger-edit-field is-wide">
+                      <div class="passenger-edit-field-head"><span>Nome do passageiro *</span></div>
+                      <input class="passenger-edit-control" value="Maria Santos">
+                    </div>
+                    <div class="passenger-edit-field is-empty">
+                      <div class="passenger-edit-field-head"><span>Telefone</span></div>
+                      <input class="passenger-edit-control is-empty" value="">
+                    </div>
+                    <div class="passenger-edit-field is-multiline is-wide">
+                      <div class="passenger-edit-field-head"><span>Perfil do passageiro</span></div>
+                      <textarea class="passenger-edit-control">Prefere silencio.</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ds-token-table">
+              <table class="ds-table">
+                <tr><th>Modal</th><th>Uso</th><th>Regra</th></tr>
+                <tr><td>Picker</td><td>Selecionar passageiro</td><td>Busca no topo, lista rolável, item ativo com anel azul.</td></tr>
+                <tr><td>Editar passageiro</td><td>Editar dados existentes</td><td>Começa bloqueado. Toggle habilita edição. Campos vazios sinalizados.</td></tr>
+                <tr><td>Duplicidade</td><td>Decidir passageiro parecido</td><td>Comparar dados. Ações: revisar, usar selecionado, criar novo.</td></tr>
+                <tr><td>Guard</td><td>Salvar com risco</td><td>Warning claro. A decisão destrutiva deve ficar em modal do sistema.</td></tr>
+                <tr><td>Foto</td><td>Confirmar ou visualizar imagem</td><td>Frame neutro, fallback para link quando preview falha.</td></tr>
+              </table>
+            </div>
+          </section>
+
+          <section class="ds-section" id="feedback">
+            <div class="ds-section-head">
+              <div>
+                <h2>Feedback</h2>
+                <p class="ds-note">Toasts e avisos precisam usar as classes reais do formulário. Não criar alerta paralelo.</p>
+              </div>
+              <span class="ds-tag">Mensagens</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <article class="ds-panel">
+                <div class="ds-panel-title">Toast stack</div>
+                <div class="toast-stack ds-toast-preview" aria-live="polite">
+                  <div class="toast success">
+                    <span class="toast-message">Passageiro adicionado.</span>
+                    <button class="toast-close" type="button" aria-label="Fechar">&times;</button>
+                  </div>
+                  <div class="toast warning">
+                    <span class="toast-message">Habilite a edição antes de alterar.</span>
+                    <button class="toast-close" type="button" aria-label="Fechar">&times;</button>
+                  </div>
+                  <div class="toast error">
+                    <span class="toast-message">Resolva os campos obrigatórios.</span>
+                    <button class="toast-close" type="button" aria-label="Fechar">&times;</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="ds-panel">
+                <div class="ds-panel-title">Contrato</div>
+                <ul class="ds-list">
+                  <li>Stack fixa: <span class="ds-code">.toast-stack</span>, canto inferior direito.</li>
+                  <li>Mensagem: <span class="ds-code">.toast-message</span>, texto curto e acionável.</li>
+                  <li>Estados: <span class="ds-code">.success</span>, <span class="ds-code">.warning</span>, <span class="ds-code">.error</span>.</li>
+                  <li>Fechar: <span class="ds-code">.toast-close</span> com <span class="ds-code">aria-label</span>.</li>
+                  <li>Toast flutuante usa <span class="ds-code">.toast-floating</span> só para contexto ancorado.</li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <section class="ds-section" id="padroes">
+            <div class="ds-section-head">
+              <div>
+                <h2>Padrões de fluxo</h2>
+                <p class="ds-note">Use esses contratos antes de criar componente novo.</p>
+              </div>
+              <span class="ds-tag">UX</span>
+            </div>
+
+            <div class="ds-grid">
+              <article class="ds-panel">
+                <div class="ds-panel-title">Agendamento principal</div>
+                <ol class="ds-list">
+                  <li>Preencher agenda, cliente, solicitante e rota.</li>
+                  <li>Selecionar passageiros pelo picker.</li>
+                  <li>Editar endereço por passageiro ou usar endereço único.</li>
+                  <li>Validar faturamento, retorno e repetição antes de salvar.</li>
+                </ol>
+              </article>
+
+              <article class="ds-panel">
+                <div class="ds-panel-title">Cadastrar passageiro</div>
+                <ol class="ds-list">
+                  <li>Nome, cliente, idioma e classificação são obrigatórios.</li>
+                  <li>Telefone precisa validar país + número.</li>
+                  <li>Foto é opcional, mas deve ter preview/limpar.</li>
+                  <li>Duplicidade exige revisão antes de criar novo.</li>
+                </ol>
+              </article>
+
+              <article class="ds-panel">
+                <div class="ds-panel-title">Edição de passageiro</div>
+                <ol class="ds-list">
+                  <li>Abrir pelo nome do passageiro.</li>
+                  <li>Começar em modo leitura.</li>
+                  <li>Ao habilitar, salvar campo a campo.</li>
+                  <li>Sinalizar <span class="ds-code">saving</span>, <span class="ds-code">saved</span>, <span class="ds-code">error</span> e <span class="ds-code">empty</span>.</li>
+                </ol>
+              </article>
+            </div>
+          </section>
+
+          <section class="ds-section" id="acessibilidade">
+            <div class="ds-section-head">
+              <div>
+                <h2>Acessibilidade</h2>
+                <p class="ds-note">O formulário precisa funcionar com teclado, leitura de tela e foco visível.</p>
+              </div>
+              <span class="ds-tag">WCAG 2.2</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <article class="ds-panel">
+                <div class="ds-panel-title">Checklist</div>
+                <ul class="ds-list">
+                  <li>Todo campo obrigatório usa label visível e <span class="ds-code">aria-required</span> quando aplicável.</li>
+                  <li>Foco precisa usar <span class="ds-code">--shadow-focus</span>.</li>
+                  <li>Modal usa <span class="ds-code">role="dialog"</span> e <span class="ds-code">aria-modal="true"</span>.</li>
+                  <li>Icon button precisa de <span class="ds-code">aria-label</span>.</li>
+                  <li>Erro precisa texto, não apenas cor.</li>
+                </ul>
+              </article>
+              <article class="ds-panel">
+                <div class="ds-panel-title">Responsivo</div>
+                <ul class="ds-list">
+                  <li>Desktop: menu lateral fixo e conteúdo em painel.</li>
+                  <li>Até 1240px: tabs horizontais.</li>
+                  <li>Até 760px: topbar compacta, marca escondida, ações reduzidas.</li>
+                  <li>Campos mantêm largura estável com <span class="ds-code">min()</span>, <span class="ds-code">flex-basis</span> e tokens.</li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <section class="ds-section" id="governanca">
+            <div class="ds-section-head">
+              <div>
+                <h2>Governanca</h2>
+                <p class="ds-note">Como manter o sistema vivo sem quebrar o formulário.</p>
+              </div>
+              <span class="ds-tag">Entrega</span>
+            </div>
+
+            <div class="ds-token-table">
+              <table class="ds-table">
+                <tr><th>Ao criar/mudar</th><th>Regra</th><th>Verificação</th></tr>
+                <tr><td>Token</td><td>Mapear primitive -> semantic -> component. Preservar nomes atuais.</td><td>Buscar uso com <span class="ds-code">rg</span>.</td></tr>
+                <tr><td>Campo</td><td>Usar <span class="ds-code">.field</span>, label, estado de foco e validação.</td><td>Testar desktop e mobile.</td></tr>
+                <tr><td>Passageiro</td><td>Usar vocabulário de <span class="ds-code">.passenger-*</span>. Não criar ilha visual.</td><td>Validar selecionar, editar, remover e endereço único.</td></tr>
+                <tr><td>Modal</td><td>Usar overlay/dialog do sistema. Nada de <span class="ds-code">confirm()</span>.</td><td>Teclado, foco, cancelar e confirmar.</td></tr>
+                <tr><td>Source publicado</td><td>Se mexer em <span class="ds-code">index.html</span>, <span class="ds-code">styles.css</span> ou <span class="ds-code">app.js</span>, rodar <span class="ds-code">npm run wr</span>.</td><td>Checar <span class="ds-code">webresource.html</span>.</td></tr>
+              </table>
+            </div>
+
+            <pre class="ds-code-block">Definition of done visual:
+1. Usa tokens reais.
+2. Não quebra DOM/IDs/data-* existentes.
+3. Funciona em desktop, tablet e mobile.
+4. Tem foco visível.
+5. Estado vazio/erro/salvando documentado.
+6. Se for fonte publicada: npm run wr.</pre>
+          </section>
+
+          <section class="ds-section" id="fontes">
+            <div class="ds-section-head">
+              <div>
+                <h2>Fontes externas usadas</h2>
+                <p class="ds-note">Pesquisa aplicada: documentar fundamentos, tokens, componentes, acessibilidade e governanca.</p>
+              </div>
+              <span class="ds-tag">2026</span>
+            </div>
+
+            <ul class="ds-list ds-source-list">
+              <li><a href="https://help.figma.com/hc/en-us/articles/14552740206743-Lesson-2-Define-your-design-system" target="_blank" rel="noopener noreferrer">Figma Learn - Define your design system</a>: estrutura de fundações, componentes e documentação.</li>
+              <li><a href="https://www.figma.com/resource-library/design-tokens/" target="_blank" rel="noopener noreferrer">Figma - Design tokens</a>: tokens como valores reutilizaveis para design e codigo.</li>
+              <li><a href="https://www.w3.org/community/design-tokens/" target="_blank" rel="noopener noreferrer">W3C Design Tokens Community Group</a>: formato padronizado de tokens.</li>
+              <li><a href="https://m3.material.io/components" target="_blank" rel="noopener noreferrer">Material Design 3 - Components</a>: documentação por componente, anatomia, estados e comportamento.</li>
+              <li><a href="https://www.w3.org/WAI/WCAG22/quickref/" target="_blank" rel="noopener noreferrer">WCAG 2.2 Quick Reference</a>: contraste, foco, teclado e leitura de tela.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

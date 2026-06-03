@@ -1,0 +1,1912 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  TelaFinalizar:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =Set(varLoading, true);
+        Reset(PenInputPas);
+        Set(
+            varOrientacao,
+            If(App.Width > App.Height, "Paisagem", "Retrato")
+        );
+
+
+
+        Set(varLoading, false)
+    Children:
+      - Container1_5:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(240, 240, 240, 1)
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - Container5_5:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =8
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  X: =40
+                  Y: =40
+                Children:
+                  - Menu_5:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =0
+                        Height: =70
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =16
+                        LayoutMaxHeight: =70
+                        LayoutMinHeight: =70
+                        LayoutMinWidth: =16
+                        PaddingBottom: =16
+                        PaddingLeft: =16
+                        PaddingRight: =16
+                        PaddingTop: =16
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - Container7_10:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                            Children:
+                              - ButtonCanvas1_6:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                    BorderRadius: =0
+                                    FontSize: =40
+                                    Height: =Parent.Height
+                                    Icon: ="ArrowLeft"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Outline
+                                    Layout: ='ButtonCanvas.Layout'.IconOnly
+                                    OnSelect: |
+                                      =
+                                      Navigate(TelaServiços, ScreenTransition.Fade);
+                                      Reset(PenInputPas); Reset(CampoObsFinal);
+                                          Set(varAssPas, "");
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: =
+                                    Width: =Parent.Width
+                        - TextCanvas6_2:
+                            Control: Text@0.0.51
+                            Properties:
+                              Align: ='TextCanvas.Align'.Center
+                              AlignInContainer: =AlignInContainer.Stretch
+                              AutoHeight: =true
+                              FillPortions: =1
+                              Font: =Font.'Open Sans'
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Size: =20
+                              Text: =If(varDetalheAtual.Tipo = "MANUTENCAO", "Detalhes da Manutenção", "Alguma Observação?")
+                              VerticalAlign: =VerticalAlign.Middle
+                              Weight: ='TextCanvas.Weight'.Semibold
+                              Wrap: =false
+                        - Container7_11:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =42
+                              LayoutMinHeight: =0
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                              X: =40
+                              Y: =40
+                            Children:
+                              - ButtonCanvas3_1:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                    FontSize: =37
+                                    Height: =Parent.Height
+                                    Icon: ="Eraser"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    OnSelect: |-
+                                      =Reset(CampoManutençãoRealizada);
+                                      Reset(CampoEstabelecimentoManutenção);
+                                      Reset(CampoValorManutenção);
+                                      Reset(CampoFormadePagamentoManutenção);
+                                    Text: =
+                                    Width: =Parent.Width
+                  - Main_5:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =9
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        PaddingTop: =8
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - ContainerDetalhesTROCA_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Visible: |+
+                                =varServicoSelecionado.Tipo = "TROCA"
+                            Children:
+                              - Container14_8:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Fill: =RGBA(0, 14, 35, 1)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_8.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_8:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: =varDetalheAtual.Troca.ID
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_8:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - ContainerInfoEdit_7:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          BorderColor: =RGBA(176, 176, 176, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =1
+                                          DropShadow: =DropShadow.None
+                                          Fill: =RGBA(222, 222, 222, 0)
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutGap: =16
+                                          LayoutMinHeight: =
+                                          LayoutMinWidth: =16
+                                          LayoutOverflowX: =LayoutOverflow.Scroll
+                                          LayoutOverflowY: =LayoutOverflow.Scroll
+                                          PaddingBottom: =40
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          PaddingTop: =8
+                                          RadiusBottomLeft: =12
+                                          RadiusBottomRight: =12
+                                          RadiusTopLeft: =12
+                                          RadiusTopRight: =12
+                                        Children:
+                                          - ContainerObsFinal_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.Semilight
+                                                FillPortions: =0
+                                                Height: =180
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =8
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_71:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      Height: =0
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Observação da Troca"
+                                                      VerticalAlign: =VerticalAlign.Top
+                                                      Weight: ='TextCanvas.Weight'.Semibold
+                                                      Width: =90
+                                                - CampoObsTroca:
+                                                    Control: TextInput@0.0.54
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      BorderRadius: =4
+                                                      Fill: =RGBA(232, 232, 232, 1)
+                                                      FillPortions: =1
+                                                      FontSize: =16
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Mode: ='TextInputCanvas.Mode'.Multiline
+                                                      Placeholder: ="Digite aqui"
+                                                      TriggerOutput: ='TextInputCanvas.TriggerOutput'.Keypress
+                                    - ContainerFinalizarSERVICO_8:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.SetByContainer
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =0
+                                          Height: =50
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          LayoutGap: =16
+                                          LayoutJustifyContent: =LayoutJustifyContent.End
+                                          LayoutMaxHeight: =
+                                          LayoutMaxWidth: =200
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Width: =If(Parent.Width > 400, Parent.Width * 0.7, Parent.Width)
+                                          X: =40
+                                          Y: =40
+                                        Children:
+                                          - ButtonCancelarObservaçãoFinal_1:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                DisplayMode: |-
+                                                  =If(
+                                                      IsBlank(varDetalheAtual.Troca),
+                                                      DisplayMode.Disabled,
+                                                      DisplayMode.Edit
+                                                  )
+                                                Fill: =RGBA(70, 84, 105, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: |-
+                                                  =Reset(CampoObsTroca);
+                                                  Navigate(TelaServiços, ScreenTransition.Fade)
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =17
+                                                Text: ="Não tenho"
+                                          - ButtonFinalizarSERVICO_10:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                DisplayMode: |-
+                                                  =If(
+                                                      IsBlank(varDetalheAtual.Troca),
+                                                      DisplayMode.Disabled,
+                                                      DisplayMode.Edit
+                                                  )
+                                                Fill: =RGBA(0, 14, 35, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: |-
+                                                  =If(
+                                                      IsBlank(CampoObsTroca.Value),
+                                                      Reset(CampoObsTroca);
+                                                      Navigate(TelaServiços, ScreenTransition.Fade),
+
+                                                      // ── 1) Variáveis base ─────────────────────────────────────────────
+                                                      Set(_guidT, varDetalheAtual.Troca.'GUID Trocas de Carro');
+                                                      Set(_tDbObs, LookUp('Trocas de Carro', 'GUID Trocas de Carro' = _guidT));
+
+                                                      If(
+                                                          IsBlank(_tDbObs),
+                                                          Notify("❌ Troca não encontrada. Atualize a tela.", NotificationType.Error, 4000),
+
+                                                          // ── 2) Variáveis de contexto ──────────────────────────────────
+                                                          Set(_obsNova, CampoObsTroca.Value);
+                                                          Set(_nomeCompleto, varMotoristaUser.'Nome completo');
+                                                          Set(_primeiroUltimo,
+                                                              First(Split(_nomeCompleto, " ")).Value
+                                                              & " " &
+                                                              Last(Split(_nomeCompleto, " ")).Value
+                                                          );
+                                                          Set(_tag, "Obs " & _primeiroUltimo & ": ");
+                                                          Set(_ehMot1Obs, _tDbObs.'Motorista 1'.'Email Microsoft' = varMotoristaUser.'Email Microsoft');
+
+                                                          // ── 3) Monta obs acumulativa em Geral ─────────────────────────
+                                                          Set(_registroGeral, LookUp(Geral, 'GUID Reserva de Veículos' = _guidSrv));
+
+                                                          If(
+                                                              IsBlank(_registroGeral),
+                                                              Notify("❌ Registro na operação não encontrado.", NotificationType.Error, 4000),
+
+                                                              Set(_obsAtual, Coalesce(_registroGeral.'Observação Final', ""));
+
+                                                              // Remove entrada anterior deste motorista e reconstrói
+                                                              Set(_partesFiltradas,
+                                                                  Concat(
+                                                                      Filter(
+                                                                          ForAll(
+                                                                              Split(_obsAtual, " | "),
+                                                                              { entrada: ThisRecord.Value }
+                                                                          ),
+                                                                          Not(IsBlank(entrada))
+                                                                          && entrada <> ""
+                                                                          && Not(StartsWith(entrada, _tag))
+                                                                      ),
+                                                                      entrada,
+                                                                      " | "
+                                                                  )
+                                                              );
+
+                                                              Set(_obsFinal,
+                                                                  If(
+                                                                      IsBlank(_partesFiltradas) || _partesFiltradas = "",
+                                                                      _tag & _obsNova,
+                                                                      _partesFiltradas & " | " & _tag & _obsNova
+                                                                  )
+                                                              );
+
+                                                              // ── 4) Patch Geral ────────────────────────────────────────
+                                                              Set(_errGeral,
+                                                                  IsError(
+                                                                      Patch(
+                                                                          Geral,
+                                                                          _registroGeral,
+                                                                          { 'Observação Final': _obsFinal }
+                                                                      )
+                                                                  )
+                                                              );
+
+                                                              // ── 5) Patch Trocas de Carro ──────────────────────────────
+                                                              Set(_errTroca,
+                                                                  IsError(
+                                                                      If(
+                                                                          _ehMot1Obs,
+                                                                          Patch(
+                                                                              'Trocas de Carro',
+                                                                              _tDbObs,
+                                                                              { 'Observação do Motorista 1': _obsNova }
+                                                                          ),
+                                                                          Patch(
+                                                                              'Trocas de Carro',
+                                                                              _tDbObs,
+                                                                              { 'Observação do Motorista 2': _obsNova }
+                                                                          )
+                                                                      )
+                                                                  )
+                                                              );
+
+                                                              // ── 6) Resultado ──────────────────────────────────────────
+                                                              If(
+                                                                  _errGeral || _errTroca,
+                                                                  Notify(
+                                                                      "❌ Falha ao salvar."
+                                                                      & If(_errGeral, " [Operação]", "")
+                                                                      & If(_errTroca, " [Troca]", "")
+                                                                      & " Verifique sua conexão.",
+                                                                      NotificationType.Error,
+                                                                      5000
+                                                                  ),
+
+                                                                  Notify("✅ Observação salva com sucesso!", NotificationType.Success, 3000);
+                                                                  Reset(CampoObsTroca);
+                                                                  Navigate(TelaServiços, ScreenTransition.Fade)
+                                                              )
+                                                          )
+                                                      )
+                                                  )
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =17
+                                                Text: ="Confirmar"
+                        - ContainerDetalhesSERVICO_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Visible: |+
+                                =varServicoSelecionado.Tipo = "SERVICO"
+                            Children:
+                              - Container14_2:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Fill: =RGBA(0, 14, 35, 1)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_2.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_2:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: ="Digite abaixo sua observação"
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_2:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - ContainerInfoEdit_2:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          BorderColor: =RGBA(176, 176, 176, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =1
+                                          DropShadow: =DropShadow.None
+                                          Fill: =RGBA(222, 222, 222, 0)
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutGap: =16
+                                          LayoutMinHeight: =
+                                          LayoutMinWidth: =16
+                                          LayoutOverflowX: =LayoutOverflow.Scroll
+                                          LayoutOverflowY: =LayoutOverflow.Scroll
+                                          PaddingBottom: =40
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          PaddingTop: =8
+                                          RadiusBottomLeft: =12
+                                          RadiusBottomRight: =12
+                                          RadiusTopLeft: =12
+                                          RadiusTopRight: =12
+                                        Children:
+                                          - ContainerObsFinal:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.Semilight
+                                                FillPortions: =0
+                                                Height: =180
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =8
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_65:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      Height: =0
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Observação do Serviço"
+                                                      VerticalAlign: =VerticalAlign.Top
+                                                      Weight: ='TextCanvas.Weight'.Semibold
+                                                      Width: =90
+                                                - CampoObsFinal:
+                                                    Control: TextInput@0.0.54
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      BorderRadius: =4
+                                                      Fill: =RGBA(232, 232, 232, 1)
+                                                      FillPortions: =1
+                                                      FontSize: =16
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Mode: ='TextInputCanvas.Mode'.Multiline
+                                                      Placeholder: ="Digite aqui"
+                                                      TriggerOutput: ='TextInputCanvas.TriggerOutput'.Keypress
+                                    - ContainerFinalizarSERVICO_6:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.SetByContainer
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =0
+                                          Height: =50
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          LayoutGap: =16
+                                          LayoutJustifyContent: =LayoutJustifyContent.End
+                                          LayoutMaxHeight: =
+                                          LayoutMaxWidth: =200
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Width: =If(Parent.Width > 400, Parent.Width * 0.7, Parent.Width)
+                                          X: =40
+                                          Y: =40
+                                        Children:
+                                          - ButtonCancelarObservaçãoFinal:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                DisplayMode: |-
+                                                  =If(
+                                                      IsBlank(varDetalheAtual.Servico) ||
+                                                      IsBlank(varDetalheAtual.Servico.'GUID Reserva de Veículos'),
+                                                      DisplayMode.Disabled,
+                                                      DisplayMode.Edit
+                                                  )
+                                                Fill: =RGBA(70, 84, 105, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: |-
+                                                  =Reset(CampoObsFinal);
+                                                  Navigate(TelaServiços, ScreenTransition.Fade)
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =17
+                                                Text: ="Não tenho"
+                                          - ButtonFinalizarSERVICO_9:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                DisplayMode: |-
+                                                  =If(
+                                                      IsBlank(varDetalheAtual.Servico) ||
+                                                      IsBlank(varDetalheAtual.Servico.'GUID Reserva de Veículos'),
+                                                      DisplayMode.Disabled,
+                                                      DisplayMode.Edit
+                                                  )
+                                                Fill: =RGBA(0, 14, 35, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: |-
+                                                  =If(
+                                                      IsBlank(CampoObsFinal.Value),
+                                                      Reset(CampoObsFinal);
+                                                          Navigate(TelaServiços, ScreenTransition.Fade),
+
+                                                      IfError(
+                                                          Patch(
+                                                              Geral,
+                                                              LookUp(Geral, 'GUID Reserva de Veículos' = _guidSrv),
+                                                              { 'Observação Final': CampoObsFinal.Value }
+                                                          );
+                                                          Notify("✅ Observação salva com sucesso!", NotificationType.Success, 3000);
+                                                          Reset(CampoObsFinal);
+                                                          Navigate(TelaServiços, ScreenTransition.Fade),
+
+                                                          Notify("❌ Falha ao salvar. Verifique sua conexão.", NotificationType.Error, 5000)
+                                                      )
+                                                  )
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =17
+                                                Text: ="Confirmar"
+                        - ContainerDetalhesMANUTENCAO_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Visible: =varServicoSelecionado.Tipo = "MANUTENCAO"
+                            Children:
+                              - Container14_9:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Fill: =RGBA(0, 14, 35, 1)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_9.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_9:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: =varDetalheAtual.Manut.ID
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_9:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - ContainerInfoEdit_8:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          BorderColor: =RGBA(176, 176, 176, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =1
+                                          DropShadow: =DropShadow.None
+                                          Fill: =RGBA(222, 222, 222, 0)
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutMinHeight: =
+                                          LayoutMinWidth: =16
+                                          LayoutOverflowX: =LayoutOverflow.Scroll
+                                          LayoutOverflowY: =LayoutOverflow.Scroll
+                                          PaddingBottom: =40
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          PaddingTop: =8
+                                          RadiusBottomLeft: =12
+                                          RadiusBottomRight: =12
+                                          RadiusTopLeft: =12
+                                          RadiusTopRight: =12
+                                        Children:
+                                          - ContainerManutençãoRealizada:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_76.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoManutençãoRealizada.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =8
+                                                LayoutMinHeight: =TextCanvas5_76.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoManutençãoRealizada.Height
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_76:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Manutenção Realizada"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - CampoManutençãoRealizada:
+                                                    Control: TextInput@0.0.54
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      BorderRadius: =4
+                                                      Fill: =RGBA(232, 232, 232, 1)
+                                                      FontSize: =16
+                                                      Height: =80
+                                                      LayoutMinHeight: =70
+                                                      LayoutMinWidth: =16
+                                                      Mode: ='TextInputCanvas.Mode'.Multiline
+                                                      Placeholder: ="Digite aqui"
+                                                      TriggerOutput: ='TextInputCanvas.TriggerOutput'.Keypress
+                                          - ContainerValorManutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_77.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoValorManutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =8
+                                                LayoutMinHeight: =TextCanvas5_77.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + TextCanvas5_77.Height
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_77:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Valor (R$)"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - CampoValorManutenção:
+                                                    Control: Classic/TextInput@2.3.2
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      BorderColor: =RGBA(245, 245, 245, 1)
+                                                      Default: =
+                                                      DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                      DisabledColor: =RGBA(161, 159, 157, 1)
+                                                      DisabledFill: =RGBA(232, 232, 232, 1)
+                                                      Fill: =RGBA(232, 232, 232, 1)
+                                                      FillPortions: =1
+                                                      Font: =Font.'Segoe UI'
+                                                      Format: =TextFormat.Number
+                                                      Height: =30
+                                                      HoverBorderColor: =RGBA(16, 110, 190, 1)
+                                                      HoverFill: =RGBA(232, 232, 232, 1)
+                                                      LayoutMaxWidth: =200
+                                                      LayoutMinWidth: =16
+                                                      PressedBorderColor: =RGBA(0, 120, 212, 1)
+                                                      PressedColor: =RGBA(0, 0, 0, 1)
+                                                      PressedFill: =RGBA(232, 232, 232, 1)
+                                                      RadiusBottomLeft: =6
+                                                      RadiusBottomRight: =6
+                                                      RadiusTopLeft: =6
+                                                      RadiusTopRight: =6
+                                                      Size: =16
+                                          - ContainerFormadePagamentoManutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_78.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoFormadePagamentoManutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =8
+                                                LayoutMinHeight: =TextCanvas5_78.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + TextCanvas5_78.Height
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_78:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Forma de Pagamento"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - CampoFormadePagamentoManutenção:
+                                                    Control: ComboBox@0.0.51
+                                                    Properties:
+                                                      AccessibleLabel: ="ds"
+                                                      Appearance: ='ComboboxCanvas.Appearance'.FilledDarker
+                                                      BorderRadius: =6
+                                                      Fill: =RGBA(232, 232, 232, 1)
+                                                      FillPortions: =1
+                                                      Font: =Font.'Open Sans'
+                                                      FontSize: =16
+                                                      FontWeight: =FontWeight.Semibold
+                                                      InputTextPlaceholder: =""
+                                                      IsSearchable: =false
+                                                      Items: =Choices(Opcoes)
+                                                      LayoutMaxWidth: =80
+                                                      LayoutMinHeight: =40
+                                                      LayoutMinWidth: =16
+                                                      OnChange: =
+                                                    Children:
+                                                      - Value1:
+                                                          Control: ComboBoxDataField@1.5.0
+                                                          Variant: textualColumn
+                                                          IsLocked: true
+                                                          Properties:
+                                                            FieldDisplayName: ="Value"
+                                                            FieldName: ="Value"
+                                                            FieldType: ="l"
+                                                            Order: =1
+                                          - ContainerEstabelecimentoManutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_79.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoEstabelecimentoManutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =8
+                                                LayoutMinHeight: =TextCanvas5_79.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoEstabelecimentoManutenção.Height
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_79:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Estabelecimento"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - CampoEstabelecimentoManutenção:
+                                                    Control: TextInput@0.0.54
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      BorderRadius: =4
+                                                      Fill: =RGBA(232, 232, 232, 1)
+                                                      FontSize: =16
+                                                      Height: =40
+                                                      LayoutMinHeight: =70
+                                                      LayoutMinWidth: =16
+                                                      Mode: ='TextInputCanvas.Mode'.Multiline
+                                                      Placeholder: ="Digite aqui"
+                                                      TriggerOutput: ='TextInputCanvas.TriggerOutput'.Keypress
+                                          - ContainerNotaFiscalManutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_81.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + ButtonAbrirTelaFotoNotaFiscalManutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =4
+                                                LayoutMinHeight: =TextCanvas5_81.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + TextCanvas5_81.Height
+                                                LayoutMinWidth: =16
+                                                LayoutOverflowY: =LayoutOverflow.Scroll
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_81:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Nota Fiscal" & If(!(varFotoNotaFiscalManutenção = Blank()), " ✔️")
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - Container15:
+                                                    Control: GroupContainer@1.5.0
+                                                    Variant: AutoLayout
+                                                    Properties:
+                                                      DropShadow: =DropShadow.None
+                                                      LayoutAlignItems: =LayoutAlignItems.Center
+                                                      LayoutDirection: =LayoutDirection.Horizontal
+                                                      LayoutGap: =8
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      RadiusBottomLeft: =0
+                                                      RadiusBottomRight: =0
+                                                      RadiusTopLeft: =0
+                                                      RadiusTopRight: =0
+                                                    Children:
+                                                      - ButtonAbrirTelaFotoNotaFiscalManutenção:
+                                                          Control: Classic/Button@2.2.0
+                                                          Properties:
+                                                            BorderColor: =RGBA(0, 0, 0, 0)
+                                                            BorderStyle: =BorderStyle.None
+                                                            Color: =RGBA(255, 255, 255, 1)
+                                                            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                            DisabledColor: =RGBA(161, 159, 157, 1)
+                                                            DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                            Fill: =RGBA(75, 125, 201, 0.71)
+                                                            Font: =Font.'Open Sans'
+                                                            Height: =35
+                                                            HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                            HoverColor: =RGBA(255, 255, 255, 1)
+                                                            HoverFill: =RGBA(16, 110, 190, 1)
+                                                            LayoutMaxHeight: =50
+                                                            LayoutMinHeight: =20
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: |-
+                                                              =Navigate(TelaFotoManutenção, ScreenTransition.Fade);
+                                                              Set(varCameraAtualManutenção, "NOTAFISCAL")
+                                                            PaddingBottom: =0
+                                                            PaddingLeft: =0
+                                                            PaddingRight: =0
+                                                            PaddingTop: =0
+                                                            PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                            PressedColor: =RGBA(255, 255, 255, 1)
+                                                            PressedFill: =RGBA(16, 110, 190, 1)
+                                                            RadiusBottomLeft: =12
+                                                            RadiusBottomRight: =12
+                                                            RadiusTopLeft: =12
+                                                            RadiusTopRight: =12
+                                                            Size: =12
+                                                            Text: =If(varFotoNotaFiscalManutenção = Blank(),  "Tirar Foto", "Refazer Foto")
+                                                            Width: =120
+                                                      - ButtonApagarFotoNotaFiscalManutenção:
+                                                          Control: Button@0.0.45
+                                                          Properties:
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                                            FontSize: =25
+                                                            Icon: ="Delete"
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: =Set(varFotoNotaFiscalManutenção, Blank())
+                                                            Text: =
+                                                            Visible: =varFotoNotaFiscalManutenção <> Blank()
+                                                            Width: =Self.Height
+                                          - ContainerFoto1Manutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_82.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + ButtonAbrirTelaFoto1Manutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =4
+                                                LayoutMinHeight: =TextCanvas5_82.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + TextCanvas5_82.Height
+                                                LayoutMinWidth: =16
+                                                LayoutOverflowY: =LayoutOverflow.Scroll
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_82:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Foto 1" & If(!(varFoto1Manutenção = Blank()), " ✔️")
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - Container15_2:
+                                                    Control: GroupContainer@1.5.0
+                                                    Variant: AutoLayout
+                                                    Properties:
+                                                      DropShadow: =DropShadow.None
+                                                      LayoutAlignItems: =LayoutAlignItems.Center
+                                                      LayoutDirection: =LayoutDirection.Horizontal
+                                                      LayoutGap: =8
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      RadiusBottomLeft: =0
+                                                      RadiusBottomRight: =0
+                                                      RadiusTopLeft: =0
+                                                      RadiusTopRight: =0
+                                                    Children:
+                                                      - ButtonAbrirTelaFoto1Manutenção:
+                                                          Control: Classic/Button@2.2.0
+                                                          Properties:
+                                                            BorderColor: =RGBA(0, 0, 0, 0)
+                                                            BorderStyle: =BorderStyle.None
+                                                            Color: =RGBA(255, 255, 255, 1)
+                                                            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                            DisabledColor: =RGBA(161, 159, 157, 1)
+                                                            DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                            Fill: =RGBA(75, 125, 201, 0.71)
+                                                            Font: =Font.'Open Sans'
+                                                            Height: =35
+                                                            HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                            HoverColor: =RGBA(255, 255, 255, 1)
+                                                            HoverFill: =RGBA(16, 110, 190, 1)
+                                                            LayoutMaxHeight: =50
+                                                            LayoutMinHeight: =20
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: |-
+                                                              =Navigate(TelaFotoManutenção, ScreenTransition.Fade);
+                                                              Set(varCameraAtualManutenção, "FOTO1")
+                                                            PaddingBottom: =0
+                                                            PaddingLeft: =0
+                                                            PaddingRight: =0
+                                                            PaddingTop: =0
+                                                            PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                            PressedColor: =RGBA(255, 255, 255, 1)
+                                                            PressedFill: =RGBA(16, 110, 190, 1)
+                                                            RadiusBottomLeft: =12
+                                                            RadiusBottomRight: =12
+                                                            RadiusTopLeft: =12
+                                                            RadiusTopRight: =12
+                                                            Size: =12
+                                                            Text: =If(varFoto1Manutenção = Blank(),  "Tirar Foto", "Refazer Foto")
+                                                            Width: =120
+                                                            X: =40
+                                                            Y: =40
+                                                      - ButtonApagarFoto1Manutenção:
+                                                          Control: Button@0.0.45
+                                                          Properties:
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                                            FontSize: =25
+                                                            Icon: ="Delete"
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: =Set(varFoto1Manutenção, Blank())
+                                                            Text: =
+                                                            Visible: =varFoto1Manutenção <> Blank()
+                                                            Width: =Self.Height
+                                          - ContainerFoto2Manutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_83.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + ButtonAbrirTelaFoto2Manutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =4
+                                                LayoutMinHeight: =TextCanvas5_83.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + TextCanvas5_83.Height
+                                                LayoutMinWidth: =16
+                                                LayoutOverflowY: =LayoutOverflow.Scroll
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_83:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Foto 2" & If(!(varFoto2Manutenção = Blank()), " ✔️")
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - Container15_3:
+                                                    Control: GroupContainer@1.5.0
+                                                    Variant: AutoLayout
+                                                    Properties:
+                                                      DropShadow: =DropShadow.None
+                                                      LayoutAlignItems: =LayoutAlignItems.Center
+                                                      LayoutDirection: =LayoutDirection.Horizontal
+                                                      LayoutGap: =8
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      RadiusBottomLeft: =0
+                                                      RadiusBottomRight: =0
+                                                      RadiusTopLeft: =0
+                                                      RadiusTopRight: =0
+                                                    Children:
+                                                      - ButtonAbrirTelaFoto2Manutenção:
+                                                          Control: Classic/Button@2.2.0
+                                                          Properties:
+                                                            BorderColor: =RGBA(0, 0, 0, 0)
+                                                            BorderStyle: =BorderStyle.None
+                                                            Color: =RGBA(255, 255, 255, 1)
+                                                            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                            DisabledColor: =RGBA(161, 159, 157, 1)
+                                                            DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                            Fill: =RGBA(75, 125, 201, 0.71)
+                                                            Font: =Font.'Open Sans'
+                                                            Height: =35
+                                                            HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                            HoverColor: =RGBA(255, 255, 255, 1)
+                                                            HoverFill: =RGBA(16, 110, 190, 1)
+                                                            LayoutMaxHeight: =50
+                                                            LayoutMinHeight: =20
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: |-
+                                                              =Navigate(TelaFotoManutenção, ScreenTransition.Fade);
+                                                              Set(varCameraAtualManutenção, "FOTO2")
+                                                            PaddingBottom: =0
+                                                            PaddingLeft: =0
+                                                            PaddingRight: =0
+                                                            PaddingTop: =0
+                                                            PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                            PressedColor: =RGBA(255, 255, 255, 1)
+                                                            PressedFill: =RGBA(16, 110, 190, 1)
+                                                            RadiusBottomLeft: =12
+                                                            RadiusBottomRight: =12
+                                                            RadiusTopLeft: =12
+                                                            RadiusTopRight: =12
+                                                            Size: =12
+                                                            Text: =If(varFoto2Manutenção = Blank(),  "Tirar Foto", "Refazer Foto")
+                                                            Width: =120
+                                                            X: =40
+                                                            Y: =40
+                                                      - ButtonApagarFoto2Manutenção:
+                                                          Control: Button@0.0.45
+                                                          Properties:
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                                            FontSize: =25
+                                                            Icon: ="Delete"
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: =Set(varFoto2Manutenção, Blank())
+                                                            Text: =
+                                                            Visible: =varFoto2Manutenção <> Blank()
+                                                            Width: =Self.Height
+                                          - ContainerFoto3Manutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_84.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + ButtonAbrirTelaFoto3Manutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =4
+                                                LayoutMinHeight: =TextCanvas5_84.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + TextCanvas5_84.Height
+                                                LayoutMinWidth: =16
+                                                LayoutOverflowY: =LayoutOverflow.Scroll
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_84:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Foto 3" & If(!(varFoto3Manutenção = Blank()), " ✔️")
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - Container15_4:
+                                                    Control: GroupContainer@1.5.0
+                                                    Variant: AutoLayout
+                                                    Properties:
+                                                      DropShadow: =DropShadow.None
+                                                      LayoutAlignItems: =LayoutAlignItems.Center
+                                                      LayoutDirection: =LayoutDirection.Horizontal
+                                                      LayoutGap: =8
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      RadiusBottomLeft: =0
+                                                      RadiusBottomRight: =0
+                                                      RadiusTopLeft: =0
+                                                      RadiusTopRight: =0
+                                                    Children:
+                                                      - ButtonAbrirTelaFoto3Manutenção:
+                                                          Control: Classic/Button@2.2.0
+                                                          Properties:
+                                                            BorderColor: =RGBA(0, 0, 0, 0)
+                                                            BorderStyle: =BorderStyle.None
+                                                            Color: =RGBA(255, 255, 255, 1)
+                                                            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                            DisabledColor: =RGBA(161, 159, 157, 1)
+                                                            DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                            Fill: =RGBA(75, 125, 201, 0.71)
+                                                            Font: =Font.'Open Sans'
+                                                            Height: =35
+                                                            HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                            HoverColor: =RGBA(255, 255, 255, 1)
+                                                            HoverFill: =RGBA(16, 110, 190, 1)
+                                                            LayoutMaxHeight: =50
+                                                            LayoutMinHeight: =20
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: |-
+                                                              =Navigate(TelaFotoManutenção, ScreenTransition.Fade);
+                                                              Set(varCameraAtualManutenção, "FOTO3")
+                                                            PaddingBottom: =0
+                                                            PaddingLeft: =0
+                                                            PaddingRight: =0
+                                                            PaddingTop: =0
+                                                            PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                            PressedColor: =RGBA(255, 255, 255, 1)
+                                                            PressedFill: =RGBA(16, 110, 190, 1)
+                                                            RadiusBottomLeft: =12
+                                                            RadiusBottomRight: =12
+                                                            RadiusTopLeft: =12
+                                                            RadiusTopRight: =12
+                                                            Size: =12
+                                                            Text: =If(varFoto3Manutenção = Blank(),  "Tirar Foto", "Refazer Foto")
+                                                            Width: =120
+                                                            X: =40
+                                                            Y: =40
+                                                      - ButtonApagarFoto3Manutenção:
+                                                          Control: Button@0.0.45
+                                                          Properties:
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                                            FontSize: =25
+                                                            Icon: ="Delete"
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            OnSelect: =Set(varFoto3Manutenção, Blank())
+                                                            Text: =
+                                                            Visible: =varFoto3Manutenção <> Blank()
+                                                            Width: =Self.Height
+                                          - ContainerObservaçõesdaManutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_85.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoObservaçõesdaManutenção.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutGap: =8
+                                                LayoutMinHeight: =TextCanvas5_85.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + CampoObservaçõesdaManutenção.Height
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_85:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 1)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Observações da Manutenção"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - CampoObservaçõesdaManutenção:
+                                                    Control: TextInput@0.0.54
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      BorderRadius: =4
+                                                      Fill: =RGBA(232, 232, 232, 1)
+                                                      FontSize: =16
+                                                      Height: =80
+                                                      LayoutMinHeight: =70
+                                                      LayoutMinWidth: =16
+                                                      Mode: ='TextInputCanvas.Mode'.Multiline
+                                                      Placeholder: ="Digite aqui"
+                                                      TriggerOutput: ='TextInputCanvas.TriggerOutput'.Keypress
+                                          - ContainerDúvidasManutenção:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =120
+                                                LayoutAlignItems: =LayoutAlignItems.Center
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutJustifyContent: =LayoutJustifyContent.Center
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                RadiusBottomLeft: =0
+                                                RadiusBottomRight: =0
+                                                RadiusTopLeft: =0
+                                                RadiusTopRight: =0
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - Container6_5:
+                                                    Control: GroupContainer@1.5.0
+                                                    Variant: AutoLayout
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.End
+                                                      DropShadow: =DropShadow.Semibold
+                                                      Fill: =RGBA(0, 14, 35, 0.28)
+                                                      FillPortions: =0
+                                                      Height: =TextCanvas5_80.Height + Label4_2.Height + Self.PaddingBottom + Self.PaddingTop
+                                                      LayoutAlignItems: =LayoutAlignItems.Center
+                                                      LayoutDirection: =LayoutDirection.Vertical
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      PaddingBottom: =8
+                                                      PaddingLeft: =8
+                                                      PaddingRight: =8
+                                                      PaddingTop: =8
+                                                      RadiusBottomLeft: =12
+                                                      RadiusBottomRight: =12
+                                                      RadiusTopLeft: =12
+                                                      RadiusTopRight: =12
+                                                      Width: =179
+                                                    Children:
+                                                      - TextCanvas5_80:
+                                                          Control: Text@0.0.51
+                                                          Properties:
+                                                            Align: ='TextCanvas.Align'.End
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            AutoHeight: =true
+                                                            Font: =Font.'Open Sans'
+                                                            FontColor: =RGBA(0, 0, 0, 1)
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            Size: =15
+                                                            Text: ="Dúvidas?"
+                                                            Weight: ='TextCanvas.Weight'.Semibold
+                                                            X: =374
+                                                            Y: =469
+                                                      - Label4_2:
+                                                          Control: Label@2.5.1
+                                                          Properties:
+                                                            Align: =Align.Right
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            AutoHeight: =true
+                                                            BorderColor: =RGBA(0, 0, 0, 0)
+                                                            BorderStyle: =BorderStyle.None
+                                                            BorderThickness: =2
+                                                            Color: =RGBA(50, 49, 48, 1)
+                                                            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                            DisabledColor: =RGBA(161, 159, 157, 1)
+                                                            FocusedBorderThickness: =4
+                                                            Font: =Font.'Open Sans'
+                                                            FontWeight: =FontWeight.Bold
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            LineHeight: =1
+                                                            OnSelect: |-
+                                                              =Launch(
+                                                                  "https://wa.me/5512997236961"
+                                                              )
+                                                            Text: ="Contatar o Júnior"
+                                                            Underline: =true
+                                                            X: =374
+                                                            Y: =469
+                                    - ContainerFinalizarSERVICO_9:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Center
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =0
+                                          Height: =50
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutJustifyContent: =LayoutJustifyContent.End
+                                          LayoutMaxHeight: =
+                                          LayoutMaxWidth: =
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Width: =Parent.Width * 0.5
+                                          X: =40
+                                          Y: =40
+                                        Children:
+                                          - ButtonFinalizarSERVICO_8:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                DisplayMode: |-
+                                                  =If(
+                                                      IsBlank(varDetalheAtual.Manut) ||
+                                                      IsBlank(varDetalheAtual.Manut.'GUID Manutenções') ||
+                                                      varDetalheAtual.Manut.'Status (cr40f_status)' = 'Status (Manutenções)'.Realizado,
+                                                      DisplayMode.Disabled,
+                                                      DisplayMode.Edit
+                                                  )
+                                                Fill: =RGBA(0, 14, 35, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: |-
+                                                  =// ═══════════════════════════════════════════════════════
+                                                  //  SALVAR MANUTENÇÃO — Blindado contra erros
+                                                  //  Ordem: Guards → Patch (banco) → Flow (fotos)
+                                                  // ═══════════════════════════════════════════════════════
+
+                                                  Set(varLoading, true);
+                                                  Set(_ok, true);
+                                                  Set(_guidM, Blank());
+                                                  Set(_proxItem, Blank());
+                                                  Set(_mDb, Blank());
+                                                  Set(_mAtualizada, Blank());
+                                                  Set(_patchGeral, Blank());
+
+                                                  // ── GUARD 1: GUID da manutenção ─────────────────────────
+                                                  If(
+                                                      _ok,
+                                                      If(
+                                                          IsBlank(varDetalheAtual.Manut.'GUID Manutenções'),
+                                                          Notify("Erro: não foi possível identificar a manutenção. Volte e tente novamente.", NotificationType.Error, 5000);
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false),
+                                                          Set(_guidM, varDetalheAtual.Manut.'GUID Manutenções')
+                                                      )
+                                                  );
+
+                                                  // ── GUARD 2: Já está realizada? ─────────────────────────
+                                                  If(
+                                                      _ok,
+                                                      If(
+                                                          varDetalheAtual.Manut.'Status (cr40f_status)' = 'Status (Manutenções)'.Realizado,
+                                                          Notify("Esta manutenção já foi finalizada anteriormente.", NotificationType.Information, 5000);
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false)
+                                                      )
+                                                  );
+
+                                                  // ── GUARD 3: Campos obrigatórios preenchidos ─────────────
+                                                  If(
+                                                      _ok,
+                                                      If(
+                                                          IsBlank(CampoFormadePagamentoManutenção.Selected.Value) ||
+                                                          IsBlank(CampoEstabelecimentoManutenção.Value) ||
+                                                          IsBlank(CampoValorManutenção.Text) ||
+                                                          IsBlank(CampoManutençãoRealizada.Value),
+                                                          Notify("Preencha corretamente: Manutenção Realizada, Forma de Pagamento, Estabelecimento e Valor.", NotificationType.Warning, 5000);
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false)
+                                                      )
+                                                  );
+
+                                                  // ── GUARD 4: Primeiro item pendente da fila ──────────────
+                                                  If(
+                                                      _ok,
+                                                      Set(
+                                                      _proxItem,
+                                                      First(
+                                                          SortByColumns(
+                                                              Filter(
+                                                                  colAgendaUI,
+                                                                  !IsBlank(DtOrdem) &&
+                                                                  Tipo <> "HEADER" &&
+                                                                  !(Tipo = "SERVICO"    && !IsBlank(DadosSERVICO)    && ("conclu" in Lower(Text(DadosSERVICO.'Status de Operação'))    || "cancel" in Lower(Text(DadosSERVICO.'Status de Operação')))) &&
+                                                                  !(Tipo = "TROCA"      && !IsBlank(DadosTROCA)      && ("conclu" in Lower(Text(DadosTROCA.'Status (cr40f_statusdatroca)'))          || "cancel" in Lower(Text(DadosTROCA.'Status (cr40f_statusdatroca)')))) &&
+                                                                  !(Tipo = "MANUTENCAO" && !IsBlank(DadosMANUTENCAO) && ("realizado" in Lower(Text(DadosMANUTENCAO.'Status (cr40f_status)')) || "conclu" in Lower(Text(DadosMANUTENCAO.'Status (cr40f_status)')) || "cancel" in Lower(Text(DadosMANUTENCAO.'Status (cr40f_status)'))))
+                                                              ),
+                                                              "DtOrdem",
+                                                              SortOrder.Ascending
+                                                          )
+                                                      )
+                                                  );
+                                                      If(
+                                                          IsBlank(_proxItem),
+                                                          Notify("Nenhum item pendente encontrado na fila. Atualize a página.", NotificationType.Error, 5000);
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false)
+                                                      )
+                                                  );
+
+                                                  // ── GUARD 5: Esta manutenção é o primeiro pendente? ──────
+                                                  If(
+                                                      _ok,
+                                                      If(
+                                                          !(
+                                                              _proxItem.Tipo = "MANUTENCAO" &&
+                                                              !IsBlank(_proxItem.DadosMANUTENCAO) &&
+                                                              _proxItem.DadosMANUTENCAO.'GUID Manutenções' = _guidM
+                                                          ),
+                                                          Notify("⚠️ Existem itens anteriores na fila ainda pendentes. Conclua-os antes de prosseguir.", NotificationType.Warning, 5000);
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false)
+                                                      )
+                                                  );
+
+                                                  // ── GUARD 6: Registro existe no banco (LookUp) ───────────
+                                                  If(
+                                                      _ok,
+                                                      Set(_mDb, LookUp(Manutenções, 'GUID Manutenções' = _guidM));
+                                                      If(
+                                                          IsBlank(_mDb) || IsBlank(_mDb.'GUID Manutenções'),
+                                                          Notify("Manutenção não encontrada no servidor. Atualize a página e tente novamente.", NotificationType.Error, 5000);
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false)
+                                                      )
+                                                  );
+
+                                                  // ── AÇÃO 1: Patch no banco (Dataverse) ───────────────────
+                                                  If(
+                                                      _ok,
+                                                      Set(
+                                                      _mAtualizada,
+                                                      IfError(
+                                                          Patch(
+                                                              Manutenções,
+                                                              _mDb,
+                                                              {
+                                                                  'Status (cr40f_status)':      'Status (Manutenções)'.Realizado,
+                                                                  'Data da Manutenção':          Now(),
+                                                                  Realizado_por_nome:            varDetalheAtual.ManutGeral.Motorista,
+                                                                  'Forma de Pagamento':          CampoFormadePagamentoManutenção.Selected.Value,
+                                                                  Estabelecimento:               CampoEstabelecimentoManutenção.Value,
+                                                                  Valor:                         Round(Value(Coalesce(CampoValorManutenção.Text, "0")), 2),
+                                                                  'Comentários do Colaborador':  CampoObservaçõesdaManutenção.Value,
+                                                                  'Serviço realizado':           CampoManutençãoRealizada.Value
+                                                              }
+                                                          ),
+                                                          Notify(
+                                                              "❌ Patch falhou: " & FirstError.Message & " | Fonte: " & FirstError.Source,
+                                                              NotificationType.Error,
+                                                              8000
+                                                          );
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false);
+                                                          Blank()
+                                                      )
+                                                  );
+
+                                                      If(
+                                                          IsBlank(_mAtualizada),
+                                                          //Notify("❌ Falha ao salvar no banco. Verifique sua conexão e tente novamente."; NotificationType.Error; 5000);;
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false),
+
+                                                          Set(_mAtualizada, LookUp(Manutenções, 'GUID Manutenções' = _guidM));
+
+                                                          Set(
+                                                              varDetalheAtual,
+                                                              {
+                                                                  ManutGeral: varDetalheAtual.ManutGeral,
+                                                                  Manut:      _mAtualizada,
+                                                                  Servico:    varDetalheAtual.Servico,
+                                                                  Troca:      varDetalheAtual.Troca
+                                                              }
+                                                          );
+                                                          UpdateIf(colAgenda,   Tipo = "MANUTENCAO" && DadosMANUTENCAO.'GUID Manutenções' = _guidM, { DadosMANUTENCAO: _mAtualizada });
+                                                          UpdateIf(colAgendaUI, Tipo = "MANUTENCAO" && DadosMANUTENCAO.'GUID Manutenções' = _guidM, { DadosMANUTENCAO: _mAtualizada });
+
+                                                          Set(
+                                                              _patchGeral,
+                                                              IfError(
+                                                                  Patch(
+                                                                      Geral,
+                                                                      varDetalheAtual.ManutGeral,
+                                                                      {
+                                                                          'Observação Final': CampoObservaçõesdaManutenção.Value,
+                                                                          'Data de Finalização': Now()
+                                                                      }
+                                                                  ),
+                                                                  Blank()
+                                                              )
+                                                          );
+
+                                                          If(
+                                                              IsBlank(_patchGeral),
+                                                              Notify("⚠️ Dados de manutenção salvos, mas falha ao atualizar observação. Tente novamente.", NotificationType.Warning, 5000);
+                                                              Set(varLoading, false);
+                                                              Set(_ok, false)
+                                                          )
+                                                      )
+                                                  );
+
+                                                  // ── AÇÃO 2: Flow — processar e salvar fotos ───────────────
+                                                  If(
+                                                      _ok,
+                                                      Notify("Sincronizando fotos com o sistema... Aguarde.", NotificationType.Information, 3000);
+
+                                                      Set(varJSON_NF, JSON(varFotoNotaFiscalManutenção, JSONFormat.IncludeBinaryData));
+                                                      Set(varB64_NF, Mid(varJSON_NF, Find(",", varJSON_NF) + 1, Len(varJSON_NF) - Find(",", varJSON_NF) - 1));
+
+                                                      Set(varJSON_F1, JSON(varFoto1Manutenção, JSONFormat.IncludeBinaryData));
+                                                      Set(varB64_F1, Mid(varJSON_F1, Find(",", varJSON_F1) + 1, Len(varJSON_F1) - Find(",", varJSON_F1) - 1));
+
+                                                      Set(varJSON_F2, JSON(varFoto2Manutenção, JSONFormat.IncludeBinaryData));
+                                                      Set(varB64_F2, Mid(varJSON_F2, Find(",", varJSON_F2) + 1, Len(varJSON_F2) - Find(",", varJSON_F2) - 1));
+
+                                                      Set(varJSON_F3, JSON(varFoto3Manutenção, JSONFormat.IncludeBinaryData));
+                                                      Set(varB64_F3, Mid(varJSON_F3, Find(",", varJSON_F3) + 1, Len(varJSON_F3) - Find(",", varJSON_F3) - 1));
+
+                                                      Set(
+                                                          varRespostaFlow,
+                                                          IfError(
+                                                              'FlowSalvarFotosManutenção|AppMotoristas'.Run(
+                                                                  varDetalheAtual.ManutGeral.'GUID Reserva de Veículos',
+                                                                  varB64_NF,
+                                                                  varB64_F1,
+                                                                  varB64_F2,
+                                                                  varB64_F3
+                                                              ),
+                                                              { status: "Erro", mensagem: "Falha ao disparar fluxo" }
+                                                          )
+                                                      );
+
+                                                      If(
+                                                          varRespostaFlow.status <> "Sucesso",
+                                                          Notify("⚠️ Dados salvos, mas houve falha ao enviar as fotos. Tente reenviar as fotos.", NotificationType.Warning, 6000);
+                                                          Set(varLoading, false);
+                                                          Set(_ok, false),
+
+                                                          Notify("✅ Manutenção e fotos salvas com sucesso!", NotificationType.Success, 4000);
+                                                          Set(varLoading, false);
+                                                          Navigate(TelaServiços, ScreenTransition.Fade)
+                                                      )
+                                                  );
+
+                                                  // ── LIMPEZA FINAL ─────────────────────────────────────────
+                                                  Set(varB64_NF, Blank());
+                                                  Set(varB64_F1, Blank());
+                                                  Set(varB64_F2, Blank());
+                                                  Set(varB64_F3, Blank());
+                                                  Set(varJSON_NF, Blank());
+                                                  Set(varJSON_F1, Blank());
+                                                  Set(varJSON_F2, Blank());
+                                                  Set(varJSON_F3, Blank());
+                                                  Set(_ok, Blank());
+                                                  Set(_guidM, Blank());
+                                                  Set(_proxItem, Blank());
+                                                  Set(_mDb, Blank());
+                                                  Set(_mAtualizada, Blank());
+                                                  Set(_patchGeral, Blank())
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =17
+                                                Text: ="FINALIZAR"
+      - ContainerLoading_6:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(186, 186, 186, 0.61)
+            Height: =Parent.Height
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Visible: =varLoading
+            Width: =Parent.Width
+          Children:
+            - Spinner1_6:
+                Control: Spinner@1.4.6
+                Properties:
+                  Appearance: ='Spinner.Appearance'.Primary
+                  BasePaletteColor: =RGBA(5, 102, 178, 1)
+                  Font: =Font.'Open Sans'
+                  FontSize: =20
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.Height
+                  Label: ="Carregando..."
+                  LabelPosition: ='Spinner.LabelPosition'.After
+                  SpinnerSize: ='Spinner.SpinnerSize'.Huge
+                  Width: =Parent.Width

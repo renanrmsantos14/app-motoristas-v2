@@ -1,0 +1,423 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  TelaAssinaturaPassageiro:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =Set(varAssinou, false);
+        Set(varLoading, true);
+        Set(varOrientacao, If(App.Width > App.Height, "Paisagem", "Retrato"));
+
+        Set(varLoading, false)
+    Children:
+      - Container1_6:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(240, 240, 240, 1)
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - ContainerRetrato_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =8
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  Visible: =varOrientacao = "Retrato"
+                  X: =40
+                  Y: =40
+                Children:
+                  - Menu_6:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =0
+                        Height: =70
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =16
+                        LayoutMaxHeight: =70
+                        LayoutMinHeight: =70
+                        LayoutMinWidth: =16
+                        PaddingBottom: =16
+                        PaddingLeft: =16
+                        PaddingRight: =16
+                        PaddingTop: =16
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - Container7_12:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                            Children:
+                              - ButtonCanvas1_7:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                    BorderRadius: =0
+                                    FontSize: =40
+                                    Height: =Parent.Height
+                                    Icon: ="ArrowLeft"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Outline
+                                    Layout: ='ButtonCanvas.Layout'.IconOnly
+                                    OnSelect: |
+                                      =Navigate(TelaVoucher, ScreenTransition.Fade)
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: =
+                                    Width: =Parent.Width
+                        - TextCanvas6_3:
+                            Control: Text@0.0.51
+                            Properties:
+                              Align: ='TextCanvas.Align'.Center
+                              AlignInContainer: =AlignInContainer.Stretch
+                              AutoHeight: =true
+                              FillPortions: =1
+                              Font: =Font.'Open Sans'
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Size: =20
+                              Text: ="Assinatura do Passageiro"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Weight: ='TextCanvas.Weight'.Semibold
+                              Wrap: =false
+                        - Container7_13:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =42
+                              LayoutMinHeight: =0
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                              X: =40
+                              Y: =40
+                  - Main_6:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =9
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        PaddingTop: =8
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - ContainerDetalhesSERVICO_3:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Visible: =varServicoSelecionado.Tipo = "SERVICO"
+                            Children:
+                              - Container14_3:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    ContentLanguage: =
+                                    Fill: =RGBA(0, 14, 35, 1)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_7.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_7:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: ="Passageiro, faça sua assinatura abaixo:"
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_7:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - Container9:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: ManualLayout
+                                        Properties:
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =0
+                                          Height: =ContainerFinalizarSERVICO_7.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                    - PenInputPas:
+                                        Control: PenInput@2.3.0
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          BorderColor: =RGBA(199, 199, 199, 1)
+                                          Height: =200
+                                          LayoutMaxHeight: =200
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnSelect: =Set(varAssinou, true)
+                                          ShowControls: =false
+                                          Size: =3
+                                    - ContainerFinalizarSERVICO_7:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =0
+                                          Height: =50
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                                          LayoutMaxHeight: =
+                                          LayoutMaxWidth: =
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Width: =Parent.Width * 0.5
+                                          X: =40
+                                          Y: =40
+                                        Children:
+                                          - Container15_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: ManualLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Width: =ButtonApagarAss.Width
+                                              Children:
+                                                - Icon2_3:
+                                                    Control: Icon@0.0.7
+                                                    Properties:
+                                                      Height: =Parent.Height * 0.9
+                                                      Icon: ="Eraser"
+                                                      IconStyle: ='Icon.IconStyle'.Filled
+                                                      Width: =Parent.Height * 0.9
+                                                      X: =(Parent.Width - Self.Width) / 2
+                                                      Y: =(Parent.Height - Self.Height) / 2
+                                                - ButtonApagarAss:
+                                                    Control: Classic/Button@2.2.0
+                                                    Properties:
+                                                      BorderColor: =RGBA(196, 196, 196, 0.42)
+                                                      BorderStyle: =BorderStyle.None
+                                                      Color: =RGBA(196, 196, 196, 0.42)
+                                                      DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                      DisabledColor: =RGBA(196, 196, 196, 0.42)
+                                                      DisabledFill: =RGBA(196, 196, 196, 1)
+                                                      DisplayMode: |-
+                                                        =If(
+                                                            IsBlank(varDetalheAtual.Servico) ||
+                                                            IsBlank(varDetalheAtual.Servico.'GUID Reserva de Veículos') ||
+                                                            varDetalheAtual.Servico.'Status de Operação' = 'Status de Operação'.Concluído,
+                                                            DisplayMode.Disabled,
+                                                            DisplayMode.Edit
+                                                        )
+                                                      Fill: =RGBA(196, 196, 196, 0.42)
+                                                      FocusedBorderColor: =RGBA(196, 196, 196, 0.42)
+                                                      Font: =Font.'Open Sans'
+                                                      FontWeight: =FontWeight.Bold
+                                                      Height: =Parent.Height
+                                                      HoverBorderColor: =RGBA(196, 196, 196, 0.42)
+                                                      HoverColor: =RGBA(196, 196, 196, 0.42)
+                                                      HoverFill: =RGBA(196, 196, 196, 0.42)
+                                                      OnSelect: |-
+                                                        =Reset(PenInputPas);
+                                                        Set(varAssinou, false)
+                                                      PaddingBottom: =0
+                                                      PaddingLeft: =0
+                                                      PaddingRight: =0
+                                                      PaddingTop: =0
+                                                      PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                      PressedColor: =RGBA(196, 196, 196, 0.42)
+                                                      PressedFill: =RGBA(196, 196, 196, 0.42)
+                                                      RadiusBottomLeft: =12
+                                                      RadiusBottomRight: =12
+                                                      RadiusTopLeft: =12
+                                                      RadiusTopRight: =12
+                                                      Size: =17
+                                                      Text: =
+                                                      Visible: =varDetalheAtual.Servico.Cliente.'Nome do cliente' = "Tenaris"
+                                                      Width: =Self.Height
+                                          - ButtonAssinarMot_2:
+                                              Control: Classic/Button@2.2.0
+                                              Properties:
+                                                BorderColor: =RGBA(0, 0, 0, 0)
+                                                BorderStyle: =BorderStyle.None
+                                                Color: =RGBA(255, 255, 255, 1)
+                                                DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                DisabledColor: =RGBA(161, 159, 157, 1)
+                                                DisabledFill: =RGBA(217, 217, 217, 0.31)
+                                                DisplayMode: |-
+                                                  =If(
+                                                      IsBlank(varDetalheAtual.Servico) ||
+                                                      IsBlank(varDetalheAtual.Servico.'GUID Reserva de Veículos') ||
+                                                      varDetalheAtual.Servico.'Status de Operação' = 'Status de Operação'.Concluído,
+                                                      DisplayMode.Disabled,
+                                                      DisplayMode.Edit
+                                                  )
+                                                Fill: =RGBA(0, 14, 35, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans'
+                                                FontWeight: =FontWeight.Bold
+                                                HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                                HoverColor: =RGBA(255, 255, 255, 1)
+                                                HoverFill: =RGBA(16, 110, 190, 1)
+                                                LayoutMaxHeight: =50
+                                                LayoutMaxWidth: =150
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =50
+                                                OnSelect: |-
+                                                  =Set(varLoading, true);
+                                                  Set(varJSON_Ass, JSON(PenInputPas.Image, JSONFormat.IncludeBinaryData));
+                                                  Set(varAssPas, Mid(varJSON_Ass, Find(",", varJSON_Ass) + 1, Len(varJSON_Ass) - Find(",", varJSON_Ass) - 1));
+                                                  If(
+                                                      varAssinou = false,
+                                                      Notify("⚠️ Nenhuma assinatura registrada. O responsável será notificado.", NotificationType.Warning, 3000)
+                                                  );
+                                                  Set(varHorarioFinal, Now());
+                                                  Navigate(TelaVoucher, ScreenTransition.Fade);
+                                                  Set(varLoading, false)
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                                PressedColor: =RGBA(255, 255, 255, 1)
+                                                PressedFill: =RGBA(16, 110, 190, 1)
+                                                RadiusBottomLeft: =12
+                                                RadiusBottomRight: =12
+                                                RadiusTopLeft: =12
+                                                RadiusTopRight: =12
+                                                Size: =17
+                                                Text: ="CONFIRMAR"
+                                                Visible: =varDetalheAtual.Servico.Cliente.'Nome do cliente' = "Tenaris"
+                                          - Container13_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: ManualLayout
+                                              Properties:
+                                                AlignInContainer: =AlignInContainer.Center
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =ButtonApagarAss.Height
+                                                LayoutMaxWidth: =ButtonApagarAss.Width
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Width: =ButtonApagarAss.Width
+      - ContainerLoading_5:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(186, 186, 186, 0.61)
+            Height: =Parent.Height
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Visible: =varLoading
+            Width: =Parent.Width
+          Children:
+            - Spinner1_5:
+                Control: Spinner@1.4.6
+                Properties:
+                  Appearance: ='Spinner.Appearance'.Primary
+                  BasePaletteColor: =RGBA(5, 102, 178, 1)
+                  Font: =Font.'Open Sans'
+                  FontSize: =20
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.Height
+                  Label: ="Carregando..."
+                  LabelPosition: ='Spinner.LabelPosition'.After
+                  SpinnerSize: ='Spinner.SpinnerSize'.Huge
+                  Width: =Parent.Width

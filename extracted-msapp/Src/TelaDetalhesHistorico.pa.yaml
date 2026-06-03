@@ -1,0 +1,1777 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  TelaDetalhesHistorico:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =Set(varLoading, true);
+
+        Set(
+            varDetalheAtual,
+            {
+                Tipo:       varServicoSelecionado.Tipo,
+                HasServico: !IsBlank(varServicoSelecionado.Servico) && varServicoSelecionado.Tipo = "SERVICO",
+                HasTroca:   !IsBlank(varServicoSelecionado.Troca)   && varServicoSelecionado.Tipo = "TROCA",
+                HasManut:   !IsBlank(varServicoSelecionado.Manut)   && varServicoSelecionado.Tipo = "MANUTENCAO",
+                Servico:    varServicoSelecionado.Servico,
+                Troca:      varServicoSelecionado.Troca,
+                Manut:      varServicoSelecionado.Manut,
+                ManutGeral: varServicoSelecionado.ManutGeral
+            }
+        );
+
+        Set(
+            varRascunho,
+            ParseJSON(varDetalheAtual.Servico.'Rascunho Voucher')
+        );
+
+        Reset(PenInputPas);
+        Set(
+            varOrientacao,
+            If(App.Width > App.Height, "Paisagem", "Retrato")
+        );
+
+        Set(varLoading, false)
+    Children:
+      - Container1_10:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(240, 240, 240, 1)
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - Container5_7:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =8
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  X: =40
+                  Y: =40
+                Children:
+                  - Menu_10:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =0
+                        Height: =70
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =16
+                        LayoutMaxHeight: =70
+                        LayoutMinHeight: =70
+                        LayoutMinWidth: =16
+                        PaddingBottom: =16
+                        PaddingLeft: =16
+                        PaddingRight: =16
+                        PaddingTop: =16
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - Container7_20:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                            Children:
+                              - ButtonCanvas1_11:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                    BorderRadius: =0
+                                    FontSize: =40
+                                    Height: =Parent.Height
+                                    Icon: ="ArrowLeft"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Outline
+                                    Layout: ='ButtonCanvas.Layout'.IconOnly
+                                    OnSelect: |
+                                      =
+                                      Navigate(TelaHistórico, ScreenTransition.Fade)
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: =
+                                    Width: =Parent.Width
+                        - TextCanvas6_6:
+                            Control: Text@0.0.51
+                            Properties:
+                              Align: ='TextCanvas.Align'.Center
+                              AlignInContainer: =AlignInContainer.Stretch
+                              AutoHeight: =true
+                              FillPortions: =1
+                              Font: =Font.'Open Sans'
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Size: =20
+                              Text: |-
+                                =If(varDetalheAtual.Tipo = "SERVICO",
+                                 "Detalhes do Serviço",
+                                 If(varDetalheAtual.Tipo = "TROCA",
+                                 "Detalhes da Troca",
+                                 If(varDetalheAtual.Tipo = "MANUTENCAO",
+                                 "Detalhes da Manutenção")))
+                              VerticalAlign: =VerticalAlign.Middle
+                              Weight: ='TextCanvas.Weight'.Semibold
+                              Wrap: =false
+                        - Container7_21:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =42
+                              LayoutMinHeight: =0
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Self.Height
+                              X: =40
+                              Y: =40
+                  - Main_10:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =9
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        PaddingTop: =8
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - ContainerDetalhesSERVICO_6:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Visible: =varServicoSelecionado.Tipo = "SERVICO"
+                            Children:
+                              - Container14_12:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Fill: =RGBA(0, 14, 35, 0.5)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_12.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_12:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 0.7)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: =varDetalheAtual.Servico.ID
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_12:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - ContainerInfoEdit_9:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          BorderColor: =RGBA(176, 176, 176, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =1
+                                          DropShadow: =DropShadow.None
+                                          Fill: =RGBA(222, 222, 222, 0)
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutMinHeight: =
+                                          LayoutMinWidth: =16
+                                          LayoutOverflowX: =LayoutOverflow.Scroll
+                                          LayoutOverflowY: =LayoutOverflow.Scroll
+                                          PaddingBottom: =40
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          PaddingTop: =8
+                                          RadiusBottomLeft: =12
+                                          RadiusBottomRight: =12
+                                          RadiusTopLeft: =12
+                                          RadiusTopRight: =12
+                                        Children:
+                                          - ContainerDataHora_3:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_19.Height + TextCanvas1_2.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_19.Height + TextCanvas1_2.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_19:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Data e Horário de Saída"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_2:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =Text(varDetalheAtual.Servico.'Data e horário de saída', "[$-pt-BR]dd/mm/yyyy HH:mm")
+                                          - ContainerDatadeFinalização:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_21.Height + TextCanvas1_15.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_21.Height + TextCanvas1_15.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_21:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Data de Finalização"
+                                                - TextCanvas1_15:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =Text(varDetalheAtual.Servico.'Data de Finalização', "[$-pt-BR]dd/mm/yyyy HH:mm")
+                                          - ContainerCliente_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_20.Height + TextCanvas1_3.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_20.Height + TextCanvas1_3.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_20:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Cliente"
+                                                - TextCanvas1_3:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Servico.Cliente.'Nome do cliente'
+                                          - ContainerTrajeto_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_22.Height + TextCanvas1_16.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_22:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Trajeto"
+                                                - TextCanvas1_16:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Servico.Trajeto
+                                          - ContainerPassageiros_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_23.Height + TextCanvas1_17.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_23:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Passageiros"
+                                                - TextCanvas1_17:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: |-
+                                                        =With(
+                                                            {
+                                                                nomes: Filter(
+                                                                    'Serviços por Passageiro',
+                                                                    'Geral (Coluna Serviços por Passageiro)'.'GUID Reserva de Veículos' = varDetalheAtual.Servico.'GUID Reserva de Veículos'
+                                                                )
+                                                            },
+                                                            If(
+                                                                CountRows(nomes) <= 1,
+                                                                Concat(nomes, 'Banco de Dados (Coluna Serviços por Passageiro)'.'Nome do Passageiro'),
+
+                                                                Concat(
+                                                                    FirstN(nomes, CountRows(nomes) - 1),
+                                                                    'Banco de Dados (Coluna Serviços por Passageiro)'.'Nome do Passageiro',
+                                                                    ", "
+                                                                ) & " e " &
+                                                                Last(nomes).'Banco de Dados (Coluna Serviços por Passageiro)'.'Nome do Passageiro'
+                                                            )
+                                                        )
+                                          - ContainerEdSaída_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_24.Height + TextCanvas1_18.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_24.Height + TextCanvas1_18.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                Visible: =false
+                                              Children:
+                                                - TextCanvas5_24:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Endereço de Saída"
+                                                - TextCanvas1_18:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Servico.'Ed de Saída - VIEW'
+                                          - ContainerDestino_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_25.Height + TextCanvas1_19.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutAlignItems: =LayoutAlignItems.Stretch
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_25:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Destino"
+                                                - TextCanvas1_19:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      Height: =0
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Servico.Destino
+                                          - ContainerObsdeOp_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_26.Height + TextCanvas1_20.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_26:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Obs de Operação"
+                                                - TextCanvas1_20:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Servico.'Obs de Operação'
+                                          - ContainerPerfildoPassageiro_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_61.Height + TextCanvas1_21.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                Visible: =false
+                                              Children:
+                                                - TextCanvas5_61:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Perfil do Passageiro"
+                                                - TextCanvas1_21:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Servico.'Perfil do passageiro'
+                                          - ContainerSolicitante_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_62.Height + TextCanvas1_22.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_62:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Solicitante"
+                                                - TextCanvas1_22:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Servico.Solicitante.'Nome do Passageiro'
+                                          - ContainerVeículo_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_63.Height + TextCanvas1_23.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_63:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Veículo"
+                                                - TextCanvas1_23:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      Height: =0
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =Coalesce(varDetalheAtual.Servico.Veículo.Modelo & " " & varDetalheAtual.Servico.Veículo.Placa, "-")
+                        - ContainerDetalhesTROCA_3:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Visible: =varServicoSelecionado.Tipo = "TROCA"
+                            Children:
+                              - Container14_13:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Fill: =RGBA(0, 14, 35, 0.5)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_13.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_13:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 0.7)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: =varDetalheAtual.Troca.ID
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_13:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - ContainerInfoEdit_10:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          BorderColor: =RGBA(176, 176, 176, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =1
+                                          DropShadow: =DropShadow.None
+                                          Fill: =RGBA(222, 222, 222, 0)
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutMinHeight: =
+                                          LayoutMinWidth: =16
+                                          LayoutOverflowX: =LayoutOverflow.Scroll
+                                          LayoutOverflowY: =LayoutOverflow.Scroll
+                                          PaddingBottom: =40
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          PaddingTop: =8
+                                          RadiusBottomLeft: =12
+                                          RadiusBottomRight: =12
+                                          RadiusTopLeft: =12
+                                          RadiusTopRight: =12
+                                        Children:
+                                          - ContainerDataInicioJanela_4:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_67.Height + TextCanvas1_91.Height + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_67.Height + TextCanvas1_91.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_67:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Início da Janela de Troca"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_91:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =Text(varDetalheAtual.Troca.'Início da Janela de Troca', "[$-pt-BR]dd/mm/yyyy HH:mm")
+                                          - ContainerDataFimJanela_4:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =Self.PaddingBottom + Self.PaddingTop + TextCanvas5_68.Height + TextCanvas1_92.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_68.Height + TextCanvas1_92.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_68:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Fim da Janela de Troca"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_92:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =Text(varDetalheAtual.Troca.'Fim da Janela de Troca', "[$-pt-BR]dd/mm/yyyy HH:mm")
+                                          - ContainerMotoristaTroca_4:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_69.Height + TextCanvas1_93.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop + Container6_6.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_69:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Você trocou de carro com:"
+                                                - TextCanvas1_93:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: |-
+                                                        =If(
+                                                            varMotoristaUser.'GUID Funcionários' = varDetalheAtual.Troca.'Motorista 1'.'GUID Funcionários',
+                                                            varDetalheAtual.Troca.'Motorista 2'.'Nome completo',
+                                                            varDetalheAtual.Troca.'Motorista 1'.'Nome completo'
+                                                        )
+                                                      Weight: ='TextCanvas.Weight'.Semibold
+                                                - Container6_6:
+                                                    Control: GroupContainer@1.5.0
+                                                    Variant: AutoLayout
+                                                    Properties:
+                                                      DropShadow: =DropShadow.None
+                                                      FillPortions: =0
+                                                      Height: '=TextCanvas1_94.Height '
+                                                      LayoutDirection: =LayoutDirection.Horizontal
+                                                      LayoutGap: =16
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                    Children:
+                                                      - Container9_8:
+                                                          Control: GroupContainer@1.5.0
+                                                          Variant: ManualLayout
+                                                          Properties:
+                                                            DropShadow: =DropShadow.None
+                                                            FillPortions: =0
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            RadiusBottomLeft: =0
+                                                            RadiusBottomRight: =0
+                                                            RadiusTopLeft: =0
+                                                            RadiusTopRight: =0
+                                                            Width: =TextCanvas1_94.Width
+                                                          Children:
+                                                            - TextCanvas1_94:
+                                                                Control: Text@0.0.51
+                                                                Properties:
+                                                                  AutoHeight: =true
+                                                                  Font: =Font.'Open Sans'
+                                                                  FontUnderline: =true
+                                                                  Height: =16
+                                                                  Text: ="Telefone"
+                                                                  Weight: ='TextCanvas.Weight'.Regular
+                                                                  Width: =60
+                                                            - ButtonCanvas3_8:
+                                                                Control: Button@0.0.45
+                                                                Properties:
+                                                                  Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                                                  FontColor: =RGBA(0, 0, 0, 0.5)
+                                                                  Height: =Parent.Height
+                                                                  OnSelect: |
+                                                                    =// 1) Escolhe o telefone base (motorista 1 vs 2)
+                                                                    Set(
+                                                                        varTelefoneBase,
+                                                                        If(
+                                                                            varMotoristaUser.'GUID Funcionários' = varDetalheAtual.Troca.'Motorista 1'.'GUID Funcionários',
+                                                                            Coalesce(
+                                                                                varDetalheAtual.Troca.'Motorista 2'.'Telefone Corporativo',
+                                                                                varDetalheAtual.Troca.'Motorista 2'.'Telefone Pessoal'
+                                                                            ),
+                                                                            Coalesce(
+                                                                                varDetalheAtual.Troca.'Motorista 1'.'Telefone Corporativo',
+                                                                                varDetalheAtual.Troca.'Motorista 1'.'Telefone Pessoal'
+                                                                            )
+                                                                        )
+                                                                    );
+
+                                                                    // 2) Limpa: mantém só dígitos
+                                                                    Set(
+                                                                        varTelefoneLimpo,
+                                                                        Coalesce(
+                                                                            Concat(
+                                                                                MatchAll(Coalesce(varTelefoneBase, ""), "\d"),
+                                                                                FullMatch
+                                                                            ),
+                                                                            ""
+                                                                        )
+                                                                    );
+
+                                                                    // 3) Normaliza: + apenas quando parecer código de país
+                                                                    Set(
+                                                                        varTelFinal,
+                                                                        With(
+                                                                            { t: Trim(varTelefoneLimpo) },
+                                                                            If(
+                                                                                IsBlank(t) || Len(t) = 0,
+                                                                                Blank(),
+
+                                                                                // 00 + código país => converte para +
+                                                                                Left(t, 2) = "00" && Len(t) > 2,
+                                                                                "+" & Mid(t, 3, Len(t) - 2),
+
+                                                                                // 12–15 dígitos => assume internacional e prefixa +
+                                                                                Len(t) >= 12 && Len(t) <= 15,
+                                                                                "+" & t,
+
+                                                                                // Caso contrário => mantém sem +
+                                                                                t
+                                                                            )
+                                                                        )
+                                                                    );
+
+                                                                    // 4) Validação final antes do Launch (evita "tel:" inválido)
+                                                                    If(
+                                                                        !IsBlank(varTelFinal) && Len(varTelFinal) >= 8,
+                                                                        Launch("tel:" & varTelFinal),
+                                                                        Notify(
+                                                                            "Motorista não possui telefone válido cadastrado!",
+                                                                            NotificationType.Error,
+                                                                            3000
+                                                                        )
+                                                                    );
+                                                                  Text: =
+                                                                  Width: =Parent.Width
+                                                      - Rectangle1_7:
+                                                          Control: Rectangle@2.3.0
+                                                          Properties:
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            BorderColor: =RGBA(0, 0, 0, 0)
+                                                            BorderStyle: =BorderStyle.None
+                                                            BorderThickness: =2
+                                                            DisabledFill: =RGBA(161, 159, 157, 1)
+                                                            Fill: =RGBA(168, 168, 168, 1)
+                                                            FocusedBorderThickness: =4
+                                                            HoverFill: =RGBA(0, 120, 212, 1)
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            PressedFill: =RGBA(0, 120, 212, 1)
+                                                            Width: =2
+                                                      - Container9_9:
+                                                          Control: GroupContainer@1.5.0
+                                                          Variant: ManualLayout
+                                                          Properties:
+                                                            DropShadow: =DropShadow.None
+                                                            FillPortions: =0
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            RadiusBottomLeft: =0
+                                                            RadiusBottomRight: =0
+                                                            RadiusTopLeft: =0
+                                                            RadiusTopRight: =0
+                                                            Width: =TextCanvas1_95.Width
+                                                          Children:
+                                                            - TextCanvas1_95:
+                                                                Control: Text@0.0.51
+                                                                Properties:
+                                                                  AutoHeight: =true
+                                                                  Font: =Font.'Open Sans'
+                                                                  FontUnderline: =true
+                                                                  Height: =16
+                                                                  Text: ="Whatsapp"
+                                                                  Weight: ='TextCanvas.Weight'.Regular
+                                                                  Width: =70
+                                                                  Wrap: =false
+                                                            - ButtonCanvas3_9:
+                                                                Control: Button@0.0.45
+                                                                Properties:
+                                                                  Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                                                  FontColor: =RGBA(0, 0, 0, 0.5)
+                                                                  Height: =Parent.Height
+                                                                  OnSelect: |
+                                                                    =Set(
+                                                                        varTelefoneBase,
+                                                                        If(
+                                                                            varMotoristaUser.'GUID Funcionários' = varDetalheAtual.Troca.'Motorista 1'.'GUID Funcionários',
+                                                                            Coalesce(
+                                                                                varDetalheAtual.Troca.'Motorista 2'.'Telefone Corporativo',
+                                                                                varDetalheAtual.Troca.'Motorista 2'.'Telefone Pessoal'
+                                                                            ),
+                                                                            Coalesce(
+                                                                                varDetalheAtual.Troca.'Motorista 1'.'Telefone Corporativo',
+                                                                                varDetalheAtual.Troca.'Motorista 1'.'Telefone Pessoal'
+                                                                            )
+                                                                        )
+                                                                    );
+
+                                                                    Set(
+                                                                        varTelefoneLimpo,
+                                                                        Concat(
+                                                                            MatchAll(
+                                                                                varTelefoneBase,
+                                                                                "\d"
+                                                                            ),
+                                                                            FullMatch
+                                                                        )
+                                                                    );
+
+                                                                    If(
+                                                                        Len(varTelefoneLimpo) >= 10,
+                                                                        Launch("https://wa.me/" & varTelefoneLimpo),
+                                                                        Notify("Motorista não possui telefone válido cadastrado!", NotificationType.Error, 3000)
+                                                                    );
+                                                                  Text: =
+                                                                  Width: =Parent.Width
+                                          - ContainerVeículo_8:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =Self.PaddingBottom + Self.PaddingTop + TextCanvas5_70.Height + TextCanvas1_96.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_70.Height + TextCanvas1_96.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_70:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Veículos envolvidos:"
+                                                - TextCanvas1_96:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: "=If(\r\n    Lower(varMotoristaUser.'GUID Funcionários') = Lower(varDetalheAtual.Troca.'Motorista 1'.'GUID Funcionários'),\r\n    \r\n    varDetalheAtual.Troca.'Veículo 1 (Antes da Troca)'.Modelo & \" \" &\r\n    varDetalheAtual.Troca.'Veículo 1 (Antes da Troca)'.Placa & \r\n    \" → \" &\r\n    varDetalheAtual.Troca.'Veículo 2 (Antes da Troca)'.Modelo & \" \" &\r\n    varDetalheAtual.Troca.'Veículo 2 (Antes da Troca)'.Placa,\r\n\r\n    If(\r\n        Lower(varMotoristaUser.'GUID Funcionários') = Lower(varDetalheAtual.Troca.'Motorista 2'.'GUID Funcionários'),\r\n\r\n        varDetalheAtual.Troca.'Veículo 2 (Antes da Troca)'.Modelo & \" \" &\r\n        varDetalheAtual.Troca.'Veículo 2 (Antes da Troca)'.Placa &\r\n        \" → \" &\r\n        varDetalheAtual.Troca.'Veículo 1 (Antes da Troca)'.Modelo & \" \" &\r\n        varDetalheAtual.Troca.'Veículo 1 (Antes da Troca)'.Placa\r\n    )\r\n)\r\n"
+                                          - ContainerObsdaTroca_4:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =Self.PaddingBottom + Self.PaddingTop + TextCanvas5_86.Height + TextCanvas1_97.Height
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_86.Height + TextCanvas1_97.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_86:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Lato Black'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Observações"
+                                                - TextCanvas1_97:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Troca.Observação
+                        - ContainerDetalhesMANUTENCAO_3:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Fill: =RGBA(242, 242, 242, 1)
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Visible: =varServicoSelecionado.Tipo = "MANUTENCAO"
+                            Children:
+                              - Container14_14:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Fill: =RGBA(0, 14, 35, 0.5)
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMaxHeight: =TextCanvas7_14.Height + Self.PaddingBottom + Self.PaddingTop
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =12
+                                    RadiusBottomRight: =12
+                                    RadiusTopLeft: =12
+                                    RadiusTopRight: =12
+                                  Children:
+                                    - TextCanvas7_14:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Lato Black'
+                                          FontColor: =RGBA(255, 255, 255, 0.7)
+                                          Height: =45
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =20
+                                          Text: =varDetalheAtual.Manut.ID
+                                          Wrap: =false
+                                          X: =40
+                                          Y: =40
+                              - ContainerInfo_14:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =10
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutGap: =8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    LayoutOverflowX: =LayoutOverflow.Scroll
+                                    LayoutOverflowY: =LayoutOverflow.Scroll
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                  Children:
+                                    - ContainerInfoEdit_11:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          BorderColor: =RGBA(176, 176, 176, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =1
+                                          DropShadow: =DropShadow.None
+                                          Fill: =RGBA(222, 222, 222, 0)
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutMinHeight: =
+                                          LayoutMinWidth: =16
+                                          LayoutOverflowX: =LayoutOverflow.Scroll
+                                          LayoutOverflowY: =LayoutOverflow.Scroll
+                                          PaddingBottom: =40
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          PaddingTop: =8
+                                          RadiusBottomLeft: =12
+                                          RadiusBottomRight: =12
+                                          RadiusTopLeft: =12
+                                          RadiusTopRight: =12
+                                        Children:
+                                          - ContainerDataHora_6:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_87.Height + TextCanvas1_34.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_87.Height + TextCanvas1_34.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_87:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Data e Horário da Manutenção"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_34:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =Text(varDetalheAtual.ManutGeral.'Data e horário de saída', "[$-pt-BR]dd/mm/yyyy HH:mm")
+                                          - ContainerDataHora_7:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_92.Height + TextCanvas1_42.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_92.Height + TextCanvas1_42.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_92:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Data de Finalização"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_42:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =Text(varDetalheAtual.Manut.'Data da Manutenção', "[$-pt-BR]dd/mm/yyyy HH:mm")
+                                          - ContainerReceber_4:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_88.Height + TextCanvas1_37.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_88.Height + TextCanvas1_37.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_88:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Descrição do Cenário Encontrado"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_37:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: |
+                                                        =varDetalheAtual.Manut.Descrição
+                                          - ContainerVeículo_9:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_89.Height + TextCanvas1_98.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                              Children:
+                                                - TextCanvas5_89:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Veículo"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_98:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      Height: =0
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: |-
+                                                        =With(
+                                                            {
+                                                                _modelo: Trim(Coalesce(varDetalheAtual.Manut.Veículo.Modelo, "")),
+                                                                _placa: Trim(Coalesce(varDetalheAtual.Manut.Veículo.Placa, ""))
+                                                            },
+                                                            If(
+                                                                IsBlank(_modelo) && IsBlank(_placa),
+                                                                "",
+                                                                _modelo &
+                                                                If(
+                                                                    !IsBlank(_modelo) && !IsBlank(_placa),
+                                                                    " ",
+                                                                    ""
+                                                                ) &
+                                                                _placa
+                                                            )
+                                                        )
+                                          - ContainerCliente_5:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_90.Height + TextCanvas1_38.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_90.Height + TextCanvas1_38.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_90:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Comentários ao Motorista"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_38:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Manut.'Comentários ao motorista'
+                                          - ContainerCliente_7:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_94.Height + TextCanvas1_44.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_94.Height + TextCanvas1_44.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_94:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Serviço Realizado"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_44:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Manut.'Serviço realizado'
+                                          - ContainerCliente_8:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_95.Height + TextCanvas1_45.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_95.Height + TextCanvas1_45.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_95:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Estabelecimento"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_45:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Manut.Estabelecimento
+                                          - ContainerCliente_6:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_93.Height + TextCanvas1_43.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_93.Height + TextCanvas1_43.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_93:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Comentários do Motorista"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_43:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Manut.'Comentários do Colaborador'
+                                          - ContainerCliente_9:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_96.Height + TextCanvas1_99.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_96.Height + TextCanvas1_99.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_96:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Forma de Pagamento"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_99:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: =varDetalheAtual.Manut.'Forma de Pagamento'
+                                          - ContainerCliente_10:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =TextCanvas5_97.Height + TextCanvas1_100.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutMinHeight: =TextCanvas5_97.Height + TextCanvas1_100.Height + Self.LayoutGap + Self.PaddingBottom + Self.PaddingTop
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - TextCanvas5_97:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Size: =15
+                                                      Text: ="Valor"
+                                                      Weight: ='TextCanvas.Weight'.Bold
+                                                - TextCanvas1_100:
+                                                    Control: Text@0.0.51
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.Stretch
+                                                      AutoHeight: =true
+                                                      Font: =Font.'Open Sans'
+                                                      FontColor: =RGBA(0, 0, 0, 0.5)
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      Text: |-
+                                                        =If(
+                                                            IsBlank(varDetalheAtual.Manut.Valor),
+                                                            "—",
+                                                            Text(
+                                                                Value(varDetalheAtual.Manut.Valor),
+                                                                "$#0.00"
+                                                            )
+                                                        )
+                                          - Container4_1:
+                                              Control: GroupContainer@1.5.0
+                                              Variant: AutoLayout
+                                              Properties:
+                                                DropShadow: =DropShadow.None
+                                                FillPortions: =0
+                                                Height: =120
+                                                LayoutAlignItems: =LayoutAlignItems.Center
+                                                LayoutDirection: =LayoutDirection.Vertical
+                                                LayoutJustifyContent: =LayoutJustifyContent.Center
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =8
+                                                PaddingLeft: =8
+                                                PaddingRight: =8
+                                                PaddingTop: =8
+                                                RadiusBottomLeft: =0
+                                                RadiusBottomRight: =0
+                                                RadiusTopLeft: =0
+                                                RadiusTopRight: =0
+                                                X: =40
+                                                Y: =40
+                                              Children:
+                                                - Container6_7:
+                                                    Control: GroupContainer@1.5.0
+                                                    Variant: AutoLayout
+                                                    Properties:
+                                                      AlignInContainer: =AlignInContainer.End
+                                                      DropShadow: =DropShadow.Semibold
+                                                      Fill: =RGBA(0, 14, 35, 0.28)
+                                                      FillPortions: =0
+                                                      Height: =TextCanvas5_91.Height + Label4_3.Height + Self.PaddingBottom + Self.PaddingTop
+                                                      LayoutAlignItems: =LayoutAlignItems.Center
+                                                      LayoutDirection: =LayoutDirection.Vertical
+                                                      LayoutMinHeight: =16
+                                                      LayoutMinWidth: =16
+                                                      PaddingBottom: =8
+                                                      PaddingLeft: =8
+                                                      PaddingRight: =8
+                                                      PaddingTop: =8
+                                                      RadiusBottomLeft: =12
+                                                      RadiusBottomRight: =12
+                                                      RadiusTopLeft: =12
+                                                      RadiusTopRight: =12
+                                                      Width: =179
+                                                    Children:
+                                                      - TextCanvas5_91:
+                                                          Control: Text@0.0.51
+                                                          Properties:
+                                                            Align: ='TextCanvas.Align'.End
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            AutoHeight: =true
+                                                            Font: =Font.'Open Sans'
+                                                            FontColor: =RGBA(0, 0, 0, 1)
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            Size: =15
+                                                            Text: ="Dúvidas?"
+                                                            Weight: ='TextCanvas.Weight'.Semibold
+                                                            X: =374
+                                                            Y: =469
+                                                      - Label4_3:
+                                                          Control: Label@2.5.1
+                                                          Properties:
+                                                            Align: =Align.Right
+                                                            AlignInContainer: =AlignInContainer.Stretch
+                                                            AutoHeight: =true
+                                                            BorderColor: =RGBA(0, 0, 0, 0)
+                                                            BorderStyle: =BorderStyle.None
+                                                            BorderThickness: =2
+                                                            Color: =RGBA(50, 49, 48, 1)
+                                                            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                                            DisabledColor: =RGBA(161, 159, 157, 1)
+                                                            FocusedBorderThickness: =4
+                                                            Font: =Font.'Open Sans'
+                                                            FontWeight: =FontWeight.Bold
+                                                            LayoutMinHeight: =16
+                                                            LayoutMinWidth: =16
+                                                            LineHeight: =1
+                                                            OnSelect: |-
+                                                              =Launch(
+                                                                  "https://wa.me/5512997236961"
+                                                              )
+                                                            Text: ="Contatar o Júnior"
+                                                            Underline: =true
+                                                            X: =374
+                                                            Y: =469
+      - ContainerLoading_10:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(186, 186, 186, 0.61)
+            Height: =Parent.Height
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Visible: =varLoading
+            Width: =Parent.Width
+          Children:
+            - Spinner1_10:
+                Control: Spinner@1.4.6
+                Properties:
+                  Appearance: ='Spinner.Appearance'.Primary
+                  BasePaletteColor: =RGBA(5, 102, 178, 1)
+                  Font: =Font.'Open Sans'
+                  FontSize: =20
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.Height
+                  Label: ="Carregando..."
+                  LabelPosition: ='Spinner.LabelPosition'.After
+                  SpinnerSize: ='Spinner.SpinnerSize'.Huge
+                  Width: =Parent.Width

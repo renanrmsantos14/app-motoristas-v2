@@ -1,0 +1,1505 @@
+[
+  {
+    "logicalName": "cr40f_funcionarios",
+    "entitySetName": "cr40f_funcionarioses",
+    "primaryIdAttribute": "cr40f_funcionariosid",
+    "primaryNameAttribute": "cr40f_nomecompleto",
+    "displayName": "Funcionários",
+    "attributes": [
+      {
+        "logicalName": "cr40f_assinatura",
+        "schemaName": "cr40f_Assinatura",
+        "type": "Virtual",
+        "displayName": "Assinatura",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_assinatura_timestamp",
+        "schemaName": "cr40f_Assinatura_Timestamp",
+        "type": "BigInt",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_assinatura_url",
+        "schemaName": "cr40f_Assinatura_URL",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_assinaturaid",
+        "schemaName": "cr40f_AssinaturaId",
+        "type": "Uniqueidentifier",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_celular",
+        "schemaName": "cr40f_Celular",
+        "type": "Integer",
+        "displayName": "Celular",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_cnh",
+        "schemaName": "cr40f_CNH",
+        "type": "Integer",
+        "displayName": "CNH",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_datadeadmissao",
+        "schemaName": "cr40f_datadeadmissao",
+        "type": "DateTime",
+        "displayName": "Data de admissão",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_datadeaniversario",
+        "schemaName": "cr40f_datadeaniversario",
+        "type": "DateTime",
+        "displayName": "Data de aniversário",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_datadedemissao",
+        "schemaName": "cr40f_Datadedemissao",
+        "type": "DateTime",
+        "displayName": "Data de demissão",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_datadoaso",
+        "schemaName": "cr40f_datadoaso",
+        "type": "DateTime",
+        "displayName": "ASO",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_emailbetinhos",
+        "schemaName": "cr40f_EmailBetinhos",
+        "type": "String",
+        "displayName": "Email Betinhos",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_emailmicrosoft",
+        "schemaName": "cr40f_EmailMicrosoft",
+        "type": "String",
+        "displayName": "Email Microsoft",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_enderecocompleto",
+        "schemaName": "cr40f_enderecocompleto",
+        "type": "String",
+        "displayName": "Endereço completo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_filiacao",
+        "schemaName": "cr40f_filiacao",
+        "type": "String",
+        "displayName": "Filiação",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_folderid",
+        "schemaName": "cr40f_FolderID",
+        "type": "String",
+        "displayName": "Folder ID",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_foto",
+        "schemaName": "cr40f_Foto",
+        "type": "Virtual",
+        "displayName": "Foto",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_foto_timestamp",
+        "schemaName": "cr40f_Foto_Timestamp",
+        "type": "BigInt",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_foto_url",
+        "schemaName": "cr40f_Foto_URL",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_fotoid",
+        "schemaName": "cr40f_FotoId",
+        "type": "Uniqueidentifier",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_funcao",
+        "schemaName": "cr40f_funcao",
+        "type": "Picklist",
+        "displayName": "Função",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_funcaoname",
+        "schemaName": "cr40f_funcaoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_funcionariosid",
+        "schemaName": "cr40f_FuncionariosId",
+        "type": "Uniqueidentifier",
+        "displayName": "GUID Funcionários",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_identificadordocolaborador",
+        "schemaName": "cr40f_identificadordocolaborador",
+        "type": "Integer",
+        "displayName": "ID_Sharepoint",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_linkparadocumentos",
+        "schemaName": "cr40f_Linkparadocumentos",
+        "type": "String",
+        "displayName": "Link para documentos",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_loginsesenhas",
+        "schemaName": "cr40f_Loginsesenhas",
+        "type": "String",
+        "displayName": "Logins e senhas",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_nomecompleto",
+        "schemaName": "cr40f_nomecompleto",
+        "type": "String",
+        "displayName": "Nome completo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_nomedaempresa",
+        "schemaName": "cr40f_nomedaempresa",
+        "type": "Picklist",
+        "displayName": "Empresa",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_nomedaempresaname",
+        "schemaName": "cr40f_nomedaempresaName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_numerodocpf",
+        "schemaName": "cr40f_numerodocpf",
+        "type": "String",
+        "displayName": "CPF",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_numerodorg",
+        "schemaName": "cr40f_numerodorg",
+        "type": "String",
+        "displayName": "RG",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_relacaotrabalhista",
+        "schemaName": "cr40f_relacaotrabalhista",
+        "type": "String",
+        "displayName": "Relação trabalhista",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_status",
+        "schemaName": "cr40f_Status",
+        "type": "Picklist",
+        "displayName": "Status",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_statusname",
+        "schemaName": "cr40f_statusName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_telefonecorporativo",
+        "schemaName": "cr40f_TelefoneCorporativo",
+        "type": "String",
+        "displayName": "Telefone Corporativo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_telefonedeemergencia",
+        "schemaName": "cr40f_TelefonedeEmergencia",
+        "type": "String",
+        "displayName": "Telefone de Emergência",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_telefonepessoal",
+        "schemaName": "cr40f_TelefonePessoal",
+        "type": "String",
+        "displayName": "Telefone Pessoal",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodevinculo",
+        "schemaName": "cr40f_tipodevinculo",
+        "type": "Picklist",
+        "displayName": "Vínculo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodevinculoname",
+        "schemaName": "cr40f_tipodevinculoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_validadedacnh",
+        "schemaName": "cr40f_validadedacnh",
+        "type": "DateTime",
+        "displayName": "Data de Validade da CNH",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculoatual",
+        "schemaName": "cr40f_VeiculoAtual",
+        "type": "Lookup",
+        "displayName": "Veículo Atual",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculoatualname",
+        "schemaName": "cr40f_VeiculoAtualName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_apelido",
+        "schemaName": "new_Apelido",
+        "type": "String",
+        "displayName": "Apelido",
+        "targets": []
+      },
+      {
+        "logicalName": "new_notificacoesfinanceiras",
+        "schemaName": "new_NotificacoesFinanceiras",
+        "type": "Boolean",
+        "displayName": "Notificações Financeiras",
+        "targets": []
+      },
+      {
+        "logicalName": "new_notificacoesfinanceirasname",
+        "schemaName": "new_notificacoesfinanceirasName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_notificacoesmotoristas",
+        "schemaName": "new_NotificacoesMotoristas",
+        "type": "Boolean",
+        "displayName": "Notificações Motoristas",
+        "targets": []
+      },
+      {
+        "logicalName": "new_notificacoesmotoristasname",
+        "schemaName": "new_notificacoesmotoristasName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_notificacoesoperacionais",
+        "schemaName": "new_NotificacoesOperacionais",
+        "type": "Boolean",
+        "displayName": "Notificações Operacionais",
+        "targets": []
+      },
+      {
+        "logicalName": "new_notificacoesoperacionaisname",
+        "schemaName": "new_notificacoesoperacionaisName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      }
+    ]
+  },
+  {
+    "logicalName": "cr40f_manutencoes",
+    "entitySetName": "cr40f_manutencoeses",
+    "primaryIdAttribute": "cr40f_manutencoesid",
+    "primaryNameAttribute": "cr40f_id",
+    "displayName": "Manutenções",
+    "attributes": [
+      {
+        "logicalName": "cr40f_agendarpara",
+        "schemaName": "cr40f_Agendarpara",
+        "type": "DateTime",
+        "displayName": "Agendar para",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_comentariosaomotorista",
+        "schemaName": "cr40f_Comentariosaomotorista",
+        "type": "String",
+        "displayName": "Comentários ao motorista",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_comentariosdoaprovador",
+        "schemaName": "cr40f_Comentariosdoaprovador",
+        "type": "String",
+        "displayName": "Comentários do aprovador",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_datadaaprovacao",
+        "schemaName": "cr40f_Datadaaprovacao",
+        "type": "DateTime",
+        "displayName": "Data da aprovação",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_datamanutencao",
+        "schemaName": "cr40f_Datamanutencao",
+        "type": "DateTime",
+        "displayName": "Data da Manutenção",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_descricao",
+        "schemaName": "cr40f_Descricao",
+        "type": "String",
+        "displayName": "Descrição",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_estabelecimento",
+        "schemaName": "cr40f_Estabelecimento",
+        "type": "String",
+        "displayName": "Estabelecimento",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_foto01",
+        "schemaName": "cr40f_Foto01",
+        "type": "String",
+        "displayName": "Foto 01",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_foto03",
+        "schemaName": "cr40f_Foto03",
+        "type": "String",
+        "displayName": "Foto 03",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_graudamanutencao",
+        "schemaName": "cr40f_Graudamanutencao",
+        "type": "Picklist",
+        "displayName": "Grau da manutenção",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_graudamanutencaoname",
+        "schemaName": "cr40f_graudamanutencaoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_id",
+        "schemaName": "cr40f_ID",
+        "type": "String",
+        "displayName": "ID",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_kmatual",
+        "schemaName": "cr40f_Kmatual",
+        "type": "Integer",
+        "displayName": "Km atual",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_linkdaevidencia",
+        "schemaName": "cr40f_Linkdaevidencia",
+        "type": "String",
+        "displayName": "Foto 02",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_manutencoesid",
+        "schemaName": "cr40f_ManutencoesId",
+        "type": "Uniqueidentifier",
+        "displayName": "GUID Manutenções",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_pagamento",
+        "schemaName": "cr40f_Pagamento",
+        "type": "Picklist",
+        "displayName": "Forma de Pagamento",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_pagamentoname",
+        "schemaName": "cr40f_pagamentoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_placa_carro",
+        "schemaName": "cr40f_Placa_Carro",
+        "type": "Lookup",
+        "displayName": "Veículo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_placa_carroname",
+        "schemaName": "cr40f_Placa_CarroName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_realizado_por_nome",
+        "schemaName": "cr40f_Realizado_por_nome",
+        "type": "Lookup",
+        "displayName": "Realizado_por_nome",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_realizado_por_nomename",
+        "schemaName": "cr40f_Realizado_por_nomeName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_servicorealizado",
+        "schemaName": "cr40f_Servicorealizado",
+        "type": "String",
+        "displayName": "Serviço realizado",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_solicitado_por",
+        "schemaName": "cr40f_Solicitado_por",
+        "type": "Lookup",
+        "displayName": "Solicitado_por",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_solicitado_porname",
+        "schemaName": "cr40f_Solicitado_porName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_status",
+        "schemaName": "cr40f_Status",
+        "type": "Picklist",
+        "displayName": "Status",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_statusname",
+        "schemaName": "cr40f_statusName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodoreparo",
+        "schemaName": "cr40f_Tipodoreparo",
+        "type": "Picklist",
+        "displayName": "Tipo do reparo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodoreparoname",
+        "schemaName": "cr40f_tipodoreparoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_valor",
+        "schemaName": "cr40f_Valor",
+        "type": "Money",
+        "displayName": "Valor",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_valor_base",
+        "schemaName": "cr40f_valor_Base",
+        "type": "Money",
+        "displayName": "Valor (Base)",
+        "targets": []
+      },
+      {
+        "logicalName": "new_comentariosdocolaborador",
+        "schemaName": "new_ComentariosdoColaborador",
+        "type": "Memo",
+        "displayName": "Comentários do Colaborador",
+        "targets": []
+      },
+      {
+        "logicalName": "new_linkdafotofinal1",
+        "schemaName": "new_LinkdaFotoFinal1",
+        "type": "String",
+        "displayName": "Link da Foto Final 1",
+        "targets": []
+      },
+      {
+        "logicalName": "new_linkdafotofinal2",
+        "schemaName": "new_LinkdaFotoFinal2",
+        "type": "String",
+        "displayName": "Link da Foto Final 2",
+        "targets": []
+      },
+      {
+        "logicalName": "new_linkdafotofinal3",
+        "schemaName": "new_LinkdaFotoFinal3",
+        "type": "String",
+        "displayName": "Link da Foto Final 3",
+        "targets": []
+      },
+      {
+        "logicalName": "new_linkdanotafiscal",
+        "schemaName": "new_LinkdaNotaFiscal",
+        "type": "String",
+        "displayName": "Link da Nota Fiscal",
+        "targets": []
+      }
+    ]
+  },
+  {
+    "logicalName": "cr40f_reservadeveculos",
+    "entitySetName": "cr40f_reservadeveculoses",
+    "primaryIdAttribute": "cr40f_reservadeveculosid",
+    "primaryNameAttribute": "cr40f_id",
+    "displayName": "Geral",
+    "attributes": [
+      {
+        "logicalName": "cr40f_cliente",
+        "schemaName": "cr40f_Cliente",
+        "type": "Lookup",
+        "displayName": "Cliente",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_clientename",
+        "schemaName": "cr40f_ClienteName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_cotao",
+        "schemaName": "cr40f_Cotao",
+        "type": "Money",
+        "displayName": "Cotação",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_cotao_base",
+        "schemaName": "cr40f_cotao_Base",
+        "type": "Money",
+        "displayName": "Cotação (Base)",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_cr",
+        "schemaName": "cr40f_CR",
+        "type": "String",
+        "displayName": "CR",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_criadopor",
+        "schemaName": "cr40f_Criadopor",
+        "type": "String",
+        "displayName": "Criado por",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_dataehorriodesada",
+        "schemaName": "cr40f_Dataehorriodesada",
+        "type": "DateTime",
+        "displayName": "Data e horário de saída",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_destino",
+        "schemaName": "cr40f_Destino",
+        "type": "Memo",
+        "displayName": "Destino",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_email",
+        "schemaName": "cr40f_Email",
+        "type": "String",
+        "displayName": "Email",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_enderecodesaida1",
+        "schemaName": "cr40f_EnderecodeSaida1",
+        "type": "Memo",
+        "displayName": "Endereço de Saída 1",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_enderecodesaida2",
+        "schemaName": "cr40f_EnderecodeSaida2",
+        "type": "Memo",
+        "displayName": "Endereço de Saída 2",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_enderecodesaida3",
+        "schemaName": "cr40f_EnderecodeSaida3",
+        "type": "Memo",
+        "displayName": "Endereço de Saída 3",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_enderecodesaida4",
+        "schemaName": "cr40f_EnderecodeSaida4",
+        "type": "Memo",
+        "displayName": "Endereço de Saída 4",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_endereodesada",
+        "schemaName": "cr40f_Endereodesada",
+        "type": "Memo",
+        "displayName": "Ed de Saída - VIEW",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_financeiro",
+        "schemaName": "cr40f_Financeiro",
+        "type": "Lookup",
+        "displayName": "OP",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_financeironame",
+        "schemaName": "cr40f_FinanceiroName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_fluxo",
+        "schemaName": "cr40f_Fluxo",
+        "type": "Boolean",
+        "displayName": "Fluxo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_fluxoname",
+        "schemaName": "cr40f_fluxoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_formadepagamento",
+        "schemaName": "cr40f_FormadePagamento",
+        "type": "Picklist",
+        "displayName": "Forma de Pagamento",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_formadepagamentoname",
+        "schemaName": "cr40f_formadepagamentoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_horrioprevistoderetorno",
+        "schemaName": "cr40f_Horrioprevistoderetorno",
+        "type": "DateTime",
+        "displayName": "Previsão de retorno",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_id",
+        "schemaName": "cr40f_ID",
+        "type": "String",
+        "displayName": "ID",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_idjuntado",
+        "schemaName": "cr40f_IDjuntado",
+        "type": "Decimal",
+        "displayName": "ID juntado",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_idnovo",
+        "schemaName": "cr40f_IDnovo",
+        "type": "String",
+        "displayName": "ID novo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_idplanner",
+        "schemaName": "cr40f_IDPlanner",
+        "type": "String",
+        "displayName": "IDPlanner",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_idtenaris",
+        "schemaName": "cr40f_IDTenaris",
+        "type": "Integer",
+        "displayName": "ID Tenaris",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_modificadopor",
+        "schemaName": "cr40f_Modificadopor",
+        "type": "String",
+        "displayName": "Modificado por",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_motorista",
+        "schemaName": "cr40f_Motorista",
+        "type": "Lookup",
+        "displayName": "Motorista",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_motoristaname",
+        "schemaName": "cr40f_MotoristaName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_obsdeoperao",
+        "schemaName": "cr40f_ObsdeOperao",
+        "type": "Memo",
+        "displayName": "Obs de Operação",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_observaointerna",
+        "schemaName": "cr40f_Observaointerna",
+        "type": "Memo",
+        "displayName": "Observação interna",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_om",
+        "schemaName": "cr40f_OM",
+        "type": "Lookup",
+        "displayName": "OM",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_omname",
+        "schemaName": "cr40f_OMName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_ot",
+        "schemaName": "cr40f_OT",
+        "type": "Lookup",
+        "displayName": "OT",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_otname",
+        "schemaName": "cr40f_OTName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro1",
+        "schemaName": "cr40f_Passageiro1",
+        "type": "Lookup",
+        "displayName": "Passageiro 1",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro1name",
+        "schemaName": "cr40f_Passageiro1Name",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro2",
+        "schemaName": "cr40f_Passageiro2",
+        "type": "Lookup",
+        "displayName": "Passageiro 2",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro2name",
+        "schemaName": "cr40f_Passageiro2Name",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro3",
+        "schemaName": "cr40f_Passageiro3",
+        "type": "Lookup",
+        "displayName": "Passageiro 3",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro3name",
+        "schemaName": "cr40f_Passageiro3Name",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro4",
+        "schemaName": "cr40f_Passageiro4",
+        "type": "Lookup",
+        "displayName": "Passageiro 4",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageiro4name",
+        "schemaName": "cr40f_Passageiro4Name",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_passageirosetelefonedecontato",
+        "schemaName": "cr40f_Passageirosetelefonedecontato",
+        "type": "Memo",
+        "displayName": "Pax - VIEW",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_perfildopassageiro",
+        "schemaName": "cr40f_Perfildopassageiro",
+        "type": "Memo",
+        "displayName": "Perfil do passageiro",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_receber",
+        "schemaName": "cr40f_Receber",
+        "type": "Boolean",
+        "displayName": "Receber",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_recebername",
+        "schemaName": "cr40f_receberName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_reservadeveculosid",
+        "schemaName": "cr40f_ReservadeveculosId",
+        "type": "Uniqueidentifier",
+        "displayName": "GUID Reserva de Veículos",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_solicitante",
+        "schemaName": "cr40f_Solicitante",
+        "type": "Lookup",
+        "displayName": "Solicitante",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_solicitantename",
+        "schemaName": "cr40f_SolicitanteName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_status",
+        "schemaName": "cr40f_Status",
+        "type": "Picklist",
+        "displayName": "Status de Operação",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_statusdefaturamento",
+        "schemaName": "cr40f_StatusdeFaturamento",
+        "type": "Picklist",
+        "displayName": "Status de Faturamento",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_statusdefaturamentoname",
+        "schemaName": "cr40f_statusdefaturamentoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_statusname",
+        "schemaName": "cr40f_statusName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tenarismodifiedutc",
+        "schemaName": "cr40f_TenarisModifiedUTC",
+        "type": "DateTime",
+        "displayName": "Tenaris Modified (UTC)",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodeveiculo",
+        "schemaName": "cr40f_TipodeVeiculo",
+        "type": "Picklist",
+        "displayName": "Tipo de Veículo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodeveiculoname",
+        "schemaName": "cr40f_tipodeveiculoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodoservico",
+        "schemaName": "cr40f_TipodoServico",
+        "type": "Picklist",
+        "displayName": "Tipo do Serviço",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_tipodoserviconame",
+        "schemaName": "cr40f_tipodoservicoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_trajeto",
+        "schemaName": "cr40f_Trajeto",
+        "type": "String",
+        "displayName": "Trajeto",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculo",
+        "schemaName": "cr40f_Veiculo",
+        "type": "Lookup",
+        "displayName": "Veículo",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculoname",
+        "schemaName": "cr40f_VeiculoName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_camposprotegidos",
+        "schemaName": "new_CamposProtegidos",
+        "type": "Memo",
+        "displayName": "Campos Protegidos",
+        "targets": []
+      },
+      {
+        "logicalName": "new_categoriadoitem",
+        "schemaName": "new_CategoriadoItem",
+        "type": "Picklist",
+        "displayName": "Categoria do Item",
+        "targets": []
+      },
+      {
+        "logicalName": "new_categoriadoitemname",
+        "schemaName": "new_categoriadoitemName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_composicaodepreco",
+        "schemaName": "new_ComposicaodePreco",
+        "type": "Lookup",
+        "displayName": "Composição de Preço",
+        "targets": []
+      },
+      {
+        "logicalName": "new_composicaodepreconame",
+        "schemaName": "new_ComposicaodePrecoName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_datadefinalizacao",
+        "schemaName": "new_DatadeFinalizacao",
+        "type": "DateTime",
+        "displayName": "Data de Finalização",
+        "targets": []
+      },
+      {
+        "logicalName": "new_enderecodesaidapersonalizado",
+        "schemaName": "new_EnderecodeSaidaPersonalizado",
+        "type": "Memo",
+        "displayName": "Endereço de Saída Personalizado",
+        "targets": []
+      },
+      {
+        "logicalName": "new_foiprogramado",
+        "schemaName": "new_FoiProgramado",
+        "type": "Boolean",
+        "displayName": "Foi Programado?",
+        "targets": []
+      },
+      {
+        "logicalName": "new_foiprogramadoname",
+        "schemaName": "new_foiprogramadoName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_houveerro",
+        "schemaName": "new_HouveErro",
+        "type": "Boolean",
+        "displayName": "Houve Erro",
+        "targets": []
+      },
+      {
+        "logicalName": "new_houveerroname",
+        "schemaName": "new_houveerroName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_idexterno",
+        "schemaName": "new_IDExterno",
+        "type": "String",
+        "displayName": "ID Externo",
+        "targets": []
+      },
+      {
+        "logicalName": "new_linkdovoucher",
+        "schemaName": "new_LinkdoVoucher",
+        "type": "String",
+        "displayName": "Link do Voucher",
+        "targets": []
+      },
+      {
+        "logicalName": "new_observacaodefaturamento",
+        "schemaName": "new_ObservacaodeFaturamento",
+        "type": "Memo",
+        "displayName": "Observação de Faturamento",
+        "targets": []
+      },
+      {
+        "logicalName": "new_observacaofinal",
+        "schemaName": "new_ObservacaoFinal",
+        "type": "Memo",
+        "displayName": "Observação Final",
+        "targets": []
+      },
+      {
+        "logicalName": "new_rascunhovoucher",
+        "schemaName": "new_RascunhoVoucher",
+        "type": "Memo",
+        "displayName": "Rascunho Voucher",
+        "targets": []
+      },
+      {
+        "logicalName": "new_snapshotsharepoint",
+        "schemaName": "new_SnapshotSharepoint",
+        "type": "Memo",
+        "displayName": "Snapshot Sharepoint",
+        "targets": []
+      },
+      {
+        "logicalName": "new_visualizacaodomotorista",
+        "schemaName": "new_VisualizacaodoMotorista",
+        "type": "DateTime",
+        "displayName": "Visualização do Motorista",
+        "targets": []
+      }
+    ]
+  },
+  {
+    "logicalName": "cr40f_servicosporpassageiro",
+    "entitySetName": "cr40f_servicosporpassageiros",
+    "primaryIdAttribute": "cr40f_servicosporpassageiroid",
+    "primaryNameAttribute": "cr40f_id",
+    "displayName": "Serviços por Passageiro",
+    "attributes": [
+      {
+        "logicalName": "cr40f_bancodedados",
+        "schemaName": "cr40f_BancodeDados",
+        "type": "Lookup",
+        "displayName": "Banco de Dados (Coluna Serviços por Passageiro)",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_bancodedadosname",
+        "schemaName": "cr40f_BancodeDadosName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_geral",
+        "schemaName": "cr40f_Geral",
+        "type": "Lookup",
+        "displayName": "Geral (Coluna Serviços por Passageiro)",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_geralname",
+        "schemaName": "cr40f_GeralName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_id",
+        "schemaName": "cr40f_ID",
+        "type": "String",
+        "displayName": "ID",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_ordemdeselecao",
+        "schemaName": "cr40f_OrdemdeSelecao",
+        "type": "Integer",
+        "displayName": "Ordem de Seleção (Coluna Serviços por Passageiro)",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_servicosporpassageiroid",
+        "schemaName": "cr40f_ServicosporPassageiroId",
+        "type": "Uniqueidentifier",
+        "displayName": "Serviços por Passageiro",
+        "targets": []
+      },
+      {
+        "logicalName": "new_enderecodesaidacolunaservicosporpassageiro",
+        "schemaName": "new_EnderecodeSaidaColunaServicosporPassageiro",
+        "type": "Memo",
+        "displayName": "Endereço de Saída (Coluna Serviços por Passageiro)",
+        "targets": []
+      }
+    ]
+  },
+  {
+    "logicalName": "cr40f_trocasdecarro",
+    "entitySetName": "cr40f_trocasdecarros",
+    "primaryIdAttribute": "cr40f_trocasdecarroid",
+    "primaryNameAttribute": "cr40f_id",
+    "displayName": "Trocas de Carro",
+    "attributes": [
+      {
+        "logicalName": "cr40f_dataehorariodatroca",
+        "schemaName": "cr40f_DataeHorariodaTroca",
+        "type": "DateTime",
+        "displayName": "Data e Horário da Troca",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_fimdajaneladetroca",
+        "schemaName": "cr40f_FimdaJaneladeTroca",
+        "type": "DateTime",
+        "displayName": "Fim da Janela de Troca",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_id",
+        "schemaName": "cr40f_ID",
+        "type": "String",
+        "displayName": "ID",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_iniciodajaneladetroca",
+        "schemaName": "cr40f_IniciodaJaneladeTroca",
+        "type": "DateTime",
+        "displayName": "Início da Janela de Troca",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_motorista1",
+        "schemaName": "cr40f_Motorista1",
+        "type": "Lookup",
+        "displayName": "Motorista 1",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_motorista1name",
+        "schemaName": "cr40f_Motorista1Name",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_motorista2",
+        "schemaName": "cr40f_Motorista2",
+        "type": "Lookup",
+        "displayName": "Motorista 2",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_motorista2name",
+        "schemaName": "cr40f_Motorista2Name",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_observacao",
+        "schemaName": "cr40f_Observacao",
+        "type": "String",
+        "displayName": "Observação",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_statusdatroca",
+        "schemaName": "cr40f_StatusdaTroca",
+        "type": "Picklist",
+        "displayName": "Status",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_statusdatrocaname",
+        "schemaName": "cr40f_statusdatrocaName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_trocasdecarroid",
+        "schemaName": "cr40f_TrocasdeCarroId",
+        "type": "Uniqueidentifier",
+        "displayName": "GUID Trocas de Carro",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculo1antesdatroca",
+        "schemaName": "cr40f_Veiculo1AntesdaTroca",
+        "type": "Lookup",
+        "displayName": "Veículo 1 (Antes da Troca)",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculo1antesdatrocaname",
+        "schemaName": "cr40f_Veiculo1AntesdaTrocaName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculo2antesdatroca",
+        "schemaName": "cr40f_Veiculo2AntesdaTroca",
+        "type": "Lookup",
+        "displayName": "Veículo 2 (Antes da Troca)",
+        "targets": []
+      },
+      {
+        "logicalName": "cr40f_veiculo2antesdatrocaname",
+        "schemaName": "cr40f_Veiculo2AntesdaTrocaName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_concluidomotorista1",
+        "schemaName": "new_ConcluidoMotorista1",
+        "type": "Boolean",
+        "displayName": "Concluído Motorista 1",
+        "targets": []
+      },
+      {
+        "logicalName": "new_concluidomotorista1name",
+        "schemaName": "new_concluidomotorista1Name",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_concluidomotorista2",
+        "schemaName": "new_ConcluidoMotorista2",
+        "type": "Boolean",
+        "displayName": "Concluído Motorista 2",
+        "targets": []
+      },
+      {
+        "logicalName": "new_concluidomotorista2name",
+        "schemaName": "new_concluidomotorista2Name",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_observacaodomotorista1",
+        "schemaName": "new_ObservacaodoMotorista1",
+        "type": "Memo",
+        "displayName": "Observação do Motorista 1",
+        "targets": []
+      },
+      {
+        "logicalName": "new_observacaodomotorista2",
+        "schemaName": "new_ObservacaodoMotorista2",
+        "type": "Memo",
+        "displayName": "Observação do Motorista 2",
+        "targets": []
+      },
+      {
+        "logicalName": "new_tipodetroca",
+        "schemaName": "new_TipodeTroca",
+        "type": "Picklist",
+        "displayName": "Tipo de Troca",
+        "targets": []
+      },
+      {
+        "logicalName": "new_tipodetrocaname",
+        "schemaName": "new_tipodetrocaName",
+        "type": "Virtual",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_trocanabasevinculo",
+        "schemaName": "new_TrocanaBaseVinculo",
+        "type": "Lookup",
+        "displayName": "Troca na Base - Vínculo",
+        "targets": []
+      },
+      {
+        "logicalName": "new_trocanabasevinculoname",
+        "schemaName": "new_TrocanaBaseVinculoName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      }
+    ]
+  },
+  {
+    "logicalName": "new_possedeveiculo",
+    "entitySetName": "new_possedeveiculos",
+    "primaryIdAttribute": "new_possedeveiculoid",
+    "primaryNameAttribute": "new_id",
+    "displayName": "Posse de Veículo",
+    "attributes": [
+      {
+        "logicalName": "new_fimdaposse",
+        "schemaName": "new_FimdaPosse",
+        "type": "DateTime",
+        "displayName": "Fim da Posse",
+        "targets": []
+      },
+      {
+        "logicalName": "new_id",
+        "schemaName": "new_ID",
+        "type": "String",
+        "displayName": "ID",
+        "targets": []
+      },
+      {
+        "logicalName": "new_iniciodaposse",
+        "schemaName": "new_IniciodaPosse",
+        "type": "DateTime",
+        "displayName": "Início da Posse",
+        "targets": []
+      },
+      {
+        "logicalName": "new_motorista",
+        "schemaName": "new_Motorista",
+        "type": "Lookup",
+        "displayName": "Motorista",
+        "targets": []
+      },
+      {
+        "logicalName": "new_motoristaname",
+        "schemaName": "new_MotoristaName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_possedeveiculoid",
+        "schemaName": "new_PossedeVeiculoId",
+        "type": "Uniqueidentifier",
+        "displayName": "GUID Posse de Veículo",
+        "targets": []
+      },
+      {
+        "logicalName": "new_trocadecarrorelacionada",
+        "schemaName": "new_TrocadeCarroRelacionada",
+        "type": "Lookup",
+        "displayName": "Troca de Carro Relacionada",
+        "targets": []
+      },
+      {
+        "logicalName": "new_trocadecarrorelacionadaname",
+        "schemaName": "new_TrocadeCarroRelacionadaName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_veiculo",
+        "schemaName": "new_Veiculo",
+        "type": "Lookup",
+        "displayName": "Veículo",
+        "targets": []
+      },
+      {
+        "logicalName": "new_veiculoname",
+        "schemaName": "new_VeiculoName",
+        "type": "String",
+        "displayName": "",
+        "targets": []
+      }
+    ]
+  }
+]

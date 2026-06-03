@@ -1,0 +1,1943 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  TelaServiços:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =Set(
+            varLoading,
+            true
+        );
+        Set(
+            varOrientacao,
+            If(
+                App.Width > App.Height,
+                "Paisagem",
+                "Retrato"
+            )
+        );
+        If(
+            IsBlank(varMotoristaUser.'GUID Funcionários'),
+            Notify(
+                "Usuário sem GUID. Volte e tente novamente.",
+                NotificationType.Error,
+                5000
+            );
+            Set(
+                varLoading,
+                false
+            ),
+            // === FASE 1: Busca paralela no Dataverse ===
+            With(
+                {
+                    dtIni: DateAdd(
+                        Now(),
+                        -24,
+                        TimeUnit.Hours
+                    ),
+                    dtFim: DateAdd(Now(), 3, TimeUnit.Days),
+                    guid: varMotoristaUser.'GUID Funcionários'
+                },
+                Concurrent(
+                    ClearCollect(
+                        colAgendaServicos,
+                        ForAll(
+                            Filter(
+                                Geral As G,
+                                G.'Data e horário de saída' >= dtIni && G.'Data e horário de saída' <= dtFim && G.Motorista.'GUID Funcionários' = guid && G.'Status de Operação' <> 'Status de Operação'.Concluído && G.'Status de Operação' <> 'Status de Operação'.'Requer Análise' && IsBlank(G.OM) && IsBlank(G.OT) && G.'Categoria do Item' = 'Categoria do Item'.Serviço && G.'Foi Programado?' = true
+                            ) As S,
+                            {
+                                Tipo: "SERVICO",
+                                DtOrdem: Coalesce(
+                                    S.'Data e horário de saída',
+                                    dtIni
+                                ),
+                                DadosSERVICO: S,
+                                DadosTROCA: Blank(),
+                                DadosTROCAGeral: Blank(),
+                                DadosMANUTENCAO: Blank(),
+                                DadosMANUTENCAOGeral: Blank()
+                            }
+                        )
+                    ),
+                    ClearCollect(
+                        colAgendaManut,
+                        ForAll(
+                            Filter(
+                                Geral As G,
+                                G.'Data e horário de saída' >= dtIni && G.'Data e horário de saída' <= dtFim && G.Motorista.'GUID Funcionários' = guid && !IsBlank(G.OM) && IsBlank(G.OT) && G.'Status de Operação' <> 'Status de Operação'.Concluído && G.'Categoria do Item' = 'Categoria do Item'.Manutenção && G.'Foi Programado?' = true
+                            ) As S,
+                            If(
+                                S.OM.'Status (cr40f_status)' = 'Status (Manutenções)'.Realizado,
+                                Blank(),
+                                {
+                                    Tipo: "MANUTENCAO",
+                                    DtOrdem: Coalesce(
+                                        S.'Data e horário de saída',
+                                        dtIni
+                                    ),
+                                    DadosSERVICO: Blank(),
+                                    DadosTROCA: Blank(),
+                                    DadosTROCAGeral: Blank(),
+                                    DadosMANUTENCAO: S.OM,
+                                    DadosMANUTENCAOGeral: S
+                                }
+                            )
+                        )
+                    ),
+                    ClearCollect(
+                        colTrocasFiltradas,
+                        Filter(
+            'Trocas de Carro',
+            'Início da Janela de Troca' <= dtFim &&
+            'Fim da Janela de Troca' >= dtIni &&
+            ('Motorista 1'.'GUID Funcionários' = guid || 'Motorista 2'.'GUID Funcionários' = guid) &&
+            'Status (cr40f_statusdatroca)' <> 'Status da Troca de Carro'.Concluída &&
+            Not(
+                ('Motorista 1'.'GUID Funcionários' = guid && 'Concluído Motorista 1' = true) ||
+                ('Motorista 2'.'GUID Funcionários' = guid && 'Concluído Motorista 2' = true)
+            )
+        )
+                    ),
+                    ClearCollect(
+                        colGuidProgramados,
+                        Filter(
+                            Geral As G,
+                            G.'Categoria do Item' = 'Categoria do Item'.'Troca de Veículos' && G.'Foi Programado?' = true
+                        )
+                    )
+                );
+                // === FASE 2: Trocas (depende de colTrocasFiltradas + colGuidProgramados) ===
+                ClearCollect(
+                    colAgendaTrocas,
+                    ForAll(
+                        Filter(
+                            colTrocasFiltradas As T,
+                            CountIf(
+                                colGuidProgramados,
+                                OT.'GUID Trocas de Carro' = T.'GUID Trocas de Carro'
+                            ) > 0
+                        ) As T,
+                        With(
+                            {
+                                geralRec: LookUp(
+                                    colGuidProgramados,
+                                    OT.'GUID Trocas de Carro' = T.'GUID Trocas de Carro'
+                                )
+                            },
+                            {
+                                Tipo: "TROCA",
+                                DtOrdem: Coalesce(
+                                    T.'Início da Janela de Troca',
+                                    dtIni
+                                ),
+                                DadosSERVICO: Blank(),
+                                DadosTROCA: T,
+                                DadosTROCAGeral: geralRec,
+                                DadosMANUTENCAO: Blank(),
+                                DadosMANUTENCAOGeral: Blank()
+                            }
+                        )
+                    )
+                );
+                // === FASE 3: Consolidar + Montar UI em bulk ===
+                ClearCollect(
+                    colAgenda,
+                    colAgendaServicos,
+                    colAgendaTrocas,
+                    Filter(
+                        colAgendaManut,
+                        !IsBlank(Tipo)
+                    )
+                );
+                ClearCollect(
+                    colAgendaUI,
+                    AddColumns(
+                        colAgenda,
+                        DtLocal,
+                        DtOrdem,
+                        DataChave,
+                        DateValue(DtOrdem),
+                        TituloData,
+                        "",
+                        Seta,
+                        "",
+                        SearchText,
+                        Switch(
+                            Tipo,
+                            "SERVICO",
+                            Lower(
+                                Coalesce(
+                                    Text(DadosSERVICO.ID),
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.'Pax - VIEW',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.Cliente.'Nome do cliente',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.'Ed de Saída - VIEW',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.Destino,
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.Motorista.'Nome completo',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.'Obs de Operação',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.Solicitante.'Nome do Passageiro',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.Trajeto,
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosSERVICO.Veículo.Placa,
+                                    ""
+                                ) & " " & Coalesce(
+                                    Text(DadosSERVICO.'Tipo de Veículo'),
+                                    ""
+                                ) & " " & Text(
+                                    DadosSERVICO.'Data e horário de saída',
+                                    "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                )
+                            ),
+                            "TROCA",
+                            Lower(
+                                Coalesce(
+                                    Text(DadosTROCA.ID),
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosTROCA.'Veículo 1 (Antes da Troca)'.Placa,
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosTROCA.'Veículo 2 (Antes da Troca)'.Placa,
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosTROCA.'Motorista 1'.'Nome completo',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosTROCA.'Motorista 2'.'Nome completo',
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosTROCA.Observação,
+                                    ""
+                                ) & " " & Text(
+                                    DadosTROCA.'Início da Janela de Troca',
+                                    "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                ) & " " & Text(
+                                    DadosTROCA.'Fim da Janela de Troca',
+                                    "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                )
+                            ),
+                            "MANUTENCAO",
+                            Lower(
+                                Coalesce(
+                                    Text(DadosMANUTENCAO.ID),
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosMANUTENCAO.Veículo.Placa,
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosMANUTENCAO.Descrição,
+                                    ""
+                                ) & " " & Coalesce(
+                                    DadosMANUTENCAOGeral.'Obs de Operação',
+                                    ""
+                                ) & " " & Text(
+                                    DtOrdem,
+                                    "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                )
+                            ),
+                            ""
+                        ),
+
+                        //_________________CONDIÇÕES E PRIORIDADES PARA AS NOTIFICAÇÕES DA GALERIA DE SERVIÇOS____________________________________________
+                        // ---------------------------------------------------------------------
+                        // Nº  | NOME DO ÍCONE                          | TIPO
+                        // ---------------------------------------------------------------------
+                        // 1   | Saída em < 30 min e não visto/editado  | SERVICO / TROCA / MANUTENCAO
+                        // 3   | Nunca visualizado OU editado não visto | SERVICO / TROCA / MANUTENCAO
+                        // 10  | Receber = Sim (sempre, independente)   | SERVICO apenas
+                        // 0   | Nenhum ícone                           | qualquer
+                        // ---------------------------------------------------------------------
+                        // TOLERÂNCIA: 10s para ignorar o modifiedon gerado pelo próprio Patch
+                        // de visualização. Se o ícone continuar preso após visualizar,
+                        // aumente esse valor (ex: 30). Afeta todas as comparações abaixo.
+                        // ---------------------------------------------------------------------
+                        IconePrioridade,
+                        Switch(
+                            Tipo,
+
+                            "SERVICO",
+                            If(
+                                // PRIORIDADE 1 — Saída em menos de 30 min E não visto ou editado após visualização
+                                DateDiff(
+                                    Now(),
+                                    DadosSERVICO.'Data e horário de saída',
+                                    TimeUnit.Minutes
+                                ) <= 30 &&
+                                DateDiff(
+                                    Now(),
+                                    DadosSERVICO.'Data e horário de saída',
+                                    TimeUnit.Minutes
+                                ) >= 0 &&
+                                (
+                                    IsBlank(DadosSERVICO.'Visualização do Motorista') ||
+                                    (
+                                        !IsBlank(DadosSERVICO.'Visualização do Motorista') &&
+                                        DateDiff(
+                                            DadosSERVICO.'Visualização do Motorista',
+                                            DadosSERVICO.'Data de Modificação',
+                                            TimeUnit.Seconds
+                                        ) > 10
+                                    )
+                                ),
+                                1,
+
+                                // PRIORIDADE 3 — Nunca visualizado OU editado após visualização e motorista não viu
+                                IsBlank(DadosSERVICO.'Visualização do Motorista') ||
+                                (
+                                    !IsBlank(DadosSERVICO.'Visualização do Motorista') &&
+                                    DateDiff(
+                                        DadosSERVICO.'Visualização do Motorista',
+                                        DadosSERVICO.'Data de Modificação',
+                                        TimeUnit.Seconds
+                                    ) > 10
+                                ),
+                                3,
+
+                                // PRIORIDADE 10 — Receber = Sim (sempre, independente de visualização)
+                                DadosSERVICO.Receber = true,
+                                10,
+
+                                // NENHUM — item normal, sem destaque
+                                0
+                            ),
+
+                            "TROCA",
+                            If(
+                                // PRIORIDADE 1 — Saída em menos de 30 min E não visto ou editado após visualização
+                                DateDiff(
+                                    Now(),
+                                    DadosTROCAGeral.'Data e horário de saída',
+                                    TimeUnit.Minutes
+                                ) <= 30 &&
+                                DateDiff(
+                                    Now(),
+                                    DadosTROCAGeral.'Data e horário de saída',
+                                    TimeUnit.Minutes
+                                ) >= 0 &&
+                                (
+                                    IsBlank(DadosTROCAGeral.'Visualização do Motorista') ||
+                                    (
+                                        !IsBlank(DadosTROCAGeral.'Visualização do Motorista') &&
+                                        DateDiff(
+                                            DadosTROCAGeral.'Visualização do Motorista',
+                                            DadosTROCAGeral.'Data de Modificação',
+                                            TimeUnit.Seconds
+                                        ) > 10
+                                    )
+                                ),
+                                1,
+
+                                // PRIORIDADE 3 — Nunca visualizado OU editado após visualização e motorista não viu
+                                IsBlank(DadosTROCAGeral.'Visualização do Motorista') ||
+                                (
+                                    !IsBlank(DadosTROCAGeral.'Visualização do Motorista') &&
+                                    DateDiff(
+                                        DadosTROCAGeral.'Visualização do Motorista',
+                                        DadosTROCAGeral.'Data de Modificação',
+                                        TimeUnit.Seconds
+                                    ) > 10
+                                ),
+                                3,
+
+                                0
+                            ),
+
+                            "MANUTENCAO",
+                            If(
+                                // PRIORIDADE 1 — Saída em menos de 30 min E não visto ou editado após visualização
+                                DateDiff(
+                                    Now(),
+                                    DadosMANUTENCAOGeral.'Data e horário de saída',
+                                    TimeUnit.Minutes
+                                ) <= 30 &&
+                                DateDiff(
+                                    Now(),
+                                    DadosMANUTENCAOGeral.'Data e horário de saída',
+                                    TimeUnit.Minutes
+                                ) >= 0 &&
+                                (
+                                    IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') ||
+                                    (
+                                        !IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') &&
+                                        DateDiff(
+                                            DadosMANUTENCAOGeral.'Visualização do Motorista',
+                                            DadosMANUTENCAOGeral.'Data de Modificação',
+                                            TimeUnit.Seconds
+                                        ) > 10
+                                    )
+                                ),
+                                1,
+
+                                // PRIORIDADE 3 — Nunca visualizado OU editado após visualização e motorista não viu
+                                IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') ||
+                                (
+                                    !IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') &&
+                                    DateDiff(
+                                        DadosMANUTENCAOGeral.'Visualização do Motorista',
+                                        DadosMANUTENCAOGeral.'Data de Modificação',
+                                        TimeUnit.Seconds
+                                    ) > 10
+                                ),
+                                3,
+
+                                0
+                            ),
+
+                            // HEADER não exibe ícone
+                            0
+                        )
+                        // =====================================================================
+                        // FIM DO CAMPO IconePrioridade
+                        // =====================================================================
+
+                    )
+                );
+                With(
+                    {t: Today()},
+                    ForAll(
+                        SortByColumns(
+                            RenameColumns(
+                                Distinct(
+                                    colAgendaUI,
+                                    DataChave
+                                ),
+                                Value,
+                                DataChave
+                            ),
+                            "DataChave",
+                            SortOrder.Ascending
+                        ) As D,
+                        Collect(
+                            colAgendaUI,
+                            {
+                                Tipo: "HEADER",
+                                DtOrdem: DateTimeValue(
+                                    Text(
+                                        D.DataChave,
+                                        "[$-en-US]yyyy-mm-dd"
+                                    ) & " 00:00"
+                                ),
+                                DtLocal: DateTimeValue(
+                                    Text(
+                                        D.DataChave,
+                                        "[$-en-US]yyyy-mm-dd"
+                                    ) & " 00:00"
+                                ),
+                                DataChave: D.DataChave,
+                                TituloData: "Serviços de " & If(
+                                    D.DataChave = t,
+                                    "HOJE",
+                                    D.DataChave = DateAdd(
+                                        t,
+                                        1
+                                    ),
+                                    "AMANHÃ",
+                                    D.DataChave = DateAdd(
+                                        t,
+                                        -1
+                                    ),
+                                    "ONTEM",
+                                    With(
+            {_dia: Weekday(D.DataChave, StartOfWeek.Sunday)},
+            Switch(
+                _dia,
+                1, "DOMINGO",
+                2, "SEGUNDA",
+                3, "TERÇA",
+                4, "QUARTA",
+                5, "QUINTA",
+                6, "SEXTA",
+                7, "SÁBADO"
+            )
+        )
+                                ),
+                                Seta: "▾",
+                                DadosSERVICO: Blank(),
+                                DadosTROCA: Blank(),
+                                DadosTROCAGeral: Blank(),
+                                DadosMANUTENCAO: Blank(),
+                                DadosMANUTENCAOGeral: Blank(),
+                                SearchText: "",
+                                IconePrioridade: 0
+                            }
+                        )
+                    )
+                );
+                ClearCollect(
+                    colAgendaUI,
+                    SortByColumns(
+                        colAgendaUI,
+                        "DtLocal",
+                        SortOrder.Ascending,
+                        "Tipo",
+                        SortOrder.Ascending
+                    )
+                )
+            );
+            Set(
+                varLoading,
+                false
+            )
+        )
+    Children:
+      - Container1_2:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(240, 240, 240, 1)
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - Container5_2:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =8
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  X: =40
+                  Y: =40
+                Children:
+                  - Menu_2:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =0
+                        Height: =70
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMaxHeight: =70
+                        LayoutMinHeight: =70
+                        LayoutMinWidth: =16
+                        PaddingBottom: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        PaddingTop: =8
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - Container2_3:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutAlignItems: =LayoutAlignItems.Stretch
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =8
+                              LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =8
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              PaddingTop: =8
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - Container7_1:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: ManualLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Self.Height
+                                  Children:
+                                    - ButtonCanvas1_1:
+                                        Control: Button@0.0.45
+                                        Properties:
+                                          Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                          BorderRadius: =0
+                                          FontSize: =40
+                                          Height: =Parent.Height
+                                          Icon: ="Home"
+                                          IconStyle: ='ButtonCanvas.IconStyle'.Outline
+                                          Layout: ='ButtonCanvas.Layout'.IconOnly
+                                          OnSelect: =Navigate(TelaInicial, ScreenTransition.Fade);
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: =
+                                          Width: =Parent.Width
+                              - Container7_8:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: ManualLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0
+                                    Height: =42
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =0
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Self.Height
+                                    X: =40
+                                    Y: =40
+                                  Children:
+                                    - ButtonCanvas1_3:
+                                        Control: Button@0.0.45
+                                        Properties:
+                                          Appearance: ='ButtonCanvas.Appearance'.Transparent
+                                          BorderRadius: =0
+                                          FontSize: =40
+                                          Height: =Parent.Height
+                                          Icon: ="ArrowClockwise"
+                                          IconStyle: ='ButtonCanvas.IconStyle'.Outline
+                                          Layout: ='ButtonCanvas.Layout'.IconOnly
+                                          OnSelect: |-
+                                            =Set(
+                                                varLoading,
+                                                true
+                                            );
+                                            Set(
+                                                varOrientacao,
+                                                If(
+                                                    App.Width > App.Height,
+                                                    "Paisagem",
+                                                    "Retrato"
+                                                )
+                                            );
+                                            If(
+                                                IsBlank(varMotoristaUser.'GUID Funcionários'),
+                                                Notify(
+                                                    "Usuário sem GUID. Volte e tente novamente.",
+                                                    NotificationType.Error,
+                                                    5000
+                                                );
+                                                Set(
+                                                    varLoading,
+                                                    false
+                                                ),
+                                                // === FASE 1: Busca paralela no Dataverse ===
+                                                With(
+                                                    {
+                                                        dtIni: DateAdd(
+                                                            Now(),
+                                                            -24,
+                                                            TimeUnit.Hours
+                                                        ),
+                                                        dtFim: DateAdd(Now(), 3, TimeUnit.Days),
+                                                        guid: varMotoristaUser.'GUID Funcionários'
+                                                    },
+                                                    Concurrent(
+                                                        ClearCollect(
+                                                            colAgendaServicos,
+                                                            ForAll(
+                                                                Filter(
+                                                                    Geral As G,
+                                                                    G.'Data e horário de saída' >= dtIni && G.'Data e horário de saída' <= dtFim && G.Motorista.'GUID Funcionários' = guid && G.'Status de Operação' <> 'Status de Operação'.Concluído && G.'Status de Operação' <> 'Status de Operação'.'Requer Análise' && IsBlank(G.OM) && IsBlank(G.OT) && G.'Categoria do Item' = 'Categoria do Item'.Serviço && G.'Foi Programado?' = true
+                                                                ) As S,
+                                                                {
+                                                                    Tipo: "SERVICO",
+                                                                    DtOrdem: Coalesce(
+                                                                        S.'Data e horário de saída',
+                                                                        dtIni
+                                                                    ),
+                                                                    DadosSERVICO: S,
+                                                                    DadosTROCA: Blank(),
+                                                                    DadosTROCAGeral: Blank(),
+                                                                    DadosMANUTENCAO: Blank(),
+                                                                    DadosMANUTENCAOGeral: Blank()
+                                                                }
+                                                            )
+                                                        ),
+                                                        ClearCollect(
+                                                            colAgendaManut,
+                                                            ForAll(
+                                                                Filter(
+                                                                    Geral As G,
+                                                                    G.'Data e horário de saída' >= dtIni && G.'Data e horário de saída' <= dtFim && G.Motorista.'GUID Funcionários' = guid && !IsBlank(G.OM) && IsBlank(G.OT) && G.'Status de Operação' <> 'Status de Operação'.Concluído && G.'Categoria do Item' = 'Categoria do Item'.Manutenção && G.'Foi Programado?' = true
+                                                                ) As S,
+                                                                If(
+                                                                    S.OM.'Status (cr40f_status)' = 'Status (Manutenções)'.Realizado,
+                                                                    Blank(),
+                                                                    {
+                                                                        Tipo: "MANUTENCAO",
+                                                                        DtOrdem: Coalesce(
+                                                                            S.'Data e horário de saída',
+                                                                            dtIni
+                                                                        ),
+                                                                        DadosSERVICO: Blank(),
+                                                                        DadosTROCA: Blank(),
+                                                                        DadosTROCAGeral: Blank(),
+                                                                        DadosMANUTENCAO: S.OM,
+                                                                        DadosMANUTENCAOGeral: S
+                                                                    }
+                                                                )
+                                                            )
+                                                        ),
+                                                        ClearCollect(
+                                                            colTrocasFiltradas,
+                                                            Filter(
+                                                'Trocas de Carro',
+                                                'Início da Janela de Troca' <= dtFim &&
+                                                'Fim da Janela de Troca' >= dtIni &&
+                                                ('Motorista 1'.'GUID Funcionários' = guid || 'Motorista 2'.'GUID Funcionários' = guid) &&
+                                                'Status (cr40f_statusdatroca)' <> 'Status da Troca de Carro'.Concluída &&
+                                                Not(
+                                                    ('Motorista 1'.'GUID Funcionários' = guid && 'Concluído Motorista 1' = true) ||
+                                                    ('Motorista 2'.'GUID Funcionários' = guid && 'Concluído Motorista 2' = true)
+                                                )
+                                            )
+                                                        ),
+                                                        ClearCollect(
+                                                            colGuidProgramados,
+                                                            Filter(
+                                                                Geral As G,
+                                                                G.'Categoria do Item' = 'Categoria do Item'.'Troca de Veículos' && G.'Foi Programado?' = true
+                                                            )
+                                                        )
+                                                    );
+                                                    // === FASE 2: Trocas (depende de colTrocasFiltradas + colGuidProgramados) ===
+                                                    ClearCollect(
+                                                        colAgendaTrocas,
+                                                        ForAll(
+                                                            Filter(
+                                                                colTrocasFiltradas As T,
+                                                                CountIf(
+                                                                    colGuidProgramados,
+                                                                    OT.'GUID Trocas de Carro' = T.'GUID Trocas de Carro'
+                                                                ) > 0
+                                                            ) As T,
+                                                            With(
+                                                                {
+                                                                    geralRec: LookUp(
+                                                                        colGuidProgramados,
+                                                                        OT.'GUID Trocas de Carro' = T.'GUID Trocas de Carro'
+                                                                    )
+                                                                },
+                                                                {
+                                                                    Tipo: "TROCA",
+                                                                    DtOrdem: Coalesce(
+                                                                        T.'Início da Janela de Troca',
+                                                                        dtIni
+                                                                    ),
+                                                                    DadosSERVICO: Blank(),
+                                                                    DadosTROCA: T,
+                                                                    DadosTROCAGeral: geralRec,
+                                                                    DadosMANUTENCAO: Blank(),
+                                                                    DadosMANUTENCAOGeral: Blank()
+                                                                }
+                                                            )
+                                                        )
+                                                    );
+                                                    // === FASE 3: Consolidar + Montar UI em bulk ===
+                                                    ClearCollect(
+                                                        colAgenda,
+                                                        colAgendaServicos,
+                                                        colAgendaTrocas,
+                                                        Filter(
+                                                            colAgendaManut,
+                                                            !IsBlank(Tipo)
+                                                        )
+                                                    );
+                                                    ClearCollect(
+                                                        colAgendaUI,
+                                                        AddColumns(
+                                                            colAgenda,
+                                                            DtLocal,
+                                                            DtOrdem,
+                                                            DataChave,
+                                                            DateValue(DtOrdem),
+                                                            TituloData,
+                                                            "",
+                                                            Seta,
+                                                            "",
+                                                            SearchText,
+                                                            Switch(
+                                                                Tipo,
+                                                                "SERVICO",
+                                                                Lower(
+                                                                    Coalesce(
+                                                                        Text(DadosSERVICO.ID),
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.'Pax - VIEW',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.Cliente.'Nome do cliente',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.'Ed de Saída - VIEW',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.Destino,
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.Motorista.'Nome completo',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.'Obs de Operação',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.Solicitante.'Nome do Passageiro',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.Trajeto,
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosSERVICO.Veículo.Placa,
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        Text(DadosSERVICO.'Tipo de Veículo'),
+                                                                        ""
+                                                                    ) & " " & Text(
+                                                                        DadosSERVICO.'Data e horário de saída',
+                                                                        "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                                                    )
+                                                                ),
+                                                                "TROCA",
+                                                                Lower(
+                                                                    Coalesce(
+                                                                        Text(DadosTROCA.ID),
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosTROCA.'Veículo 1 (Antes da Troca)'.Placa,
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosTROCA.'Veículo 2 (Antes da Troca)'.Placa,
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosTROCA.'Motorista 1'.'Nome completo',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosTROCA.'Motorista 2'.'Nome completo',
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosTROCA.Observação,
+                                                                        ""
+                                                                    ) & " " & Text(
+                                                                        DadosTROCA.'Início da Janela de Troca',
+                                                                        "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                                                    ) & " " & Text(
+                                                                        DadosTROCA.'Fim da Janela de Troca',
+                                                                        "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                                                    )
+                                                                ),
+                                                                "MANUTENCAO",
+                                                                Lower(
+                                                                    Coalesce(
+                                                                        Text(DadosMANUTENCAO.ID),
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosMANUTENCAO.Veículo.Placa,
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosMANUTENCAO.Descrição,
+                                                                        ""
+                                                                    ) & " " & Coalesce(
+                                                                        DadosMANUTENCAOGeral.'Obs de Operação',
+                                                                        ""
+                                                                    ) & " " & Text(
+                                                                        DtOrdem,
+                                                                        "[$-pt-BR]dd/MM/yyyy HH:mm"
+                                                                    )
+                                                                ),
+                                                                ""
+                                                            ),
+
+                                                            //_________________CONDIÇÕES E PRIORIDADES PARA AS NOTIFICAÇÕES DA GALERIA DE SERVIÇOS____________________________________________
+                                                            // ---------------------------------------------------------------------
+                                                            // Nº  | NOME DO ÍCONE                          | TIPO
+                                                            // ---------------------------------------------------------------------
+                                                            // 1   | Saída em < 30 min e não visto/editado  | SERVICO / TROCA / MANUTENCAO
+                                                            // 3   | Nunca visualizado OU editado não visto | SERVICO / TROCA / MANUTENCAO
+                                                            // 10  | Receber = Sim (sempre, independente)   | SERVICO apenas
+                                                            // 0   | Nenhum ícone                           | qualquer
+                                                            // ---------------------------------------------------------------------
+                                                            // TOLERÂNCIA: 10s para ignorar o modifiedon gerado pelo próprio Patch
+                                                            // de visualização. Se o ícone continuar preso após visualizar,
+                                                            // aumente esse valor (ex: 30). Afeta todas as comparações abaixo.
+                                                            // ---------------------------------------------------------------------
+                                                            IconePrioridade,
+                                                            Switch(
+                                                                Tipo,
+
+                                                                "SERVICO",
+                                                                If(
+                                                                    // PRIORIDADE 1 — Saída em menos de 30 min E não visto ou editado após visualização
+                                                                    DateDiff(
+                                                                        Now(),
+                                                                        DadosSERVICO.'Data e horário de saída',
+                                                                        TimeUnit.Minutes
+                                                                    ) <= 30 &&
+                                                                    DateDiff(
+                                                                        Now(),
+                                                                        DadosSERVICO.'Data e horário de saída',
+                                                                        TimeUnit.Minutes
+                                                                    ) >= 0 &&
+                                                                    (
+                                                                        IsBlank(DadosSERVICO.'Visualização do Motorista') ||
+                                                                        (
+                                                                            !IsBlank(DadosSERVICO.'Visualização do Motorista') &&
+                                                                            DateDiff(
+                                                                                DadosSERVICO.'Visualização do Motorista',
+                                                                                DadosSERVICO.'Data de Modificação',
+                                                                                TimeUnit.Seconds
+                                                                            ) > 10
+                                                                        )
+                                                                    ),
+                                                                    1,
+
+                                                                    // PRIORIDADE 3 — Nunca visualizado OU editado após visualização e motorista não viu
+                                                                    IsBlank(DadosSERVICO.'Visualização do Motorista') ||
+                                                                    (
+                                                                        !IsBlank(DadosSERVICO.'Visualização do Motorista') &&
+                                                                        DateDiff(
+                                                                            DadosSERVICO.'Visualização do Motorista',
+                                                                            DadosSERVICO.'Data de Modificação',
+                                                                            TimeUnit.Seconds
+                                                                        ) > 10
+                                                                    ),
+                                                                    3,
+
+                                                                    // PRIORIDADE 10 — Receber = Sim (sempre, independente de visualização)
+                                                                    DadosSERVICO.Receber = true,
+                                                                    10,
+
+                                                                    // NENHUM — item normal, sem destaque
+                                                                    0
+                                                                ),
+
+                                                                "TROCA",
+                                                                If(
+                                                                    // PRIORIDADE 1 — Saída em menos de 30 min E não visto ou editado após visualização
+                                                                    DateDiff(
+                                                                        Now(),
+                                                                        DadosTROCAGeral.'Data e horário de saída',
+                                                                        TimeUnit.Minutes
+                                                                    ) <= 30 &&
+                                                                    DateDiff(
+                                                                        Now(),
+                                                                        DadosTROCAGeral.'Data e horário de saída',
+                                                                        TimeUnit.Minutes
+                                                                    ) >= 0 &&
+                                                                    (
+                                                                        IsBlank(DadosTROCAGeral.'Visualização do Motorista') ||
+                                                                        (
+                                                                            !IsBlank(DadosTROCAGeral.'Visualização do Motorista') &&
+                                                                            DateDiff(
+                                                                                DadosTROCAGeral.'Visualização do Motorista',
+                                                                                DadosTROCAGeral.'Data de Modificação',
+                                                                                TimeUnit.Seconds
+                                                                            ) > 10
+                                                                        )
+                                                                    ),
+                                                                    1,
+
+                                                                    // PRIORIDADE 3 — Nunca visualizado OU editado após visualização e motorista não viu
+                                                                    IsBlank(DadosTROCAGeral.'Visualização do Motorista') ||
+                                                                    (
+                                                                        !IsBlank(DadosTROCAGeral.'Visualização do Motorista') &&
+                                                                        DateDiff(
+                                                                            DadosTROCAGeral.'Visualização do Motorista',
+                                                                            DadosTROCAGeral.'Data de Modificação',
+                                                                            TimeUnit.Seconds
+                                                                        ) > 10
+                                                                    ),
+                                                                    3,
+
+                                                                    0
+                                                                ),
+
+                                                                "MANUTENCAO",
+                                                                If(
+                                                                    // PRIORIDADE 1 — Saída em menos de 30 min E não visto ou editado após visualização
+                                                                    DateDiff(
+                                                                        Now(),
+                                                                        DadosMANUTENCAOGeral.'Data e horário de saída',
+                                                                        TimeUnit.Minutes
+                                                                    ) <= 30 &&
+                                                                    DateDiff(
+                                                                        Now(),
+                                                                        DadosMANUTENCAOGeral.'Data e horário de saída',
+                                                                        TimeUnit.Minutes
+                                                                    ) >= 0 &&
+                                                                    (
+                                                                        IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') ||
+                                                                        (
+                                                                            !IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') &&
+                                                                            DateDiff(
+                                                                                DadosMANUTENCAOGeral.'Visualização do Motorista',
+                                                                                DadosMANUTENCAOGeral.'Data de Modificação',
+                                                                                TimeUnit.Seconds
+                                                                            ) > 10
+                                                                        )
+                                                                    ),
+                                                                    1,
+
+                                                                    // PRIORIDADE 3 — Nunca visualizado OU editado após visualização e motorista não viu
+                                                                    IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') ||
+                                                                    (
+                                                                        !IsBlank(DadosMANUTENCAOGeral.'Visualização do Motorista') &&
+                                                                        DateDiff(
+                                                                            DadosMANUTENCAOGeral.'Visualização do Motorista',
+                                                                            DadosMANUTENCAOGeral.'Data de Modificação',
+                                                                            TimeUnit.Seconds
+                                                                        ) > 10
+                                                                    ),
+                                                                    3,
+
+                                                                    0
+                                                                ),
+
+                                                                // HEADER não exibe ícone
+                                                                0
+                                                            )
+                                                            // =====================================================================
+                                                            // FIM DO CAMPO IconePrioridade
+                                                            // =====================================================================
+
+                                                        )
+                                                    );
+                                                    With(
+                                                        {t: Today()},
+                                                        ForAll(
+                                                            SortByColumns(
+                                                                RenameColumns(
+                                                                    Distinct(
+                                                                        colAgendaUI,
+                                                                        DataChave
+                                                                    ),
+                                                                    Value,
+                                                                    DataChave
+                                                                ),
+                                                                "DataChave",
+                                                                SortOrder.Ascending
+                                                            ) As D,
+                                                            Collect(
+                                                                colAgendaUI,
+                                                                {
+                                                                    Tipo: "HEADER",
+                                                                    DtOrdem: DateTimeValue(
+                                                                        Text(
+                                                                            D.DataChave,
+                                                                            "[$-en-US]yyyy-mm-dd"
+                                                                        ) & " 00:00"
+                                                                    ),
+                                                                    DtLocal: DateTimeValue(
+                                                                        Text(
+                                                                            D.DataChave,
+                                                                            "[$-en-US]yyyy-mm-dd"
+                                                                        ) & " 00:00"
+                                                                    ),
+                                                                    DataChave: D.DataChave,
+                                                                    TituloData: "Serviços de " & If(
+                                                                        D.DataChave = t,
+                                                                        "HOJE",
+                                                                        D.DataChave = DateAdd(
+                                                                            t,
+                                                                            1
+                                                                        ),
+                                                                        "AMANHÃ",
+                                                                        D.DataChave = DateAdd(
+                                                                            t,
+                                                                            -1
+                                                                        ),
+                                                                        "ONTEM",
+                                                                        With(
+                                                {_dia: Weekday(D.DataChave, StartOfWeek.Sunday)},
+                                                Switch(
+                                                    _dia,
+                                                    1, "DOMINGO",
+                                                    2, "SEGUNDA",
+                                                    3, "TERÇA",
+                                                    4, "QUARTA",
+                                                    5, "QUINTA",
+                                                    6, "SEXTA",
+                                                    7, "SÁBADO"
+                                                )
+                                            )
+                                                                    ),
+                                                                    Seta: "▾",
+                                                                    DadosSERVICO: Blank(),
+                                                                    DadosTROCA: Blank(),
+                                                                    DadosTROCAGeral: Blank(),
+                                                                    DadosMANUTENCAO: Blank(),
+                                                                    DadosMANUTENCAOGeral: Blank(),
+                                                                    SearchText: "",
+                                                                    IconePrioridade: 0
+                                                                }
+                                                            )
+                                                        )
+                                                    );
+                                                    ClearCollect(
+                                                        colAgendaUI,
+                                                        SortByColumns(
+                                                            colAgendaUI,
+                                                            "DtLocal",
+                                                            SortOrder.Ascending,
+                                                            "Tipo",
+                                                            SortOrder.Ascending
+                                                        )
+                                                    )
+                                                );
+                                                Set(
+                                                    varLoading,
+                                                    false
+                                                )
+                                            )
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: =
+                                          Width: =Parent.Width
+                              - Label2_2:
+                                  Control: Label@2.5.1
+                                  Properties:
+                                    Align: =Align.Center
+                                    AlignInContainer: =AlignInContainer.Center
+                                    AutoHeight: =true
+                                    BorderColor: =RGBA(0, 0, 0, 0)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =2
+                                    Color: =RGBA(50, 49, 48, 1)
+                                    DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                    DisabledColor: =RGBA(161, 159, 157, 1)
+                                    FillPortions: =1
+                                    FocusedBorderThickness: =4
+                                    Font: =Font.'Open Sans'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =15
+                                    Text: ="Seus Serviços"
+                              - Container7_9:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: ManualLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0
+                                    Height: =42
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =0
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Self.Height
+                                    X: =40
+                                    Y: =40
+                              - Container3_2:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: ManualLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Width: =Self.Height
+                                  Children:
+                                    - Avatar1:
+                                        Control: Avatar@1.0.40
+                                        Properties:
+                                          Appearance: ='Avatar.Appearance'.Colorful
+                                          Height: =Parent.Height
+                                          Shape: ='Avatar.Shape'.Circular
+                                          Width: =Parent.Width - Parent.PaddingLeft + Parent.PaddingRight
+                  - Main_2:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =9
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                      Children:
+                        - Container2_4:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =60
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingLeft: =20
+                              PaddingRight: =20
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                            Children:
+                              - Container4_2:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    LayoutAlignItems: =LayoutAlignItems.End
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutJustifyContent: =LayoutJustifyContent.Center
+                                    LayoutMaxWidth: =400
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                  Children:
+                                    - txtBusca_2:
+                                        Control: TextInput@0.0.54
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          Appearance: ='TextInputCanvas.Appearance'.Outline
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =0
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans'
+                                          LayoutMaxHeight: =30
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Placeholder: ="Buscar (cliente, origem, etc)"
+                                          TriggerOutput: ='TextInputCanvas.TriggerOutput'.Keypress
+                                          Type: ='TextInputCanvas.Type'.Search
+                                    - Rectangle1_2:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          BorderColor: =RGBA(166, 166, 166, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(166, 166, 166, 1)
+                                          Fill: =RGBA(125, 125, 125, 1)
+                                          FocusedBorderColor: =RGBA(0, 120, 212, 1)
+                                          Height: =2
+                                          HoverFill: =RGBA(0, 0, 0, 1)
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PressedFill: =RGBA(0, 0, 0, 1)
+                              - Icon2_2:
+                                  Control: Icon@0.0.7
+                                  Properties:
+                                    Icon: ="Search"
+                                    IconColor: =RGBA(0, 0, 0, 1)
+                                    IconStyle: ='Icon.IconStyle'.Outline
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                        - ContainerNENHUMSERVICO:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutAlignItems: =LayoutAlignItems.Stretch
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =8
+                              PaddingLeft: =16
+                              PaddingRight: =16
+                              PaddingTop: =8
+                              Visible: =CountRows(colAgendaUI) = 0 && varLoading = false
+                            Children:
+                              - TextCanvas9:
+                                  Control: Text@0.0.51
+                                  Properties:
+                                    Align: ='TextCanvas.Align'.Center
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans'
+                                    FontUnderline: =true
+                                    LayoutMinHeight: =100
+                                    LayoutMinWidth: =16
+                                    Size: =35
+                                    Text: ="Nenhum serviço atribuído a você no momento"
+                                    VerticalAlign: =VerticalAlign.Middle
+                                    Weight: ='TextCanvas.Weight'.Bold
+                        - galServicos_2:
+                            Control: Gallery@2.15.0
+                            Variant: BrowseLayout_Flexible_SocialFeed_ver5.0
+                            Properties:
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              Items: |-
+                                =With(
+                                    { q: Lower(Trim(txtBusca_2.Value)) },
+
+                                    If(
+                                        IsBlank(q),
+                                        colAgendaUI,
+
+                                        Filter(
+                                            colAgendaUI,
+
+                                            // === Busca por padrão de data (mesmo comportamento original) ===
+                                            (
+                                                IsMatch(q, "^[0-9]{2}/[0-9]{2}/[0-9]{4}\s[0-9]{2}:[0-9]{2}$") &&
+                                                Day(DtLocal)    = Value(Left(q, 2)) &&
+                                                Month(DtLocal)  = Value(Mid(q, 4, 2)) &&
+                                                Year(DtLocal)   = Value(Mid(q, 7, 4)) &&
+                                                Hour(DtLocal)   = Value(Mid(q, 12, 2)) &&
+                                                Minute(DtLocal) = Value(Right(q, 2))
+                                            ) ||
+                                            (
+                                                IsMatch(q, "^[0-9]{2}/[0-9]{2}/[0-9]{4}$") &&
+                                                Day(DtLocal)   = Value(Left(q, 2)) &&
+                                                Month(DtLocal) = Value(Mid(q, 4, 2)) &&
+                                                Year(DtLocal)  = Value(Right(q, 4))
+                                            ) ||
+                                            (
+                                                IsMatch(q, "^[0-9]{2}/[0-9]{2}$") &&
+                                                Day(DtLocal)   = Value(Left(q, 2)) &&
+                                                Month(DtLocal) = Value(Right(q, 2))
+                                            ) ||
+
+                                            // === Busca por texto (usa SearchText pré-computado) ===
+                                            IfError(Find(q, SearchText), 0) > 0
+                                        )
+                                    )
+                                )
+                              OnSelect: |-
+                                =Set(varLoading,true);
+                                Set(
+                                    varServicoSelecionado,
+                                    {
+                                        Tipo:       Upper(Trim(ThisItem.Tipo)),
+                                        Servico:    ThisItem.DadosSERVICO,
+                                        Troca:      ThisItem.DadosTROCA,
+                                        TrocaGeral: ThisItem.DadosTROCAGeral,
+                                        Manut:      ThisItem.DadosMANUTENCAO,
+                                        ManutGeral: ThisItem.DadosMANUTENCAOGeral
+                                    }
+                                );
+
+                                Navigate(TelaDetalhes,ScreenTransition.Fade);
+
+                                // Patch visualização — se nunca visualizou OU se foi modificado mais de 2s após a última visualização
+                                If(
+                                    !IsBlank(varServicoSelecionado.Servico) &&
+                                    (
+                                        IsBlank(varServicoSelecionado.Servico.'Visualização do Motorista') ||
+                                        DateDiff(
+                                            varServicoSelecionado.Servico.'Visualização do Motorista',
+                                            varServicoSelecionado.Servico.'Data de Modificação',
+                                            TimeUnit.Seconds
+                                        ) > 2
+                                    ),
+                                    Patch(
+                                        Geral,
+                                        varServicoSelecionado.Servico,
+                                        {'Visualização do Motorista': Now()}
+                                    )
+                                );
+                                If(
+                                    !IsBlank(varServicoSelecionado.TrocaGeral) &&
+                                    (
+                                        IsBlank(varServicoSelecionado.TrocaGeral.'Visualização do Motorista') ||
+                                        DateDiff(
+                                            varServicoSelecionado.TrocaGeral.'Visualização do Motorista',
+                                            varServicoSelecionado.TrocaGeral.'Data de Modificação',
+                                            TimeUnit.Seconds
+                                        ) > 2
+                                    ),
+                                    Patch(
+                                        Geral,
+                                        varServicoSelecionado.TrocaGeral,
+                                        {'Visualização do Motorista': Now()}
+                                    )
+                                );
+                                If(
+                                    !IsBlank(varServicoSelecionado.ManutGeral) &&
+                                    (
+                                        IsBlank(varServicoSelecionado.ManutGeral.'Visualização do Motorista') ||
+                                        DateDiff(
+                                            varServicoSelecionado.ManutGeral.'Visualização do Motorista',
+                                            varServicoSelecionado.ManutGeral.'Data de Modificação',
+                                            TimeUnit.Seconds
+                                        ) > 2
+                                    ),
+                                    Patch(
+                                        Geral,
+                                        varServicoSelecionado.ManutGeral,
+                                        {'Visualização do Motorista': Now()}
+                                    )
+                                );
+
+                                Set(varLoading,false)
+                              TemplatePadding: =16
+                              TemplateSize: =0
+                              Visible: =CountRows(colAgendaUI) > 0
+                            Children:
+                              - Container3_5:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.Regular
+                                    Fill: |-
+                                      =If(
+                                          ThisItem.Tipo = "TROCA",
+                                          RGBA(164, 217, 224, 1),
+                                          If(
+                                              ThisItem.Tipo = "SERVICO",
+                                              Color.Transparent,
+                                              If(
+                                                  ThisItem.Tipo = "HEADER",
+                                                  RGBA(
+                                                      0,
+                                                      14,
+                                                      35,
+                                                      1
+                                                  ),
+                                                  If(ThisItem.Tipo = "MANUTENCAO",
+                                                  RGBA(236, 204, 188, 1))
+                                              )
+                                          )
+                                      )
+                                    Height: |+
+                                      =If(
+                                          ThisItem.Tipo = "HEADER",
+                                          48,   // altura menor para header
+                                          115   // altura normal para serviço/troca
+                                      )
+
+                                    LayoutAlignItems: =LayoutAlignItems.Stretch
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =10
+                                    RadiusBottomRight: =10
+                                    RadiusTopLeft: =10
+                                    RadiusTopRight: =10
+                                    Width: =Parent.TemplateWidth
+                                  Children:
+                                    - ContainerCardSERVICO:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Center
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =3
+                                          Height: =Parent.Height
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutJustifyContent: =LayoutJustifyContent.Center
+                                          LayoutMaxHeight: =
+                                          LayoutMinHeight: =220
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          Visible: =ThisItem.Tipo = "SERVICO"
+                                          Width: =Parent.Width
+                                        Children:
+                                          - TextCanvas1_46:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AutoHeight: =true
+                                                Font: =Font.'Lato Black'
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Size: =17
+                                                Text: ="Serviço"
+                                                Weight: ='TextCanvas.Weight'.Bold
+                                                Wrap: =false
+                                          - TextCanvas1_47:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Size: =20
+                                                Text: |
+                                                  =With(
+                                                      {
+                                                          dt: ThisItem.DadosSERVICO.'Data e horário de saída',
+                                                          dataServico: DateValue(ThisItem.DadosSERVICO.'Data e horário de saída'),
+                                                          hora: Text(ThisItem.DadosSERVICO.'Data e horário de saída', "[$-pt-BR]HH:mm")
+                                                      },
+                                                      If(
+                                                          IsBlank(dt),
+                                                          "",
+                                                          dataServico = Today(),
+                                                          "HOJE " & hora,
+                                                          dataServico = DateAdd(Today(), 1, TimeUnit.Days),
+                                                          "AMANHÃ " & hora,
+                                                          dataServico = DateAdd(Today(), -1, TimeUnit.Days),
+                                                          "ONTEM " & hora,
+                                                          Text(dt, "[$-pt-BR]dd/mm/yyyy") & " " & hora
+                                                      )
+                                                  )
+                                                Weight: ='TextCanvas.Weight'.Bold
+                                                Wrap: =false
+                                          - TextCanvas1_50:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Size: =16
+                                                Text: =ThisItem.DadosSERVICO.Trajeto
+                                                Weight: ='TextCanvas.Weight'.Semibold
+                                                Wrap: =false
+                                    - ContainerCardTROCA:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Center
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =3
+                                          Height: =Parent.Height - 10
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutJustifyContent: =LayoutJustifyContent.Center
+                                          LayoutMinHeight: =110
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          Visible: =ThisItem.Tipo = "TROCA"
+                                          Width: =Parent.Width
+                                        Children:
+                                          - TextCanvas1_51:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AutoHeight: =true
+                                                Font: =Font.'Lato Black'
+                                                FontColor: =RGBA(0, 0, 0, 1)
+                                                Height: =0
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                Size: =17
+                                                Text: ="Troca de Carro"
+                                                Weight: ='TextCanvas.Weight'.Bold
+                                                Wrap: =false
+                                          - TextCanvas1_52:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                Height: =0
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                Size: =20
+                                                Text: |
+                                                  =With(
+                                                      {
+                                                          dt: ThisItem.DadosTROCA.'Início da Janela de Troca',
+                                                          dataServico: DateValue(ThisItem.DadosTROCA.'Início da Janela de Troca'),
+                                                          hora: "entre " & Text(ThisItem.DadosTROCA.'Início da Janela de Troca', "[$-pt-BR]HH:mm") & " e " & Text(ThisItem.DadosTROCA.'Fim da Janela de Troca', "[$-pt-BR]HH:mm")
+                                                      },
+                                                      If(
+                                                          IsBlank(dt),
+                                                          "",
+                                                          dataServico = Today(),
+                                                          "HOJE " & hora,
+                                                          dataServico = DateAdd(Today(), 1, TimeUnit.Days),
+                                                          "AMANHÃ " & hora,
+                                                          dataServico = DateAdd(Today(), -1, TimeUnit.Days),
+                                                          "ONTEM " & hora,
+                                                          Text(dt, "[$-pt-BR]dd/mm/yyyy") & " " & hora
+                                                      )
+                                                  )
+                                                Weight: ='TextCanvas.Weight'.Bold
+                                                Wrap: =false
+                                          - TextCanvas1_53:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AlignInContainer: =AlignInContainer.Stretch
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Text: "=With(\n    {\n        _t: ThisItem.DadosTROCA,\n        _v1: ThisItem.DadosTROCA.'Veículo 1 (Antes da Troca)',\n        _v2: ThisItem.DadosTROCA.'Veículo 2 (Antes da Troca)',\n        _isMot1: varMotoristaUser.'GUID Funcionários' = ThisItem.DadosTROCA.'Motorista 1'.'GUID Funcionários',\n        _isMot2: varMotoristaUser.'GUID Funcionários' = ThisItem.DadosTROCA.'Motorista 2'.'GUID Funcionários'\n    },\n    Switch(\n        _t.'Tipo de Troca',\n        \n        // \U0001F504 TROCA ENTRE MOTORISTAS\n        'Tipo de Troca de Carro'.Troca,\n            If(\n                IsBlank(_v1) || IsBlank(_v2), \"Veículos registrados na conclusão\",\n                _isMot1, \n                    Coalesce(_v1.Modelo, \"Veículo\") & \" \" & Coalesce(_v1.Placa, \"S/ placa\") & \" -> \" & \n                    Coalesce(_v2.Modelo, \"Veículo\") & \" \" & Coalesce(_v2.Placa, \"S/ placa\"),\n                _isMot2, \n                    Coalesce(_v2.Modelo, \"Veículo\") & \" \" & Coalesce(_v2.Placa, \"S/ placa\") & \" -> \" & \n                    Coalesce(_v1.Modelo, \"Veículo\") & \" \" & Coalesce(_v1.Placa, \"S/ placa\"),\n                \"Veículos registrados na conclusão\"\n            ),\n            \n        // \U0001F697 RETIRADA DA BASE\n        'Tipo de Troca de Carro'.'Retirada da base',\n            If(\n                IsBlank(_v2), \"Veículo não registrado\",\n                \"BASE -> \" & Coalesce(_v2.Modelo, \"Veículo\") & \" \" & Coalesce(_v2.Placa, \"S/ placa\")\n            ),\n            \n        // \U0001F4E6 DEVOLUÇÃO À BASE\n        'Tipo de Troca de Carro'.'Devolução à base',\n            If(\n                IsBlank(_v1), \"Veículo não registrado\",\n                Coalesce(_v1.Modelo, \"Veículo\") & \" \" & Coalesce(_v1.Placa, \"S/ placa\") & \" -> BASE\"\n            ),\n            \n        // ⚠️ FALLBACK\n        \"Operação não identificada\"\n    )\n)"
+                                                Visible: =false
+                                                Weight: ='TextCanvas.Weight'.Semibold
+                                                Wrap: =false
+                                                X: =40
+                                                Y: =40
+                                          - TextCanvas1_54:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AlignInContainer: =AlignInContainer.Stretch
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Text: "=If(\n    ThisItem.DadosTROCA.'Tipo de Troca' = 'Tipo de Troca de Carro'.Troca,\n    \"Trocar de carro com \" & If(\n        varMotoristaUser.'GUID Funcionários' = ThisItem.DadosTROCA.'Motorista 1'.'GUID Funcionários',\n        ThisItem.DadosTROCA.'Motorista 2'.'Nome completo',\n        ThisItem.DadosTROCA.'Motorista 1'.'Nome completo'\n    ),\n    If(\n        ThisItem.DadosTROCA.'Tipo de Troca' = 'Tipo de Troca de Carro'.'Devolução à base',\n        \"Deixar o carro na base\"\n    ),\n    If(\n        ThisItem.DadosTROCA.'Tipo de Troca' = 'Tipo de Troca de Carro'.'Retirada da base',\n        \n        \"Deixar o carro na base\"\n    )\n)"
+                                                Weight: ='TextCanvas.Weight'.Regular
+                                                Wrap: =false
+                                                X: =40
+                                                Y: =40
+                                    - ContainerHEADER_1:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =3
+                                          Height: =Parent.Height - 10
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutJustifyContent: =LayoutJustifyContent.Center
+                                          LayoutMinHeight: =0
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          Visible: =ThisItem.Tipo = "HEADER"
+                                          Width: =Parent.Width
+                                        Children:
+                                          - TextCanvas1_55:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                Align: ='TextCanvas.Align'.Center
+                                                AlignInContainer: =AlignInContainer.Stretch
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                FontColor: =RGBA(255, 255, 255, 1)
+                                                Height: =0
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                Size: =26
+                                                Text: =ThisItem.TituloData & " " & ThisItem.Seta
+                                                Weight: ='TextCanvas.Weight'.Bold
+                                                Wrap: =false
+                                    - ContainerCardMANUTENCAO:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          DropShadow: =DropShadow.None
+                                          FillPortions: =3
+                                          Height: =110
+                                          LayoutAlignItems: =LayoutAlignItems.Stretch
+                                          LayoutDirection: =LayoutDirection.Vertical
+                                          LayoutJustifyContent: =LayoutJustifyContent.Center
+                                          LayoutMinHeight: =0
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =8
+                                          PaddingRight: =8
+                                          Visible: =ThisItem.Tipo = "MANUTENCAO"
+                                          Width: =Parent.Width
+                                        Children:
+                                          - TextCanvas1_56:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AutoHeight: =true
+                                                Font: =Font.'Lato Black'
+                                                FontColor: =RGBA(0, 0, 0, 1)
+                                                Height: =0
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                Size: =17
+                                                Text: ="Manutenção"
+                                                Weight: ='TextCanvas.Weight'.Bold
+                                                Wrap: =false
+                                          - TextCanvas1_58:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AlignInContainer: =AlignInContainer.Stretch
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Size: =20
+                                                Text: |
+                                                  =With(
+                                                      {
+                                                          dt: ThisItem.DadosMANUTENCAOGeral.'Data e horário de saída',
+                                                          dataServico: DateValue(ThisItem.DadosMANUTENCAOGeral.'Data e horário de saída'),
+                                                          hora: Text(ThisItem.DadosMANUTENCAOGeral.'Data e horário de saída', "[$-pt-BR]HH:mm")
+                                                      },
+                                                      If(
+                                                          IsBlank(dt),
+                                                          "",
+                                                          dataServico = Today(),
+                                                          "HOJE " & hora,
+                                                          dataServico = DateAdd(Today(), 1, TimeUnit.Days),
+                                                          "AMANHÃ " & hora,
+                                                          dataServico = DateAdd(Today(), -1, TimeUnit.Days),
+                                                          "ONTEM " & hora,
+                                                          Text(dt, "[$-pt-BR]dd/mm/yyyy") & " " & hora
+                                                      )
+                                                  )
+                                                Weight: ='TextCanvas.Weight'.Bold
+                                                Wrap: =false
+                                                X: =40
+                                                Y: =40
+                                          - TextCanvas1_57:
+                                              Control: Text@0.0.51
+                                              Properties:
+                                                AutoHeight: =true
+                                                Font: =Font.'Open Sans'
+                                                Height: =0
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                PaddingBottom: =0
+                                                PaddingLeft: =0
+                                                PaddingRight: =0
+                                                PaddingTop: =0
+                                                Size: =16
+                                                Text: |+
+                                                  =With(
+                                                      {
+                                                          v: ThisItem.DadosMANUTENCAO.Veículo,
+                                                          modelo: Coalesce(ThisItem.DadosMANUTENCAO.Veículo.Modelo, ""),
+                                                          cor: Coalesce(ThisItem.DadosMANUTENCAO.Veículo.Cor, ""),
+                                                          placa: Coalesce(ThisItem.DadosMANUTENCAO.Veículo.Placa, "")
+                                                      },
+                                                      Coalesce(
+                                                          "Manutenção no " &
+                                                          Trim(
+                                                              Coalesce(modelo, "") & " " &
+                                                              Coalesce(cor, "") & " " &
+                                                              Coalesce(placa, "")
+                                                          ),
+                                                          "Você precisa fazer manutenção no veículo (dados indisponíveis)"
+                                                      )
+                                                  )
+                                                Weight: ='TextCanvas.Weight'.Regular
+                                                Wrap: =false
+                              - Button1_2:
+                                  Control: Classic/Button@2.2.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 0, 0, 0)
+                                    BorderStyle: =BorderStyle.None
+                                    Color: =Color.Transparent
+                                    DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                    DisabledColor: =Color.Transparent
+                                    DisabledFill: =RGBA(0, 0, 0, 0)
+                                    Fill: =Color.Transparent
+                                    Font: =Font.'Open Sans'
+                                    Height: =Container3_5.Height
+                                    HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                    HoverColor: =Color.Transparent
+                                    HoverFill: =RGBA(0, 0, 0, 0)
+                                    OnSelect: =If(ThisItem.Tipo = "HEADER", Blank(), Select(Parent))
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    PressedBorderColor: =RGBA(0, 69, 120, 0)
+                                    PressedColor: =Color.Transparent
+                                    PressedFill: =RGBA(0, 0, 0, 0)
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Text: =
+                                    Width: =Container3_5.Width
+                              - ContainerCANCELADO:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Fill: =RGBA(255, 0, 0, 0.65)
+                                    Height: =Container3_5.Height
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    PaddingBottom: =8
+                                    PaddingLeft: =8
+                                    PaddingRight: =8
+                                    PaddingTop: =8
+                                    RadiusBottomLeft: =Container3_5.RadiusBottomLeft
+                                    RadiusBottomRight: =Container3_5.RadiusBottomRight
+                                    RadiusTopLeft: =Container3_5.RadiusTopLeft
+                                    RadiusTopRight: =Container3_5.RadiusTopRight
+                                    Visible: |-
+                                      ="cancel" in Lower(Text(ThisItem.DadosMANUTENCAO.'Status (cr40f_status)')) || 
+                                      "cancel" in Lower(Text(ThisItem.DadosSERVICO.'Status de Operação')) || 
+                                      "cancel" in Lower(Text(ThisItem.DadosTROCA.'Status (cr40f_statusdatroca)'))
+                                    Width: =Container3_5.Width
+                                  Children:
+                                    - Icon2:
+                                        Control: Icon@0.0.7
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          FillPortions: =1
+                                          Height: =1
+                                          Icon: ="Dismiss"
+                                          IconColor: =RGBA(255, 255, 255, 1)
+                                          Width: =552
+                                          Y: =(Parent.Height - Self.Height) / 2
+                                    - TextCanvas4:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Open Sans'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          Height: =0
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Size: =25
+                                          Text: ="CANCELADO"
+                                          Weight: ='TextCanvas.Weight'.Bold
+                                    - TextCanvas4_1:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Align: ='TextCanvas.Align'.Center
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          AutoHeight: =true
+                                          Font: =Font.'Open Sans'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          Height: =0
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Text: ="(desconsiderar este item)"
+                                          Weight: ='TextCanvas.Weight'.Regular
+                              - ContainerIconsNotificação:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    Height: =30
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutJustifyContent: =LayoutJustifyContent.Center
+                                    Visible: =ThisItem.Tipo <> "HEADER"
+                                    Width: =30
+                                    X: =Container3_5.Width - (Self.Width / 2) - Container3_5.PaddingLeft - Container3_5.PaddingRight - 5
+                                    Y: =5
+                                  Children:
+                                    - IconP1:
+                                        Control: Icon@0.0.7
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          FillPortions: =1
+                                          Icon: ="Warning"
+                                          IconColor: =RGBA(215, 58, 60, 1)
+                                          IconStyle: ='Icon.IconStyle'.Outline
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Visible: =ThisItem.IconePrioridade = 1
+                                    - IconP2:
+                                        Control: Icon@0.0.7
+                                        Properties:
+                                          Icon: ="ErrorCircle"
+                                          IconColor: =RGBA(214, 157, 24, 1)
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Visible: =ThisItem.IconePrioridade = 2
+                                    - IconP3:
+                                        Control: Circle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(245, 245, 245, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(0, 120, 212, 1)
+                                          DisplayMode: =DisplayMode.View
+                                          Fill: =RGBA(214, 157, 24, 1)
+                                          Height: =Parent.Width * 0.6
+                                          HoverFill: =RGBA(0, 120, 212, 1)
+                                          PressedFill: =RGBA(0, 120, 212, 1)
+                                          Visible: =ThisItem.IconePrioridade = 3
+                                          Width: =Parent.Width * 0.6
+                                    - IconP10:
+                                        Control: Icon@0.0.7
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Stretch
+                                          FillPortions: =1
+                                          Icon: ="Money"
+                                          IconColor: =RGBA(52, 152, 47, 1)
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Visible: =ThisItem.IconePrioridade = 10
+      - ContainerLoading_2:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(186, 186, 186, 0.61)
+            Height: =Parent.Height
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Visible: =varLoading
+            Width: =Parent.Width
+          Children:
+            - Spinner1_2:
+                Control: Spinner@1.4.6
+                Properties:
+                  Appearance: ='Spinner.Appearance'.Primary
+                  BasePaletteColor: =RGBA(5, 102, 178, 1)
+                  Font: =Font.'Open Sans'
+                  FontSize: =20
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.Height
+                  Label: ="Carregando..."
+                  LabelPosition: ='Spinner.LabelPosition'.After
+                  SpinnerSize: ='Spinner.SpinnerSize'.Huge
+                  Width: =Parent.Width

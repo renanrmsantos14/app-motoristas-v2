@@ -1,0 +1,24 @@
+{
+  "name": "app-motoristas-webresource",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.cjs",
+    "build": "node scripts/build-react-singlefile.cjs",
+    "test": "node --test --experimental-strip-types tests/*.test.ts",
+    "preview": "node scripts/serve-dist.cjs"
+  },
+  "dependencies": {
+    "motion": "^12.40.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.21"
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "QualifiedValues": [
+    {
+      "Namespace": "Cliente (Formulários)",
+      "Kind": "default.cds_cr40f_clientes1_forms",
+      "Values": {
+        "Informações": "262ed240-6537-4326-b0fa-ee843457fbee"
+      }
+    },
+    {
+      "Namespace": "Veículos (Formulários)",
+      "Kind": "default.cds_cr40f_veiculos_forms",
+      "Values": {
+        "Informações": "262c2f45-e3be-4fe5-8350-e42c62638bf5"
+      }
+    },
+    {
+      "Namespace": "Geral (Formulários)",
+      "Kind": "default.cds_cr40f_reservadeveculos_forms",
+      "Values": {
+        "Informações": "9eed0b00-948a-4d47-af3f-cdfc7513151f",
+        "Dashboardsadsa": "0c94439c-3d37-f111-88b4-7ced8db141e0"
+      }
+    },
+    {
+      "Namespace": "Funcionários (Formulários)",
+      "Kind": "default.cds_cr40f_funcionarios_forms",
+      "Values": {
+        "Informações": "a90b69e9-5ed9-4578-b77d-bedaf3f413b5"
+      }
+    },
+    {
+      "Namespace": "Banco de Dados (Formulários)",
+      "Kind": "default.cds_cr40f_bancodedados_forms",
+      "Values": {
+        "Informações": "d705f682-5c5a-40dc-9e9f-904d699ef245"
+      }
+    },
+    {
+      "Namespace": "Manutenções (Formulários)",
+      "Kind": "default.cds_cr40f_manutencoes_forms",
+      "Values": {
+        "Teste_Painel": "ba60f291-d1e4-f011-8406-7ced8da85b7f",
+        "Informações": "1d236ed9-c494-4186-8436-fb120a6a10bc"
+      }
+    },
+    {
+      "Namespace": "Trocas de Carro (Formulários)",
+      "Kind": "default.cds_cr40f_trocasdecarro_forms",
+      "Values": {
+        "Informações": "5dc5b6a7-9448-44af-b68c-ef210fc89e5e"
+      }
+    },
+    {
+      "Namespace": "Serviços por Passageiro (Formulários)",
+      "Kind": "default.cds_cr40f_servicosporpassageiro_forms",
+      "Values": {
+        "Informações": "3043f744-79ba-4f00-83e3-eab8bd0d3dac"
+      }
+    },
+    {
+      "Namespace": "Posse de Veículos (Formulários)",
+      "Kind": "default.cds_new_possedeveiculo_forms",
+      "Values": {
+        "Informações": "8740cd2a-89de-4c21-b938-f9ecec4c927d"
+      }
+    },
+    {
+      "Namespace": "Cliente (Forms)",
+      "Kind": "default.cds_cr40f_clientes1_forms",
+      "Values": {
+        "Informações": "262ed240-6537-4326-b0fa-ee843457fbee"
+      }
+    },
+    {
+      "Namespace": "Veículos (Forms)",
+      "Kind": "default.cds_cr40f_veiculos_forms",
+      "Values": {
+        "Informações": "262c2f45-e3be-4fe5-8350-e42c62638bf5"
+      }
+    },
+    {
+      "Namespace": "Geral (Forms)",
+      "Kind": "default.cds_cr40f_reservadeveculos_forms",
+      "Values": {
+        "Informações": "9eed0b00-948a-4d47-af3f-cdfc7513151f",
+        "Dashboardsadsa": "0c94439c-3d37-f111-88b4-7ced8db141e0"
+      }
+    },
+    {
+      "Namespace": "Funcionários (Forms)",
+      "Kind": "default.cds_cr40f_funcionarios_forms",
+      "Values": {
+        "Informações": "a90b69e9-5ed9-4578-b77d-bedaf3f413b5"
+      }
+    },
+    {
+      "Namespace": "Banco de Dados (Forms)",
+      "Kind": "default.cds_cr40f_bancodedados_forms",
+      "Values": {
+        "Informações": "d705f682-5c5a-40dc-9e9f-904d699ef245"
+      }
+    },
+    {
+      "Namespace": "Manutenções (Forms)",
+      "Kind": "default.cds_cr40f_manutencoes_forms",
+      "Values": {
+        "Teste_Painel": "ba60f291-d1e4-f011-8406-7ced8da85b7f",
+        "Informações": "1d236ed9-c494-4186-8436-fb120a6a10bc"
+      }
+    },
+    {
+      "Namespace": "Trocas de Carro (Forms)",
+      "Kind": "default.cds_cr40f_trocasdecarro_forms",
+      "Values": {
+        "Informações": "5dc5b6a7-9448-44af-b68c-ef210fc89e5e"
+      }
+    },
+    {
+      "Namespace": "Serviços por Passageiro (Forms)",
+      "Kind": "default.cds_cr40f_servicosporpassageiro_forms",
+      "Values": {
+        "Informações": "3043f744-79ba-4f00-83e3-eab8bd0d3dac"
+      }
+    },
+    {
+      "Namespace": "Moedas (Formulários)",
+      "Kind": "default.cds_transactioncurrency_forms",
+      "Values": {
+        "Information": "b56b6d35-1e69-436b-ba86-78127d36e8aa"
+      }
+    },
+    {
+      "Namespace": "Infração de Trânsito (Formulários)",
+      "Kind": "default.cds_cr40f_infracaodetransito_forms",
+      "Values": {
+        "Informações": "74d978e4-f0fa-43dc-ac2d-e19f105a8178"
+      }
+    },
+    {
+      "Namespace": "Multas (Formulários)",
+      "Kind": "default.cds_cr40f_multas_forms",
+      "Values": {
+        "Informações": "14bf5e91-38bd-4f4b-84c6-ae7bbaeb7499"
+      }
+    },
+    {
+      "Namespace": "Ordens de Pagamento (Formulários)",
+      "Kind": "default.cds_cr40f_financeiro_forms",
+      "Values": {
+        "Informações": "6b2b1b14-0168-4f99-ab0b-ffbc704cf79f"
+      }
+    },
+    {
+      "Namespace": "Pagantes (Formulários)",
+      "Kind": "default.cds_cr40f_pagantes_forms",
+      "Values": {
+        "Informações": "9ddd3038-7b61-487a-acb8-da2ce067c7ae"
+      }
+    },
+    {
+      "Namespace": "STATUS DA MANUTENÇÃO (Formulários)",
+      "Kind": "default.cds_cr40f_statusdamanutencao_forms",
+      "Values": {
+        "Informações": "8b3ce72c-96b7-4562-bbb1-65621f95694b"
+      }
+    },
+    {
+      "Namespace": "Contatos (Formulários)",
+      "Kind": "default.cds_contact_forms",
+      "Values": {
+        "Informações": "894cc46a-b0cb-4ab0-8bf6-200544e46a2d",
+        "Painel de Referência de Contatos": "d880c3cf-80e2-42f3-82f9-24d040d09f17",
+        "Portal Contact (Enhanced)": "c1c97961-2d42-4103-abf8-2fe2bdf38224",
+        "Profile Web Form (Enhanced)": "bddc0100-0dbe-4562-aafe-31d08c8ab506",
+        "Invite Web Form": "d6190b35-9474-4098-9698-33f6627eb3bf",
+        "Formulário do Cartão de Persona Viva": "449faa0e-f471-48ec-87d0-4719909546d2",
+        "Perfis Sociais": "7bb87dfd-ec3e-4ed9-8e3e-5725d3067295",
+        "Criação Rápida de Contato": "661157fe-2fc9-4eaa-835f-5bfa2f7b64f7",
+        "Ocorrências Recentes e Direitos": "f3b707fb-3b5f-45f9-9c6b-5e573bb5d19e",
+        "Atualizar Contato": "26843818-6508-4afe-9342-5fae2ebf15ca",
+        "Formulário Rápido de Contato": "bdb0ae1c-32fa-4374-b637-8dafe107bc44",
+        "cartão do contato da conta": "29de27bc-a257-4f29-99cf-bab4a84e688f",
+        "Formulário Cartão de Contato": "bc0f68dd-a4b1-4a8f-bed3-c8f5db2f89cf",
+        "cartão de contato": "707fc57b-c5e6-471b-a180-e37ed28a38e2",
+        "Profile Web Form (Enhanced) - Japanese": "01124dd8-9bff-4cc0-bb33-ea9d943c3f9f",
+        "Contato": "1fed44d1-ae68-4a41-bd2b-f13acac4acfa"
+      }
+    },
+    {
+      "Namespace": "Posse de Veículos (Forms)",
+      "Kind": "default.cds_new_possedeveiculo_forms",
+      "Values": {
+        "Informações": "8740cd2a-89de-4c21-b938-f9ecec4c927d"
+      }
+    }
+  ]
+}

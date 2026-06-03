@@ -1,0 +1,52 @@
+{
+  "Resources": [
+    {
+      "Name": "SampleImage",
+      "Schema": "i",
+      "IsSampleData": true,
+      "IsWritable": false,
+      "Type": "ResourceInfo",
+      "FileName": "/ctrllib/image/images/SampleImage.svg",
+      "Path": "/ctrllib/image/images/SampleImage.svg",
+      "Content": "Image",
+      "ResourceKind": "Uri",
+      "RootPath": "ms-appx:///ctrllib/image/images/SampleImage.svg"
+    },
+    {
+      "Name": "Logo Betinhos B",
+      "Schema": "i",
+      "IsSampleData": false,
+      "IsWritable": false,
+      "Type": "ResourceInfo",
+      "FileName": "bd7d5f28-81c5-4c0e-9c19-59e59e1d22cf.png",
+      "Path": "Assets\\Images\\bd7d5f28-81c5-4c0e-9c19-59e59e1d22cf.png",
+      "Content": "Image",
+      "ResourceKind": "LocalFile",
+      "RootPath": "https://dsprdil102sbr.blob.core.windows.net/eac1854c-312d-4a31-88ac-e3ffbfd84a3d-1/resource/YmQ3ZDVmMjgtODFjNS00YzBlLTljMTktNTllNTllMWQyMmNm.png?skoid=58690ece-ec83-4ce2-9ce8-883d4d6a54ee&sktid=975f013f-7f24-47e8-a7d3-abc4752bf346&skt=2026-06-02T16%3A56%3A53Z&ske=2026-06-03T17%3A11%3A53Z&sks=b&skv=2023-01-03&sv=2023-01-03&spr=https&se=2026-06-03T17%3A11%3A53Z&sr=b&sp=r&sig=ZecvBX2rYUhNzgpQCTCJyhda3ZWNZTvoCeLJUT75LYE%3D"
+    },
+    {
+      "Name": "SamplePdf",
+      "Schema": "o",
+      "IsSampleData": true,
+      "IsWritable": false,
+      "Type": "ResourceInfo",
+      "FileName": "/ctrllib/pdfViewer/data/SamplePdf.pdf",
+      "Path": "/ctrllib/pdfViewer/data/SamplePdf.pdf",
+      "Content": "Pdf",
+      "ResourceKind": "Uri",
+      "RootPath": "ms-appx:///ctrllib/pdfViewer/data/SamplePdf.pdf"
+    },
+    {
+      "Name": "SampleAudio",
+      "Schema": "m",
+      "IsSampleData": true,
+      "IsWritable": false,
+      "Type": "ResourceInfo",
+      "FileName": "/ctrllib/audioPlayback/media/SampleAudio.mp3",
+      "Path": "/ctrllib/audioPlayback/media/SampleAudio.mp3",
+      "Content": "Audio",
+      "ResourceKind": "Uri",
+      "RootPath": "ms-appx:///ctrllib/audioPlayback/media/SampleAudio.mp3"
+    }
+  ]
+}
