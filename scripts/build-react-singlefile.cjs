@@ -5,6 +5,21 @@ async function run() {
   const esbuild = require("esbuild");
   const root = process.cwd();
   const distDir = path.join(root, "dist");
+  const packagePath = path.join(root, "package.json");
+  const packageLockPath = path.join(root, "package-lock.json");
+
+  function bumpPatchVersion(version) {
+    const parts = String(version).split(".").map((part) => Number(part));
+    if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part) || part < 0)) {
+      throw new Error(`Versao invalida no package.json: ${version}`);
+    }
+
+    parts[2] += 1;
+    return parts.join(".");
+  }
+
+  const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+  const nextVersion = bumpPatchVersion(packageJson.version);
 
   fs.rmSync(distDir, { recursive: true, force: true });
   fs.mkdirSync(distDir, { recursive: true });
@@ -26,6 +41,37 @@ async function run() {
 
   const js = result.outputFiles[0].text;
   const css = fs.readFileSync(path.join(root, "src", "styles.css"), "utf8");
+  packageJson.version = nextVersion;
+  fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+  if (fs.existsSync(packageLockPath)) {
+    const packageLock = JSON.parse(fs.readFileSync(packageLockPath, "utf8"));
+    packageLock.version = nextVersion;
+    if (packageLock.packages?.[""]) {
+      packageLock.packages[""].version = nextVersion;
+    }
+    fs.writeFileSync(packageLockPath, `${JSON.stringify(packageLock, null, 2)}\n`, "utf8");
+  }
+
+  const flowEnv = JSON.stringify({
+    VITE_FLOW_GERAR_VOUCHER_URL: process.env.VITE_FLOW_GERAR_VOUCHER_URL ?? "",
+    VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL: process.env.VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL ?? ""
+  }).replace(/</g, "\\u003c");
+  const builtAt = new Date();
+  const buildInfo = JSON.stringify({
+    version: nextVersion,
+    builtAt: builtAt.toISOString(),
+    builtAtLabel: builtAt.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }).replace(/</g, "\\u003c");
+
+  const initScript = `<script>window.__APP_FLOW_ENV=${flowEnv};window.__APP_BUILD_INFO=${buildInfo};</script>`;
 
   const html = `<!doctype html>
 <html lang="pt-BR">
@@ -37,13 +83,14 @@ async function run() {
   </head>
   <body>
     <div id="root"></div>
+    ${initScript}
     <script>${js}</script>
   </body>
   </html>`;
 
   fs.writeFileSync(path.join(distDir, "webresource-app-motoristas.html"), html, "utf8");
   fs.writeFileSync(path.join(distDir, "index.html"), html, "utf8");
-  console.log("Build concluído: dist/webresource-app-motoristas.html");
+  console.log(`Build concluído: dist/webresource-app-motoristas.html | versão ${nextVersion}`);
 }
 
 run().catch((error) => {

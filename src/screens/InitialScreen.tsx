@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import betinhosLogo from "../../Logo Betinhos B.png";
 import historyIcon from "../assets/icons/clock.svg";
+import { PullToRefresh } from "../components/common/PullToRefresh";
 import type { AgendaItem } from "../types";
 
 const modules = [
@@ -29,7 +30,7 @@ const modules = [
     action: "Abrir",
     icon: "maintenance",
     tone: "neutral",
-    disabled: true,
+    disabled: false,
   },
   {
     id: "expenses",
@@ -146,6 +147,7 @@ type InitialScreenProps = {
   onExpensesPress?: () => void;
   openExpenses?: () => void;
   onResetLocal?: () => void;
+  onRefresh?: () => void | Promise<void>;
   driverName?: string;
   motoristaNome?: string;
   nextServiceAt?: string | Date | null;
@@ -153,6 +155,15 @@ type InitialScreenProps = {
   services?: AgendaItem[];
   [key: string]: unknown;
 };
+
+type BuildInfo = {
+  version?: string;
+  builtAtLabel?: string;
+};
+
+function getBuildInfo() {
+  return ((window as Window & { __APP_BUILD_INFO?: BuildInfo }).__APP_BUILD_INFO ?? {}) as BuildInfo;
+}
 
 function getFirstName(name?: string) {
   return name?.trim().split(/\s+/)[0] || "Renan";
@@ -292,11 +303,13 @@ function ModuleIcon({ name }: { name: string }) {
 }
 
 export function InitialScreen(props: InitialScreenProps) {
+  const shellRef = useRef<HTMLElement | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const driverName = getFirstName(props.driverName ?? props.motoristaNome);
   const nextService = useMemo(() => getNextServiceItem(props, now), [now, props.nextServiceAt, props.proximoServicoEm, props.services]);
   const nextServiceDate = nextService?.date ?? null;
   const agendaCount = useMemo(() => getTodayAgendaCount(props.services, now), [now, props.services]);
+  const buildInfo = useMemo(() => getBuildInfo(), []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60000);
@@ -320,8 +333,9 @@ export function InitialScreen(props: InitialScreenProps) {
       .find((handler): handler is (screen: string) => void => typeof handler === "function");
 
     const aliases = screenAliases[screen] ?? [screen];
+    const targetScreen = screen === "maintenancePhoto" ? "solicitarManutencao" : aliases[0];
     if (navigator) {
-      navigator(aliases[0]);
+      navigator(targetScreen);
       return;
     }
 
@@ -346,7 +360,8 @@ export function InitialScreen(props: InitialScreenProps) {
   };
 
   return (
-    <main className="concept-shell">
+    <PullToRefresh className="pull-refresh--home" scrollRef={shellRef} onRefresh={props.onRefresh ?? (() => window.location.reload())}>
+    <main ref={shellRef} className="concept-shell">
       <header className="concept-topbar">
         <div>
           <span className="concept-kicker">Olá,</span>
@@ -389,12 +404,15 @@ export function InitialScreen(props: InitialScreenProps) {
       </section>
 
       <footer className="concept-footer">
-        <span>Versão 1.1.2 • Atualizado em 03/06/2026</span>
+        <span>
+          Versão {buildInfo.version ?? "local"} {buildInfo.builtAtLabel ? `- Build ${buildInfo.builtAtLabel}` : ""}
+        </span>
         <button type="button" onClick={resetLocalData}>
           Resetar dados locais
         </button>
       </footer>
     </main>
+    </PullToRefresh>
   );
 }
 

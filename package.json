@@ -1,11 +1,13 @@
 {
   "name": "app-motoristas-webresource",
-  "version": "2.0.0",
+  "version": "2.0.451",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev-server.cjs",
     "build": "node scripts/build-react-singlefile.cjs",
+    "deploy:webresource": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1",
+    "push": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1 -EnvironmentUrl https://org23b93544.crm2.dynamics.com/ -WebResourceName new_app-motoristas-v2",
     "test": "node --test --experimental-strip-types tests/*.test.ts",
     "preview": "node scripts/serve-dist.cjs"
   },

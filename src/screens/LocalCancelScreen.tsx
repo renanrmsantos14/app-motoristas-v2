@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FlowSubmitButton, type FlowSubmitState } from "../components/common/FlowSubmitButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { DetailData } from "../types";
@@ -8,14 +9,16 @@ type LocalCancelScreenProps = {
   onBack: () => void;
   onWrongClick: () => void;
   onSubmit: (reason: string) => void;
+  submitState?: FlowSubmitState;
 };
 
-export function LocalCancelScreen({ onBack, onWrongClick, onSubmit }: LocalCancelScreenProps) {
+export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState = "idle" }: LocalCancelScreenProps) {
   const [text, setText] = useState("");
+  const isSubmitting = submitState !== "idle";
 
   return (
     <AppShell screenLabel="TelaCanceladonoLocal">
-      <FormMenu title="Cancelado no Local" onBack={onBack} rightIcon="eraser" rightLabel="Limpar" onRightClick={() => setText("")} />
+      <FormMenu title="Cancelado no Local" onBack={isSubmitting ? undefined : onBack} rightIcon="eraser" rightLabel="Limpar" onRightClick={isSubmitting ? undefined : () => setText("")} />
       <section className="main-panel cancel-main">
         <article className="cancel-card">
           <div className="cancel-title">Descreva detalhadamente:</div>
@@ -31,8 +34,8 @@ export function LocalCancelScreen({ onBack, onWrongClick, onSubmit }: LocalCance
                 />
               </div>
               <div className="cancel-actions">
-                <button className="cancel-wrong" onClick={onWrongClick}>Cliquei errado</button>
-                <button className="cancel-submit" onClick={() => onSubmit(text)}>Enviar</button>
+                <button className="cancel-wrong" disabled={isSubmitting} onClick={onWrongClick}>Cliquei errado</button>
+                <FlowSubmitButton className="cancel-submit" idleLabel="Enviar" state={submitState} onClick={() => onSubmit(text)} />
               </div>
             </div>
           </div>

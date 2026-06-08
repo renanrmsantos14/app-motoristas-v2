@@ -16,6 +16,11 @@ type XrmLike = {
 };
 
 export type DataverseRecord = Record<string, any>;
+type AppResourceFlowEnv = Record<string, string | undefined>;
+type WindowWithFlowEnv = Window & {
+  __APP_FLOW_ENV?: AppResourceFlowEnv;
+  __APP_REPORT_ERROR?: (error: unknown, context?: Record<string, unknown>) => void;
+};
 
 export type DriverContext = {
   id: string;
@@ -35,6 +40,25 @@ export type FinalizePayload = {
   fields: Record<string, string>;
   signatureDataUrl?: string;
   photos?: Partial<Record<MaintenancePhotoKind, string>>;
+  onProgress?: (message: string) => void;
+};
+
+export type MaintenanceRequestPayload = {
+  descricao: string;
+  kmAtual: number;
+  veiculoId: string;
+  motoristaId: string;
+  gravidade: number;
+  agendarPara?: string;
+  comentario?: string;
+  photos?: string[];
+  onProgress?: (message: string) => void;
+};
+
+export type MaintenanceRequestVehicleOption = {
+  id: string;
+  label: string;
+  isCurrent: boolean;
 };
 
 const CATEGORY = {
@@ -73,35 +97,48 @@ const MAINTENANCE_STATUS = {
 export const DATAVERSE = {
   clientes: "cr40f_clientes1s",
   veiculos: "cr40f_veiculoses",
-  geral: "cr40f_reservadeveculos",
-  funcionarios: "cr40f_funcionarios",
+  geral: "cr40f_reservadeveculoses",
+  funcionarios: "cr40f_funcionarioses",
   bancoDeDados: "cr40f_bancodedadoses",
   manutencoes: "cr40f_manutencoeses",
   trocas: "cr40f_trocasdecarros",
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
   posseVeiculos: "new_possedeveiculos",
+  fotosManutencao: "new_fotomanutencao",
   systemusers: "systemusers"
 } as const;
 
-const WEB_API_ENTITY: Record<string, string> = {
-  [DATAVERSE.systemusers]: "systemuser"
-};
-
 const ENTITY_COLLECTION_ALIASES: Record<string, string> = {
-  cr40f_reservadeveculoses: "cr40f_reservadeveculos",
-  cr40f_reservadeveculoes: "cr40f_reservadeveculos",
-  cr40f_funcionarioses: "cr40f_funcionarios",
-  cr40f_funcionarioes: "cr40f_funcionarios"
+  cr40f_reservadeveculoes: "cr40f_reservadeveculoses",
+  cr40f_funcionarioes: "cr40f_funcionarioses"
 };
-
-function normalizeEntitySet(entitySetName: string) {
-  return ENTITY_COLLECTION_ALIASES[entitySetName] || entitySetName;
-}
+const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
+  [DATAVERSE.clientes]: "cr40f_clientes1",
+  [DATAVERSE.veiculos]: "cr40f_veiculos",
+  [DATAVERSE.geral]: "cr40f_reservadeveculos",
+  [DATAVERSE.funcionarios]: "cr40f_funcionarios",
+  [DATAVERSE.bancoDeDados]: "cr40f_bancodedados",
+  [DATAVERSE.manutencoes]: "cr40f_manutencoes",
+  [DATAVERSE.trocas]: "cr40f_trocasdecarro",
+  [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
+  [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
+  [DATAVERSE.fotosManutencao]: "new_fotomanutencao",
+  [DATAVERSE.systemusers]: "systemuser",
+  environmentvariabledefinitions: "environmentvariabledefinition",
+  environmentvariablevalues: "environmentvariablevalue"
+};
 
 const FLOW_URLS = {
   gerarVoucher: "VITE_FLOW_GERAR_VOUCHER_URL",
   salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL"
 } as const;
+
+const DEV_DATAVERSE_URL = "https://org23b93544.crm2.dynamics.com/";
+
+const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> = {
+  [FLOW_URLS.gerarVoucher]: "new_FlowURLFlowGerarVoucherAppMotoristasv2",
+  [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive"
+};
 
 const GERAL_SELECT =
   "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,modifiedon";
@@ -114,6 +151,7 @@ const EXCHANGE_SELECT =
 
 const DV_LOG_PREFIX = "[AppMotoristas:Dataverse]";
 let lastRuntimeLogKey = "";
+const flowUrlCache = new Map<string, string>();
 
 function dataverseLog(message: string, data?: unknown) {
   if (data === undefined) {
@@ -134,9 +172,20 @@ function dataverseWarn(message: string, data?: unknown) {
 function dataverseError(message: string, data?: unknown) {
   if (data === undefined) {
     console.error(DV_LOG_PREFIX, message);
+    (window as WindowWithFlowEnv).__APP_REPORT_ERROR?.(new Error(message), {
+      severity: "error",
+      source: "dataverse",
+      action: message
+    });
     return;
   }
   console.error(DV_LOG_PREFIX, message, data);
+  (window as WindowWithFlowEnv).__APP_REPORT_ERROR?.(data, {
+    severity: "error",
+    source: "dataverse",
+    action: message,
+    payload: data
+  });
 }
 
 function getWindowXrm(): XrmLike | null {
@@ -213,38 +262,13 @@ function encodeOptions(value: string) {
   return value.startsWith("?") ? value : `?${value}`;
 }
 
-function singularizeDataverseCollection(name: string) {
-  if (!name) return name;
-  const normalized = normalizeEntitySet(name);
-  if (normalized !== name) return normalized;
-  if (name === "cr40f_trocasdecarros") return "cr40f_trocasdecarro";
-  if (name === "cr40f_trocasdecarroes") return "cr40f_trocasdecarro";
-  if (name === "cr40f_reservadeveculoses") return "cr40f_reservadeveculo";
-  if (name === "cr40f_reservadeveculoes") return "cr40f_reservadeveculo";
-  if (name === "cr40f_funcionarioses") return "cr40f_funcionario";
-  if (name === "cr40f_funcionarioes") return "cr40f_funcionario";
-  if (name === "cr40f_manutencoeses") return "cr40f_manutencao";
-  if (name === "cr40f_bancodedadoses") return "cr40f_bancodado";
-  if (name === "cr40f_servicosporpassageiros") return "cr40f_servicosporpassageiro";
-  if (name === "cr40f_veiculoses") return "cr40f_veiculo";
-  if (name === "cr40f_clientes1s") return "cr40f_cliente1";
-  if (name === "new_possedeveiculos") return "new_possedeveiculo";
-  if (name.endsWith("es")) {
-    const candidate = name.slice(0, -2);
-    return candidate.endsWith("s") ? candidate.slice(0, -1) : candidate;
-  }
-  if (name.endsWith("s")) return name.slice(0, -1);
-  return name;
-}
-
-function normalizeEntitySetFromAlias(name: string) {
-  if (!name) return name;
-  if (name === "systemusers") return "systemuser";
-  return ENTITY_COLLECTION_ALIASES[name] || name;
-}
-
 function getWebApiEntityName(entitySetName: string) {
-  return normalizeEntitySet(singularizeDataverseCollection(entitySetName));
+  const normalizedCollection = ENTITY_COLLECTION_ALIASES[entitySetName] ?? entitySetName;
+  return ENTITY_SET_TO_ENTITY_NAME[normalizedCollection] || normalizedCollection;
+}
+
+function getBusinessId(record: DataverseRecord, fallback = "") {
+  return String(record.cr40f_id ?? fallback ?? "").trim();
 }
 
 function describeDataverseError(error: unknown) {
@@ -377,7 +401,7 @@ export async function getDriverContext(): Promise<DriverContext> {
 
   const result = await retrieveMultiple(
     DATAVERSE.funcionarios,
-    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft&$filter=cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=1`
+    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value&$filter=cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=1`
   );
   const funcionario = result.entities[0] ?? null;
   if (!funcionario) throw new Error("Motorista nao encontrado em Funcionarios pelo Email Microsoft.");
@@ -396,6 +420,105 @@ export async function getDriverContext(): Promise<DriverContext> {
   };
 }
 
+export function getDriverCurrentVehicleId(driver: DriverContext | null) {
+  return cleanODataGuid(driver?.funcionario?._cr40f_veiculoatual_value);
+}
+
+function getVehicleLabel(record: DataverseRecord) {
+  const placa = String(record.cr40f_placa ?? "").trim();
+  const modelo = [record.cr40f_marca, record.cr40f_modelo].map((value) => String(value ?? "").trim()).filter(Boolean).join(" ");
+  return [placa, modelo].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
+}
+
+export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext) {
+  const currentVehicleId = getDriverCurrentVehicleId(driver);
+  const result = await retrieveMultiple(
+    DATAVERSE.veiculos,
+    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value&$orderby=cr40f_placa asc&$top=200"
+  );
+  return result.entities
+    .map((record): MaintenanceRequestVehicleOption => {
+      const id = cleanODataGuid(record.cr40f_veiculosid);
+      return {
+        id,
+        label: getVehicleLabel(record),
+        isCurrent: Boolean(currentVehicleId && id === currentVehicleId)
+      };
+    })
+    .filter((vehicle) => Boolean(vehicle.id && vehicle.label));
+}
+
+export function buildMaintenanceRequestRecord(payload: MaintenanceRequestPayload) {
+  const descricao = payload.descricao.trim();
+  const kmAtual = Number(payload.kmAtual);
+  const veiculoId = cleanGuid(payload.veiculoId);
+  const motoristaId = cleanGuid(payload.motoristaId);
+  const gravidade = Number(payload.gravidade);
+  const agendarPara = payload.agendarPara?.trim();
+  const comentario = payload.comentario?.trim();
+
+  if (!descricao) throw new Error("Descricao da manutencao e obrigatoria.");
+  if (!Number.isFinite(kmAtual) || kmAtual <= 0) throw new Error("Km atual deve ser maior que zero.");
+  if (!veiculoId) throw new Error("Veiculo atual nao encontrado para solicitar manutencao.");
+  if (!motoristaId) throw new Error("Motorista logado nao encontrado para solicitar manutencao.");
+  if (!Number.isFinite(gravidade) || gravidade <= 0) throw new Error("Gravidade da manutencao e obrigatoria.");
+
+  const data: Record<string, unknown> = {
+    cr40f_descricao: descricao,
+    cr40f_kmatual: Math.trunc(kmAtual),
+    cr40f_graudamanutencao: Math.trunc(gravidade),
+    "cr40f_Placa_Carro@odata.bind": bind(DATAVERSE.veiculos, veiculoId),
+    "cr40f_Solicitado_por@odata.bind": bind(DATAVERSE.funcionarios, motoristaId)
+  };
+
+  if (agendarPara) data.cr40f_agendarpara = new Date(agendarPara).toISOString();
+  if (comentario) data.cr40f_comentariosaomotorista = comentario;
+
+  return data;
+}
+
+export async function createMaintenanceRequestRemote(payload: MaintenanceRequestPayload) {
+  dataverseLog("Solicitacao de manutencao iniciada.", {
+    kmAtual: payload.kmAtual,
+    hasAgendarPara: Boolean(payload.agendarPara),
+    photoCount: payload.photos?.length ?? 0
+  });
+  const result = await createOne(DATAVERSE.manutencoes, buildMaintenanceRequestRecord(payload));
+  const photos = payload.photos?.filter(Boolean) ?? [];
+  if (!photos.length) return result;
+
+  payload.onProgress?.("Preparando pasta das fotos.");
+  const maintenance = await retrieveOne(DATAVERSE.manutencoes, result.id, MAINTENANCE_SELECT);
+  const photoFolderPath = `${await buildMaintenancePhotoFolder(maintenance)}/Solicitação`;
+
+  const uploadedRequestLinks = await Promise.all(photos.map(async (photoDataUrl, index) => {
+    const fileName = `foto-solicitacao-${index + 1}`;
+    payload.onProgress?.(`Enviando foto ${index + 1} da solicitação.`);
+    const link = await uploadMaintenancePhoto(photoFolderPath, photoDataUrl, fileName, {
+      manutencaoId: maintenance.cr40f_id ?? "",
+      manutencaoGuid: result.id,
+      tipoFoto: "SOLICITACAO",
+      indice: index + 1
+    });
+    return { fileName, link, order: index + 1 };
+  }));
+
+  await Promise.all(uploadedRequestLinks.map((item) =>
+    createMaintenancePhotoLinkRecord({
+      maintenanceId: result.id,
+      maintenanceBusinessId: String(maintenance.cr40f_id ?? ""),
+      origin: "PRE_MANUTENCAO",
+      photoType: "SOLICITACAO",
+      link: item.link,
+      path: photoFolderPath,
+      fileName: item.fileName,
+      order: item.order
+    })
+  ));
+
+  return result;
+}
+
 function toDate(value: unknown) {
   const date = value ? new Date(String(value)) : null;
   return date && !Number.isNaN(date.getTime()) ? date : null;
@@ -408,7 +531,7 @@ function formatAgendaTime(date: Date | null) {
   tomorrow.setDate(today.getDate() + 1);
   const sameDay = date.toDateString() === today.toDateString();
   const nextDay = date.toDateString() === tomorrow.toDateString();
-  const prefix = sameDay ? "HOJE" : nextDay ? "AMANHA" : date.toLocaleDateString("pt-BR");
+  const prefix = sameDay ? "HOJE" : nextDay ? "AMANHÃ" : date.toLocaleDateString("pt-BR");
   return `${prefix} ${date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
@@ -451,11 +574,6 @@ function parseCurrencyNumber(value: string) {
   );
 }
 
-function formatFlowInteger(value: string) {
-  const number = Number(String(value ?? "").replace(/\D/g, ""));
-  return Number.isFinite(number) ? String(Math.trunc(number)) : "0";
-}
-
 function formatFlowDecimal(value: string) {
   const number = parseCurrencyNumber(value);
   return Number.isFinite(number) ? number.toFixed(2) : "0.00";
@@ -464,6 +582,183 @@ function formatFlowDecimal(value: string) {
 function dataUrlToBase64(value = "") {
   const comma = value.indexOf(",");
   return comma >= 0 ? value.slice(comma + 1) : value;
+}
+
+function getDataUrlMimeType(value = "") {
+  const match = /^data:([^;,]+)[;,]/i.exec(value);
+  return match?.[1]?.trim().toLowerCase() || "application/octet-stream";
+}
+
+function getFileExtensionFromMimeType(mimeType: string) {
+  const normalized = mimeType.trim().toLowerCase();
+  if (normalized === "image/jpeg" || normalized === "image/jpg") return "jpg";
+  if (normalized === "image/png") return "png";
+  if (normalized === "image/webp") return "webp";
+  if (normalized === "image/heic") return "heic";
+  if (normalized === "image/heif") return "heif";
+  const subtype = normalized.split("/")[1] ?? "";
+  return subtype.replace(/[^a-z0-9]/gi, "").toLowerCase() || "bin";
+}
+
+function sanitizePathSegment(value: unknown, fallback: string) {
+  const sanitized = String(value ?? "")
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
+    .replace(/\s+/g, " ")
+    .replace(/\.+$/g, "");
+  return sanitized || fallback;
+}
+
+function shouldUseDevFolderPrefix() {
+  const clientUrl = getWindowXrm()?.Utility?.getGlobalContext?.().getClientUrl?.() ?? "";
+  return clientUrl.replace(/\/+$/, "").toLowerCase() === DEV_DATAVERSE_URL.replace(/\/+$/, "").toLowerCase();
+}
+
+function getFlowLink(result: unknown) {
+  const record = (result ?? {}) as Record<string, unknown>;
+  const direct = getFlowText(
+    record,
+    "shareLink",
+    "link",
+    "webUrl",
+    "url",
+    "fileLink",
+    "sharedLink"
+  );
+  if (direct) return direct;
+  const nestedLink = (record.link ?? record.shareLink ?? {}) as Record<string, unknown>;
+  return getFlowText(nestedLink, "webUrl", "url", "href");
+}
+
+async function buildMaintenancePhotoFolder(record: DataverseRecord) {
+  const geral = (record.__geral as DataverseRecord | undefined) ?? {};
+  const vehicleId = cleanODataGuid(record._cr40f_placa_carro_value) || cleanODataGuid(geral._cr40f_veiculo_value);
+  let vehicleLabel = "Sem modelo - Sem placa";
+  if (vehicleId) {
+    const vehicle = await retrieveOne(DATAVERSE.veiculos, vehicleId, "$select=cr40f_modelo,cr40f_placa");
+    vehicleLabel = `${String(vehicle.cr40f_modelo ?? "Sem modelo").trim() || "Sem modelo"} - ${
+      String(vehicle.cr40f_placa ?? "Sem placa").trim() || "Sem placa"
+    }`;
+  }
+  const maintenanceBusinessId = sanitizePathSegment(record.cr40f_id, "Sem ID");
+  const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+  return `Manutenções/${devPrefix}${sanitizePathSegment(vehicleLabel, "Sem modelo - Sem placa")}/${maintenanceBusinessId}`;
+}
+
+async function uploadMaintenancePhoto(
+  path: string,
+  photoDataUrl: string,
+  fileNameBase: string,
+  metadata: Record<string, unknown>
+) {
+  const mimeType = getDataUrlMimeType(photoDataUrl);
+  const extension = getFileExtensionFromMimeType(mimeType);
+  const flowResult = await runHttpFlow(FLOW_URLS.salvarFotosManutencao, {
+    caminhoCompleto: path,
+    nomeArquivo: `${sanitizePathSegment(fileNameBase, "arquivo")}.${extension}`,
+    conteudoBase64: dataUrlToBase64(photoDataUrl),
+    mimeType,
+    metadados: metadata
+  });
+  assertFlowSuccess(flowResult, "FlowSalvarArquivosOnedrive");
+  return getFlowLink(flowResult);
+}
+
+function formatMaintenanceRequestPhotoLinks(existingComment: string, links: string[]) {
+  const validLinks = links.map((link) => link.trim()).filter(Boolean);
+  if (!validLinks.length) return existingComment;
+  const linkBlock = validLinks.map((link, index) => `Foto solicitação ${index + 1}: ${link}`).join("\n");
+  return [existingComment.trim(), linkBlock].filter(Boolean).join("\n\n");
+}
+
+type MaintenancePhotoOrigin = "PRE_MANUTENCAO" | "POS_MANUTENCAO" | "NOTA_FISCAL";
+
+async function createMaintenancePhotoLinkRecord({
+  maintenanceId,
+  maintenanceBusinessId,
+  origin,
+  photoType,
+  link,
+  path,
+  fileName,
+  order
+}: {
+  maintenanceId: string;
+  maintenanceBusinessId: string;
+  origin: MaintenancePhotoOrigin;
+  photoType: string;
+  link: string;
+  path: string;
+  fileName: string;
+  order: number;
+}) {
+  if (!link.trim()) return;
+  await createOne(DATAVERSE.fotosManutencao, {
+    new_name: `${maintenanceBusinessId || cleanGuid(maintenanceId)} - ${origin} - ${order}`,
+    new_tipofoto: photoType,
+    new_origem: origin,
+    new_link: link,
+    new_caminho: path,
+    new_nomearquivo: fileName,
+    new_ordem: order,
+    "new_Manutencao@odata.bind": bind(DATAVERSE.manutencoes, maintenanceId)
+  });
+}
+
+function describeFlowUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const pathParts = parsed.pathname.split("/").filter(Boolean);
+    const lastPath = pathParts[pathParts.length - 1] ?? "";
+    return `${parsed.hostname}/${lastPath.slice(0, 12)}${lastPath.length > 12 ? "..." : ""}`;
+  } catch {
+    return "URL invalida";
+  }
+}
+
+function describeFlowUrlForDebug(url: string) {
+  try {
+    const parsed = new URL(url);
+    const params = Array.from(parsed.searchParams.keys());
+    const sig = parsed.searchParams.get("sig") ?? parsed.searchParams.get("code") ?? "";
+    const redactedParams = params.length ? `?${params.join("=&")}=` : " sem query";
+    const sigHint = sig ? ` sig/code final: ...${sig.slice(-8)}` : "";
+    return `${parsed.origin}${parsed.pathname}${redactedParams}${sigHint}`;
+  } catch {
+    return "URL invalida";
+  }
+}
+
+function hasSharedAccessQuery(url: string) {
+  try {
+    const params = new URL(url).searchParams;
+    return Boolean(params.get("sig") || params.get("code"));
+  } catch {
+    return false;
+  }
+}
+
+function buildHttpFlowErrorMessage(envKey: string, url: string, response: Response, responseText: string) {
+  const bodyPreview = responseText.trim().replace(/\s+/g, " ").slice(0, 220);
+  const bodyInfo = bodyPreview ? ` Corpo: ${bodyPreview}` : " Corpo vazio.";
+  const endpointInfo = `Endpoint: ${describeFlowUrl(url)}. Variavel: ${envKey}. URL usada: ${describeFlowUrlForDebug(url)}.`;
+  const sharedAccessRequired = /Shared Access/i.test(responseText);
+  const queryHint = hasSharedAccessQuery(url)
+    ? "A URL tem query de acesso; confira se foi copiada depois de salvar/publicar o Flow."
+    : "A URL esta sem sig/code. Copie a URL completa do gatilho HTTP, incluindo tudo depois de ?.";
+
+  if (response.status === 401 || response.status === 403) {
+    if (sharedAccessRequired) {
+      return `Flow exige Shared Access/SAS. HTTP ${response.status} ${response.statusText || ""}. ${endpointInfo} ${queryHint}${bodyInfo}`;
+    }
+    return `Flow bloqueado antes da execucao. HTTP ${response.status} ${response.statusText || ""}. ${endpointInfo} Verifique URL do gatilho HTTP, query sig/code e politica de autenticacao do Flow.${bodyInfo}`;
+  }
+
+  if (response.status === 404) {
+    return `Flow nao encontrado. HTTP 404. ${endpointInfo} Provavel URL antiga, Flow recriado, ambiente errado ou caminho quebrado.${bodyInfo}`;
+  }
+
+  return `Flow falhou. HTTP ${response.status} ${response.statusText || ""}. ${endpointInfo}${bodyInfo}`;
 }
 
 function getFlowText(result: unknown, ...keys: string[]) {
@@ -580,7 +875,7 @@ async function buildPassengersHtml(geralId: string, serviceDate: Date | null, dr
       const message = buildPassengerMessage(name, driverName, serviceDate);
       const phoneText = escapeHtml(phoneRaw || "Sem telefone");
       const phoneHtml = phone
-        ? `<a href="https://wa.me/${phone}?text=${encodeURIComponent(message)}">${phoneText}</a>`
+        ? `<a href="https://wa.me/${phone}?text=${encodeURIComponent(message)}" target="_blank" rel="noopener noreferrer">${phoneText}</a>`
         : `<span style="color:#8a8a8a">${phoneText}</span>`;
       return `<span>${escapeHtml(name)}${name && phoneRaw ? " - " : ""}${phoneHtml}</span>`;
     })
@@ -592,17 +887,17 @@ async function buildPassengersHtml(geralId: string, serviceDate: Date | null, dr
 function buildFields(record: DataverseRecord, passengerHtml = ""): DetailField[] {
   const date = toDate(record.cr40f_dataehorriodesada);
   return [
-    { label: "Data e Horario de Saida", value: date ? date.toLocaleString("pt-BR") : "" },
+    { label: "Data e Horário de Saída", value: date ? date.toLocaleString("pt-BR") : "" },
     { label: "Cliente", value: getLookupName(record, "cr40f_cliente") || getFormatted(record, "cr40f_cliente") },
     { label: "Receber", value: getFormatted(record, "cr40f_receber") },
     { label: "Trajeto", value: String(record.cr40f_trajeto ?? "") },
     { label: "Passageiros e Telefones de Contato", value: passengerHtml || String(record.cr40f_passageirosetelefonedecontato ?? ""), html: true },
-    { label: "Endereco de Saida", value: String(record.cr40f_endereodesada ?? "") },
+    { label: "Endereço de Saída", value: String(record.cr40f_endereodesada ?? "") },
     { label: "Destino", value: String(record.cr40f_destino ?? "") },
-    { label: "Obs de Operacao", value: String(record.cr40f_obsdeoperao ?? "") },
+    { label: "Obs de Operação", value: String(record.cr40f_obsdeoperao ?? "") },
     { label: "Perfil do Passageiro", value: String(record.cr40f_perfildopassageiro ?? "") },
     { label: "Solicitante", value: getLookupName(record, "cr40f_solicitante") },
-    { label: "Veiculo", value: getLookupName(record, "cr40f_veiculo") }
+    { label: "Veículo", value: getLookupName(record, "cr40f_veiculo") }
   ].filter((field) => field.value);
 }
 
@@ -614,7 +909,8 @@ function serviceActions(record: DataverseRecord): DetailAction[] {
 function mapGeralService(record: DataverseRecord, passengerHtml = ""): AgendaItem {
   const date = toDate(record.cr40f_dataehorriodesada);
   const id = getGeralId(record);
-  const trajectory = String(record.cr40f_trajeto ?? record.cr40f_id ?? "Servico");
+  const businessId = getBusinessId(record, id);
+  const trajectory = String(record.cr40f_trajeto ?? record.cr40f_id ?? "Serviço");
   const minutesUntilStart = date ? (date.getTime() - Date.now()) / 60000 : Number.POSITIVE_INFINITY;
   const viewedAt = toDate(record.new_visualizacaodomotorista);
   const modifiedAt = toDate(record.modifiedon);
@@ -622,8 +918,8 @@ function mapGeralService(record: DataverseRecord, passengerHtml = ""): AgendaIte
   const isReceber = normalizeText(getFormatted(record, "cr40f_receber")) === "sim";
   const detail: DetailData = {
     type: "SERVICO",
-    id,
-    title: "Detalhes do Servico",
+    id: businessId,
+    title: "Detalhes do Serviço",
     actions: serviceActions(record),
     fields: buildFields(record, passengerHtml),
     dataverse: { entitySetName: DATAVERSE.geral, id, record }
@@ -632,11 +928,11 @@ function mapGeralService(record: DataverseRecord, passengerHtml = ""): AgendaIte
   return {
     id: `srv-${id}`,
     tipo: "SERVICO",
-    label: "Servico",
+    label: "Serviço",
     time: formatAgendaTime(date),
     description: trajectory,
     priority: isReceber ? 10 : minutesUntilStart >= 0 && minutesUntilStart <= 30 && wasEditedAfterView ? 1 : wasEditedAfterView ? 3 : 0,
-    searchText: `${id} ${trajectory}`.toLowerCase(),
+    searchText: `${businessId} ${id} ${trajectory}`.toLowerCase(),
     detail
   };
 }
@@ -655,14 +951,14 @@ async function mapGeralServiceWithPassengers(record: DataverseRecord, driver: Dr
 function buildMaintenanceFields(geral: DataverseRecord, maintenance: DataverseRecord): DetailField[] {
   const date = toDate(geral.cr40f_dataehorriodesada);
   return [
-    { label: "Data e Horario de Saida", value: date ? date.toLocaleString("pt-BR") : "" },
-    { label: "ID Manutencao", value: String(maintenance.cr40f_id ?? "") },
-    { label: "Veiculo", value: getLookupName(maintenance, "cr40f_placa_carro") || getLookupName(geral, "cr40f_veiculo") },
-    { label: "Descricao", value: String(maintenance.cr40f_descricao ?? "") },
-    { label: "Grau da Manutencao", value: getFormatted(maintenance, "cr40f_graudamanutencao") },
+    { label: "Data e Horário de Saída", value: date ? date.toLocaleString("pt-BR") : "" },
+    { label: "ID Manutenção", value: String(maintenance.cr40f_id ?? "") },
+    { label: "Veículo", value: getLookupName(maintenance, "cr40f_placa_carro") || getLookupName(geral, "cr40f_veiculo") },
+    { label: "Descrição", value: String(maintenance.cr40f_descricao ?? "") },
+    { label: "Grau da Manutenção", value: getFormatted(maintenance, "cr40f_graudamanutencao") },
     { label: "Tipo do Reparo", value: getFormatted(maintenance, "cr40f_tipodoreparo") },
-    { label: "Comentarios ao Motorista", value: String(maintenance.cr40f_comentariosaomotorista ?? "") },
-    { label: "Obs de Operacao", value: String(geral.cr40f_obsdeoperao ?? "") },
+    { label: "Comentários ao Motorista", value: String(maintenance.cr40f_comentariosaomotorista ?? "") },
+    { label: "Obs de Operação", value: String(geral.cr40f_obsdeoperao ?? "") },
     { label: "Link Nota Fiscal", value: String(maintenance.new_linkdanotafiscal ?? "") },
     { label: "Link Foto 1", value: String(maintenance.new_linkdafotofinal1 ?? "") },
     { label: "Link Foto 2", value: String(maintenance.new_linkdafotofinal2 ?? "") },
@@ -674,11 +970,12 @@ function mapMaintenance(geral: DataverseRecord, maintenance: DataverseRecord): A
   const date = toDate(geral.cr40f_dataehorriodesada);
   const geralId = getGeralId(geral);
   const maintenanceId = getRecordId(maintenance, "cr40f_manutencoesid");
-  const description = String(maintenance.cr40f_descricao ?? geral.cr40f_trajeto ?? "Manutencao");
+  const businessId = getBusinessId(maintenance, maintenanceId || geralId);
+  const description = String(maintenance.cr40f_descricao ?? geral.cr40f_trajeto ?? "Manutenção");
   const detail: DetailData = {
     type: "MANUTENCAO",
-    id: maintenanceId || geralId,
-    title: "Detalhes da Manutencao",
+    id: businessId,
+    title: "Detalhes da Manutenção",
     actions: ["cancel", "finalizar"],
     fields: buildMaintenanceFields(geral, maintenance),
     dataverse: {
@@ -691,11 +988,11 @@ function mapMaintenance(geral: DataverseRecord, maintenance: DataverseRecord): A
   return {
     id: `mnt-${maintenanceId || geralId}`,
     tipo: "MANUTENCAO",
-    label: "Manutencao",
+    label: "Manutenção",
     time: formatAgendaTime(date),
     description,
     priority: 0,
-    searchText: `${maintenanceId} ${geralId} ${description} ${getLookupName(maintenance, "cr40f_placa_carro")}`.toLowerCase(),
+    searchText: `${businessId} ${maintenanceId} ${geralId} ${description} ${getLookupName(maintenance, "cr40f_placa_carro")}`.toLowerCase(),
     detail
   };
 }
@@ -704,28 +1001,29 @@ function buildExchangeFields(exchange: DataverseRecord, geral?: DataverseRecord)
   const start = toDate(exchange.cr40f_iniciodajaneladetroca);
   const end = toDate(exchange.cr40f_fimdajaneladetroca);
   return [
-    { label: "Inicio da Janela", value: start ? start.toLocaleString("pt-BR") : "" },
+    { label: "Início da Janela", value: start ? start.toLocaleString("pt-BR") : "" },
     { label: "Fim da Janela", value: end ? end.toLocaleString("pt-BR") : "" },
     { label: "Motorista 1", value: getLookupName(exchange, "cr40f_motorista1") },
     { label: "Motorista 2", value: getLookupName(exchange, "cr40f_motorista2") },
-    { label: "Veiculo 1 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo1antesdatroca") },
-    { label: "Veiculo 2 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo2antesdatroca") },
+    { label: "Veículo 1 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo1antesdatroca") },
+    { label: "Veículo 2 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo2antesdatroca") },
     { label: "Tipo de Troca", value: getFormatted(exchange, "new_tipodetroca") },
-    { label: "Observacao", value: String(exchange.cr40f_observacao ?? "") },
-    { label: "Obs de Operacao", value: String(geral?.cr40f_obsdeoperao ?? "") }
+    { label: "Observação", value: String(exchange.cr40f_observacao ?? "") },
+    { label: "Obs de Operação", value: String(geral?.cr40f_obsdeoperao ?? "") }
   ].filter((field) => field.value);
 }
 
 function mapExchange(exchange: DataverseRecord, geral: DataverseRecord | undefined): AgendaItem {
   const start = toDate(exchange.cr40f_iniciodajaneladetroca);
   const exchangeId = getRecordId(exchange, "cr40f_trocasdecarroid");
+  const businessId = getBusinessId(exchange, exchangeId);
   const geralId = geral ? getGeralId(geral) : "";
   const description =
     `${getLookupName(exchange, "cr40f_veiculo1antesdatroca")} <> ${getLookupName(exchange, "cr40f_veiculo2antesdatroca")}`.trim() ||
     String(exchange.cr40f_id ?? "Troca de Carro");
   const detail: DetailData = {
     type: "TROCA",
-    id: exchangeId,
+    id: businessId,
     title: "Detalhes da Troca",
     actions: ["cancel", "finalizar"],
     fields: buildExchangeFields(exchange, geral),
@@ -743,7 +1041,7 @@ function mapExchange(exchange: DataverseRecord, geral: DataverseRecord | undefin
     time: formatAgendaTime(start),
     description,
     priority: 0,
-    searchText: `${exchangeId} ${description} ${getLookupName(exchange, "cr40f_motorista1")} ${getLookupName(exchange, "cr40f_motorista2")}`.toLowerCase(),
+    searchText: `${businessId} ${exchangeId} ${description} ${getLookupName(exchange, "cr40f_motorista1")} ${getLookupName(exchange, "cr40f_motorista2")}`.toLowerCase(),
     detail
   };
 }
@@ -776,7 +1074,7 @@ function addDateHeaders(items: AgendaItem[]) {
     const date = item.time?.split(" ")[0] ?? "";
     if (date && date !== lastKey) {
       lastKey = date;
-      result.push({ id: `h-${date}-${result.length}`, tipo: "HEADER", tituloData: date === "HOJE" ? "Servicos de HOJE" : date === "AMANHA" ? "Servicos de AMANHA" : date, seta: "v" });
+      result.push({ id: `h-${date}-${result.length}`, tipo: "HEADER", tituloData: date === "HOJE" ? "Serviços de HOJE" : date === "AMANHÃ" ? "Serviços de AMANHÃ" : date, seta: "v" });
     }
     result.push(item);
   }
@@ -790,7 +1088,7 @@ function addHistoryDateHeaders(items: AgendaItem[]) {
     const date = item.time?.split(" ")[0] ?? "";
     if (date && date !== lastKey) {
       lastKey = date;
-      const title = date === "HOJE" ? "Servicos de HOJE" : date === "AMANHA" ? "Servicos de AMANHA" : `Servicos de ${date}`;
+      const title = date === "HOJE" ? "Serviços de HOJE" : date === "AMANHÃ" ? "Serviços de AMANHÃ" : `Serviços de ${date}`;
       result.push({ id: `hh-${date}-${result.length}`, tipo: "HEADER", tituloData: title, seta: "v" });
     }
     result.push(item);
@@ -815,7 +1113,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.geral,
     [
       geralSelect,
-      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and new_datadefinalizacao eq null and cr40f_status ne ${OPERATION_STATUS.concluido} and cr40f_status ne ${OPERATION_STATUS.requerAnalise} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
+      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and cr40f_status ne ${OPERATION_STATUS.requerAnalise} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc",
       "$top=80"
     ].join("&")
@@ -825,7 +1123,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.geral,
     [
       geralSelect,
-      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and new_datadefinalizacao eq null and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
+      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc",
       "$top=80"
     ].join("&")
@@ -849,7 +1147,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.geral,
     [
       geralSelect,
-      `$filter=new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.troca} and new_datadefinalizacao eq null and _cr40f_ot_value ne null`,
+      `$filter=new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.troca} and _cr40f_ot_value ne null`,
       "$top=120"
     ].join("&")
   );
@@ -1020,27 +1318,89 @@ export async function loadRemoteDetailByParams(servicoId: string, tipo = ""): Pr
   return null;
 }
 
+async function getDataverseEnvironmentVariableValue(schemaName: string) {
+  if (flowUrlCache.has(schemaName)) return flowUrlCache.get(schemaName) ?? "";
+
+  const definitionResult = await retrieveMultiple(
+    "environmentvariabledefinitions",
+    [
+      "$select=environmentvariabledefinitionid,schemaname,defaultvalue",
+      `$filter=schemaname eq '${escapeODataText(schemaName)}'`,
+      "$top=1"
+    ].join("&")
+  );
+  const definition = definitionResult.entities[0];
+  if (!definition?.environmentvariabledefinitionid) {
+    throw new Error(`Variavel de ambiente Dataverse nao encontrada: ${schemaName}`);
+  }
+
+  const valueResult = await retrieveMultiple(
+    "environmentvariablevalues",
+    [
+      "$select=value",
+      `$filter=_environmentvariabledefinitionid_value eq ${cleanGuid(definition.environmentvariabledefinitionid)}`,
+      "$top=1"
+    ].join("&")
+  );
+  const url = String(valueResult.entities[0]?.value ?? definition.defaultvalue ?? "").trim();
+  flowUrlCache.set(schemaName, url);
+  return url;
+}
+
+async function resolveFlowUrl(envKey: string) {
+  const dataverseSchemaName = FLOW_DATAVERSE_ENVIRONMENT_VARIABLES[envKey];
+  if (dataverseSchemaName && hasDataverseRuntime()) {
+    try {
+      const dataverseUrl = await getDataverseEnvironmentVariableValue(dataverseSchemaName);
+      if (dataverseUrl) return dataverseUrl;
+      dataverseWarn("Variavel de ambiente Dataverse vazia.", { envKey, dataverseSchemaName });
+    } catch (error) {
+      dataverseWarn("Falha ao ler variavel de ambiente Dataverse. Usando fallback local.", {
+        envKey,
+        dataverseSchemaName,
+        error: describeDataverseError(error)
+      });
+    }
+  }
+
+  const flowEnv = ((window as WindowWithFlowEnv).__APP_FLOW_ENV ?? {}) as AppResourceFlowEnv;
+  return flowEnv[envKey] ?? "";
+}
+
 async function runHttpFlow(envKey: string, payload: Record<string, unknown>) {
-  const viteEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
-  const url = viteEnv[envKey] ?? "";
-  if (!url) throw new Error(`URL do Flow nao configurada: ${envKey}. Use trigger HTTP/custom API para webresource React.`);
+  const url = await resolveFlowUrl(envKey);
+  if (!url) throw new Error(`URL do Flow nao configurada: ${envKey}. Configure a variavel Dataverse ou window.__APP_FLOW_ENV.`);
   const startedAt = performance.now();
   dataverseLog("Flow HTTP iniciado.", { envKey, payloadFields: Object.keys(payload) });
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    dataverseError("Flow HTTP nao recebeu resposta.", {
+      envKey,
+      endpoint: describeFlowUrl(url),
+      urlUsada: describeFlowUrlForDebug(url),
+      durationMs: Math.round(performance.now() - startedAt),
+      error: error instanceof Error ? error.message : String(error)
+    });
+    throw new Error(`Flow sem resposta. Variavel: ${envKey}. Endpoint: ${describeFlowUrl(url)}. URL usada: ${describeFlowUrlForDebug(url)}. Verifique CORS, rede, URL do gatilho HTTP e se a query sig/code esta completa.`);
+  }
   const responseText = await response.text();
   if (!response.ok) {
     dataverseError("Flow HTTP falhou.", {
       envKey,
+      endpoint: describeFlowUrl(url),
+      urlUsada: describeFlowUrlForDebug(url),
       status: response.status,
       statusText: response.statusText,
       durationMs: Math.round(performance.now() - startedAt),
       responseText
     });
-    throw new Error(`Flow falhou: HTTP ${response.status}`);
+    throw new Error(buildHttpFlowErrorMessage(envKey, url, response, responseText));
   }
   dataverseLog("Flow HTTP concluido.", {
     envKey,
@@ -1062,28 +1422,30 @@ async function runHttpFlow(envKey: string, payload: Record<string, unknown>) {
 
 export async function saveVoucherRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
-  if (!dv?.id) throw new Error("Servico sem referencia Dataverse.");
+  if (!dv?.id) throw new Error("Serviço sem referência Dataverse.");
   const record = dv.record ?? {};
   dataverseLog("Finalizacao por voucher iniciada.", { detailId: payload.detail.id, dataverseId: dv.id });
+  payload.onProgress?.("Preparando dados do voucher.");
+  payload.onProgress?.("Enviando voucher para o Flow.");
   const flowResult = await runHttpFlow(FLOW_URLS.gerarVoucher, {
     text: record.cr40f_reservadeveculosid ?? dv.id,
     text_1: dataUrlToBase64(payload.signatureDataUrl ?? ""),
-    text_2: payload.fields.Desvio ?? "Nao",
-    text_3: formatFlowInteger(payload.fields["Km Inicial"] ?? "0"),
-    text_4: formatFlowInteger(payload.fields["Km Final"] ?? "0"),
-    text_5: payload.fields["Horario Inicial"] ?? payload.fields["HorÃ¡rio Inicial"] ?? "",
-    text_6: payload.fields["Espera Inicio"] ?? payload.fields["Espera InÃ­cio"] ?? "",
+    text_2: payload.fields.Desvio === "Não" ? "Nao" : payload.fields.Desvio ?? "Nao",
+    text_5: payload.fields["Horario Inicial"] ?? payload.fields["Horário Inicial"] ?? payload.fields["HorÃ¡rio Inicial"] ?? "",
+    text_6: payload.fields["Espera Inicio"] ?? payload.fields["Espera Início"] ?? payload.fields["Espera InÃ­cio"] ?? "",
     text_7: payload.fields["Espera Final"] ?? "",
-    text_8: formatFlowDecimal(payload.fields.Pedagio ?? payload.fields["PedÃ¡gio"] ?? "0"),
+    text_8: formatFlowDecimal(payload.fields.Pedagio ?? payload.fields["Pedágio"] ?? payload.fields["PedÃ¡gio"] ?? "0"),
     text_9: formatFlowDecimal(payload.fields.Estacionamento ?? "0"),
-    text_10: formatFlowDecimal(payload.fields.Combustivel ?? payload.fields["CombustÃ­vel"] ?? "0"),
+    text_10: formatFlowDecimal(payload.fields.Combustivel ?? payload.fields["Combustível"] ?? payload.fields["CombustÃ­vel"] ?? "0"),
     text_11: formatFlowDecimal(payload.fields.Hospedagem ?? "0"),
     text_12: formatFlowDecimal(payload.fields.Outros ?? "0"),
-    text_13: payload.fields["Observacao Voucher"] ?? payload.fields["ObservaÃ§Ã£o Voucher"] ?? "",
-    text_14: payload.fields["Horario Final"] ?? payload.fields["HorÃ¡rio Final"] ?? "",
+    text_13: payload.fields["Observacao Voucher"] ?? payload.fields["Observação Voucher"] ?? payload.fields["ObservaÃ§Ã£o Voucher"] ?? "",
+    text_14: payload.fields["Horario Final"] ?? payload.fields["Horário Final"] ?? payload.fields["HorÃ¡rio Final"] ?? "",
     text_15: new Date().toISOString()
   });
+  payload.onProgress?.("Validando retorno do Flow.");
   assertFlowSuccess(flowResult, "FlowGerarVoucher");
+  payload.onProgress?.("Atualizando status no Dataverse.");
   await updateOne(DATAVERSE.geral, dv.id, {
     new_rascunhovoucher: null,
     cr40f_status: OPERATION_STATUS.concluido,
@@ -1100,23 +1462,21 @@ export async function saveVoucherDraftRemote(detail: DetailData, fields: Record<
     await updateOne(DATAVERSE.geral, dv.id, { new_rascunhovoucher: null });
     return;
   }
-  const [horaSaida = "", minSaida = ""] = String(fields["Horario Inicial"] ?? "").split(":");
-  const [esperaIniHora = "", esperaIniMin = ""] = String(fields["Espera Inicio"] ?? "").split(":");
+  const [horaSaida = "", minSaida = ""] = String(fields["Horário Inicial"] ?? fields["Horario Inicial"] ?? "").split(":");
+  const [esperaIniHora = "", esperaIniMin = ""] = String(fields["Espera Início"] ?? fields["Espera Inicio"] ?? "").split(":");
   const [esperaFimHora = "", esperaFimMin = ""] = String(fields["Espera Final"] ?? "").split(":");
   const draft = {
-    km_inicial: fields["Km Inicial"] ?? "",
-    km_final: fields["Km Final"] ?? "",
     hora_saida: horaSaida,
     min_saida: minSaida,
     espera_ini_hora: esperaIniHora,
     espera_ini_min: esperaIniMin,
     espera_fim_hora: esperaFimHora,
     espera_fim_min: esperaFimMin,
-    desvio: fields.Desvio ?? "Nao",
-    obs: fields["Observacao Voucher"] ?? "",
-    pedagio: fields.Pedagio ?? "",
+    desvio: fields.Desvio ?? "Não",
+    obs: fields["Observação Voucher"] ?? fields["Observacao Voucher"] ?? "",
+    pedagio: fields["Pedágio"] ?? fields.Pedagio ?? "",
     estacionamento: fields.Estacionamento ?? "",
-    combustivel: fields.Combustivel ?? "",
+    combustivel: fields["Combustível"] ?? fields.Combustivel ?? "",
     hospedagem: fields.Hospedagem ?? "",
     outros: fields.Outros ?? ""
   };
@@ -1128,10 +1488,11 @@ export async function saveVoucherDraftRemote(detail: DetailData, fields: Record<
 
 export async function finalizeServiceRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
-  if (!dv?.id) throw new Error("Servico sem referencia Dataverse.");
-  dataverseLog("Finalizacao simples de servico iniciada.", { detailId: payload.detail.id, dataverseId: dv.id });
+  if (!dv?.id) throw new Error("Serviço sem referência Dataverse.");
+  dataverseLog("Finalização simples de serviço iniciada.", { detailId: payload.detail.id, dataverseId: dv.id });
+  payload.onProgress?.("Atualizando serviço no Dataverse.");
   await updateOne(DATAVERSE.geral, dv.id, {
-    new_observacaofinal: payload.fields["Observacao Final"] ?? payload.fields["ObservaÃ§Ã£o Final"] ?? "",
+    new_observacaofinal: payload.fields["Observacao Final"] ?? payload.fields["Observação Final"] ?? payload.fields["ObservaÃ§Ã£o Final"] ?? "",
     cr40f_status: OPERATION_STATUS.concluido,
     new_datadefinalizacao: new Date().toISOString()
   });
@@ -1139,11 +1500,11 @@ export async function finalizeServiceRemote(payload: FinalizePayload) {
 
 export async function cancelServiceRemote(detail: DetailData, reason: string) {
   const dv = detail.dataverse;
-  if (!dv?.id) throw new Error("Servico sem referencia Dataverse.");
+  if (!dv?.id) throw new Error("Serviço sem referência Dataverse.");
   const record = dv.record ?? {};
   const geralId = detail.type === "SERVICO" ? dv.id : cleanODataGuid(record.__geralId);
-  if (!geralId) throw new Error("Registro Geral vinculado nao encontrado para cancelamento.");
-  dataverseLog("Cancelamento/finalizacao local remota iniciado.", {
+  if (!geralId) throw new Error("Registro Geral vinculado não encontrado para cancelamento.");
+  dataverseLog("Cancelamento/finalização local remota iniciado.", {
     detailId: detail.id,
     dataverseId: dv.id,
     geralId,
@@ -1255,12 +1616,12 @@ async function applyExchangePossessionRemote(exchange: DataverseRecord, exchange
 
 export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
-  if (!dv?.id) throw new Error("Manutencao sem referencia Dataverse.");
+  if (!dv?.id) throw new Error("Manutenção sem referência Dataverse.");
   const record = dv.record ?? {};
   const geralId = cleanODataGuid(record.__geralId);
   const paymentKey = normalizeText(payload.fields["Forma de Pagamento"] ?? "");
   const paymentValue = MAINTENANCE_PAYMENT[paymentKey];
-  dataverseLog("Finalizacao de manutencao iniciada.", {
+  dataverseLog("Finalização de manutenção iniciada.", {
     detailId: payload.detail.id,
     dataverseId: dv.id,
     photoKinds: Object.keys(payload.photos ?? {})
@@ -1269,36 +1630,78 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
     cr40f_datamanutencao: new Date().toISOString(),
     cr40f_estabelecimento: payload.fields.Estabelecimento,
     cr40f_valor: parseCurrencyNumber(payload.fields.Valor ?? "0"),
-    new_comentariosdocolaborador: payload.fields["Comentarios do Motorista"] ?? "",
-    cr40f_servicorealizado: payload.fields["Servico Realizado"] ?? ""
+    new_comentariosdocolaborador: payload.fields["Comentários do Motorista"] ?? payload.fields["Comentarios do Motorista"] ?? "",
+    cr40f_servicorealizado: payload.fields["Serviço Realizado"] ?? payload.fields["Servico Realizado"] ?? ""
   };
   if (paymentValue !== undefined) maintenancePatch.cr40f_pagamento = paymentValue;
   const motoristaId = cleanODataGuid((record.__geral as DataverseRecord | undefined)?._cr40f_motorista_value);
   if (motoristaId) maintenancePatch["cr40f_Realizado_por_nome@odata.bind"] = bind(DATAVERSE.funcionarios, motoristaId);
 
+  payload.onProgress?.("Salvando dados da manutenção.");
   await updateOne(DATAVERSE.manutencoes, dv.id, maintenancePatch);
-  const flowResult = await runHttpFlow(FLOW_URLS.salvarFotosManutencao, {
-    text: geralId || dv.id,
-    text_1: dataUrlToBase64(payload.photos?.NOTAFISCAL ?? ""),
-    text_2: dataUrlToBase64(payload.photos?.FOTO1 ?? ""),
-    text_3: dataUrlToBase64(payload.photos?.FOTO2 ?? ""),
-    text_4: dataUrlToBase64(payload.photos?.FOTO3 ?? "")
-  });
-  assertFlowSuccess(flowResult, "FlowSalvarFotosManutencao");
   const photoPatch: Record<string, unknown> = {};
-  const notaFiscal = getFlowText(flowResult, "new_linkdanotafiscal", "linkNotaFiscal", "notaFiscal", "text_1");
-  const foto1 = getFlowText(flowResult, "new_linkdafotofinal1", "linkFoto1", "foto1", "text_2");
-  const foto2 = getFlowText(flowResult, "new_linkdafotofinal2", "linkFoto2", "foto2", "text_3");
-  const foto3 = getFlowText(flowResult, "new_linkdafotofinal3", "linkFoto3", "foto3", "text_4");
   photoPatch.cr40f_status = MAINTENANCE_STATUS.realizado;
-  if (notaFiscal) photoPatch.new_linkdanotafiscal = notaFiscal;
-  if (foto1) photoPatch.new_linkdafotofinal1 = foto1;
-  if (foto2) photoPatch.new_linkdafotofinal2 = foto2;
-  if (foto3) photoPatch.new_linkdafotofinal3 = foto3;
+  const photos = payload.photos ?? {};
+  const invoiceEntries = Object.entries(photos)
+    .filter(([kind, dataUrl]) => kind.startsWith("NOTAFISCAL") && Boolean(dataUrl))
+    .sort(([left], [right]) => {
+      const leftIndex = left === "NOTAFISCAL" ? 1 : Number(left.replace("NOTAFISCAL_", ""));
+      const rightIndex = right === "NOTAFISCAL" ? 1 : Number(right.replace("NOTAFISCAL_", ""));
+      return leftIndex - rightIndex;
+    })
+    .map(([kind], index) => ({
+      kind: kind as MaintenancePhotoKind,
+      fileName: `nota-fiscal-${index + 1}`,
+      targetField: "new_linkdanotafiscal"
+    }));
+  const photoEntries = [
+    ...invoiceEntries,
+    { kind: "FOTO1", fileName: "foto-1", targetField: "new_linkdafotofinal1" },
+    { kind: "FOTO2", fileName: "foto-2", targetField: "new_linkdafotofinal2" },
+    { kind: "FOTO3", fileName: "foto-3", targetField: "new_linkdafotofinal3" }
+  ] as const;
+  const photoFolderPath = await buildMaintenancePhotoFolder(record);
+
+  const uploadEntries = photoEntries.filter((entry) => Boolean(photos[entry.kind]));
+  if (uploadEntries.length) payload.onProgress?.(`Enviando ${uploadEntries.length} foto(s) para o OneDrive.`);
+  const uploadedLinks = await Promise.all(uploadEntries.map(async (entry) => ({
+    targetField: entry.targetField,
+    kind: entry.kind,
+    fileName: entry.fileName,
+    link: await uploadMaintenancePhoto(photoFolderPath, photos[entry.kind] ?? "", entry.fileName, {
+      manutencaoId: record.cr40f_id ?? "",
+      manutencaoGuid: dv.id,
+      geralId,
+      tipoFoto: entry.kind
+    })
+  })));
+
+  const linksByField = uploadedLinks.reduce<Record<string, string[]>>((current, item) => {
+    if (!item.link) return current;
+    current[item.targetField] = [...(current[item.targetField] ?? []), item.link];
+    return current;
+  }, {});
+  Object.entries(linksByField).forEach(([field, links]) => {
+    photoPatch[field] = links.join("\n");
+  });
+
+  await Promise.all(uploadedLinks.map((item, index) => createMaintenancePhotoLinkRecord({
+    maintenanceId: dv.id,
+    maintenanceBusinessId: String(record.cr40f_id ?? ""),
+    origin: item.kind.startsWith("NOTAFISCAL") ? "NOTA_FISCAL" : "POS_MANUTENCAO",
+    photoType: item.kind,
+    link: item.link,
+    path: photoFolderPath,
+    fileName: item.fileName,
+    order: index + 1
+  })));
+
+  payload.onProgress?.("Gravando links das fotos no Dataverse.");
   await updateOne(DATAVERSE.manutencoes, dv.id, photoPatch);
   if (geralId) {
+    payload.onProgress?.("Concluindo item da agenda.");
     await updateOne(DATAVERSE.geral, geralId, {
-      new_observacaofinal: payload.fields["Comentarios do Motorista"] ?? payload.fields["Observacoes"] ?? "",
+      new_observacaofinal: payload.fields["Comentários do Motorista"] ?? payload.fields["Comentarios do Motorista"] ?? payload.fields["Observações"] ?? payload.fields["Observacoes"] ?? "",
       cr40f_status: OPERATION_STATUS.concluido,
       new_datadefinalizacao: new Date().toISOString()
     });
@@ -1307,14 +1710,14 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
 
 export async function finalizeExchangeRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
-  if (!dv?.id) throw new Error("Troca sem referencia Dataverse.");
+  if (!dv?.id) throw new Error("Troca sem referência Dataverse.");
   const driver = await getDriverContext();
   const record = dv.record ?? {};
   const isDriver1 = cleanODataGuid(record._cr40f_motorista1_value) === cleanGuid(driver.id);
   const isDriver2 = cleanODataGuid(record._cr40f_motorista2_value) === cleanGuid(driver.id);
-  if (!isDriver1 && !isDriver2) throw new Error("Motorista atual nao pertence a esta troca.");
+  if (!isDriver1 && !isDriver2) throw new Error("Motorista atual não pertence a esta troca.");
 
-  const observation = payload.fields.Observacoes ?? payload.fields["Observacao da Troca"] ?? "Sem observacao.";
+  const observation = payload.fields["Observações"] ?? payload.fields.Observacoes ?? payload.fields["Observação da Troca"] ?? payload.fields["Observacao da Troca"] ?? "Sem observação.";
   const exchangePatch: Record<string, unknown> = {};
   if (isDriver1) {
     exchangePatch.new_concluidomotorista1 = true;
@@ -1329,7 +1732,7 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
   const driver2Done = isDriver2 ? true : record.new_concluidomotorista2 === true;
   if (driver1Done && driver2Done) exchangePatch.cr40f_statusdatroca = EXCHANGE_STATUS.concluida;
 
-  dataverseLog("Finalizacao de troca iniciada.", {
+  dataverseLog("Finalização de troca iniciada.", {
     detailId: payload.detail.id,
     dataverseId: dv.id,
     isDriver1,
@@ -1337,11 +1740,14 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
     closesExchange: driver1Done && driver2Done
   });
 
+  payload.onProgress?.("Atualizando troca no Dataverse.");
   await updateOne(DATAVERSE.trocas, dv.id, exchangePatch);
 
   const geralId = cleanODataGuid(record.__geralId);
   if (geralId && driver1Done && driver2Done) {
+    payload.onProgress?.("Atualizando posse dos veículos.");
     await applyExchangePossessionRemote(record, dv.id);
+    payload.onProgress?.("Concluindo item da agenda.");
     await updateOne(DATAVERSE.geral, geralId, {
       new_observacaofinal: observation,
       cr40f_status: OPERATION_STATUS.concluido,

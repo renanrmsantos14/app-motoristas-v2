@@ -10,7 +10,9 @@ export type SystemIconName =
   | "copy"
   | "check"
   | "eraser"
+  | "trash"
   | "camera"
+  | "flash"
   | "sync"
   | "rotate";
 
@@ -49,11 +51,30 @@ export function SystemIcon({ name }: { name: SystemIconName }) {
     );
   }
 
+  if (name === "trash") {
+    return (
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M9 13h30" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" />
+        <path d="M19 13V8h10v5" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M14 18 16 40h16l2-22" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 23v12M27 23v12" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
   if (name === "camera") {
     return (
       <svg viewBox="0 0 48 48" aria-hidden="true">
         <path d="M7 17h9l3-5h10l3 5h9v24H7V17Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
         <circle cx="24" cy="29" r="8" fill="none" stroke="currentColor" strokeWidth="3" />
+      </svg>
+    );
+  }
+
+  if (name === "flash") {
+    return (
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M28 4 12 27h13l-5 21 17-27H24l4-17Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }

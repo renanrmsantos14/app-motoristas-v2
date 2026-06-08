@@ -1,0 +1,462 @@
+{
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\dataverse-metadata-prefix-2026-06-01T11-28-09-842Z.json": {
+    "mtime": 1780313290.4487288,
+    "ast_hash": "7d46e217eef0707dd079b505af3a38fe",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\package.json": {
+    "mtime": 1780492250.6013987,
+    "ast_hash": "4ad8cc5cdc54f2821f6481e9114bdb31",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tsconfig.json": {
+    "mtime": 1780425313.6741276,
+    "ast_hash": "7dbe80a92b653e763f75e6cda20ded39",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tsconfig.node.json": {
+    "mtime": 1780425814.1436262,
+    "ast_hash": "42c71f3f9f64d94f8145887b59354846",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\vite.config.ts": {
+    "mtime": 1780425314.8458922,
+    "ast_hash": "0aac3985a73cd1a47caf6c0636375a92",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\docs\\dataverse-schema-index.json": {
+    "mtime": 1780510334.3816402,
+    "ast_hash": "5f3e40102f176086e0e2140781309244",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Header.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "b10a272f496881ce3c21887f665f2e4e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Properties.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "c87aed3f7c2f214b3ce8d1012bb70036",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\AppTests\\2.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "7af9e0e91a1d52735290e92257e5a6f3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\1.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "4d61be2f13adf7ed18232bd8324c95f9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\156.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "170bc9e17c8b021e43760cbb10da7a3b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\207.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "8158423aa0ff32ae3772fd491306f100",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\277.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "de709ad97ad8f468deaae31208a09861",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\300.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "4ee727802efeb03676b67d8f872694af",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\381.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "3c3f5bf3293eab03dc75f967ccd4786e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\4.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "2815440f8542470f515e16dba3c4daa6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\406.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "5ff31ac3136058f01f196327838fe88b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\425.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "4d50853aea55047cfce15220a3c69599",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\471.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "aebc4b15d37dece74601aa923170b6b6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\48.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "1c4789064ae426e1455ff86254ccfba2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\587.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "5a357d4f698ad9d3689911bfb6a9d988",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\DataSources.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "ab73aca9fcc2a51a0674d81761d5b3e9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\ModernThemes.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "1d56bedc48f58e63bf6d434e944a5b20",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\QualifiedValues.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "fca7a9085026c00d6b275f579bdfb5db",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\Resources.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "5d7efdc4b0102f9819564ba297beb26d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\Templates.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "1a6e4fb498f91daa91378cf9b529d75d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\Themes.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "d7df30cfb2cf028dc4a4eb64b24cec00",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Resources\\PublishInfo.json": {
+    "mtime": 1780430282.0,
+    "ast_hash": "f4f776bb97458b08b745729a37b8f22b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\App.tsx": {
+    "mtime": 1780514283.6985373,
+    "ast_hash": "57105eb2c995d7b167bd7f94e5c60b25",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets.d.ts": {
+    "mtime": 1780486493.0771642,
+    "ast_hash": "ec4bd8eb4fe5a4ea9198be50e7cae0b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\main.tsx": {
+    "mtime": 1780426889.584975,
+    "ast_hash": "eaf761d026f6030ad1a886f5927ff362",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\react-dom-cjs.d.ts": {
+    "mtime": 1780426856.3327653,
+    "ast_hash": "846e459a2d757b51439b63758c244340",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\types.ts": {
+    "mtime": 1780510025.8878095,
+    "ast_hash": "f343d46e542092cc95f06af36eb749f2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\common\\Avatar.tsx": {
+    "mtime": 1780427702.2559478,
+    "ast_hash": "93c7c9d1c4409e445b4fca0208e28414",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\details\\DetailActionButton.tsx": {
+    "mtime": 1780494435.0980766,
+    "ast_hash": "4d5e0fbd234ee3c09e1f0b41f0e36c8b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\details\\DetailsField.tsx": {
+    "mtime": 1780427736.8635125,
+    "ast_hash": "1cd099bdac37d58cf88b9e3604ded578",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\details\\QuestionsBox.tsx": {
+    "mtime": 1780485962.3974972,
+    "ast_hash": "7b3d38fc9b46097ff0c4584468eec52c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\icons\\PowerIcon.tsx": {
+    "mtime": 1780486493.6556513,
+    "ast_hash": "d79e19b4cdff4c3688651ef614e705b2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\icons\\SystemIcon.tsx": {
+    "mtime": 1780921201.434434,
+    "ast_hash": "9fcf76197f3de743cdf6c4c4721541bc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\initial\\TileButton.tsx": {
+    "mtime": 1780427735.5954075,
+    "ast_hash": "553f614f3113a37f70b168ec896ef3ad",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\layout\\AppShell.tsx": {
+    "mtime": 1780427702.6285837,
+    "ast_hash": "52c45a34d8713cc0040d897f7e82a1d9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\DetailsMenu.tsx": {
+    "mtime": 1780496556.956967,
+    "ast_hash": "9a8526b5c252fde9e82c5c88f7a9fd11",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\FormMenu.tsx": {
+    "mtime": 1780509569.8073509,
+    "ast_hash": "f9c91207fe214b7a1ce01cb80d46b38b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\InitialMenu.tsx": {
+    "mtime": 1780427734.860898,
+    "ast_hash": "f2f9012e28c73b172e9ba0f6086390a0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\ServicesMenu.tsx": {
+    "mtime": 1780492736.746308,
+    "ast_hash": "c2155aced08e2a4889a9431889b8f44e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\services\\AgendaCard.tsx": {
+    "mtime": 1780509059.3320131,
+    "ast_hash": "d5dc64d8a2dcccc8774cca4f6dc96808",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\services\\NotificationMarker.tsx": {
+    "mtime": 1780427736.2172556,
+    "ast_hash": "dc1285e003a4d5054f47422de83467d3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\services\\SearchBar.tsx": {
+    "mtime": 1780492750.1193862,
+    "ast_hash": "f65eb3bddccb25699954c8623838efd3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\voucher\\VoucherInputRow.tsx": {
+    "mtime": 1780509578.2939892,
+    "ast_hash": "79872339b42a6c08df8454a67ac04b04",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\voucher\\VoucherSection.tsx": {
+    "mtime": 1780428121.68433,
+    "ast_hash": "543b74a50457cc3408ef9ec6e43405bb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\data\\mockData.ts": {
+    "mtime": 1780508071.5499961,
+    "ast_hash": "1a15348c013f82868655b5f7771e55f5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\hooks\\useAgendaSearch.ts": {
+    "mtime": 1780427701.2179153,
+    "ast_hash": "5c7234c39f17a43d54d2b14488a34465",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\lib\\dataverse.ts": {
+    "mtime": 1780921636.3859017,
+    "ast_hash": "8a41e42f95ffd7b8beed0d24dfcabb5d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\lib\\localWorkflow.ts": {
+    "mtime": 1780485961.6939366,
+    "ast_hash": "5fb75a42728a3303620accd568bcb50c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\DetailsScreen.tsx": {
+    "mtime": 1780508328.5908198,
+    "ast_hash": "838e1c2f57c8b1a9d2dda05cd84537dc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\FinalizeScreen.tsx": {
+    "mtime": 1780513321.9380546,
+    "ast_hash": "09b21e6053583222f20b7377cb49a53f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\HistoryDetailsScreen.tsx": {
+    "mtime": 1780498914.0737455,
+    "ast_hash": "ac991f5aa39e8975de7c705589d3d843",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\HistoryScreen.tsx": {
+    "mtime": 1780492513.465964,
+    "ast_hash": "883153cffb7a71624c1a976f39bc7ac9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\InitialScreen.tsx": {
+    "mtime": 1780518094.7541683,
+    "ast_hash": "37e0cb255eb164e1a3e1d921c96e3308",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\LocalCancelScreen.tsx": {
+    "mtime": 1780430286.8993773,
+    "ast_hash": "64acf6fb04291581dee134c823410394",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\MaintenancePhotoPreviewScreen.tsx": {
+    "mtime": 1780429984.6111398,
+    "ast_hash": "ab1524ef7da2f7481aa8d3708f55b436",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\MaintenancePhotoScreen.tsx": {
+    "mtime": 1780921324.049819,
+    "ast_hash": "b603703d86141a610872aedcb24681c5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\ServicesScreen.tsx": {
+    "mtime": 1780509277.360076,
+    "ast_hash": "72eeb6b1d4573628afcdbc0fecde515b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\SignatureScreen.tsx": {
+    "mtime": 1780509729.1932197,
+    "ast_hash": "d670f95b374364660b00d92858ad30c2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\VoucherScreen.tsx": {
+    "mtime": 1780921810.820888,
+    "ast_hash": "4cf2618a1aad6e294d416320fd978631",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tests\\localWorkflow.test.ts": {
+    "mtime": 1780485887.640758,
+    "ast_hash": "911585db99df2b4556247d5066756adc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\DESIGN_SYSTEM.html": {
+    "mtime": 1780420212.5858428,
+    "ast_hash": "2053be8597bddf0d37b43126e64f3d94",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\index.html": {
+    "mtime": 1780426324.2678733,
+    "ast_hash": "100e0aab4137ac8da44097357e855ef5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\PENDENCIAS_PRODUCAO.md": {
+    "mtime": 1780514382.8392172,
+    "ast_hash": "3cfcb20c127c31eba167bff42f997e2c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\README.md": {
+    "mtime": 1780511629.5401633,
+    "ast_hash": "875db1b716697e3ebb7ca13164400048",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\docs\\superpowers\\plans\\2026-06-02-app-motoristas-webresource.md": {
+    "mtime": 1780420434.3902993,
+    "ast_hash": "31db3d1dc8b4652af8b2350338b545bb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\App.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "105ccd57906b641dfa95bb60ea6c9616",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaAssinaturaPassageiro.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "e501eb90f6efb85c3adb48f64fc04958",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaCanceladonoLocal.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "982b6675ee1cb8a3fd3f9e31becb8dfb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaDetalhes.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "816ef8fe09a6c99be5b18e0ec0dc2b80",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaDetalhesHistorico.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "de77f49ffbc2b965e5f8d3d548a5d1d8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaFinalizar.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "30997f5836bca1f7a701292aa0beb3c5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaFotoManuten\u00e7\u00e3o.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "ef85f25ccc5d3c98bfc1366afaaf4b0f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaHist\u00f3rico.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "5e8b736c0120287f924d24d4a618f236",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaInicial.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "14cf5d338236c45f20a2e0a0a1a1dae6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaPreviewFotoManuten\u00e7\u00e3o.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "98662cb44decca8d8e81d8b9570ca000",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaServi\u00e7os.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "7018e4667d84f90334a0457c27e57744",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaVoucher.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "e82a5902aeffb66e6c0581fc1bbff6f4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\_EditorState.pa.yaml": {
+    "mtime": 1780430282.0,
+    "ast_hash": "2ec1580bafdbaaf02059922b74b9df40",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\Logo Betinhos B.png": {
+    "mtime": 1764071784.2389493,
+    "ast_hash": "0fb821aa945a9f66577cff5ed43f5c7f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Assets\\Images\\bd7d5f28-81c5-4c0e-9c19-59e59e1d22cf.png": {
+    "mtime": 1780430284.0,
+    "ast_hash": "0fb821aa945a9f66577cff5ed43f5c7f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Resources\\myhnyueu.jpg": {
+    "mtime": 1780430282.0,
+    "ast_hash": "09d32fe382e17122ef2d37380dea0354",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\car.svg": {
+    "mtime": 1780485641.9062865,
+    "ast_hash": "f757988740282f7d21a163cb7c524b72",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\check-svgrepo-com.svg": {
+    "mtime": 1780509007.8045065,
+    "ast_hash": "9a2a2bb0e5bebdd93d2b4ee34aefcaa3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\clock.svg": {
+    "mtime": 1780485769.6611865,
+    "ast_hash": "2601d27375af91a74656e7e887ea8ff3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\money-check-dollar.svg": {
+    "mtime": 1780485685.6034093,
+    "ast_hash": "1511aa50a6f0e4bacf058580938a0a89",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\wrench.svg": {
+    "mtime": 1780485737.344846,
+    "ast_hash": "d3994f7ca1c440c36f5e32ca3211227a",
+    "semantic_hash": ""
+  }
+}

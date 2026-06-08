@@ -57,22 +57,16 @@ test("fotos da manutenção podem ser salvas e limpas localmente", () => {
   assert.deepEqual(cleared.photos["76"], {});
 });
 
-test("voucher exige horário inicial, km inicial e km final maior", () => {
+test("voucher exige horário inicial", () => {
   assert.deepEqual(validateVoucherFields({
-    "Horário Inicial": "Não informado",
-    "Km Inicial": "0",
-    "Km Final": "0"
+    "Horário Inicial": "Não informado"
   }), [
-    "Horário inicial é obrigatório.",
-    "KM inicial é obrigatório.",
-    "KM final é obrigatório."
+    "Horário inicial é obrigatório."
   ]);
 
   assert.deepEqual(validateVoucherFields({
-    "Horário Inicial": "14:30",
-    "Km Inicial": "100",
-    "Km Final": "80"
-  }), ["KM final deve ser maior que o inicial."]);
+    "Horário Inicial": "14:30"
+  }), []);
 });
 
 test("manutenção exige campos principais antes de finalizar", () => {

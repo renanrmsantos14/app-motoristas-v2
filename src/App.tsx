@@ -3,34 +3,48 @@ import { AnimatePresence, motion } from "motion/react";
 import { agendaMock, historyMock } from "./data/mockData";
 import {
   cancelServiceRemote,
+  createMaintenanceRequestRemote,
   finalizeExchangeRemote,
   finalizeMaintenanceRemote,
   finalizeServiceRemote,
+  getDriverContext,
+  getDriverCurrentVehicleId,
   hasDataverseRuntime,
+  loadMaintenanceRequestVehiclesRemote,
   loadRemoteDetailByParams,
   loadRemoteStore,
   markDetailViewedRemote,
   saveVoucherDraftRemote,
-  saveVoucherRemote
+  saveVoucherRemote,
+  type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
+import { reportAppError } from "./lib/appErrorLogger";
 import {
   cancelDetailLocally,
   clearMaintenancePhotos,
+  deleteMaintenancePhoto as deleteFinalizationMaintenancePhoto,
   detailsToClipboardText,
   finalizeDetailLocally,
   findDetailByParams,
+  removeAgendaDetail,
   saveMaintenancePhoto,
   saveSignatureLocally,
   type LocalStore
 } from "./lib/localWorkflow";
 import { DetailsScreen } from "./screens/DetailsScreen";
-import { FinalizeScreen } from "./screens/FinalizeScreen";
+import { FinalizeScreen, type MaintenanceFinalizeDraft } from "./screens/FinalizeScreen";
 import { HistoryDetailsScreen } from "./screens/HistoryDetailsScreen";
 import { HistoryScreen } from "./screens/HistoryScreen";
 import { InitialScreen } from "./screens/InitialScreen";
 import { LocalCancelScreen } from "./screens/LocalCancelScreen";
 import { MaintenancePhotoScreen } from "./screens/MaintenancePhotoScreen";
 import { MaintenancePhotoPreviewScreen } from "./screens/MaintenancePhotoPreviewScreen";
+import {
+  MaintenanceRequestScreen,
+  type MaintenanceRequestDraft,
+  type MaintenanceRequestFields,
+  type MaintenanceRequestPhoto
+} from "./screens/MaintenanceRequestScreen";
 import { ServicesScreen } from "./screens/ServicesScreen";
 import { SignatureScreen } from "./screens/SignatureScreen";
 import { VoucherScreen } from "./screens/VoucherScreen";
@@ -54,6 +68,9 @@ const SCREEN_DEPTH: Record<Screen, number> = {
   detalhesHistorico: 2,
   voucher: 3,
   finalizar: 3,
+  solicitarManutencao: 1,
+  fotoSolicitacaoManutencao: 2,
+  previewFotoSolicitacaoManutencao: 3,
   canceladoLocal: 3,
   assinatura: 4,
   fotoManutencao: 4,
@@ -287,6 +304,21 @@ function getInitialParams() {
   };
 }
 
+function getVoucherDraftKey(detail: DetailData) {
+  return `${detail.type}:${detail.id}`;
+}
+
+type RemoteOperation = {
+  title: string;
+  message: string;
+  detailId?: string;
+  phase: "loading" | "success";
+};
+
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 function App() {
   const [store, setStore] = useState<LocalStore>(() => loadStore());
   const initialDetailRef = useRef<DetailData | null>(getInitialDetail(store));
@@ -296,10 +328,46 @@ function App() {
   const [maintenancePhotoKind, setMaintenancePhotoKind] = useState<MaintenancePhotoKind>("NOTAFISCAL");
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
   const [toast, setToast] = useState("");
+  const [criticalError, setCriticalError] = useState("");
   const [completingDetailKey, setCompletingDetailKey] = useState("");
+  const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
   const [remoteMode, setRemoteMode] = useState(false);
+  const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
+  const [maintenanceCurrentVehicleId, setMaintenanceCurrentVehicleId] = useState("");
+  const [maintenanceVehiclesLoading, setMaintenanceVehiclesLoading] = useState(false);
+  const [maintenanceRequestDraft, setMaintenanceRequestDraft] = useState<MaintenanceRequestDraft>({
+    descricao: "",
+    kmAtual: "",
+    veiculoId: "",
+    gravidade: ""
+  });
+  const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = useState<MaintenanceRequestPhoto[]>([]);
+  const [maintenanceRequestPhotoDraft, setMaintenanceRequestPhotoDraft] = useState("");
+  const [maintenanceRequestPreviewPhotoId, setMaintenanceRequestPreviewPhotoId] = useState("");
+  const [maintenanceExistingPreview, setMaintenanceExistingPreview] = useState(false);
+  const [maintenanceFinalizeDraft, setMaintenanceFinalizeDraft] = useState<MaintenanceFinalizeDraft>({
+    serviceDone: "",
+    value: "",
+    payment: "",
+    establishment: "",
+    notes: ""
+  });
   const finalizeTimerRef = useRef<number | null>(null);
+  const completingClearTimerRef = useRef<number | null>(null);
   const voucherDraftTimerRef = useRef<number | null>(null);
+
+  const logAppError = (error: unknown, action: string, phase = "") => {
+    reportAppError(error, {
+      severity: "error",
+      source: "app",
+      action,
+      phase,
+      screen,
+      detailId: selectedDetail?.id,
+      detailType: selectedDetail?.type
+    });
+  };
 
   useEffect(() => {
     if (remoteMode) return;
@@ -322,7 +390,16 @@ function App() {
         }));
         if (remoteInitialDetail) {
           markDetailViewedRemote(remoteInitialDetail).catch((error) => {
-            setToast(error instanceof Error ? error.message : "Falha ao marcar visualizacao.");
+            reportAppError(error, {
+              severity: "error",
+              source: "app",
+              action: "markDetailViewedRemote",
+              phase: "initial-detail",
+              screen: "detalhes",
+              detailId: remoteInitialDetail.id,
+              detailType: remoteInitialDetail.type
+            });
+            setToast(error instanceof Error ? error.message : "Falha ao marcar visualização.");
           });
           setSelectedDetail(remoteInitialDetail);
           setScreen("detalhes");
@@ -334,11 +411,20 @@ function App() {
             .then((detail) => {
               if (!alive) return;
               if (!detail) {
-                setToast("Servico remoto nao encontrado.");
+                setToast("Serviço remoto não encontrado.");
                 return;
               }
               markDetailViewedRemote(detail).catch((error) => {
-                setToast(error instanceof Error ? error.message : "Falha ao marcar visualizacao.");
+                reportAppError(error, {
+                  severity: "error",
+                  source: "app",
+                  action: "markDetailViewedRemote",
+                  phase: "deep-link",
+                  screen: "detalhes",
+                  detailId: detail.id,
+                  detailType: detail.type
+                });
+                setToast(error instanceof Error ? error.message : "Falha ao marcar visualização.");
               });
               setSelectedDetail(detail);
               setScreen("detalhes");
@@ -346,7 +432,14 @@ function App() {
             })
             .catch((error) => {
               if (!alive) return;
-              setToast(error instanceof Error ? error.message : "Servico remoto nao encontrado.");
+              reportAppError(error, {
+                severity: "error",
+                source: "app",
+                action: "loadRemoteDetailByParams",
+                phase: "initial-deep-link",
+                screen
+              });
+              setToast(error instanceof Error ? error.message : "Serviço remoto não encontrado.");
             });
           return;
         }
@@ -354,6 +447,13 @@ function App() {
       })
       .catch((error) => {
         if (!alive) return;
+        reportAppError(error, {
+          severity: "critical",
+          source: "app",
+          action: "loadRemoteStore",
+          phase: "bootstrap",
+          screen
+        });
         setRemoteMode(false);
         setToast(error instanceof Error ? error.message : "Falha ao carregar Dataverse.");
       });
@@ -371,6 +471,7 @@ function App() {
   useEffect(() => {
     return () => {
       if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);
+      if (completingClearTimerRef.current) window.clearTimeout(completingClearTimerRef.current);
       if (voucherDraftTimerRef.current) window.clearTimeout(voucherDraftTimerRef.current);
     };
   }, []);
@@ -385,6 +486,37 @@ function App() {
   useEffect(() => {
     previousScreenRef.current = screen;
   }, [screen]);
+
+  useEffect(() => {
+    if (screen !== "solicitarManutencao" || !remoteMode) return;
+    let alive = true;
+    setMaintenanceVehiclesLoading(true);
+    getDriverContext()
+      .then(async (driver) => {
+        const vehicles = await loadMaintenanceRequestVehiclesRemote(driver);
+        if (!alive) return;
+        const currentVehicleId = getDriverCurrentVehicleId(driver);
+        setMaintenanceCurrentVehicleId(currentVehicleId);
+        setMaintenanceVehicles(vehicles);
+      })
+      .catch((error) => {
+        if (!alive) return;
+        reportAppError(error, {
+          severity: "error",
+          source: "app",
+          action: "loadMaintenanceRequestVehiclesRemote",
+          phase: "maintenance-request",
+          screen
+        });
+        setToast(error instanceof Error ? error.message : "Falha ao carregar veículos.");
+      })
+      .finally(() => {
+        if (alive) setMaintenanceVehiclesLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [screen, remoteMode]);
 
   const show = (node: React.ReactNode) => (
     <>
@@ -402,20 +534,51 @@ function App() {
         </motion.div>
       </AnimatePresence>
       {toast ? <div className="local-toast">{toast}</div> : null}
+      {remoteOperation ? (
+        <div className="flow-progress-overlay" role="status" aria-live="polite" aria-label={remoteOperation.title}>
+          <div className={`flow-progress-card is-${remoteOperation.phase}`}>
+            <div className="flow-progress-track" aria-hidden="true">
+              <span />
+            </div>
+            <div className="flow-progress-kicker">{remoteOperation.detailId ?? "Processo remoto"}</div>
+            <h2>{remoteOperation.title}</h2>
+            <p>{remoteOperation.message}</p>
+            <div className="flow-progress-note">Mantenha esta tela aberta.</div>
+          </div>
+        </div>
+      ) : null}
+      {criticalError ? (
+        <div className="critical-error-overlay" role="dialog" aria-modal="true" aria-labelledby="critical-error-title">
+          <div className="critical-error-card">
+            <div className="critical-error-kicker">Falha no envio</div>
+            <h2 id="critical-error-title">Processo não foi concluído</h2>
+            <p>{criticalError}</p>
+            <div className="critical-error-actions">
+              <button type="button" onClick={() => setCriticalError("")}>Entendi</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 
-  const refreshLocal = () => {
+  const refreshLocal = async (detailToRefresh?: DetailData) => {
     if (remoteMode) {
       setToast("Atualizando Dataverse.");
-      loadRemoteStore()
-        .then((remote) => {
-          setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history }));
-          setToast("Atualizado do Dataverse.");
-        })
-        .catch((error) => {
-          setToast(error instanceof Error ? error.message : "Falha ao atualizar Dataverse.");
-        });
+      try {
+        const remote = await loadRemoteStore();
+        setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history }));
+        if (detailToRefresh) {
+          const refreshedDetail =
+            findDetailByParams([...remote.agenda, ...remote.history], detailToRefresh.id, detailToRefresh.type) ??
+            await loadRemoteDetailByParams(detailToRefresh.dataverse?.id ?? detailToRefresh.id, detailToRefresh.type);
+          if (refreshedDetail) setSelectedDetail(refreshedDetail);
+        }
+        setToast("Atualizado do Dataverse.");
+      } catch (error) {
+        logAppError(error, "loadRemoteStore", "refresh");
+        setToast(error instanceof Error ? error.message : "Falha ao atualizar Dataverse.");
+      }
       return;
     }
     setStore((current) => ({ ...current }));
@@ -431,7 +594,7 @@ function App() {
   };
 
   const finalizeSelected = async (fields: Record<string, string>) => {
-    if (!selectedDetail) return;
+    if (!selectedDetail || remoteOperation) return;
     const detailToFinalize = selectedDetail;
     const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
     const firstPendingDetail = findFirstPendingDetail(store.agenda);
@@ -443,14 +606,42 @@ function App() {
     }
 
     if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);
+    if (completingClearTimerRef.current) window.clearTimeout(completingClearTimerRef.current);
 
     if (remoteMode) {
+      const isVoucher = "Horario Inicial" in fields || "Horário Inicial" in fields;
+      const operationTitle =
+        detailToFinalize.type === "SERVICO" && isVoucher
+          ? "Enviando voucher"
+          : detailToFinalize.type === "MANUTENCAO"
+            ? "Enviando manutenção"
+            : detailToFinalize.type === "TROCA"
+              ? "Finalizando troca"
+              : "Finalizando serviço";
+      const setProgress = (message: string) => {
+        setRemoteOperation({
+          title: operationTitle,
+          message,
+          detailId: detailToFinalize.id,
+          phase: "loading"
+        });
+      };
+      const setSuccess = (message: string) => {
+        setRemoteOperation({
+          title: operationTitle,
+          message,
+          detailId: detailToFinalize.id,
+          phase: "success"
+        });
+      };
       try {
+        setProgress("Conferindo fila no Dataverse.");
         const remoteBeforeFinalize = await loadRemoteStore();
         const remoteFirstPendingDetail = findFirstPendingDetail(remoteBeforeFinalize.agenda);
         setStore((current) => ({ ...current, agenda: remoteBeforeFinalize.agenda, history: remoteBeforeFinalize.history }));
 
         if (remoteFirstPendingDetail && !isSameDetail(remoteFirstPendingDetail, detailToFinalize)) {
+          setRemoteOperation(null);
           setToast("Conclua os itens anteriores da fila antes de prosseguir.");
           setSelectedDetail(null);
           setScreen("servicos");
@@ -459,55 +650,100 @@ function App() {
 
         const signatureDataUrl = store.signatures[detailToFinalize.id];
         const photos = store.photos[detailToFinalize.id];
-        const isVoucher = "Km Inicial" in fields || "Horario Inicial" in fields || "Horário Inicial" in fields;
+        const isVoucher = "Horario Inicial" in fields || "Horário Inicial" in fields;
 
         if (detailToFinalize.type === "SERVICO" && isVoucher) {
-          await saveVoucherRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos });
+          await saveVoucherRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
         } else if (detailToFinalize.type === "SERVICO") {
-          await finalizeServiceRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos });
+          await finalizeServiceRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
         } else if (detailToFinalize.type === "MANUTENCAO") {
-          await finalizeMaintenanceRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos });
+          await finalizeMaintenanceRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
         } else if (detailToFinalize.type === "TROCA") {
-          await finalizeExchangeRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos });
+          await finalizeExchangeRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
         }
+        setSuccess("Enviado com sucesso.");
+        await wait(720);
       } catch (error) {
-        setToast(error instanceof Error ? error.message : "Falha ao finalizar no Dataverse.");
+        logAppError(error, "finalizeSelected", detailToFinalize.type);
+        setRemoteOperation(null);
+        setCriticalError(error instanceof Error ? error.message : "Falha ao finalizar no Dataverse.");
         return;
       }
     }
 
     setCompletingDetailKey(detailKey);
+    if (detailToFinalize.type === "MANUTENCAO") {
+      setMaintenanceFinalizeDraft({ serviceDone: "", value: "", payment: "", establishment: "", notes: "" });
+    }
     setSelectedDetail(null);
     setScreen("servicos");
 
-    finalizeTimerRef.current = window.setTimeout(() => {
+    finalizeTimerRef.current = window.setTimeout(async () => {
       if (remoteMode) {
-        loadRemoteStore()
-          .then((remote) => setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history })))
-          .catch(() => setStore((current) => finalizeDetailLocally(current, detailToFinalize, fields)));
+        try {
+          const remote = await loadRemoteStore();
+          setStore((current) => ({
+            ...current,
+            agenda: removeAgendaDetail(remote.agenda, detailToFinalize),
+            history: remote.history
+          }));
+        } catch {
+          setStore((current) => finalizeDetailLocally(current, detailToFinalize, fields));
+        }
       } else {
         setStore((current) => finalizeDetailLocally(current, detailToFinalize, fields));
       }
-      setCompletingDetailKey("");
+      setRemoteOperation(null);
       finalizeTimerRef.current = null;
+      completingClearTimerRef.current = window.setTimeout(() => {
+        setCompletingDetailKey("");
+        completingClearTimerRef.current = null;
+      }, 620);
     }, 1650);
   };
 
   const cancelSelected = async (reason: string) => {
-    if (!selectedDetail) return;
+    if (!selectedDetail || remoteOperation) return;
     if (remoteMode) {
       try {
+        setRemoteOperation({
+          title: "Enviando cancelamento",
+          message: "Atualizando status no Dataverse.",
+          detailId: selectedDetail.id,
+          phase: "loading"
+        });
         await cancelServiceRemote(selectedDetail, reason);
+        setRemoteOperation({
+          title: "Enviando cancelamento",
+          message: "Enviado com sucesso.",
+          detailId: selectedDetail.id,
+          phase: "success"
+        });
+        await wait(720);
         setSelectedDetail(null);
         setScreen("servicos");
         setToast("Cancelamento enviado para analise.");
         loadRemoteStore()
           .then((remote) => setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history })))
           .catch((error) => {
+            reportAppError(error, {
+              severity: "error",
+              source: "app",
+              action: "loadRemoteStore",
+              phase: "after-cancel",
+              screen: "servicos",
+              detailId: selectedDetail.id,
+              detailType: selectedDetail.type
+            });
             setToast(error instanceof Error ? error.message : "Cancelado, mas falhou ao atualizar a agenda.");
+          })
+          .finally(() => {
+            setRemoteOperation(null);
           });
         return;
       } catch (error) {
+        logAppError(error, "cancelSelected", selectedDetail.type);
+        setRemoteOperation(null);
         setToast(error instanceof Error ? error.message : "Falha ao cancelar no Dataverse.");
         return;
       }
@@ -521,14 +757,132 @@ function App() {
   };
 
   const saveVoucherDraft = (fields: Record<string, string>) => {
-    if (!remoteMode || !selectedDetail || selectedDetail.type !== "SERVICO") return;
+    if (!selectedDetail || selectedDetail.type !== "SERVICO") return;
     const detail = selectedDetail;
+    setVoucherDrafts((current) => ({
+      ...current,
+      [getVoucherDraftKey(detail)]: fields
+    }));
+
+    if (!remoteMode) return;
     if (voucherDraftTimerRef.current) window.clearTimeout(voucherDraftTimerRef.current);
     voucherDraftTimerRef.current = window.setTimeout(() => {
       saveVoucherDraftRemote(detail, fields).catch((error) => {
+        reportAppError(error, {
+          severity: "error",
+          source: "app",
+          action: "saveVoucherDraftRemote",
+          phase: "debounced-save",
+          screen: "voucher",
+          detailId: detail.id,
+          detailType: detail.type
+        });
         setToast(error instanceof Error ? error.message : "Falha ao salvar rascunho do voucher.");
       });
     }, 450);
+  };
+
+  const navigateFromInitial = (screenName: string) => {
+    if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao") {
+      setScreen(screenName);
+    }
+  };
+
+  const submitMaintenanceRequest = async (fields: MaintenanceRequestFields) => {
+    if (remoteOperation) return;
+    if (!remoteMode) {
+      setToast("Abra no Power Apps para enviar ao Dataverse.");
+      return;
+    }
+
+    try {
+      setRemoteOperation({
+        title: "Solicitando manutenção",
+        message: "Identificando motorista.",
+        phase: "loading"
+      });
+      const driver = await getDriverContext();
+      setRemoteOperation({
+        title: "Solicitando manutenção",
+        message: "Criando ordem de manutenção.",
+        phase: "loading"
+      });
+      const result = await createMaintenanceRequestRemote({
+        descricao: fields.descricao,
+        kmAtual: fields.kmAtual,
+        veiculoId: fields.veiculoId,
+        motoristaId: driver.id,
+        gravidade: fields.gravidade,
+        photos: maintenanceRequestPhotos.map((photo) => photo.dataUrl),
+        onProgress: (message) => setRemoteOperation({
+          title: "Solicitando manutenção",
+          message,
+          phase: "loading"
+        })
+      });
+      setRemoteOperation({
+        title: "Solicitando manutenção",
+        message: "Solicitação enviada.",
+        detailId: result.id,
+        phase: "success"
+      });
+      await wait(720);
+      setRemoteOperation(null);
+      setMaintenanceRequestDraft({ descricao: "", kmAtual: "", veiculoId: maintenanceCurrentVehicleId, gravidade: "" });
+      setMaintenanceRequestPhotos([]);
+      setScreen("inicio");
+      setToast("Solicitação enviada para aprovação.");
+    } catch (error) {
+      logAppError(error, "submitMaintenanceRequest", "create");
+      setRemoteOperation(null);
+      setCriticalError(error instanceof Error ? error.message : "Falha ao solicitar manutenção.");
+    }
+  };
+
+  const openMaintenanceRequestCamera = () => {
+    setMaintenanceRequestPhotoDraft("");
+    setMaintenanceRequestPreviewPhotoId("");
+    setScreen("fotoSolicitacaoManutencao");
+  };
+
+  const openMaintenanceRequestNativePreview = (photoDataUrl: string) => {
+    setMaintenanceRequestPhotoDraft(photoDataUrl);
+    setMaintenanceRequestPreviewPhotoId("");
+    setScreen("previewFotoSolicitacaoManutencao");
+  };
+
+  const openMaintenanceRequestPreview = (photoId: string) => {
+    const photo = maintenanceRequestPhotos.find((item) => item.id === photoId);
+    if (!photo) return;
+    setMaintenanceRequestPhotoDraft(photo.dataUrl);
+    setMaintenanceRequestPreviewPhotoId(photoId);
+    setScreen("previewFotoSolicitacaoManutencao");
+  };
+
+  const confirmMaintenanceRequestPhoto = () => {
+    if (!maintenanceRequestPhotoDraft) return setScreen("solicitarManutencao");
+    if (maintenanceRequestPreviewPhotoId) {
+      setMaintenanceRequestPhotos((current) =>
+        current.map((photo) => photo.id === maintenanceRequestPreviewPhotoId ? { ...photo, dataUrl: maintenanceRequestPhotoDraft } : photo)
+      );
+    } else {
+      setMaintenanceRequestPhotos((current) => [
+        ...current,
+        { id: `request-photo-${Date.now()}-${current.length + 1}`, dataUrl: maintenanceRequestPhotoDraft }
+      ]);
+    }
+    setMaintenanceRequestPhotoDraft("");
+    setMaintenanceRequestPreviewPhotoId("");
+    setScreen("solicitarManutencao");
+  };
+
+  const deleteMaintenanceRequestPhoto = () => {
+    if (maintenanceRequestPreviewPhotoId) {
+      setMaintenanceRequestPhotos((current) => current.filter((photo) => photo.id !== maintenanceRequestPreviewPhotoId));
+    }
+    setMaintenanceRequestPhotoDraft("");
+    setMaintenanceRequestPreviewPhotoId("");
+    setScreen("solicitarManutencao");
   };
 
   if (screen === "canceladoLocal" && selectedDetail) {
@@ -538,6 +892,62 @@ function App() {
         onBack={() => setScreen("detalhes")}
         onWrongClick={() => setScreen("detalhes")}
         onSubmit={cancelSelected}
+        submitState={remoteOperation?.phase ?? "idle"}
+      />
+    );
+  }
+
+  if (screen === "fotoSolicitacaoManutencao") {
+    return show(
+      <MaintenancePhotoScreen
+        kind="FOTO1"
+        title="Tire a foto da manutenção"
+        onBack={() => setScreen("solicitarManutencao")}
+        onCapture={(photoDataUrl) => {
+          setMaintenanceRequestPhotoDraft(photoDataUrl);
+          setScreen("previewFotoSolicitacaoManutencao");
+        }}
+        onSwitchCamera={() => setToast("Câmera alternada localmente.")}
+      />
+    );
+  }
+
+  if (screen === "previewFotoSolicitacaoManutencao") {
+    return show(
+      <MaintenancePhotoPreviewScreen
+        kind="FOTO1"
+        title="Foto da manutenção"
+        prompt="A foto está legível?"
+        photoDataUrl={maintenanceRequestPhotoDraft}
+        onBack={() => setScreen("solicitarManutencao")}
+        onRetake={() => setScreen("fotoSolicitacaoManutencao")}
+        onNativeRetake={(photoDataUrl) => {
+          setMaintenanceRequestPhotoDraft(photoDataUrl);
+          setScreen("previewFotoSolicitacaoManutencao");
+        }}
+        onDelete={maintenanceRequestPreviewPhotoId ? deleteMaintenanceRequestPhoto : undefined}
+        onConfirm={confirmMaintenanceRequestPhoto}
+        confirmLabel={maintenanceRequestPreviewPhotoId ? "Voltar" : "Confirmar"}
+        deleteOnly={Boolean(maintenanceRequestPreviewPhotoId)}
+      />
+    );
+  }
+
+  if (screen === "solicitarManutencao") {
+    return show(
+      <MaintenanceRequestScreen
+        draft={maintenanceRequestDraft}
+        photos={maintenanceRequestPhotos}
+        onDraftChange={setMaintenanceRequestDraft}
+        onAddPhoto={openMaintenanceRequestCamera}
+        onNativeAddPhoto={openMaintenanceRequestNativePreview}
+        onPreviewPhoto={openMaintenanceRequestPreview}
+        onBack={() => setScreen("inicio")}
+        onSubmit={submitMaintenanceRequest}
+        submitState={remoteOperation?.phase ?? "idle"}
+        vehicles={maintenanceVehicles}
+        initialVehicleId={maintenanceCurrentVehicleId}
+        vehiclesLoading={maintenanceVehiclesLoading}
       />
     );
   }
@@ -549,6 +959,7 @@ function App() {
         onBack={() => setScreen("finalizar")}
         onCapture={(photoDataUrl) => {
           setPhotoDraft(photoDataUrl);
+          setMaintenanceExistingPreview(false);
           setScreen("previewFotoManutencao");
         }}
         onSwitchCamera={() => setToast("Câmera alternada localmente.")}
@@ -563,11 +974,25 @@ function App() {
         photoDataUrl={photoDraft}
         onBack={() => setScreen("finalizar")}
         onRetake={() => setScreen("fotoManutencao")}
+        onNativeRetake={(photoDataUrl) => {
+          setPhotoDraft(photoDataUrl);
+          setMaintenanceExistingPreview(false);
+          setScreen("previewFotoManutencao");
+        }}
         onConfirm={() => {
           setStore((current) => saveMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind, photoDraft ?? ""));
           setToast("Foto salva localmente.");
+          setMaintenanceExistingPreview(false);
           setScreen("finalizar");
         }}
+        onDelete={maintenanceExistingPreview ? () => {
+          setStore((current) => deleteFinalizationMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind));
+          setToast("Foto apagada.");
+          setPhotoDraft(null);
+          setMaintenanceExistingPreview(false);
+          setScreen("finalizar");
+        } : undefined}
+        deleteOnly={maintenanceExistingPreview}
       />
     );
   }
@@ -579,13 +1004,32 @@ function App() {
         onBack={() => setScreen("servicos")}
         onDone={finalizeSelected}
         confirmedPhotos={confirmedMaintenancePhotos}
+        maintenancePhotos={store.photos[selectedDetail.id] ?? {}}
+        maintenanceDraft={maintenanceFinalizeDraft}
+        onMaintenanceDraftChange={setMaintenanceFinalizeDraft}
+        submitState={remoteOperation?.phase ?? "idle"}
         onClearPhotos={() => {
           setStore((current) => clearMaintenancePhotos(current, selectedDetail.id));
           setToast("Fotos locais limpas.");
         }}
         onPreviewMaintenancePhoto={(kind) => {
           setMaintenancePhotoKind(kind);
+          const existingPhoto = store.photos[selectedDetail.id]?.[kind];
+          if (existingPhoto) {
+            setPhotoDraft(existingPhoto);
+            setMaintenanceExistingPreview(true);
+            setScreen("previewFotoManutencao");
+            return;
+          }
+          setPhotoDraft(null);
+          setMaintenanceExistingPreview(false);
           setScreen("fotoManutencao");
+        }}
+        onCaptureMaintenancePhoto={(kind, photoDataUrl) => {
+          setMaintenancePhotoKind(kind);
+          setPhotoDraft(photoDataUrl);
+          setMaintenanceExistingPreview(false);
+          setScreen("previewFotoManutencao");
         }}
       />
     );
@@ -612,10 +1056,12 @@ function App() {
       <VoucherScreen
         detail={selectedDetail}
         hasSignature={Boolean(store.signatures[selectedDetail.id])}
+        initialDraft={voucherDrafts[getVoucherDraftKey(selectedDetail)]}
         onBack={() => setScreen("servicos")}
         onOpenSignature={() => setScreen("assinatura")}
         onFinalize={finalizeSelected}
         onDraftChange={saveVoucherDraft}
+        submitState={remoteOperation?.phase ?? "idle"}
       />
     );
   }
@@ -628,6 +1074,7 @@ function App() {
         onOpenVoucher={() => setScreen("voucher")}
         onOpenFinalize={() => setScreen("finalizar")}
         onCancelLocal={() => setScreen("canceladoLocal")}
+        onRefresh={() => refreshLocal(selectedDetail)}
         onCopy={() => {
           void navigator.clipboard?.writeText(detailsToClipboardText(selectedDetail));
           setToast("Informações copiadas.");
@@ -637,7 +1084,7 @@ function App() {
   }
 
   if (screen === "detalhesHistorico" && selectedDetail) {
-    return show(<HistoryDetailsScreen detail={selectedDetail} onBack={() => setScreen("historico")} />);
+    return show(<HistoryDetailsScreen detail={selectedDetail} onBack={() => setScreen("historico")} onRefresh={() => refreshLocal(selectedDetail)} />);
   }
 
   if (screen === "historico") {
@@ -664,7 +1111,16 @@ function App() {
         onOpenDetails={(detail) => {
           if (remoteMode) {
             markDetailViewedRemote(detail).catch((error) => {
-              setToast(error instanceof Error ? error.message : "Falha ao marcar visualizacao.");
+              reportAppError(error, {
+                severity: "error",
+                source: "app",
+                action: "markDetailViewedRemote",
+                phase: "open-details",
+                screen: "servicos",
+                detailId: detail.id,
+                detailType: detail.type
+              });
+              setToast(error instanceof Error ? error.message : "Falha ao marcar visualização.");
             });
           }
           setSelectedDetail(detail);
@@ -674,7 +1130,7 @@ function App() {
     );
   }
 
-  return show(<InitialScreen onNavigate={setScreen} onResetLocal={resetLocal} services={store.agenda} />);
+  return show(<InitialScreen onNavigate={navigateFromInitial} onResetLocal={resetLocal} onRefresh={refreshLocal} services={store.agenda} />);
 }
 
 export default App;

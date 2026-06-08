@@ -3,6 +3,7 @@ import type { DetailData } from "../types";
 import { DetailActionButton } from "../components/details/DetailActionButton";
 import { DetailsField } from "../components/details/DetailsField";
 import { QuestionsBox } from "../components/details/QuestionsBox";
+import { PullToRefresh } from "../components/common/PullToRefresh";
 import { AppShell } from "../components/layout/AppShell";
 import { DetailsMenu } from "../components/navigation/DetailsMenu";
 
@@ -13,6 +14,7 @@ type DetailsScreenProps = {
   onOpenFinalize: () => void;
   onCancelLocal: () => void;
   onCopy: () => void;
+  onRefresh: () => void | Promise<void>;
 };
 
 const getFieldValue = (detail: DetailData, label: string) =>
@@ -21,7 +23,7 @@ const getFieldValue = (detail: DetailData, label: string) =>
 const isTenarisClient = (detail: DetailData) => /tenn?aris/i.test(getFieldValue(detail, "Cliente"));
 
 const getVisibleActions = (detail: DetailData) => {
-  if (detail.type !== "SERVICO") return detail.actions;
+  if (detail.type !== "SERVICO") return detail.actions.filter((action) => action !== "cancel");
   return isTenarisClient(detail)
     ? detail.actions.filter((action) => action !== "finalizar")
     : detail.actions.filter((action) => action !== "voucher");
@@ -33,11 +35,14 @@ export function DetailsScreen({
   onOpenVoucher,
   onOpenFinalize,
   onCancelLocal,
-  onCopy
+  onCopy,
+  onRefresh
 }: DetailsScreenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [hasMoreContent, setHasMoreContent] = useState(false);
+  const [shouldRenderScrollHint, setShouldRenderScrollHint] = useState(false);
+  const [isScrollHintExiting, setIsScrollHintExiting] = useState(false);
   const dateField = detail.fields.find((field) => /data|hora|hor\u00e1rio|janela/i.test(field.label));
   const fieldsWithoutHeaderDate = dateField ? detail.fields.filter((field) => field !== dateField) : detail.fields;
   const visibleActions = getVisibleActions(detail);
@@ -81,6 +86,22 @@ export function DetailsScreen({
     return () => window.clearTimeout(timer);
   }, [confirmCancel]);
 
+  useEffect(() => {
+    if (hasMoreContent) {
+      setShouldRenderScrollHint(true);
+      setIsScrollHintExiting(false);
+      return;
+    }
+
+    if (!shouldRenderScrollHint) return;
+    setIsScrollHintExiting(true);
+    const timer = window.setTimeout(() => {
+      setShouldRenderScrollHint(false);
+      setIsScrollHintExiting(false);
+    }, 340);
+    return () => window.clearTimeout(timer);
+  }, [hasMoreContent, shouldRenderScrollHint]);
+
   const handleCancel = () => {
     if (confirmCancel) {
       onCancelLocal();
@@ -99,22 +120,24 @@ export function DetailsScreen({
             <div className="details-code-v1">#{detail.id}</div>
           </div>
 
-          <div
-            ref={scrollRef}
-            className={`details-scroll details-scroll-v1 ${hasMoreContent ? "has-more-content" : ""}`}
-            onScroll={updateScrollHint}
-          >
-            <div className="details-fields details-fields-v1">
-              {fieldsWithoutHeaderDate.map((field) => (
-                <DetailsField key={field.label} field={field} />
-              ))}
+          <PullToRefresh className="pull-refresh--details" scrollRef={scrollRef} onRefresh={onRefresh}>
+            <div
+              ref={scrollRef}
+              className={`details-scroll details-scroll-v1 ${hasMoreContent ? "has-more-content" : ""}`}
+              onScroll={updateScrollHint}
+            >
+              <div className="details-fields details-fields-v1">
+                {fieldsWithoutHeaderDate.map((field) => (
+                  <DetailsField key={field.label} field={field} />
+                ))}
 
-              {detail.type === "MANUTENCAO" ? <QuestionsBox /> : null}
+                {detail.type === "MANUTENCAO" ? <QuestionsBox /> : null}
+              </div>
             </div>
-          </div>
+          </PullToRefresh>
 
-          {hasMoreContent ? (
-            <div className="details-scroll-hint" aria-hidden="true">
+          {shouldRenderScrollHint ? (
+            <div className={`details-scroll-hint ${isScrollHintExiting ? "is-exiting" : ""}`} aria-hidden="true">
               <span>Mais detalhes abaixo</span>
             </div>
           ) : null}

@@ -127,22 +127,18 @@ async function main() {
   await sleep(250);
 
   const signed = await evaluate("document.body.innerText.includes('Assinatura capturada')");
-  const beforeRotate = await screenshot("01-signature-drawn");
-
-  await evaluate("document.querySelector('.signature-rotate')?.click(); true");
-  await sleep(500);
-  const wide = await evaluate("document.querySelector('.signature-main')?.classList.contains('signature-wide')");
-  const afterRotate = await screenshot("02-signature-wide");
+  const signatureRotateExists = await evaluate("Boolean(document.querySelector('.signature-rotate'))");
+  const signatureShot = await screenshot("01-signature-drawn");
 
   const appErrors = events.filter((event) => event.method === "Runtime.exceptionThrown");
   ws.close();
 
   console.log(JSON.stringify({
-    ok: signed && wide && appErrors.length === 0,
+    ok: signed && !signatureRotateExists && appErrors.length === 0,
     signed,
-    wide,
+    signatureRotateExists,
     exceptionCount: appErrors.length,
-    screenshots: { beforeRotate, afterRotate }
+    screenshots: { signatureShot }
   }, null, 2));
 }
 

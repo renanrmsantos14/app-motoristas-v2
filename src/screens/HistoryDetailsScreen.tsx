@@ -1,15 +1,19 @@
+import { useRef } from "react";
 import type { DetailData } from "../types";
 import { DetailsField } from "../components/details/DetailsField";
 import { QuestionsBox } from "../components/details/QuestionsBox";
+import { PullToRefresh } from "../components/common/PullToRefresh";
 import { AppShell } from "../components/layout/AppShell";
 import { DetailsMenu } from "../components/navigation/DetailsMenu";
 
 type HistoryDetailsScreenProps = {
   detail: DetailData;
   onBack: () => void;
+  onRefresh: () => void | Promise<void>;
 };
 
-export function HistoryDetailsScreen({ detail, onBack }: HistoryDetailsScreenProps) {
+export function HistoryDetailsScreen({ detail, onBack, onRefresh }: HistoryDetailsScreenProps) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const title =
     detail.type === "SERVICO"
       ? "Detalhes do Servi\u00e7o"
@@ -29,14 +33,16 @@ export function HistoryDetailsScreen({ detail, onBack }: HistoryDetailsScreenPro
             <div className="details-date-v1">{dateField?.value ?? "Sem data"}</div>
             <div className="details-code-v1">#{detail.id}</div>
           </div>
-          <div className="details-scroll details-scroll-v1 history-scroll-v1">
-            <div className="details-fields details-fields-v1 history-fields-v1">
-              {fieldsWithoutHeaderDate.map((field) => (
-                <DetailsField key={field.label} field={field} />
-              ))}
-              {detail.type === "MANUTENCAO" ? <QuestionsBox /> : null}
+          <PullToRefresh className="pull-refresh--details" scrollRef={scrollRef} onRefresh={onRefresh}>
+            <div ref={scrollRef} className="details-scroll details-scroll-v1 history-scroll-v1">
+              <div className="details-fields details-fields-v1 history-fields-v1">
+                {fieldsWithoutHeaderDate.map((field) => (
+                  <DetailsField key={field.label} field={field} />
+                ))}
+                {detail.type === "MANUTENCAO" ? <QuestionsBox /> : null}
+              </div>
             </div>
-          </div>
+          </PullToRefresh>
         </article>
       </section>
     </AppShell>

@@ -1,4 +1,4 @@
-import type { AgendaItem, DetailData, DetailField, MaintenancePhotoKind } from "../types";
+﻿import type { AgendaItem, DetailData, DetailField, MaintenancePhotoKind } from "../types";
 
 export type LocalStore = {
   agenda: AgendaItem[];
@@ -54,6 +54,19 @@ export function clearMaintenancePhotos(store: LocalStore, detailId: string): Loc
     photos: {
       ...store.photos,
       [detailId]: {}
+    }
+  };
+}
+
+export function deleteMaintenancePhoto(store: LocalStore, detailId: string, kind: MaintenancePhotoKind): LocalStore {
+  const nextPhotos = { ...(store.photos[detailId] ?? {}) };
+  delete nextPhotos[kind];
+
+  return {
+    ...store,
+    photos: {
+      ...store.photos,
+      [detailId]: nextPhotos
     }
   };
 }
@@ -122,20 +135,10 @@ function parseLocalNumber(value: string | undefined) {
 
 export function validateVoucherFields(fields: Record<string, string>): string[] {
   const errors: string[] = [];
-  const kmStart = parseLocalNumber(fields["Km Inicial"]);
-  const kmEnd = parseLocalNumber(fields["Km Final"]);
+  const startTime = fields["Horário Inicial"] ?? fields["Horario Inicial"] ?? fields["HorÃ¡rio Inicial"] ?? fields["HorÃƒÂ¡rio Inicial"];
 
-  if (!fields["Horário Inicial"] || fields["Horário Inicial"] === "Não informado") {
+  if (!startTime || startTime === "Não informado" || startTime === "Nao informado" || startTime === "NÃ£o informado" || startTime === "NÃƒÂ£o informado") {
     errors.push("Horário inicial é obrigatório.");
-  }
-  if (!kmStart) {
-    errors.push("KM inicial é obrigatório.");
-  }
-  if (!kmEnd) {
-    errors.push("KM final é obrigatório.");
-  }
-  if (kmStart > 0 && kmEnd > 0 && kmEnd <= kmStart) {
-    errors.push("KM final deve ser maior que o inicial.");
   }
 
   return errors;
@@ -144,11 +147,15 @@ export function validateVoucherFields(fields: Record<string, string>): string[] 
 export function validateMaintenanceFields(fields: Record<string, string>): string[] {
   const value = parseLocalNumber(fields.Valor);
   const invalid =
-    !fields["Serviço Realizado"] ||
+    !(fields["Serviço Realizado"] ?? fields["Servico Realizado"] ?? fields["ServiÃ§o Realizado"] ?? fields["ServiÃƒÂ§o Realizado"]) ||
     !fields["Forma de Pagamento"] ||
     fields["Forma de Pagamento"] === "Não informado" ||
+    fields["Forma de Pagamento"] === "NÃ£o informado" ||
+    fields["Forma de Pagamento"] === "NÃƒÂ£o informado" ||
     !fields.Estabelecimento ||
     fields.Estabelecimento === "Não informado" ||
+    fields.Estabelecimento === "NÃ£o informado" ||
+    fields.Estabelecimento === "NÃƒÂ£o informado" ||
     value <= 0;
 
   return invalid ? ["Preencha corretamente: Manutenção Realizada, Forma de Pagamento, Estabelecimento e Valor."] : [];
@@ -182,3 +189,40 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
   const digits = phone.replace(/\D/g, "");
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
+
+type XrmNavigationLike = {
+  Navigation?: {
+    openUrl?: (url: string, options?: { openInNewWindow?: boolean; height?: number; width?: number }) => void;
+  };
+};
+
+function getXrmNavigation(): XrmNavigationLike | null {
+  const current = window as Window & { Xrm?: XrmNavigationLike };
+  try {
+    const parentWindow = window.parent as Window & { Xrm?: XrmNavigationLike };
+    return current.Xrm?.Navigation?.openUrl ? current.Xrm : parentWindow?.Xrm?.Navigation?.openUrl ? parentWindow.Xrm : null;
+  } catch {
+    return current.Xrm?.Navigation?.openUrl ? current.Xrm : null;
+  }
+}
+
+export function openExternalUrl(url: string) {
+  const targetUrl = String(url ?? "").trim();
+  if (!targetUrl) return;
+
+  const xrm = getXrmNavigation();
+  if (xrm?.Navigation?.openUrl) {
+    xrm.Navigation.openUrl(targetUrl, { openInNewWindow: true });
+    return;
+  }
+
+  const opened = window.open(targetUrl, "_blank", "noopener,noreferrer");
+  if (opened) {
+    opened.opener = null;
+    return;
+  }
+
+  window.location.assign(targetUrl);
+}
+
+

@@ -25,7 +25,6 @@ export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
   const startPointRef = useRef<Point>({ x: 0, y: 0 });
   const imageSnapshotRef = useRef<string | null>(null);
   const [signed, setSigned] = useState(false);
-  const [wideMode, setWideMode] = useState(false);
   const [signatureError, setSignatureError] = useState("");
 
   const prepareCanvas = () => {
@@ -63,7 +62,7 @@ export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
 
   useLayoutEffect(() => {
     prepareCanvas();
-  }, [wideMode]);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -167,32 +166,11 @@ export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
     onConfirm(signedRef.current ? canvasRef.current?.toDataURL("image/png") ?? null : null);
   };
 
-  const toggleWideMode = async () => {
-    const next = !wideMode;
-    setWideMode(next);
-
-    try {
-      const orientation = screen.orientation as (ScreenOrientation & {
-        lock?: (orientation: OrientationLockType) => Promise<void>;
-        unlock?: () => void;
-      }) | undefined;
-
-      if (next) {
-        await document.documentElement.requestFullscreen?.();
-        await orientation?.lock?.("landscape");
-      } else {
-        orientation?.unlock?.();
-        if (document.fullscreenElement) await document.exitFullscreen?.();
-      }
-    } catch {
-      // Fallback visual interno quando o navegador bloqueia rotação.
-    }
-  };
 
   return (
     <AppShell screenLabel="TelaAssinaturaPassageiro">
       <FormMenu title="Assinatura do Passageiro" onBack={onBack} />
-      <section className={`main-panel signature-main ${wideMode ? "signature-wide" : ""}`}>
+      <section className="main-panel signature-main">
         <article className="signature-card">
           <header className="signature-top">
             <div className="signature-title">
@@ -226,9 +204,6 @@ export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
               <button className="signature-confirm" onClick={confirmSignature} type="button">
                 Confirmar
               </button>
-              <button className="signature-rotate" aria-label="Virar tela" onClick={toggleWideMode} type="button">
-                <SystemIcon name="rotate" />
-              </button>
             </div>
           </div>
         </article>
@@ -236,3 +211,4 @@ export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
     </AppShell>
   );
 }
+

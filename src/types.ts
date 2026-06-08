@@ -7,6 +7,9 @@ export type Screen =
   | "voucher"
   | "assinatura"
   | "finalizar"
+  | "solicitarManutencao"
+  | "fotoSolicitacaoManutencao"
+  | "previewFotoSolicitacaoManutencao"
   | "fotoManutencao"
   | "previewFotoManutencao"
   | "canceladoLocal";
@@ -24,7 +27,7 @@ export type Tile = {
 
 export type DetailAction = "cancel" | "voucher" | "finalizar";
 
-export type MaintenancePhotoKind = "NOTAFISCAL" | "FOTO1" | "FOTO2" | "FOTO3";
+export type MaintenancePhotoKind = "NOTAFISCAL" | `NOTAFISCAL_${number}` | "FOTO1" | "FOTO2" | "FOTO3";
 
 export type DetailField = {
   label: string;

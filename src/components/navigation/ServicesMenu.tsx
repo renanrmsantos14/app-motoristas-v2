@@ -4,17 +4,23 @@ import { SystemIcon } from "../icons/SystemIcon";
 
 type ServicesMenuProps = {
   onHome: () => void;
-  onRefresh: () => void;
+  onRefresh: () => void | Promise<void>;
   title?: string;
 };
 
 export function ServicesMenu({ onHome, onRefresh, title = "Seus Serviços" }: ServicesMenuProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const refresh = () => {
+  const refresh = async () => {
+    if (isRefreshing) return;
     setIsRefreshing(true);
-    onRefresh();
-    window.setTimeout(() => setIsRefreshing(false), 650);
+    window.dispatchEvent(new CustomEvent("betinhos:refresh-visual", { detail: { phase: "start" } }));
+    try {
+      await onRefresh();
+    } finally {
+      window.dispatchEvent(new CustomEvent("betinhos:refresh-visual", { detail: { phase: "done" } }));
+      window.setTimeout(() => setIsRefreshing(false), 360);
+    }
   };
 
   return (

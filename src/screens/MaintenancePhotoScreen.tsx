@@ -2,48 +2,104 @@ import { useEffect, useRef, useState } from "react";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { SystemIcon } from "../components/icons/SystemIcon";
+import { captureVideoFrameDataUrl, getViewportOrientationAngle, isLandscapeViewport, normalizeAngle, readPhotoFileAsDataUrl } from "../lib/photoOrientation";
 import type { MaintenancePhotoKind } from "../types";
 
 type MaintenancePhotoScreenProps = {
   kind: MaintenancePhotoKind;
+  title?: string;
   onBack: () => void;
   onCapture: (photoDataUrl: string) => void;
   onSwitchCamera: () => void;
 };
 
-const titleByKind: Record<MaintenancePhotoKind, string> = {
-  NOTAFISCAL: "Tire a foto da nota fiscal",
-  FOTO1: "Tire a foto 1 de 3",
-  FOTO2: "Tire a foto 2 de 3",
-  FOTO3: "Tire a foto 3 de 3"
+type TorchMediaTrackCapabilities = MediaTrackCapabilities & {
+  torch?: boolean;
 };
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
+type TorchMediaTrackConstraintSet = MediaTrackConstraintSet & {
+  torch?: boolean;
+};
+
+function getTitleByKind(kind: MaintenancePhotoKind) {
+  if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
+  if (kind === "FOTO1") return "Tire a foto 1 de 3";
+  if (kind === "FOTO2") return "Tire a foto 2 de 3";
+  return "Tire a foto 3 de 3";
 }
 
-export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera }: MaintenancePhotoScreenProps) {
+function isIosDevice() {
+  if (typeof navigator === "undefined") return false;
+  const userAgent = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  return /iPad|iPhone|iPod/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function getCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
+  const landscape = isLandscapeViewport();
+  return {
+    facingMode: { ideal: mode },
+    width: { ideal: landscape ? 1920 : 1280 },
+    height: { ideal: landscape ? 1080 : 720 }
+  };
+}
+
+export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onSwitchCamera }: MaintenancePhotoScreenProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const defaultLaunchAttemptedRef = useRef(false);
+  const orientationAngleRef = useRef(getViewportOrientationAngle());
+  const iosDevice = isIosDevice();
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [cameraError, setCameraError] = useState("");
   const [ready, setReady] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startedByUser, setStartedByUser] = useState(false);
+  const [flashSupported, setFlashSupported] = useState(false);
+  const [flashOn, setFlashOn] = useState(false);
 
   const stopStream = () => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setReady(false);
+    setFlashSupported(false);
+    setFlashOn(false);
   };
 
   useEffect(() => () => stopStream(), []);
+
+  useEffect(() => {
+    const syncViewportOrientation = () => {
+      orientationAngleRef.current = getViewportOrientationAngle();
+    };
+
+    const syncDeviceOrientation = (event: DeviceOrientationEvent) => {
+      if (typeof event.gamma !== "number" || typeof event.beta !== "number") return;
+      if (Math.abs(event.gamma) > 45) {
+        orientationAngleRef.current = event.gamma > 0 ? 90 : 270;
+        return;
+      }
+      if (event.beta < -45) {
+        orientationAngleRef.current = 180;
+        return;
+      }
+      if (Math.abs(event.gamma) < 25 && event.beta > -20) {
+        orientationAngleRef.current = 0;
+      }
+    };
+
+    syncViewportOrientation();
+    window.addEventListener("resize", syncViewportOrientation);
+    window.addEventListener("orientationchange", syncViewportOrientation);
+    window.addEventListener("deviceorientation", syncDeviceOrientation);
+
+    return () => {
+      window.removeEventListener("resize", syncViewportOrientation);
+      window.removeEventListener("orientationchange", syncViewportOrientation);
+      window.removeEventListener("deviceorientation", syncDeviceOrientation);
+    };
+  }, []);
 
   const startCamera = async (mode = facingMode) => {
     setStarting(true);
@@ -59,11 +115,7 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: mode },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
+          video: getCameraVideoConstraints(mode),
           audio: false
         });
       } catch {
@@ -74,6 +126,11 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
       }
 
       streamRef.current = stream;
+      const videoTrack = stream.getVideoTracks()[0];
+      const capabilities = videoTrack?.getCapabilities?.() as TorchMediaTrackCapabilities | undefined;
+      setFlashSupported(Boolean(capabilities?.torch));
+      setFlashOn(false);
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.setAttribute("playsinline", "true");
@@ -96,14 +153,8 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
       return;
     }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    onCapture(canvas.toDataURL("image/jpeg", 0.92));
+    const photoDataUrl = captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
+    if (photoDataUrl) onCapture(photoDataUrl);
   };
 
   const switchCamera = () => {
@@ -113,6 +164,31 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
     if (startedByUser) void startCamera(next);
   };
 
+  const toggleFlash = async () => {
+    const videoTrack = streamRef.current?.getVideoTracks()[0];
+    if (!videoTrack || !ready) {
+      setCameraError("Abra a câmera antes de ativar o flash.");
+      return;
+    }
+
+    if (!flashSupported) {
+      setCameraError("Este dispositivo não liberou controle de flash pelo navegador.");
+      return;
+    }
+
+    const nextFlashOn = !flashOn;
+    try {
+      await videoTrack.applyConstraints({
+        advanced: [{ torch: nextFlashOn } as TorchMediaTrackConstraintSet]
+      });
+      setFlashOn(nextFlashOn);
+      setCameraError("");
+    } catch (error) {
+      setFlashOn(false);
+      setCameraError(error instanceof Error ? error.message : "Não foi possível controlar o flash.");
+    }
+  };
+
   const openNativeCamera = () => {
     fileInputRef.current?.click();
   };
@@ -120,22 +196,39 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
   const handleNativeCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const dataUrl = await readFileAsDataUrl(file);
+    const dataUrl = await readPhotoFileAsDataUrl(file, normalizeAngle(orientationAngleRef.current));
     onCapture(dataUrl);
     event.target.value = "";
   };
+
+  useEffect(() => {
+    if (defaultLaunchAttemptedRef.current) return;
+    defaultLaunchAttemptedRef.current = true;
+
+    if (iosDevice) {
+      setCameraError("");
+      return;
+    }
+
+    void startCamera("environment");
+  }, [iosDevice]);
 
   return (
     <AppShell screenLabel="TelaFotoManutenção">
       <FormMenu title="" onBack={onBack} />
       <section className="main-panel photo-main">
         <article className="photo-card">
-          <div className="photo-title">{titleByKind[kind]}</div>
+          <div className="photo-title">{title ?? getTitleByKind(kind)}</div>
           <div className="photo-body">
             <div className="camera-view real-camera-view">
               <video ref={videoRef} className="real-camera-video" playsInline muted autoPlay />
 
-              {!startedByUser && !starting ? (
+              {iosDevice ? (
+                <button className="ios-native-camera-hit" type="button" onClick={openNativeCamera}>
+                  <SystemIcon name="camera" />
+                  <span>Tocar para tirar foto</span>
+                </button>
+              ) : !startedByUser && !starting ? (
                 <div className="camera-start-panel">
                   <strong>Abra a câmera</strong>
                   <span>No iPhone, toque no botão para liberar o vídeo.</span>
@@ -144,7 +237,7 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
                 </div>
               ) : null}
 
-              {cameraError ? (
+              {!iosDevice && cameraError ? (
                 <div className="camera-error">
                   <strong>Câmera indisponível</strong>
                   <span>{cameraError}</span>
@@ -154,7 +247,7 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
                 </div>
               ) : null}
 
-              {!cameraError && starting ? <div className="camera-loading">Abrindo câmera...</div> : null}
+              {!iosDevice && !cameraError && starting ? <div className="camera-loading">Abrindo câmera...</div> : null}
             </div>
 
             <input
@@ -166,15 +259,24 @@ export function MaintenancePhotoScreen({ kind, onBack, onCapture, onSwitchCamera
               onChange={handleNativeCapture}
             />
 
-            <div className="photo-actions photo-actions-ios">
-              <button className="photo-native" onClick={openNativeCamera}>Câmera nativa</button>
-              <button className="photo-capture" onClick={capture} aria-label="Tirar foto" disabled={!ready}>
-                <SystemIcon name="camera" />
-              </button>
-              <button className="photo-switch" onClick={switchCamera} aria-label="Mudar câmera">
-                <SystemIcon name="sync" />
-              </button>
-            </div>
+            {!iosDevice ? (
+              <div className="photo-actions photo-actions-ios">
+                <button
+                  className={`photo-flash ${flashOn ? "is-active" : ""}`}
+                  onClick={toggleFlash}
+                  aria-label={flashOn ? "Desativar flash" : "Ativar flash"}
+                  disabled={!ready || !flashSupported}
+                >
+                  <SystemIcon name="flash" />
+                </button>
+                <button className="photo-capture" onClick={capture} aria-label="Tirar foto" disabled={!ready}>
+                  <SystemIcon name="camera" />
+                </button>
+                <button className="photo-switch" onClick={switchCamera} aria-label="Mudar câmera">
+                  <SystemIcon name="sync" />
+                </button>
+              </div>
+            ) : null}
           </div>
         </article>
       </section>
