@@ -7,6 +7,7 @@ export type Screen =
   | "voucher"
   | "assinatura"
   | "finalizar"
+  | "gastos"
   | "solicitarManutencao"
   | "fotoSolicitacaoManutencao"
   | "previewFotoSolicitacaoManutencao"

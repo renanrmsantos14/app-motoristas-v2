@@ -17,7 +17,7 @@ function build() {
   }
 
   building = true;
-  const child = spawn(process.execPath, [path.join(root, "scripts", "build-react-singlefile.cjs")], {
+  const child = spawn(process.execPath, [path.join(root, "scripts", "build-react-singlefile.cjs"), "--no-version"], {
     cwd: root,
     stdio: "inherit"
   });

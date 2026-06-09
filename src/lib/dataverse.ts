@@ -101,6 +101,8 @@ export const DATAVERSE = {
   funcionarios: "cr40f_funcionarioses",
   bancoDeDados: "cr40f_bancodedadoses",
   manutencoes: "cr40f_manutencoeses",
+  despesas: "cr40f_despesas",
+  anexosDespesas: "cr40f_anexodespesas",
   trocas: "cr40f_trocasdecarros",
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
   posseVeiculos: "new_possedeveiculos",
@@ -119,6 +121,8 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.funcionarios]: "cr40f_funcionarios",
   [DATAVERSE.bancoDeDados]: "cr40f_bancodedados",
   [DATAVERSE.manutencoes]: "cr40f_manutencoes",
+  [DATAVERSE.despesas]: "cr40f_despesa",
+  [DATAVERSE.anexosDespesas]: "cr40f_anexodespesa",
   [DATAVERSE.trocas]: "cr40f_trocasdecarro",
   [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
   [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
@@ -144,7 +148,9 @@ const GERAL_SELECT =
   "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,modifiedon";
 
 const MAINTENANCE_SELECT =
-  "$select=cr40f_manutencoesid,cr40f_id,cr40f_descricao,cr40f_comentariosaomotorista,cr40f_graudamanutencao,cr40f_tipodoreparo,cr40f_status,cr40f_servicorealizado,cr40f_estabelecimento,cr40f_valor,cr40f_pagamento,_cr40f_placa_carro_value,_cr40f_realizado_por_nome_value,new_comentariosdocolaborador,new_linkdanotafiscal,new_linkdafotofinal1,new_linkdafotofinal2,new_linkdafotofinal3";
+  "$select=cr40f_manutencoesid,cr40f_id,cr40f_descricao,cr40f_comentariosaomotorista,cr40f_graudamanutencao,cr40f_tipodoreparo,cr40f_status,cr40f_servicorealizado,cr40f_estabelecimento,cr40f_valor,cr40f_pagamento,_cr40f_placa_carro_value,_cr40f_realizado_por_nome_value,new_comentariosdocolaborador,cr40f_foto01,cr40f_linkdaevidencia,cr40f_foto03,new_linkdanotafiscal,new_linkdafotofinal1,new_linkdafotofinal2,new_linkdafotofinal3";
+
+const MAINTENANCE_REQUEST_PHOTO_FIELDS = ["cr40f_foto01", "cr40f_linkdaevidencia", "cr40f_foto03"] as const;
 
 const EXCHANGE_SELECT =
   "$select=cr40f_trocasdecarroid,cr40f_id,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,_cr40f_motorista1_value,_cr40f_motorista2_value,_cr40f_veiculo1antesdatroca_value,_cr40f_veiculo2antesdatroca_value,cr40f_observacao,cr40f_statusdatroca,new_tipodetroca,new_concluidomotorista1,new_concluidomotorista2,new_observacaodomotorista1,new_observacaodomotorista2";
@@ -516,6 +522,35 @@ export async function createMaintenanceRequestRemote(payload: MaintenanceRequest
     })
   ));
 
+  const firstThreeLinks = uploadedRequestLinks
+    .map((item) => item.link)
+    .filter(Boolean)
+    .slice(0, 3);
+  const photoPatch: Record<string, unknown> = {};
+  MAINTENANCE_REQUEST_PHOTO_FIELDS.forEach((field, index) => {
+    if (firstThreeLinks[index]) photoPatch[field] = firstThreeLinks[index];
+  });
+  if (Object.keys(photoPatch).length) {
+    payload.onProgress?.("Gravando links das fotos no Dataverse.");
+    await updateOne(DATAVERSE.manutencoes, result.id, photoPatch);
+    const verified = await retrieveOne(
+      DATAVERSE.manutencoes,
+      result.id,
+      `$select=${MAINTENANCE_REQUEST_PHOTO_FIELDS.join(",")}`
+    );
+    const missingFields = MAINTENANCE_REQUEST_PHOTO_FIELDS
+      .slice(0, firstThreeLinks.length)
+      .filter((field, index) => String(verified[field] ?? "") !== firstThreeLinks[index]);
+    if (missingFields.length) {
+      dataverseError("Links das fotos de solicitacao nao foram confirmados no Dataverse.", {
+        maintenanceId: result.id,
+        missingFields,
+        expectedFields: Object.keys(photoPatch)
+      });
+      throw new Error("Fotos salvas no OneDrive, mas os links nao foram confirmados na manutencao.");
+    }
+  }
+
   return result;
 }
 
@@ -529,9 +564,12 @@ function formatAgendaTime(date: Date | null) {
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
   const sameDay = date.toDateString() === today.toDateString();
   const nextDay = date.toDateString() === tomorrow.toDateString();
-  const prefix = sameDay ? "HOJE" : nextDay ? "AMANHÃ" : date.toLocaleDateString("pt-BR");
+  const previousDay = date.toDateString() === yesterday.toDateString();
+  const prefix = sameDay ? "HOJE" : previousDay ? "ONTEM" : nextDay ? "AMANHÃ" : date.toLocaleDateString("pt-BR");
   return `${prefix} ${date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
@@ -627,7 +665,51 @@ function getFlowLink(result: unknown) {
   );
   if (direct) return direct;
   const nestedLink = (record.link ?? record.shareLink ?? {}) as Record<string, unknown>;
-  return getFlowText(nestedLink, "webUrl", "url", "href");
+  const nestedDirect = getFlowText(nestedLink, "webUrl", "url", "href");
+  if (nestedDirect) return nestedDirect;
+  const bodyRecord = parseFlowRecord(record.body ?? record.Body ?? record.responseText);
+  if (bodyRecord) return getFlowLink(bodyRecord);
+  return "";
+}
+
+function parseFlowRecord(value: unknown): Record<string, unknown> | null {
+  if (!value) return null;
+  if (typeof value === "object") return value as Record<string, unknown>;
+  if (typeof value !== "string") return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : null;
+  } catch {
+    return null;
+  }
+}
+
+function describeFlowResultForLog(result: unknown) {
+  const record = (result ?? {}) as Record<string, unknown>;
+  return {
+    keys: Object.keys(record),
+    status: record.status ?? record.Status ?? record.resultado ?? record.Resultado ?? "",
+    message: record.message ?? record.mensagem ?? record.error ?? record.erro ?? "",
+    hasShareLink: Boolean(getFlowText(record, "shareLink")),
+    hasLink: Boolean(getFlowText(record, "link")),
+    hasWebUrl: Boolean(getFlowText(record, "webUrl")),
+    hasUrl: Boolean(getFlowText(record, "url")),
+    hasFileLink: Boolean(getFlowText(record, "fileLink")),
+    hasSharedLink: Boolean(getFlowText(record, "sharedLink")),
+    hasBody: Boolean(record.body ?? record.Body),
+    bodyKeys: Object.keys(parseFlowRecord(record.body ?? record.Body ?? record.responseText) ?? {})
+  };
+}
+
+function requireFlowLink(result: unknown, context: Record<string, unknown>) {
+  const link = getFlowLink(result);
+  if (link) return link;
+  dataverseError("FlowSalvarArquivosOnedrive nao retornou link compartilhavel.", {
+    ...context,
+    expectedKeys: ["shareLink", "link", "webUrl", "url", "fileLink", "sharedLink"],
+    flowResult: describeFlowResultForLog(result)
+  });
+  throw new Error("Foto salva no OneDrive, mas o Flow nao retornou link compartilhavel. Envio interrompido.");
 }
 
 async function buildMaintenancePhotoFolder(record: DataverseRecord) {
@@ -661,7 +743,51 @@ async function uploadMaintenancePhoto(
     metadados: metadata
   });
   assertFlowSuccess(flowResult, "FlowSalvarArquivosOnedrive");
-  return getFlowLink(flowResult);
+  return requireFlowLink(flowResult, {
+    path,
+    fileName: `${sanitizePathSegment(fileNameBase, "arquivo")}.${extension}`,
+    mimeType,
+    metadata
+  });
+}
+
+export async function uploadExpenseInvoiceRemote({
+  expenseId,
+  expenseName,
+  motoristaId,
+  dataUrl,
+  fileName,
+  onProgress
+}: {
+  expenseId: string;
+  expenseName: string;
+  motoristaId?: string;
+  dataUrl: string;
+  fileName?: string;
+  onProgress?: (message: string) => void;
+}) {
+  if (!dataUrl) return "";
+  const baseName = sanitizePathSegment(fileName?.replace(/\.[^.]+$/, ""), "nota-fiscal");
+  const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+  const path = `Despesas/${devPrefix}${sanitizePathSegment(expenseName, "Sem nome")}`;
+  onProgress?.("Enviando nota fiscal.");
+  const link = await uploadMaintenancePhoto(path, dataUrl, baseName, {
+    despesaGuid: expenseId,
+    despesaNome: expenseName,
+    tipo: "NOTA_FISCAL"
+  });
+
+  onProgress?.("Vinculando nota fiscal à despesa.");
+  const record: Record<string, unknown> = {
+    cr40f_nome: `Nota fiscal - ${expenseName}`,
+    cr40f_nomearquivo: fileName || `${baseName}`,
+    cr40f_urlsharepoint: link,
+    cr40f_dataenvio: new Date().toISOString(),
+    "cr40f_Despesa@odata.bind": bind(DATAVERSE.despesas, expenseId)
+  };
+  if (motoristaId) record["cr40f_EnviadoPor@odata.bind"] = bind(DATAVERSE.funcionarios, motoristaId);
+  await createOne(DATAVERSE.anexosDespesas, record);
+  return link;
 }
 
 function formatMaintenanceRequestPhotoLinks(existingComment: string, links: string[]) {
@@ -777,6 +903,12 @@ function assertFlowSuccess(result: unknown, flowName: string) {
   const status = normalizeText(rawStatus);
   if (status === "sucesso" || status === "success" || status === "ok") return;
   const message = String(record.message ?? record.mensagem ?? record.error ?? record.erro ?? `${flowName} retornou status ${rawStatus}`);
+  dataverseError(`${flowName} retornou falha.`, {
+    flowName,
+    rawStatus,
+    message,
+    flowResult: describeFlowResultForLog(result)
+  });
   throw new Error(message);
 }
 
@@ -959,10 +1091,13 @@ function buildMaintenanceFields(geral: DataverseRecord, maintenance: DataverseRe
     { label: "Tipo do Reparo", value: getFormatted(maintenance, "cr40f_tipodoreparo") },
     { label: "Comentários ao Motorista", value: String(maintenance.cr40f_comentariosaomotorista ?? "") },
     { label: "Obs de Operação", value: String(geral.cr40f_obsdeoperao ?? "") },
+    { label: "Link Foto Solicitação 1", value: String(maintenance.cr40f_foto01 ?? "") },
+    { label: "Link Foto Solicitação 2", value: String(maintenance.cr40f_linkdaevidencia ?? "") },
+    { label: "Link Foto Solicitação 3", value: String(maintenance.cr40f_foto03 ?? "") },
     { label: "Link Nota Fiscal", value: String(maintenance.new_linkdanotafiscal ?? "") },
-    { label: "Link Foto 1", value: String(maintenance.new_linkdafotofinal1 ?? "") },
-    { label: "Link Foto 2", value: String(maintenance.new_linkdafotofinal2 ?? "") },
-    { label: "Link Foto 3", value: String(maintenance.new_linkdafotofinal3 ?? "") }
+    { label: "Link Foto Final 1", value: String(maintenance.new_linkdafotofinal1 ?? "") },
+    { label: "Link Foto Final 2", value: String(maintenance.new_linkdafotofinal2 ?? "") },
+    { label: "Link Foto Final 3", value: String(maintenance.new_linkdafotofinal3 ?? "") }
   ].filter((field) => field.value);
 }
 
@@ -1074,7 +1209,7 @@ function addDateHeaders(items: AgendaItem[]) {
     const date = item.time?.split(" ")[0] ?? "";
     if (date && date !== lastKey) {
       lastKey = date;
-      result.push({ id: `h-${date}-${result.length}`, tipo: "HEADER", tituloData: date === "HOJE" ? "Serviços de HOJE" : date === "AMANHÃ" ? "Serviços de AMANHÃ" : date, seta: "v" });
+      result.push({ id: `h-${date}-${result.length}`, tipo: "HEADER", tituloData: date, seta: "" });
     }
     result.push(item);
   }
@@ -1088,8 +1223,7 @@ function addHistoryDateHeaders(items: AgendaItem[]) {
     const date = item.time?.split(" ")[0] ?? "";
     if (date && date !== lastKey) {
       lastKey = date;
-      const title = date === "HOJE" ? "Serviços de HOJE" : date === "AMANHÃ" ? "Serviços de AMANHÃ" : `Serviços de ${date}`;
-      result.push({ id: `hh-${date}-${result.length}`, tipo: "HEADER", tituloData: title, seta: "v" });
+      result.push({ id: `hh-${date}-${result.length}`, tipo: "HEADER", tituloData: date, seta: "" });
     }
     result.push(item);
   }

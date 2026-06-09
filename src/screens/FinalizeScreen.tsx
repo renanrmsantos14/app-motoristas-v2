@@ -85,13 +85,13 @@ function ServiceFinalize({ onDone, submitState }: { detail: DetailData; onDone: 
       <div className="finalize-scroll">
         <div className="finalize-form">
           <TextAreaBlock label="Observação do Serviço" value={obs} onChange={setObs} />
-          <FinalizeActions
-            onNone={() => onDone({ "Observação Final": "Sem observação." })}
-            onConfirm={() => onDone({ "Observação Final": obs || "Sem observação." })}
-            submitState={submitState}
-          />
         </div>
       </div>
+      <FinalizeActions
+        onNone={() => onDone({ "Observação Final": "Sem observação." })}
+        onConfirm={() => onDone({ "Observação Final": obs || "Sem observação." })}
+        submitState={submitState}
+      />
     </article>
   );
 }
@@ -105,13 +105,13 @@ function ExchangeFinalize({ detail, onDone, submitState }: { detail: DetailData;
       <div className="finalize-scroll">
         <div className="finalize-form">
           <TextAreaBlock label="Observação da Troca" value={obs} onChange={setObs} />
-          <FinalizeActions
-            onNone={() => onDone({ "Observações": "Sem observação." })}
-            onConfirm={() => onDone({ "Observações": obs || "Sem observação." })}
-            submitState={submitState}
-          />
         </div>
       </div>
+      <FinalizeActions
+        onNone={() => onDone({ "Observações": "Sem observação." })}
+        onConfirm={() => onDone({ "Observações": obs || "Sem observação." })}
+        submitState={submitState}
+      />
     </article>
   );
 }
@@ -347,10 +347,10 @@ function MaintenanceFinalize({
               Contatar o Júnior
             </button>
           </div>
-          <div className="finalize-actions maintenance-actions">
-            <FlowSubmitButton className="finalize-primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
-          </div>
         </div>
+      </div>
+      <div className="finalize-actions maintenance-actions">
+        <FlowSubmitButton className="finalize-primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
       </div>
     </article>
   );

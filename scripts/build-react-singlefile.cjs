@@ -7,6 +7,7 @@ async function run() {
   const distDir = path.join(root, "dist");
   const packagePath = path.join(root, "package.json");
   const packageLockPath = path.join(root, "package-lock.json");
+  const shouldBumpVersion = !process.argv.includes("--no-version");
 
   function bumpPatchVersion(version) {
     const parts = String(version).split(".").map((part) => Number(part));
@@ -19,7 +20,7 @@ async function run() {
   }
 
   const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-  const nextVersion = bumpPatchVersion(packageJson.version);
+  const buildVersion = shouldBumpVersion ? bumpPatchVersion(packageJson.version) : packageJson.version;
 
   fs.rmSync(distDir, { recursive: true, force: true });
   fs.mkdirSync(distDir, { recursive: true });
@@ -41,14 +42,16 @@ async function run() {
 
   const js = result.outputFiles[0].text;
   const css = fs.readFileSync(path.join(root, "src", "styles.css"), "utf8");
-  packageJson.version = nextVersion;
-  fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+  if (shouldBumpVersion) {
+    packageJson.version = buildVersion;
+    fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+  }
 
-  if (fs.existsSync(packageLockPath)) {
+  if (shouldBumpVersion && fs.existsSync(packageLockPath)) {
     const packageLock = JSON.parse(fs.readFileSync(packageLockPath, "utf8"));
-    packageLock.version = nextVersion;
+    packageLock.version = buildVersion;
     if (packageLock.packages?.[""]) {
-      packageLock.packages[""].version = nextVersion;
+      packageLock.packages[""].version = buildVersion;
     }
     fs.writeFileSync(packageLockPath, `${JSON.stringify(packageLock, null, 2)}\n`, "utf8");
   }
@@ -59,7 +62,7 @@ async function run() {
   }).replace(/</g, "\\u003c");
   const builtAt = new Date();
   const buildInfo = JSON.stringify({
-    version: nextVersion,
+    version: buildVersion,
     builtAt: builtAt.toISOString(),
     builtAtLabel: builtAt.toLocaleString("pt-BR", {
       timeZone: "America/Sao_Paulo",
@@ -90,7 +93,7 @@ async function run() {
 
   fs.writeFileSync(path.join(distDir, "webresource-app-motoristas.html"), html, "utf8");
   fs.writeFileSync(path.join(distDir, "index.html"), html, "utf8");
-  console.log(`Build concluído: dist/webresource-app-motoristas.html | versão ${nextVersion}`);
+  console.log(`Build concluído: dist/webresource-app-motoristas.html | versão ${buildVersion}`);
 }
 
 run().catch((error) => {

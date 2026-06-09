@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import betinhosLogo from "../../Logo Betinhos B.png";
+import carCrashIcon from "../assets/icons/car-crash-svgrepo-com.svg";
 import historyIcon from "../assets/icons/clock.svg";
 import { PullToRefresh } from "../components/common/PullToRefresh";
 import type { AgendaItem } from "../types";
@@ -26,7 +27,7 @@ const modules = [
   {
     id: "maintenancePhoto",
     label: "Manutenção",
-    detail: "Fotos e vistoria",
+    detail: "Solicitar reparo",
     action: "Abrir",
     icon: "maintenance",
     tone: "neutral",
@@ -39,6 +40,15 @@ const modules = [
     action: "Abrir",
     icon: "expenses",
     tone: "neutral",
+    disabled: false,
+  },
+  {
+    id: "collisions",
+    label: "Colis\u00f5es",
+    detail: "Registro de colis\u00f5es",
+    action: "Em breve",
+    icon: "collisions",
+    tone: "neutral",
     disabled: true,
   },
 ];
@@ -47,7 +57,8 @@ const screenAliases: Record<string, string[]> = {
   services: ["servicos", "services", "Services", "serviços"],
   history: ["historico", "history", "History", "histórico"],
   maintenancePhoto: ["maintenancePhoto", "maintenance", "MaintenancePhoto", "manutencao", "manutenção"],
-  expenses: ["expenses", "gastos", "Expenses"],
+  collisions: ["collisions", "colisoes", "Collisions"],
+  expenses: ["gastos", "expenses", "Expenses"],
 };
 
 const moduleHandlers: Record<string, string[]> = {
@@ -88,6 +99,7 @@ const moduleHandlers: Record<string, string[]> = {
     "openMaintenancePhoto",
     "openMaintenance",
   ],
+  collisions: ["onOpenCollisions", "onCollisionsClick", "onCollisionsPress", "openCollisions"],
   expenses: ["onOpenExpenses", "onExpensesClick", "onExpensesPress", "openExpenses"],
 };
 
@@ -142,6 +154,10 @@ type InitialScreenProps = {
   onMaintenancePress?: () => void;
   openMaintenancePhoto?: () => void;
   openMaintenance?: () => void;
+  onOpenCollisions?: () => void;
+  onCollisionsClick?: () => void;
+  onCollisionsPress?: () => void;
+  openCollisions?: () => void;
   onOpenExpenses?: () => void;
   onExpensesClick?: () => void;
   onExpensesPress?: () => void;
@@ -283,6 +299,10 @@ function ModuleIcon({ name }: { name: string }) {
 
   if (name === "history") {
     return <img src={historyIcon} alt="" />;
+  }
+
+  if (name === "collisions") {
+    return <img src={carCrashIcon} alt="" />;
   }
 
   if (name === "maintenance") {

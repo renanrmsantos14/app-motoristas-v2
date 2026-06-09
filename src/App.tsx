@@ -4,6 +4,8 @@ import { agendaMock, historyMock } from "./data/mockData";
 import {
   cancelServiceRemote,
   createMaintenanceRequestRemote,
+  createOne,
+  DATAVERSE,
   finalizeExchangeRemote,
   finalizeMaintenanceRemote,
   finalizeServiceRemote,
@@ -16,6 +18,8 @@ import {
   markDetailViewedRemote,
   saveVoucherDraftRemote,
   saveVoucherRemote,
+  uploadExpenseInvoiceRemote,
+  type DriverContext,
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
 import { reportAppError } from "./lib/appErrorLogger";
@@ -32,6 +36,7 @@ import {
   type LocalStore
 } from "./lib/localWorkflow";
 import { DetailsScreen } from "./screens/DetailsScreen";
+import { ExpenseScreen } from "./screens/ExpenseScreen";
 import { FinalizeScreen, type MaintenanceFinalizeDraft } from "./screens/FinalizeScreen";
 import { HistoryDetailsScreen } from "./screens/HistoryDetailsScreen";
 import { HistoryScreen } from "./screens/HistoryScreen";
@@ -48,6 +53,7 @@ import {
 import { ServicesScreen } from "./screens/ServicesScreen";
 import { SignatureScreen } from "./screens/SignatureScreen";
 import { VoucherScreen } from "./screens/VoucherScreen";
+import { buildExpenseCreatePayload, type ExpenseDraft } from "./lib/expenses";
 import type { DetailData, MaintenancePhotoKind, Screen } from "./types";
 
 const STORAGE_KEY = "app-motoristas-local-v1";
@@ -68,6 +74,7 @@ const SCREEN_DEPTH: Record<Screen, number> = {
   detalhesHistorico: 2,
   voucher: 3,
   finalizar: 3,
+  gastos: 1,
   solicitarManutencao: 1,
   fotoSolicitacaoManutencao: 2,
   previewFotoSolicitacaoManutencao: 3,
@@ -110,7 +117,7 @@ const fastFade = {
   ease: "easeOut" as const
 };
 
-const isListScreen = (screenName: Screen) => screenName === "servicos" || screenName === "historico";
+const isListScreen = (screenName: Screen) => screenName === "servicos" || screenName === "historico" || screenName === "gastos";
 const isDetailScreen = (screenName: Screen) => screenName === "detalhes" || screenName === "detalhesHistorico";
 const isTaskScreen = (screenName: Screen) =>
   screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
@@ -332,6 +339,7 @@ function App() {
   const [completingDetailKey, setCompletingDetailKey] = useState("");
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
   const [remoteMode, setRemoteMode] = useState(false);
+  const [driverContext, setDriverContext] = useState<DriverContext | null>(null);
   const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>({});
   const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
   const [maintenanceCurrentVehicleId, setMaintenanceCurrentVehicleId] = useState("");
@@ -341,6 +349,20 @@ function App() {
     kmAtual: "",
     veiculoId: "",
     gravidade: ""
+  });
+  const [expenseDraft, setExpenseDraft] = useState<ExpenseDraft>({
+    categoria: "",
+    veiculoId: "",
+    cidade: "",
+    valor: "",
+    dataGasto: new Date().toISOString().slice(0, 10),
+    formaPagamento: "",
+    descricao: "",
+    kmInformado: "",
+    litros: "",
+    observacao: "",
+    notaFiscalDataUrl: "",
+    notaFiscalFileName: ""
   });
   const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = useState<MaintenanceRequestPhoto[]>([]);
   const [maintenanceRequestPhotoDraft, setMaintenanceRequestPhotoDraft] = useState("");
@@ -383,6 +405,7 @@ function App() {
       .then((remote) => {
         if (!alive) return;
         const remoteInitialDetail = getInitialDetail({ ...store, agenda: remote.agenda, history: remote.history });
+        setDriverContext(remote.driver);
         setStore((current) => ({
           ...current,
           agenda: remote.agenda,
@@ -488,7 +511,7 @@ function App() {
   }, [screen]);
 
   useEffect(() => {
-    if (screen !== "solicitarManutencao" || !remoteMode) return;
+    if ((screen !== "solicitarManutencao" && screen !== "gastos") || !remoteMode) return;
     let alive = true;
     setMaintenanceVehiclesLoading(true);
     getDriverContext()
@@ -567,6 +590,7 @@ function App() {
       setToast("Atualizando Dataverse.");
       try {
         const remote = await loadRemoteStore();
+        setDriverContext(remote.driver);
         setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history }));
         if (detailToRefresh) {
           const refreshedDetail =
@@ -783,8 +807,80 @@ function App() {
   };
 
   const navigateFromInitial = (screenName: string) => {
-    if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao") {
+    if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos") {
       setScreen(screenName);
+    }
+  };
+
+  const submitExpense = async (draft: ExpenseDraft) => {
+    if (remoteOperation) return;
+    if (!remoteMode) {
+      setToast("Abra no Power Apps para registrar no Dataverse.");
+      return;
+    }
+
+    try {
+      setRemoteOperation({
+        title: "Registrando gasto",
+        message: "Identificando motorista.",
+        phase: "loading"
+      });
+      const driver = driverContext ?? await getDriverContext();
+      const veiculoId = draft.veiculoId || getDriverCurrentVehicleId(driver);
+      setRemoteOperation({
+        title: "Registrando gasto",
+        message: "Criando despesa.",
+        phase: "loading"
+      });
+      const payload = buildExpenseCreatePayload({
+        draft,
+        motoristaId: driver.id,
+        veiculoId
+      });
+      const result = await createOne(DATAVERSE.despesas, payload);
+      if (draft.notaFiscalDataUrl) {
+        await uploadExpenseInvoiceRemote({
+          expenseId: result.id,
+          expenseName: String(payload.cr40f_nome ?? "Despesa"),
+          motoristaId: driver.id,
+          dataUrl: draft.notaFiscalDataUrl,
+          fileName: draft.notaFiscalFileName,
+          onProgress: (message) => setRemoteOperation({
+            title: "Registrando gasto",
+            message,
+            detailId: result.id,
+            phase: "loading"
+          })
+        });
+      }
+      setRemoteOperation({
+        title: "Registrando gasto",
+        message: "Despesa registrada.",
+        detailId: result.id,
+        phase: "success"
+      });
+      await wait(720);
+      setRemoteOperation(null);
+      setExpenseDraft({
+        categoria: "",
+        veiculoId: "",
+        cidade: "",
+        valor: "",
+        dataGasto: new Date().toISOString().slice(0, 10),
+        formaPagamento: "",
+        descricao: "",
+        kmInformado: "",
+        litros: "",
+        observacao: "",
+        notaFiscalDataUrl: "",
+        notaFiscalFileName: ""
+      });
+      setScreen("inicio");
+      setToast("Gasto registrado.");
+    } catch (error) {
+      logAppError(error, "submitExpense", "create");
+      setRemoteOperation(null);
+      setCriticalError(error instanceof Error ? error.message : "Falha ao registrar gasto.");
     }
   };
 
@@ -948,6 +1044,21 @@ function App() {
         vehicles={maintenanceVehicles}
         initialVehicleId={maintenanceCurrentVehicleId}
         vehiclesLoading={maintenanceVehiclesLoading}
+      />
+    );
+  }
+
+  if (screen === "gastos") {
+    return show(
+      <ExpenseScreen
+        draft={expenseDraft}
+        onDraftChange={setExpenseDraft}
+        onBack={() => setScreen("inicio")}
+        onSubmit={submitExpense}
+        submitState={remoteOperation?.phase ?? "idle"}
+        vehicles={maintenanceVehicles}
+        vehiclesLoading={maintenanceVehiclesLoading}
+        currentVehicleId={maintenanceCurrentVehicleId}
       />
     );
   }
@@ -1130,7 +1241,15 @@ function App() {
     );
   }
 
-  return show(<InitialScreen onNavigate={navigateFromInitial} onResetLocal={resetLocal} onRefresh={refreshLocal} services={store.agenda} />);
+  return show(
+    <InitialScreen
+      onNavigate={navigateFromInitial}
+      onResetLocal={resetLocal}
+      onRefresh={refreshLocal}
+      services={store.agenda}
+      driverName={driverContext?.fullName}
+    />
+  );
 }
 
 export default App;

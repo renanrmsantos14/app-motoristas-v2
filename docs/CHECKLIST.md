@@ -26,4 +26,9 @@
 
 ## Voucher
 
-- [ ] Confirmar que nao tem observacao no voucher.
+- [ ] Confirmar que usuario tem que confirmar que nao tem observacao no voucher.
+
+
+## Serviços
+
+- [ ] Tirar foto do comprovante do pagamento quando receber de visitante.

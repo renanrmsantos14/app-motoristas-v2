@@ -50,6 +50,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onSwitc
   const streamRef = useRef<MediaStream | null>(null);
   const defaultLaunchAttemptedRef = useRef(false);
   const orientationAngleRef = useRef(getViewportOrientationAngle());
+  const lastDeviceOrientationAtRef = useRef(0);
   const iosDevice = isIosDevice();
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [cameraError, setCameraError] = useState("");
@@ -71,12 +72,19 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onSwitc
 
   useEffect(() => {
     const syncViewportOrientation = () => {
+      if (Date.now() - lastDeviceOrientationAtRef.current < 800) return;
       orientationAngleRef.current = getViewportOrientationAngle();
     };
 
     const syncDeviceOrientation = (event: DeviceOrientationEvent) => {
       if (typeof event.gamma !== "number" || typeof event.beta !== "number") return;
-      if (Math.abs(event.gamma) > 45) {
+      lastDeviceOrientationAtRef.current = Date.now();
+      const currentAngle = orientationAngleRef.current;
+      const tiltX = Math.abs(event.gamma);
+      const enterLandscapeAt = 50;
+      const exitLandscapeAt = 30;
+
+      if (tiltX >= enterLandscapeAt) {
         orientationAngleRef.current = event.gamma > 0 ? 90 : 270;
         return;
       }
@@ -84,7 +92,8 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onSwitc
         orientationAngleRef.current = 180;
         return;
       }
-      if (Math.abs(event.gamma) < 25 && event.beta > -20) {
+      if ((currentAngle === 90 || currentAngle === 270) && tiltX > exitLandscapeAt) return;
+      if (tiltX <= exitLandscapeAt && event.beta > -25) {
         orientationAngleRef.current = 0;
       }
     };

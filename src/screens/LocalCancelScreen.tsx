@@ -33,11 +33,11 @@ export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState 
                   rows={6}
                 />
               </div>
-              <div className="cancel-actions">
-                <button className="cancel-wrong" disabled={isSubmitting} onClick={onWrongClick}>Cliquei errado</button>
-                <FlowSubmitButton className="cancel-submit" idleLabel="Enviar" state={submitState} onClick={() => onSubmit(text)} />
-              </div>
             </div>
+          </div>
+          <div className="cancel-actions">
+            <button className="cancel-wrong" disabled={isSubmitting} onClick={onWrongClick}>Cliquei errado</button>
+            <FlowSubmitButton className="cancel-submit" idleLabel="Enviar" state={submitState} onClick={() => onSubmit(text)} />
           </div>
         </article>
       </section>

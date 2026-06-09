@@ -7,6 +7,7 @@ type XrmLike = {
   };
   WebApi?: {
     createRecord: (entityName: string, data: Record<string, unknown>) => Promise<{ id: string }>;
+    retrieveRecord?: (entityName: string, id: string, options?: string) => Promise<Record<string, unknown>>;
   };
 };
 
@@ -43,6 +44,14 @@ const MAX_QUEUE_ITEMS = 50;
 const SESSION_ID = createSessionId();
 let flushing = false;
 let originalConsoleError: typeof console.error | null = null;
+let userContextPromise: Promise<RuntimeUserContext> | null = null;
+
+type RuntimeUserContext = {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userDomainName: string;
+};
 
 function createSessionId() {
   const cryptoApi = globalThis.crypto;
@@ -111,14 +120,63 @@ function getBuildInfo() {
   return getWindowRuntime()?.__APP_BUILD_INFO ?? {};
 }
 
+function cleanGuid(value = "") {
+  return value.replace(/[{}]/g, "").toLowerCase();
+}
+
+async function getRuntimeUserContext(): Promise<RuntimeUserContext> {
+  if (userContextPromise) return userContextPromise;
+
+  userContextPromise = (async () => {
+    const xrm = getXrm();
+    const settings = xrm?.Utility?.getGlobalContext?.().userSettings;
+    const userId = cleanGuid(settings?.userId ?? "");
+    const fallbackName = String(settings?.userName ?? "");
+    const fallback = {
+      userId,
+      userName: fallbackName,
+      userEmail: "",
+      userDomainName: ""
+    };
+
+    if (!xrm?.WebApi?.retrieveRecord || !userId) return fallback;
+
+    try {
+      const user = await xrm.WebApi.retrieveRecord(
+        "systemuser",
+        userId,
+        "?$select=internalemailaddress,fullname,domainname"
+      );
+      return {
+        userId,
+        userName: String(user.fullname ?? fallbackName),
+        userEmail: String(user.internalemailaddress ?? ""),
+        userDomainName: String(user.domainname ?? "")
+      };
+    } catch {
+      return fallback;
+    }
+  })();
+
+  return userContextPromise;
+}
+
 function truncate(value: unknown, maxLength = MAX_TEXT) {
   return String(value ?? "").slice(0, maxLength);
 }
 
-function getBaseRecord(context: AppErrorLogContext, error: ReturnType<typeof normalizeError>) {
+function getConnectionType(runtime: WindowWithRuntime | null) {
+  const navigatorWithConnection = runtime?.navigator as Navigator & {
+    connection?: { effectiveType?: string; type?: string };
+  };
+  return navigatorWithConnection?.connection?.effectiveType ?? navigatorWithConnection?.connection?.type ?? "";
+}
+
+async function getBaseRecord(context: AppErrorLogContext, error: ReturnType<typeof normalizeError>) {
   const runtime = getWindowRuntime();
   const xrm = getXrm();
   const build = getBuildInfo();
+  const user = await getRuntimeUserContext();
   const clientUrl = xrm?.Utility?.getGlobalContext?.().getClientUrl?.() ?? "";
   const title = `${context.severity ?? "error"} | ${context.source ?? "app"} | ${error.message || context.action || "erro"}`;
 
@@ -140,8 +198,20 @@ function getBaseRecord(context: AppErrorLogContext, error: ReturnType<typeof nor
     new_appversion: truncate(build.version ?? "", 60),
     new_builtat: truncate(build.builtAtLabel ?? build.builtAt ?? "", 80),
     new_sessionid: truncate(SESSION_ID, 120),
+    new_userid: truncate(user.userId, 120),
+    new_username: truncate(user.userName, 300),
+    new_useremail: truncate(user.userEmail, 300),
+    new_userdomainname: truncate(user.userDomainName, 300),
+    new_appname: "App Motoristas",
     new_url: truncate(runtime?.location?.href ?? "", 4000),
+    new_referrer: truncate(runtime?.document?.referrer ?? "", 4000),
     new_useragent: truncate(runtime?.navigator?.userAgent ?? "", 4000),
+    new_language: truncate(runtime?.navigator?.language ?? "", 80),
+    new_platform: truncate(runtime?.navigator?.platform ?? "", 160),
+    new_timezone: truncate(Intl.DateTimeFormat().resolvedOptions().timeZone ?? "", 120),
+    new_viewport: runtime ? `${runtime.innerWidth}x${runtime.innerHeight}@${runtime.devicePixelRatio || 1}` : "",
+    new_visibilitystate: truncate(runtime?.document?.visibilityState ?? "", 40),
+    new_connectiontype: truncate(getConnectionType(runtime), 80),
     new_clienturl: truncate(clientUrl, 500),
     new_isoffline: runtime?.navigator?.onLine === false ? "true" : "false",
     new_payloadjson: safeStringify(context.payload ?? {}, MAX_TEXT),
@@ -192,17 +262,27 @@ export async function flushAppErrorLogQueue() {
 
 export function reportAppError(error: unknown, context: AppErrorLogContext = {}) {
   const normalized = normalizeError(error);
-  const record = getBaseRecord(context, normalized);
-  const xrm = getXrm();
+  void getBaseRecord(context, normalized).then((record) => {
+    const xrm = getXrm();
+    if (!xrm?.WebApi) {
+      enqueue(record);
+      return;
+    }
 
-  if (!xrm?.WebApi) {
-    enqueue(record);
-    return;
-  }
-
-  void xrm.WebApi.createRecord(LOGICAL_NAME, record)
-    .then(() => flushAppErrorLogQueue())
-    .catch(() => enqueue(record));
+    void xrm.WebApi.createRecord(LOGICAL_NAME, record)
+      .then(() => flushAppErrorLogQueue())
+      .catch(() => enqueue(record));
+  }).catch(() => {
+    enqueue({
+      new_name: truncate(`error | logger | ${normalized.message}`, 160),
+      new_occurredat: new Date().toISOString(),
+      new_severity: "error",
+      new_source: "logger",
+      new_message: truncate(normalized.message, MAX_TEXT),
+      new_stack: truncate(normalized.stack, MAX_STACK),
+      new_sessionid: truncate(SESSION_ID, 120)
+    });
+  });
 }
 
 function errorFromConsoleArgs(args: unknown[]) {

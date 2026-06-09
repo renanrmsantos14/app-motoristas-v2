@@ -8,7 +8,7 @@ export const tiles: Tile[] = [
 ];
 
 export const agendaMock: AgendaItem[] = [
-  { id: "h-hoje", tipo: "HEADER", tituloData: "Serviços de HOJE", seta: "▾" },
+  { id: "h-hoje", tipo: "HEADER", tituloData: "HOJE", seta: "" },
   {
     id: "srv-10241",
     tipo: "SERVICO",
@@ -86,7 +86,7 @@ export const agendaMock: AgendaItem[] = [
       ]
     }
   },
-  { id: "h-amanha", tipo: "HEADER", tituloData: "Serviços de AMANHÃ", seta: "▾" },
+  { id: "h-amanha", tipo: "HEADER", tituloData: "AMANHÃ", seta: "" },
   {
     id: "srv-10244",
     tipo: "SERVICO",
@@ -140,7 +140,7 @@ export const agendaMock: AgendaItem[] = [
 ];
 
 export const historyMock: AgendaItem[] = [
-  { id: "hist-hoje", tipo: "HEADER", tituloData: "Serviços de HOJE", seta: "▾" },
+  { id: "hist-hoje", tipo: "HEADER", tituloData: "HOJE", seta: "" },
   {
     id: "hist-srv-10239",
     tipo: "SERVICO",

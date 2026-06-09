@@ -233,13 +233,13 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
                 <VoucherInputRow label="Hospedagem"><input inputMode="decimal" placeholder="R$ 0,00" value={hotel} onChange={(event) => { setHotel(event.target.value); emitDraft({ Hospedagem: event.target.value }); }} /></VoucherInputRow>
                 <VoucherInputRow label="Outros"><input inputMode="decimal" placeholder="R$ 0,00" value={others} onChange={(event) => { setOthers(event.target.value); emitDraft({ Outros: event.target.value }); }} /></VoucherInputRow>
               </VoucherSection>
-              <div className="voucher-actions">
-                {showSignature ? <button ref={signatureButtonRef} className={`voucher-sign ${errors.signature ? "is-invalid" : ""}`} aria-invalid={Boolean(errors.signature)} disabled={isSubmitting} onClick={() => { clearError("signature"); onOpenSignature(); }}>{hasSignature ? "Refazer assinatura" : "Assinar"}</button> : null}
-                <FlowSubmitButton className="voucher-finish" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
-              </div>
-              {errors.signature ? <div className="field-error action-error">{errors.signature}</div> : null}
             </div>
           </div>
+          <div className="voucher-actions">
+            {showSignature ? <button ref={signatureButtonRef} className={`voucher-sign ${errors.signature ? "is-invalid" : ""}`} aria-invalid={Boolean(errors.signature)} disabled={isSubmitting} onClick={() => { clearError("signature"); onOpenSignature(); }}>{hasSignature ? "Refazer assinatura" : "Assinar"}</button> : null}
+            <FlowSubmitButton className="voucher-finish" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
+          </div>
+          {errors.signature ? <div className="field-error action-error">{errors.signature}</div> : null}
         </article>
       </section>
     </AppShell>

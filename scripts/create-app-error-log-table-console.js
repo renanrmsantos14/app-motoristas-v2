@@ -23,8 +23,20 @@
     { type: "string", schemaName: "new_AppVersion", label: "Versao do app", maxLength: 60 },
     { type: "string", schemaName: "new_BuiltAt", label: "Build", maxLength: 80 },
     { type: "string", schemaName: "new_SessionId", label: "Sessao", maxLength: 120 },
+    { type: "string", schemaName: "new_UserId", label: "ID do usuario", maxLength: 120 },
+    { type: "string", schemaName: "new_UserName", label: "Nome do usuario", maxLength: 300 },
+    { type: "string", schemaName: "new_UserEmail", label: "Email do usuario", maxLength: 300 },
+    { type: "string", schemaName: "new_UserDomainName", label: "Dominio do usuario", maxLength: 300 },
+    { type: "string", schemaName: "new_AppName", label: "Nome do app", maxLength: 120 },
     { type: "memo", schemaName: "new_Url", label: "URL", maxLength: 4000 },
+    { type: "memo", schemaName: "new_Referrer", label: "URL anterior", maxLength: 4000 },
     { type: "memo", schemaName: "new_UserAgent", label: "User agent", maxLength: 4000 },
+    { type: "string", schemaName: "new_Language", label: "Idioma do navegador", maxLength: 80 },
+    { type: "string", schemaName: "new_Platform", label: "Plataforma", maxLength: 160 },
+    { type: "string", schemaName: "new_TimeZone", label: "Fuso horario", maxLength: 120 },
+    { type: "string", schemaName: "new_Viewport", label: "Viewport", maxLength: 80 },
+    { type: "string", schemaName: "new_VisibilityState", label: "Visibilidade da pagina", maxLength: 40 },
+    { type: "string", schemaName: "new_ConnectionType", label: "Tipo de conexao", maxLength: 80 },
     { type: "string", schemaName: "new_ClientUrl", label: "URL Dataverse", maxLength: 500 },
     { type: "string", schemaName: "new_IsOffline", label: "Offline", maxLength: 20 },
     { type: "memo", schemaName: "new_PayloadJson", label: "Payload JSON", maxLength: 100000 },
@@ -187,7 +199,35 @@
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  function cleanGuid(value = "") {
+    return value.replace(/[{}]/g, "").toLowerCase();
+  }
+
+  async function getCurrentUser() {
+    const settings = xrm.Utility.getGlobalContext().userSettings;
+    const userId = cleanGuid(settings?.userId ?? "");
+    const fallback = {
+      id: userId,
+      name: settings?.userName ?? "",
+      email: "",
+      domainName: ""
+    };
+    if (!userId) return fallback;
+    try {
+      const user = await xrm.WebApi.retrieveRecord("systemuser", userId, "?$select=internalemailaddress,fullname,domainname");
+      return {
+        id: userId,
+        name: user.fullname ?? fallback.name,
+        email: user.internalemailaddress ?? "",
+        domainName: user.domainname ?? ""
+      };
+    } catch {
+      return fallback;
+    }
+  }
+
   async function createSmokeLog() {
+    const user = await getCurrentUser();
     const payload = {
       new_name: "Smoke test - log app motoristas",
       new_occurredat: new Date().toISOString(),
@@ -195,8 +235,20 @@
       new_source: "console-install",
       new_action: "create-app-error-log-table-console",
       new_message: "Tabela de log criada/validada.",
+      new_appname: "App Motoristas",
+      new_userid: user.id,
+      new_username: user.name,
+      new_useremail: user.email,
+      new_userdomainname: user.domainName,
       new_url: location.href,
+      new_referrer: document.referrer,
       new_useragent: navigator.userAgent,
+      new_language: navigator.language,
+      new_platform: navigator.platform,
+      new_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      new_viewport: `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio || 1}`,
+      new_visibilitystate: document.visibilityState,
+      new_connectiontype: navigator.connection?.effectiveType ?? navigator.connection?.type ?? "",
       new_clienturl: clientUrl,
       new_isoffline: navigator.onLine ? "false" : "true",
       new_rawjson: JSON.stringify({ createdBy: "console", table: TABLE.logicalName })

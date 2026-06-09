@@ -244,10 +244,10 @@ export function MaintenanceRequestScreen({
                   />
                 </div>
               </div>
-              <div className="finalize-actions maintenance-actions">
-                <FlowSubmitButton className="finalize-primary" idleLabel="ENVIAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={submit} />
-              </div>
             </div>
+          </div>
+          <div className="finalize-actions maintenance-actions">
+            <FlowSubmitButton className="finalize-primary" idleLabel="ENVIAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={submit} />
           </div>
         </article>
       </section>
