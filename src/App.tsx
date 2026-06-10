@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { agendaMock, historyMock } from "./data/mockData";
 import {
   cancelServiceRemote,
+  assertExpenseSchemaReadyRemote,
   createMaintenanceRequestRemote,
   createOne,
   DATAVERSE,
@@ -12,12 +13,15 @@ import {
   getDriverContext,
   getDriverCurrentVehicleId,
   hasDataverseRuntime,
+  loadExpenseReferenceDataRemote,
+  loadExpenseLookupNavigationNamesRemote,
   loadMaintenanceRequestVehiclesRemote,
   loadRemoteDetailByParams,
   loadRemoteStore,
   markDetailViewedRemote,
   saveVoucherDraftRemote,
   saveVoucherRemote,
+  updateOne,
   uploadExpenseInvoiceRemote,
   type DriverContext,
   type MaintenanceRequestVehicleOption
@@ -53,7 +57,7 @@ import {
 import { ServicesScreen } from "./screens/ServicesScreen";
 import { SignatureScreen } from "./screens/SignatureScreen";
 import { VoucherScreen } from "./screens/VoucherScreen";
-import { buildExpenseCreatePayload, type ExpenseDraft } from "./lib/expenses";
+import { DEFAULT_EXPENSE_REFERENCE_DATA, buildExpenseCreatePayload, type ExpenseDraft, type ExpensePhoto, type ExpenseReferenceData } from "./lib/expenses";
 import type { DetailData, MaintenancePhotoKind, Screen } from "./types";
 
 const STORAGE_KEY = "app-motoristas-local-v1";
@@ -75,6 +79,8 @@ const SCREEN_DEPTH: Record<Screen, number> = {
   voucher: 3,
   finalizar: 3,
   gastos: 1,
+  fotoGasto: 2,
+  previewFotoGasto: 3,
   solicitarManutencao: 1,
   fotoSolicitacaoManutencao: 2,
   previewFotoSolicitacaoManutencao: 3,
@@ -122,7 +128,7 @@ const isDetailScreen = (screenName: Screen) => screenName === "detalhes" || scre
 const isTaskScreen = (screenName: Screen) =>
   screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
 const isCaptureScreen = (screenName: Screen) =>
-  screenName === "fotoManutencao" || screenName === "previewFotoManutencao";
+  screenName === "fotoManutencao" || screenName === "previewFotoManutencao" || screenName === "fotoGasto" || screenName === "previewFotoGasto";
 
 function getScreenMotion(current: Screen, previous: Screen) {
   const delta = SCREEN_DEPTH[current] - SCREEN_DEPTH[previous];
@@ -351,19 +357,22 @@ function App() {
     gravidade: ""
   });
   const [expenseDraft, setExpenseDraft] = useState<ExpenseDraft>({
-    categoria: "",
+    categoriaId: "",
     veiculoId: "",
-    cidade: "",
     valor: "",
     dataGasto: new Date().toISOString().slice(0, 10),
-    formaPagamento: "",
+    formaPagamentoId: "",
+    estabelecimento: "",
     descricao: "",
     kmInformado: "",
-    litros: "",
-    observacao: "",
-    notaFiscalDataUrl: "",
-    notaFiscalFileName: ""
+    litros: ""
   });
+  const [expenseReferenceData, setExpenseReferenceData] = useState<ExpenseReferenceData>(DEFAULT_EXPENSE_REFERENCE_DATA);
+  const [expenseReferenceLoading, setExpenseReferenceLoading] = useState(false);
+  const [expenseReferenceError, setExpenseReferenceError] = useState("");
+  const [expensePhotos, setExpensePhotos] = useState<ExpensePhoto[]>([]);
+  const [expensePhotoDraft, setExpensePhotoDraft] = useState("");
+  const [expensePreviewPhotoId, setExpensePreviewPhotoId] = useState("");
   const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = useState<MaintenanceRequestPhoto[]>([]);
   const [maintenanceRequestPhotoDraft, setMaintenanceRequestPhotoDraft] = useState("");
   const [maintenanceRequestPreviewPhotoId, setMaintenanceRequestPreviewPhotoId] = useState("");
@@ -535,6 +544,39 @@ function App() {
       })
       .finally(() => {
         if (alive) setMaintenanceVehiclesLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [screen, remoteMode]);
+
+  useEffect(() => {
+    if (screen !== "gastos" || !remoteMode) return;
+    let alive = true;
+    setExpenseReferenceLoading(true);
+    setExpenseReferenceError("");
+    setExpenseReferenceData({ categories: [], paymentMethods: [] });
+    loadExpenseReferenceDataRemote()
+      .then((referenceData) => {
+        if (!alive) return;
+        setExpenseReferenceData(referenceData);
+        setExpenseReferenceError("");
+      })
+      .catch((error) => {
+        if (!alive) return;
+        reportAppError(error, {
+          severity: "error",
+          source: "app",
+          action: "loadExpenseReferenceDataRemote",
+          phase: "expense-form",
+          screen
+        });
+        const message = error instanceof Error ? error.message : "Falha ao carregar categorias de despesas.";
+        setExpenseReferenceError(message);
+        setToast(message);
+      })
+      .finally(() => {
+        if (alive) setExpenseReferenceLoading(false);
       });
     return () => {
       alive = false;
@@ -819,6 +861,7 @@ function App() {
       return;
     }
 
+    let createdExpenseId = "";
     try {
       setRemoteOperation({
         title: "Registrando gasto",
@@ -827,6 +870,17 @@ function App() {
       });
       const driver = driverContext ?? await getDriverContext();
       const veiculoId = draft.veiculoId || getDriverCurrentVehicleId(driver);
+      const photosToSubmit = expensePhotos.filter((photo) => Boolean(photo.dataUrl));
+      setRemoteOperation({
+        title: "Registrando gasto",
+        message: "Conferindo schema do Dataverse.",
+        phase: "loading"
+      });
+      await assertExpenseSchemaReadyRemote();
+      const lookupNavigationNames = await loadExpenseLookupNavigationNamesRemote({
+        includeVeiculo: Boolean(draft.veiculoId || veiculoId),
+        includeReserva: false
+      });
       setRemoteOperation({
         title: "Registrando gasto",
         message: "Criando despesa.",
@@ -834,17 +888,27 @@ function App() {
       });
       const payload = buildExpenseCreatePayload({
         draft,
+        photos: photosToSubmit,
+        referenceData: expenseReferenceData,
         motoristaId: driver.id,
-        veiculoId
+        veiculoId,
+        categoryEntitySet: DATAVERSE.categoriasDespesasOperacionais,
+        paymentMethodEntitySet: DATAVERSE.formasPagamentoDespesas,
+        motoristaEntitySet: DATAVERSE.funcionarios,
+        veiculoEntitySet: DATAVERSE.veiculos,
+        reservaEntitySet: DATAVERSE.geral,
+        lookupNavigationNames
       });
-      const result = await createOne(DATAVERSE.despesas, payload);
-      if (draft.notaFiscalDataUrl) {
+      const result = await createOne(DATAVERSE.despesasOperacionais, payload);
+      createdExpenseId = result.id;
+      for (const [index, photo] of photosToSubmit.entries()) {
         await uploadExpenseInvoiceRemote({
           expenseId: result.id,
           expenseName: String(payload.cr40f_nome ?? "Despesa"),
           motoristaId: driver.id,
-          dataUrl: draft.notaFiscalDataUrl,
-          fileName: draft.notaFiscalFileName,
+          dataUrl: photo.dataUrl,
+          fileName: `comprovante-${index + 1}`,
+          order: index + 1,
           onProgress: (message) => setRemoteOperation({
             title: "Registrando gasto",
             message,
@@ -852,6 +916,9 @@ function App() {
             phase: "loading"
           })
         });
+      }
+      if (photosToSubmit.length) {
+        await updateOne(DATAVERSE.despesasOperacionais, result.id, { cr40f_statusanexo: 100000002 });
       }
       setRemoteOperation({
         title: "Registrando gasto",
@@ -862,22 +929,29 @@ function App() {
       await wait(720);
       setRemoteOperation(null);
       setExpenseDraft({
-        categoria: "",
+        categoriaId: "",
         veiculoId: "",
-        cidade: "",
         valor: "",
         dataGasto: new Date().toISOString().slice(0, 10),
-        formaPagamento: "",
+        formaPagamentoId: "",
+        estabelecimento: "",
         descricao: "",
         kmInformado: "",
-        litros: "",
-        observacao: "",
-        notaFiscalDataUrl: "",
-        notaFiscalFileName: ""
+        litros: ""
       });
+      setExpensePhotos([]);
+      setExpensePhotoDraft("");
+      setExpensePreviewPhotoId("");
       setScreen("inicio");
       setToast("Gasto registrado.");
     } catch (error) {
+      if (createdExpenseId) {
+        try {
+          await updateOne(DATAVERSE.despesasOperacionais, createdExpenseId, { cr40f_statusanexo: 100000003 });
+        } catch (statusError) {
+          logAppError(statusError, "submitExpense", "statusanexo");
+        }
+      }
       logAppError(error, "submitExpense", "create");
       setRemoteOperation(null);
       setCriticalError(error instanceof Error ? error.message : "Falha ao registrar gasto.");
@@ -981,6 +1055,52 @@ function App() {
     setScreen("solicitarManutencao");
   };
 
+  const openExpenseCamera = () => {
+    setExpensePhotoDraft("");
+    setExpensePreviewPhotoId("");
+    setScreen("fotoGasto");
+  };
+
+  const openExpenseNativePreview = (photoDataUrl: string) => {
+    setExpensePhotoDraft(photoDataUrl);
+    setExpensePreviewPhotoId("");
+    setScreen("previewFotoGasto");
+  };
+
+  const openExpensePreview = (photoId: string) => {
+    const photo = expensePhotos.find((item) => item.id === photoId);
+    if (!photo) return;
+    setExpensePhotoDraft(photo.dataUrl);
+    setExpensePreviewPhotoId(photoId);
+    setScreen("previewFotoGasto");
+  };
+
+  const confirmExpensePhoto = () => {
+    if (!expensePhotoDraft) return setScreen("gastos");
+    if (expensePreviewPhotoId) {
+      setExpensePhotos((current) =>
+        current.map((photo) => photo.id === expensePreviewPhotoId ? { ...photo, dataUrl: expensePhotoDraft } : photo)
+      );
+    } else {
+      setExpensePhotos((current) => [
+        ...current,
+        { id: `expense-photo-${Date.now()}-${current.length + 1}`, dataUrl: expensePhotoDraft }
+      ]);
+    }
+    setExpensePhotoDraft("");
+    setExpensePreviewPhotoId("");
+    setScreen("gastos");
+  };
+
+  const deleteExpensePhoto = () => {
+    if (expensePreviewPhotoId) {
+      setExpensePhotos((current) => current.filter((photo) => photo.id !== expensePreviewPhotoId));
+    }
+    setExpensePhotoDraft("");
+    setExpensePreviewPhotoId("");
+    setScreen("gastos");
+  };
+
   if (screen === "canceladoLocal" && selectedDetail) {
     return show(
       <LocalCancelScreen
@@ -1029,6 +1149,56 @@ function App() {
     );
   }
 
+  if (screen === "fotoGasto") {
+    return show(
+      <MaintenancePhotoScreen
+        kind="NOTAFISCAL"
+        title="Tire a foto do comprovante"
+        onBack={() => setScreen("gastos")}
+        onCapture={(photoDataUrl) => {
+          setExpensePhotoDraft(photoDataUrl);
+          setExpensePreviewPhotoId("");
+          setScreen("previewFotoGasto");
+        }}
+        onSwitchCamera={() => setToast("Câmera alternada localmente.")}
+      />
+    );
+  }
+
+  if (screen === "previewFotoGasto") {
+    return show(
+      <MaintenancePhotoPreviewScreen
+        kind="NOTAFISCAL"
+        title="Comprovante"
+        prompt="O comprovante está legível?"
+        photoDataUrl={expensePhotoDraft}
+        onBack={() => {
+          setExpensePhotoDraft("");
+          setExpensePreviewPhotoId("");
+          setScreen("gastos");
+        }}
+        onRetake={() => {
+          setExpensePhotoDraft("");
+          setExpensePreviewPhotoId("");
+          setScreen("fotoGasto");
+        }}
+        onNativeRetake={(photoDataUrl) => {
+          if (expensePreviewPhotoId) {
+            setExpensePhotos((current) =>
+              current.map((photo) => photo.id === expensePreviewPhotoId ? { ...photo, dataUrl: photoDataUrl } : photo)
+            );
+          }
+          setExpensePhotoDraft(photoDataUrl);
+          setScreen("previewFotoGasto");
+        }}
+        onDelete={expensePreviewPhotoId ? deleteExpensePhoto : undefined}
+        onConfirm={confirmExpensePhoto}
+        confirmLabel={expensePreviewPhotoId ? "Voltar" : "Confirmar"}
+        deleteOnly={Boolean(expensePreviewPhotoId)}
+      />
+    );
+  }
+
   if (screen === "solicitarManutencao") {
     return show(
       <MaintenanceRequestScreen
@@ -1052,7 +1222,14 @@ function App() {
     return show(
       <ExpenseScreen
         draft={expenseDraft}
+        photos={expensePhotos}
+        referenceData={expenseReferenceData}
+        referenceLoading={expenseReferenceLoading}
+        referenceError={!remoteMode ? "Visualização local. Para gravar, abra o app publicado no Model-driven." : expenseReferenceError}
         onDraftChange={setExpenseDraft}
+        onAddPhoto={openExpenseCamera}
+        onNativeAddPhoto={openExpenseNativePreview}
+        onPreviewPhoto={openExpensePreview}
         onBack={() => setScreen("inicio")}
         onSubmit={submitExpense}
         submitState={remoteOperation?.phase ?? "idle"}

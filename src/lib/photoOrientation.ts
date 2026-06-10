@@ -1,10 +1,14 @@
 export function isLandscapeViewport() {
   if (typeof window === "undefined") return false;
-  return window.innerWidth / Math.max(window.innerHeight, 1) >= 1.2;
+  return window.innerWidth / Math.max(window.innerHeight, 1) >= 1.45;
 }
 
 export function getViewportOrientationAngle() {
   if (typeof window === "undefined") return 0;
+  const angle = Number(window.screen?.orientation?.angle ?? 0);
+  if (isLandscapeViewport() && (angle === 90 || angle === -270)) return 90;
+  if (isLandscapeViewport() && (angle === 270 || angle === -90)) return 270;
+  if (!isLandscapeViewport() && Math.abs(angle) === 180) return 180;
   return isLandscapeViewport() ? 90 : 0;
 }
 

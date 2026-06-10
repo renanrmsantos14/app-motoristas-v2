@@ -1,0 +1,18 @@
+{
+  "capturedAt": "2026-06-09T18:18:55.765Z",
+  "sourceUrl": "http://127.0.0.1:5176",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "shots": {
+    "home": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\01-home.png",
+    "services": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\02-services.png",
+    "details": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\03-details.png",
+    "voucher": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\04-voucher.png",
+    "signature": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\05-signature.png",
+    "maintenance": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\06-maintenance.png",
+    "finalizeMaintenance": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\07-finalize-maintenance.png",
+    "expenses": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\remotion\\assets\\screens\\08-expenses.png"
+  }
+}

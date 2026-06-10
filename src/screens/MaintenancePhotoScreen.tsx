@@ -81,14 +81,14 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onSwitc
       lastDeviceOrientationAtRef.current = Date.now();
       const currentAngle = orientationAngleRef.current;
       const tiltX = Math.abs(event.gamma);
-      const enterLandscapeAt = 50;
-      const exitLandscapeAt = 30;
+      const enterLandscapeAt = 72;
+      const exitLandscapeAt = 58;
 
       if (tiltX >= enterLandscapeAt) {
         orientationAngleRef.current = event.gamma > 0 ? 90 : 270;
         return;
       }
-      if (event.beta < -45) {
+      if (event.beta < -125) {
         orientationAngleRef.current = 180;
         return;
       }

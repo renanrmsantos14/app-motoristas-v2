@@ -46,7 +46,8 @@ function contentType(filePath) {
 }
 
 function serveFile(request, response) {
-  const requestedPath = request.url === "/" ? "index.html" : request.url.replace(/^\//, "");
+  const requestPath = (request.url || "/").split("?")[0];
+  const requestedPath = requestPath === "/" ? "index.html" : requestPath.replace(/^\//, "");
   const filePath = path.join(distDir, requestedPath);
 
   fs.readFile(filePath, (error, data) => {

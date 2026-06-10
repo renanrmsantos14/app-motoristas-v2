@@ -511,6 +511,152 @@ Nada e apagado automaticamente.
     return lastBlockers;
   }
 
+  function getWorkflowBlockers(deps) {
+    const blockers = deps.ok ? deps.dependencies.map(summarizeDependency) : [];
+    return blockers.filter((item) => Number(item.dependentComponentType) === 29);
+  }
+
+  async function getWorkflowRecord(workflowId) {
+    const id = cleanGuid(workflowId);
+    const paths = [
+      `workflows(${id})?$select=workflowid,name,uniquename,category,type,statecode,statuscode,ismanaged`,
+      `workflows(${id})?$select=workflowid,name,statecode,statuscode,ismanaged`,
+      `workflows(${id})`
+    ];
+    for (const path of paths) {
+      const result = await requestOptional(path);
+      if (result.ok) return result.data ?? {};
+    }
+    return null;
+  }
+
+  async function tryDeactivateWorkflow(workflowId) {
+    const id = cleanGuid(workflowId);
+    const attempts = [
+      {
+        label: "PATCH statecode/statuscode",
+        path: `workflows(${id})`,
+        options: {
+          method: "PATCH",
+          body: JSON.stringify({ statecode: 0, statuscode: 1 })
+        }
+      },
+      {
+        label: "bound SetState",
+        path: `workflows(${id})/Microsoft.Dynamics.CRM.SetState`,
+        options: {
+          method: "POST",
+          body: JSON.stringify({ State: 0, Status: 1 })
+        }
+      },
+      {
+        label: "unbound SetState",
+        path: "SetState",
+        options: {
+          method: "POST",
+          body: JSON.stringify({
+            EntityMoniker: {
+              "@odata.type": "Microsoft.Dynamics.CRM.workflow",
+              workflowid: id
+            },
+            State: 0,
+            Status: 1
+          })
+        }
+      }
+    ];
+
+    const failures = [];
+    for (const attempt of attempts) {
+      feedback(`Tentando desativar workflow/processo: ${id}`, { tentativa: attempt.label });
+      const result = await requestOptional(attempt.path, attempt.options);
+      if (result.ok) {
+        feedback(`Workflow/processo desativado: ${id}`, { tentativa: attempt.label });
+        return { ok: true, attempt: attempt.label, failures };
+      }
+      failures.push({ attempt: attempt.label, error: result.error, raw: result.raw });
+      feedback(`Falha ao desativar workflow/processo: ${id}`, { tentativa: attempt.label, error: result.error }, "warn");
+    }
+    return { ok: false, attempt: "", failures };
+  }
+
+  async function deleteWorkflowBlocker(workflowId) {
+    const id = cleanGuid(workflowId);
+    const workflow = await getWorkflowRecord(id);
+    const details = workflow ? {
+      workflowid: workflow.workflowid ?? id,
+      name: workflow.name ?? "",
+      uniquename: workflow.uniquename ?? "",
+      category: workflow.category ?? "",
+      type: workflow.type ?? "",
+      statecode: workflow.statecode ?? "",
+      statuscode: workflow.statuscode ?? "",
+      ismanaged: workflow.ismanaged ?? ""
+    } : { workflowid: id, name: "(nao foi possivel ler registro)" };
+
+    feedback("Workflow/processo bloqueador encontrado", details);
+    if (workflow?.ismanaged === true) {
+      return { ok: false, id, details, error: "Workflow/processo gerenciado. Nao pode ser apagado por este console." };
+    }
+
+    let deletion = await requestOptional(`workflows(${id})`, { method: "DELETE" });
+    if (deletion.ok) {
+      feedback(`Workflow/processo apagado: ${id}`, details);
+      return { ok: true, id, details, deactivated: false };
+    }
+
+    feedback(`Delete direto falhou para workflow/processo: ${id}`, { error: deletion.error }, "warn");
+    const deactivation = await tryDeactivateWorkflow(id);
+    if (deactivation.ok) {
+      await publishAndWait(`desativacao de workflow/processo ${id}`);
+      deletion = await requestOptional(`workflows(${id})`, { method: "DELETE" });
+      if (deletion.ok) {
+        feedback(`Workflow/processo apagado apos desativar: ${id}`, details);
+        return { ok: true, id, details, deactivated: true, deactivationAttempt: deactivation.attempt };
+      }
+    }
+
+    return {
+      ok: false,
+      id,
+      details,
+      error: deletion.error,
+      raw: deletion.raw,
+      deactivationFailures: deactivation.failures
+    };
+  }
+
+  async function removeWorkflowDependencies(entity, deps, reason) {
+    const blockers = getWorkflowBlockers(deps);
+    const workflowIds = [...new Set(blockers.map((item) => item.dependentComponentObjectId).filter(Boolean).map(cleanGuid))];
+    const result = { found: workflowIds.length, deleted: [], failures: [], remaining: [] };
+    if (!workflowIds.length) {
+      feedback(`Sem workflow/processo bloqueador: ${entity.LogicalName}`, { reason });
+      return result;
+    }
+
+    feedbackTable(`Workflows/processos bloqueadores: ${entity.LogicalName}`, blockers);
+    for (const workflowId of workflowIds) {
+      const deletion = await deleteWorkflowBlocker(workflowId);
+      if (deletion.ok) {
+        result.deleted.push(deletion);
+      } else {
+        result.failures.push(deletion);
+        feedback(`Falha ao apagar workflow/processo bloqueador: ${workflowId}`, { error: deletion.error }, "warn");
+      }
+    }
+
+    await publishAndWait(`${entity.LogicalName} apos limpar workflows/processos`);
+    const depsAfter = await retrieveDependencies(entity);
+    result.remaining = getWorkflowBlockers(depsAfter);
+    if (result.remaining.length) {
+      feedbackTable(`Workflow/processo ainda bloqueia: ${entity.LogicalName}`, result.remaining);
+    } else {
+      feedback(`Workflow/processo nao bloqueia mais: ${entity.LogicalName}`);
+    }
+    return result;
+  }
+
   async function getRelationshipsForEntity(entityLogicalName) {
     feedback(`Buscando relacionamentos: ${entityLogicalName}`);
     const paths = [
@@ -689,7 +835,21 @@ Nada e apagado automaticamente.
       if (remainingAppBlockers.length) {
         throw new Error(`Ainda existem ${remainingAppBlockers.length} bloqueios de app/sitemap. Metadata da tabela nao sera apagada nesta tentativa.`);
       }
+      const workflowCleanupBeforeRelationships = await removeWorkflowDependencies(
+        entity,
+        await retrieveDependencies(entity),
+        "antes de remover relacionamentos"
+      );
       const relationshipDelete = await deleteRelationshipsForEntity(entity);
+      const workflowCleanupAfterRelationships = await removeWorkflowDependencies(
+        entity,
+        await retrieveDependencies(entity),
+        "depois de remover relacionamentos"
+      );
+      const remainingWorkflowBlockers = getWorkflowBlockers(await retrieveDependencies(entity));
+      if (remainingWorkflowBlockers.length) {
+        throw new Error(`Ainda existem ${remainingWorkflowBlockers.length} bloqueios de workflow/processo. Metadata da tabela nao sera apagada nesta tentativa.`);
+      }
       await deleteTable(entity);
       results.push({
         table: entity.LogicalName,
@@ -703,6 +863,9 @@ Nada e apagado automaticamente.
         appModuleComponentRowFailures: appCleanup.appModuleComponentRowFailures.length,
         sitemapUpdates: appCleanup.sitemapUpdates.filter((item) => item.changed).length,
         sitemapFailures: appCleanup.sitemapFailures.length,
+        workflowBlockersFound: workflowCleanupBeforeRelationships.found + workflowCleanupAfterRelationships.found,
+        workflowsDeleted: workflowCleanupBeforeRelationships.deleted.length + workflowCleanupAfterRelationships.deleted.length,
+        workflowFailures: workflowCleanupBeforeRelationships.failures.length + workflowCleanupAfterRelationships.failures.length,
         relationshipsDeleted: relationshipDelete.deleted.length,
         relationshipFailures: relationshipDelete.failures.length,
         detail: "Linhas apagadas. Delete EntityDefinitions enviado."

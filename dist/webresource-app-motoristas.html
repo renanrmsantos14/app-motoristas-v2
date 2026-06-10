@@ -7644,7 +7644,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.28","builtAt":"2026-06-09T15:34:17.668Z","builtAtLabel":"09/06/2026, 12:34"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.62","builtAt":"2026-06-10T17:16:13.983Z","builtAtLabel":"10/06/2026, 14:16"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -8750,7 +8750,7 @@ select,
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect14(create, deps) {
+          function useEffect15(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -9533,7 +9533,7 @@ select,
           exports.useContext = useContext9;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect14;
+          exports.useEffect = useEffect15;
           exports.useId = useId4;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect4;
@@ -26556,8 +26556,10 @@ select,
     funcionarios: "cr40f_funcionarioses",
     bancoDeDados: "cr40f_bancodedadoses",
     manutencoes: "cr40f_manutencoeses",
-    despesas: "cr40f_despesas",
-    anexosDespesas: "cr40f_anexodespesas",
+    despesasOperacionais: "cr40f_despesaoperacionals",
+    anexosDespesasOperacionais: "cr40f_anexodespesaoperacionals",
+    categoriasDespesasOperacionais: "cr40f_categoriadespesaoperacionals",
+    formasPagamentoDespesas: "cr40f_formapagamentodespesas",
     trocas: "cr40f_trocasdecarros",
     servicosPorPassageiro: "cr40f_servicosporpassageiros",
     posseVeiculos: "new_possedeveiculos",
@@ -26575,8 +26577,10 @@ select,
     [DATAVERSE.funcionarios]: "cr40f_funcionarios",
     [DATAVERSE.bancoDeDados]: "cr40f_bancodedados",
     [DATAVERSE.manutencoes]: "cr40f_manutencoes",
-    [DATAVERSE.despesas]: "cr40f_despesa",
-    [DATAVERSE.anexosDespesas]: "cr40f_anexodespesa",
+    [DATAVERSE.despesasOperacionais]: "cr40f_despesaoperacional",
+    [DATAVERSE.anexosDespesasOperacionais]: "cr40f_anexodespesaoperacional",
+    [DATAVERSE.categoriasDespesasOperacionais]: "cr40f_categoriadespesaoperacional",
+    [DATAVERSE.formasPagamentoDespesas]: "cr40f_formapagamentodespesa",
     [DATAVERSE.trocas]: "cr40f_trocasdecarro",
     [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
     [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
@@ -26869,6 +26873,74 @@ select,
       };
     }).filter((vehicle) => Boolean(vehicle.id && vehicle.label));
   }
+  function getBooleanValue(record, logicalName) {
+    const value = record[logicalName];
+    return value === true || value === 1 || value === "true";
+  }
+  var EXPENSE_CATEGORY_ACTIVE_QUERY = "$select=cr40f_categoriadespesaoperacionalid,cr40f_nome,cr40f_ordem,cr40f_exigeveiculo,cr40f_exigereserva,cr40f_exigekm,cr40f_exigelitros,cr40f_ativa&$filter=cr40f_ativa eq true&$orderby=cr40f_ordem asc,cr40f_nome asc";
+  var EXPENSE_CATEGORY_ALL_QUERY = "$select=cr40f_categoriadespesaoperacionalid,cr40f_nome,cr40f_ordem,cr40f_exigeveiculo,cr40f_exigereserva,cr40f_exigekm,cr40f_exigelitros,cr40f_ativa&$orderby=cr40f_ordem asc,cr40f_nome asc";
+  var EXPENSE_CATEGORY_MINIMAL_QUERY = "$select=cr40f_categoriadespesaoperacionalid,cr40f_nome&$orderby=cr40f_nome asc";
+  var EXPENSE_PAYMENT_ACTIVE_QUERY = "$select=cr40f_formapagamentodespesaid,cr40f_nome,cr40f_ordem,cr40f_tipo,cr40f_ativa&$filter=cr40f_ativa eq true&$orderby=cr40f_ordem asc,cr40f_nome asc";
+  var EXPENSE_PAYMENT_ALL_QUERY = "$select=cr40f_formapagamentodespesaid,cr40f_nome,cr40f_ordem,cr40f_tipo,cr40f_ativa&$orderby=cr40f_ordem asc,cr40f_nome asc";
+  var EXPENSE_PAYMENT_MINIMAL_QUERY = "$select=cr40f_formapagamentodespesaid,cr40f_nome&$orderby=cr40f_nome asc";
+  async function retrieveExpenseReferenceRecords(entitySetName, label, activeQuery, allQuery, minimalQuery) {
+    let activeError = null;
+    try {
+      const activeResult = await retrieveMultiple(entitySetName, activeQuery);
+      if (activeResult.entities.length) return activeResult;
+      dataverseWarn(`Referencia de despesa sem registros ativos: ${label}. Tentando consulta sem filtro de ativo.`);
+    } catch (error) {
+      activeError = error;
+      dataverseWarn(`Consulta ativa de referencia de despesa falhou: ${label}. Tentando consulta sem filtro de ativo.`, describeDataverseError(error));
+    }
+    try {
+      const allResult = await retrieveMultiple(entitySetName, allQuery);
+      if (allResult.entities.length) return allResult;
+      dataverseWarn(`Referencia de despesa vazia: ${label}. Tentando consulta minima.`);
+    } catch (error) {
+      dataverseWarn(`Consulta completa de referencia de despesa falhou: ${label}. Tentando consulta minima.`, describeDataverseError(error));
+    }
+    try {
+      return await retrieveMultiple(entitySetName, minimalQuery);
+    } catch (error) {
+      throw activeError ?? error;
+    }
+  }
+  async function loadExpenseReferenceDataRemote() {
+    const [categoryResult, paymentResult] = await Promise.all([
+      retrieveExpenseReferenceRecords(
+        DATAVERSE.categoriasDespesasOperacionais,
+        "categorias",
+        EXPENSE_CATEGORY_ACTIVE_QUERY,
+        EXPENSE_CATEGORY_ALL_QUERY,
+        EXPENSE_CATEGORY_MINIMAL_QUERY
+      ),
+      retrieveExpenseReferenceRecords(
+        DATAVERSE.formasPagamentoDespesas,
+        "formas de pagamento",
+        EXPENSE_PAYMENT_ACTIVE_QUERY,
+        EXPENSE_PAYMENT_ALL_QUERY,
+        EXPENSE_PAYMENT_MINIMAL_QUERY
+      )
+    ]);
+    return {
+      categories: categoryResult.entities.map((record) => ({
+        id: cleanODataGuid(record.cr40f_categoriadespesaoperacionalid),
+        name: String(record.cr40f_nome ?? "").trim(),
+        order: Number(record.cr40f_ordem ?? 9999),
+        exigeVeiculo: getBooleanValue(record, "cr40f_exigeveiculo"),
+        exigeReserva: getBooleanValue(record, "cr40f_exigereserva"),
+        exigeKm: getBooleanValue(record, "cr40f_exigekm"),
+        exigeLitros: getBooleanValue(record, "cr40f_exigelitros")
+      })).filter((category) => Boolean(category.id && category.name)),
+      paymentMethods: paymentResult.entities.map((record) => ({
+        id: cleanODataGuid(record.cr40f_formapagamentodespesaid),
+        name: String(record.cr40f_nome ?? "").trim(),
+        order: Number(record.cr40f_ordem ?? 9999),
+        tipo: String(record.cr40f_tipo ?? "").trim()
+      })).filter((method) => Boolean(method.id && method.name))
+    };
+  }
   function buildMaintenanceRequestRecord(payload) {
     const descricao = payload.descricao.trim();
     const kmAtual = Number(payload.kmAtual);
@@ -27117,28 +27189,35 @@ select,
     motoristaId,
     dataUrl,
     fileName,
+    order = 1,
     onProgress
   }) {
     if (!dataUrl) return "";
-    const baseName = sanitizePathSegment(fileName?.replace(/\.[^.]+$/, ""), "nota-fiscal");
+    const baseName = sanitizePathSegment(fileName?.replace(/\.[^.]+$/, ""), `comprovante-${order}`);
     const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
     const path = `Despesas/${devPrefix}${sanitizePathSegment(expenseName, "Sem nome")}`;
-    onProgress?.("Enviando nota fiscal.");
+    const lookupNavigationNames = await loadExpenseAttachmentLookupNavigationNamesRemote();
+    onProgress?.(`Enviando comprovante ${order}.`);
     const link = await uploadMaintenancePhoto(path, dataUrl, baseName, {
       despesaGuid: expenseId,
       despesaNome: expenseName,
-      tipo: "NOTA_FISCAL"
+      tipo: "COMPROVANTE",
+      indice: order
     });
-    onProgress?.("Vinculando nota fiscal \xE0 despesa.");
+    onProgress?.(`Vinculando comprovante ${order} \xE0 despesa.`);
     const record = {
-      cr40f_nome: `Nota fiscal - ${expenseName}`,
+      cr40f_nome: `Comprovante ${order} - ${expenseName}`,
       cr40f_nomearquivo: fileName || `${baseName}`,
       cr40f_urlsharepoint: link,
+      cr40f_sharelink: link,
       cr40f_dataenvio: (/* @__PURE__ */ new Date()).toISOString(),
-      "cr40f_Despesa@odata.bind": bind(DATAVERSE.despesas, expenseId)
+      cr40f_ordem: order,
+      cr40f_status: 100000001,
+      cr40f_tipo: 1e8,
+      [`${lookupNavigationNames.despesa}@odata.bind`]: bind(DATAVERSE.despesasOperacionais, expenseId)
     };
-    if (motoristaId) record["cr40f_EnviadoPor@odata.bind"] = bind(DATAVERSE.funcionarios, motoristaId);
-    await createOne(DATAVERSE.anexosDespesas, record);
+    if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+    await createOne(DATAVERSE.anexosDespesasOperacionais, record);
     return link;
   }
   async function createMaintenancePhotoLinkRecord({
@@ -27235,6 +27314,236 @@ select,
   }
   function bind(entitySetName, id3) {
     return `/${entitySetName}(${cleanGuid(id3)})`;
+  }
+  var lookupNavigationNameCache = /* @__PURE__ */ new Map();
+  function normalizeMetadataName(value) {
+    return String(value ?? "").trim().toLowerCase();
+  }
+  function getClientUrl() {
+    const clientUrl = getWindowXrm()?.Utility?.getGlobalContext?.().getClientUrl?.();
+    if (!clientUrl) throw new Error("URL do Dataverse nao encontrada no runtime Xrm.");
+    return clientUrl.replace(/\/$/, "");
+  }
+  async function fetchDataverseMetadataJson(path) {
+    const response = await fetch(encodeURI(`${getClientUrl()}/api/data/v9.2/${path}`), {
+      headers: {
+        Accept: "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0"
+      }
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(`GET ${path}
+${response.status} ${response.statusText}
+${text}`);
+    }
+    return text ? JSON.parse(text) : {};
+  }
+  async function fetchManyToOneRelationshipMetadata(referencingEntityName) {
+    const select = "$select=SchemaName,ReferencedEntity,ReferencingEntity,ReferencingAttribute,ReferencingEntityNavigationPropertyName";
+    try {
+      const metadata = await fetchDataverseMetadataJson(
+        `EntityDefinitions(LogicalName='${escapeODataText(referencingEntityName)}')/ManyToOneRelationships?${select}`
+      );
+      return metadata.value ?? [];
+    } catch (error) {
+      dataverseWarn("Consulta de relacionamentos pela EntityDefinitions falhou. Tentando RelationshipDefinitions.", describeDataverseError(error));
+      const metadata = await fetchDataverseMetadataJson(
+        `RelationshipDefinitions/Microsoft.Dynamics.CRM.OneToManyRelationshipMetadata?${select}&$filter=ReferencingEntity eq '${escapeODataText(referencingEntityName)}'`
+      );
+      return metadata.value ?? [];
+    }
+  }
+  async function assertEntityHasAttributes(entitySetName, label, requiredAttributes) {
+    try {
+      await retrieveMultiple(entitySetName, `$select=${requiredAttributes.join(",")}&$top=1`);
+    } catch (error) {
+      throw new Error(
+        `Schema de ${label} nao passou na consulta real do Dataverse. Rode repair-despesas-operacionais-relacionamentos.console.js se o erro citar campo inexistente. Detalhe: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+  async function assertExpenseSchemaReadyRemote() {
+    await Promise.all([
+      assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", [
+        "cr40f_nome",
+        "cr40f_datagasto",
+        "cr40f_valor",
+        "cr40f_statusoperacional",
+        "cr40f_statusfinanceiro",
+        "cr40f_statusanexo",
+        "cr40f_origem",
+        "cr40f_observacao",
+        "cr40f_estabelecimento",
+        "cr40f_kminformado",
+        "cr40f_litros"
+      ]),
+      assertEntityHasAttributes(DATAVERSE.anexosDespesasOperacionais, "Anexos de Despesas", [
+        "cr40f_nome",
+        "cr40f_nomearquivo",
+        "cr40f_urlsharepoint",
+        "cr40f_sharelink",
+        "cr40f_dataenvio",
+        "cr40f_ordem",
+        "cr40f_status",
+        "cr40f_tipo"
+      ]),
+      assertEntityHasAttributes(DATAVERSE.categoriasDespesasOperacionais, "Categorias de Despesas", [
+        "cr40f_nome",
+        "cr40f_ativa",
+        "cr40f_exigeveiculo",
+        "cr40f_exigereserva",
+        "cr40f_exigekm",
+        "cr40f_exigelitros",
+        "cr40f_ordem"
+      ]),
+      assertEntityHasAttributes(DATAVERSE.formasPagamentoDespesas, "Formas de Pagamento", [
+        "cr40f_nome",
+        "cr40f_ativa",
+        "cr40f_tipo",
+        "cr40f_ordem"
+      ])
+    ]);
+  }
+  async function resolveLookupNavigationName({
+    referencingEntitySetName,
+    referencedEntitySetName,
+    referencingAttribute,
+    label
+  }) {
+    const referencingEntityName = getWebApiEntityName(referencingEntitySetName);
+    const referencedEntityName = getWebApiEntityName(referencedEntitySetName);
+    const cacheKey = `${referencingEntityName}:${referencedEntityName}:${referencingAttribute}`;
+    const cached = lookupNavigationNameCache.get(cacheKey);
+    if (cached) return cached;
+    const relationships = await fetchManyToOneRelationshipMetadata(referencingEntityName);
+    const match = relationships.find(
+      (relationship) => normalizeMetadataName(relationship.ReferencingAttribute) === normalizeMetadataName(referencingAttribute) && normalizeMetadataName(relationship.ReferencedEntity) === normalizeMetadataName(referencedEntityName)
+    );
+    const navigationName = String(match?.ReferencingEntityNavigationPropertyName ?? "").trim();
+    if (!navigationName) {
+      const candidates = relationships.filter((relationship) => normalizeMetadataName(relationship.ReferencingAttribute) === normalizeMetadataName(referencingAttribute)).map((relationship) => ({
+        schemaName: relationship.SchemaName,
+        referencedEntity: relationship.ReferencedEntity,
+        referencingAttribute: relationship.ReferencingAttribute,
+        navigationName: relationship.ReferencingEntityNavigationPropertyName
+      }));
+      throw new Error(`Navigation property nao encontrado para ${label} (${referencingEntityName}.${referencingAttribute}). Candidatos: ${JSON.stringify(candidates)}`);
+    }
+    lookupNavigationNameCache.set(cacheKey, navigationName);
+    dataverseLog("Navigation property resolvido.", {
+      label,
+      referencingEntityName,
+      referencedEntityName,
+      referencingAttribute,
+      navigationName,
+      schemaName: match?.SchemaName
+    });
+    return navigationName;
+  }
+  async function loadExpenseLookupNavigationNamesRemote(options = {}) {
+    const requests = [
+      {
+        key: "motorista",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.funcionarios,
+        referencingAttribute: "cr40f_motorista",
+        label: "Despesa.Motorista",
+        required: true
+      },
+      {
+        key: "categoria",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.categoriasDespesasOperacionais,
+        referencingAttribute: "cr40f_categoria",
+        label: "Despesa.Categoria",
+        required: true
+      },
+      {
+        key: "formaPagamento",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.formasPagamentoDespesas,
+        referencingAttribute: "cr40f_formapagamento",
+        label: "Despesa.FormaPagamento",
+        required: true
+      }
+    ];
+    if (options.includeVeiculo) {
+      requests.push({
+        key: "veiculo",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.veiculos,
+        referencingAttribute: "cr40f_veiculo",
+        label: "Despesa.Veiculo"
+      });
+    }
+    if (options.includeReserva) {
+      requests.push({
+        key: "reserva",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.geral,
+        referencingAttribute: "cr40f_reserva",
+        label: "Despesa.Reserva"
+      });
+    }
+    const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+    const names = {};
+    const failures = [];
+    settled.forEach((result, index) => {
+      const request = requests[index];
+      if (result.status === "fulfilled") {
+        names[request.key] = result.value;
+        return;
+      }
+      failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+    });
+    if (failures.length) {
+      throw new Error(`Schema de Despesas incompleto. Rode repair-despesas-operacionais-relacionamentos.console.js. Falhas: ${failures.join(" | ")}`);
+    }
+    if (!names.motorista || !names.categoria || !names.formaPagamento) {
+      throw new Error("Schema de Despesas incompleto. Lookups obrigatorios nao resolvidos.");
+    }
+    return {
+      motorista: names.motorista,
+      categoria: names.categoria,
+      formaPagamento: names.formaPagamento,
+      veiculo: names.veiculo,
+      reserva: names.reserva
+    };
+  }
+  async function loadExpenseAttachmentLookupNavigationNamesRemote() {
+    const requests = [
+      {
+        key: "despesa",
+        referencingEntitySetName: DATAVERSE.anexosDespesasOperacionais,
+        referencedEntitySetName: DATAVERSE.despesasOperacionais,
+        referencingAttribute: "cr40f_despesa",
+        label: "AnexoDespesa.Despesa"
+      },
+      {
+        key: "enviadoPor",
+        referencingEntitySetName: DATAVERSE.anexosDespesasOperacionais,
+        referencedEntitySetName: DATAVERSE.funcionarios,
+        referencingAttribute: "cr40f_enviadopor",
+        label: "AnexoDespesa.EnviadoPor"
+      }
+    ];
+    const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+    const names = {};
+    const failures = [];
+    settled.forEach((result, index) => {
+      const request = requests[index];
+      if (result.status === "fulfilled") {
+        names[request.key] = result.value;
+        return;
+      }
+      failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+    });
+    if (failures.length || !names.despesa || !names.enviadoPor) {
+      throw new Error(`Schema de Anexos de Despesas incompleto. Rode repair-despesas-operacionais-relacionamentos.console.js. Falhas: ${failures.join(" | ")}`);
+    }
+    return { despesa: names.despesa, enviadoPor: names.enviadoPor };
   }
   function getGeralId(record) {
     return getRecordId(record, "cr40f_reservadeveculosid", "cr40f_reservadeveiculosid");
@@ -29244,46 +29553,121 @@ select,
   }
 
   // src/lib/expenses.ts
-  var EXPENSE_CATEGORIES = [
-    "Abastecimento",
-    "Hospedagem",
-    "Lavagem",
-    "Caf\xE9",
-    "Almo\xE7o",
-    "Jantar",
-    "Manuten\xE7\xE3o",
-    "Estacionamento",
-    "Aplicativos",
-    "Loca\xE7\xE3o de carro",
-    "Gastos a pedido do cliente",
-    "Outros"
-  ];
-  var EXPENSE_PAYMENT_METHODS = ["Cart\xE3o", "Dinheiro", "Pix", "Pedido de compra", "Pago pelo cliente"];
-  var EXPENSE_VEHICLE_CATEGORIES = ["Abastecimento", "Lavagem", "Manuten\xE7\xE3o", "Estacionamento", "Loca\xE7\xE3o de carro"];
-  var EXPENSE_KM_CATEGORIES = ["Abastecimento"];
-  var EXPENSE_LITER_CATEGORIES = ["Abastecimento"];
-  var EXPENSE_DESCRIPTION_REQUIRED_CATEGORIES = ["Outros", "Gastos a pedido do cliente"];
-  var EXPENSE_ENTITY_SETS = {
-    funcionarios: "cr40f_funcionarioses",
-    veiculos: "cr40f_veiculoses"
+  var DEFAULT_EXPENSE_REFERENCE_DATA = {
+    categories: [
+      {
+        id: "local-combustivel",
+        name: "Combust\xEDvel",
+        order: 10,
+        exigeVeiculo: true,
+        exigeReserva: false,
+        exigeKm: true,
+        exigeLitros: true
+      },
+      {
+        id: "local-pedagio",
+        name: "Ped\xE1gio",
+        order: 20,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-estacionamento",
+        name: "Estacionamento",
+        order: 30,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-lavagem",
+        name: "Lavagem",
+        order: 40,
+        exigeVeiculo: true,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-manutencao-emergencial",
+        name: "Manuten\xE7\xE3o emergencial",
+        order: 50,
+        exigeVeiculo: true,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-alimentacao",
+        name: "Alimenta\xE7\xE3o",
+        order: 60,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-hospedagem",
+        name: "Hospedagem",
+        order: 70,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-outros",
+        name: "Outros",
+        order: 999,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      }
+    ],
+    paymentMethods: [
+      { id: "local-cartao-empresa", name: "Cart\xE3o empresa", order: 10, tipo: "Cart\xE3o" },
+      { id: "local-cartao-motorista", name: "Cart\xE3o motorista", order: 20, tipo: "Cart\xE3o" },
+      { id: "local-dinheiro-motorista", name: "Dinheiro motorista", order: 30, tipo: "Dinheiro" },
+      { id: "local-pix-motorista", name: "Pix motorista", order: 40, tipo: "Pix" },
+      { id: "local-tag-ctf", name: "Tag CTF", order: 50, tipo: "Tag" },
+      { id: "local-sem-parar", name: "Sem Parar", order: 60, tipo: "Tag" }
+    ]
   };
-  function cleanGuid3(value = "") {
-    return value.replace(/[{}]/g, "").toLowerCase();
+  var fallbackCategoryRules = {
+    Combust\u00EDvel: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
+    combustivel: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
+    Lavagem: { exigeVeiculo: true },
+    "Manuten\xE7\xE3o emergencial": { exigeVeiculo: true }
+  };
+  function normalizeText3(value) {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
-  function bind2(entitySetName, id3) {
-    return `/${entitySetName}(${cleanGuid3(id3)})`;
+  function findExpenseCategory(referenceData, id3) {
+    return referenceData.categories.find((category) => category.id === id3) ?? null;
   }
-  function expenseNeedsVehicle(categoria) {
-    return EXPENSE_VEHICLE_CATEGORIES.includes(categoria);
+  function findExpensePaymentMethod(referenceData, id3) {
+    return referenceData.paymentMethods.find((method) => method.id === id3) ?? null;
   }
-  function expenseNeedsKm(categoria) {
-    return EXPENSE_KM_CATEGORIES.includes(categoria);
-  }
-  function expenseNeedsLiters(categoria) {
-    return EXPENSE_LITER_CATEGORIES.includes(categoria);
-  }
-  function expenseNeedsDescription(categoria) {
-    return EXPENSE_DESCRIPTION_REQUIRED_CATEGORIES.includes(categoria);
+  function getExpenseCategoryRules(category) {
+    if (!category) {
+      return {
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      };
+    }
+    const fallback = fallbackCategoryRules[category.name] ?? fallbackCategoryRules[normalizeText3(category.name)] ?? {};
+    return {
+      exigeVeiculo: category.exigeVeiculo || fallback.exigeVeiculo || false,
+      exigeReserva: category.exigeReserva || fallback.exigeReserva || false,
+      exigeKm: category.exigeKm || fallback.exigeKm || false,
+      exigeLitros: category.exigeLitros || fallback.exigeLitros || false
+    };
   }
   function parseCurrencyInput(value) {
     const cleaned = String(value ?? "").replace("R$", "").replace(/\s/g, "").trim();
@@ -29300,35 +29684,41 @@ select,
     const parsed = Number(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;
   }
-  function validateExpenseDraft(draft) {
+  function validateExpenseDraft(draft, photos, referenceData) {
     const errors = {};
+    const category = findExpenseCategory(referenceData, draft.categoriaId);
+    const paymentMethod = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
+    const rules = getExpenseCategoryRules(category);
     const valor = parseCurrencyInput(draft.valor);
-    if (!draft.categoria.trim()) errors.categoria = "Selecione a categoria.";
-    if (expenseNeedsVehicle(draft.categoria) && !draft.veiculoId.trim()) errors.veiculoId = "Selecione o ve\xEDculo.";
-    if (!draft.cidade.trim()) errors.cidade = "Informe a cidade.";
+    if (!category) errors.categoriaId = "Selecione a categoria.";
+    if (rules.exigeVeiculo && !draft.veiculoId.trim()) errors.veiculoId = "Selecione o ve\xEDculo.";
     if (!Number.isFinite(valor) || valor <= 0) errors.valor = "Informe um valor maior que zero.";
     if (!draft.dataGasto) errors.dataGasto = "Informe a data do gasto.";
-    if (!draft.formaPagamento.trim()) errors.formaPagamento = "Selecione a forma de pagamento.";
-    if (expenseNeedsDescription(draft.categoria) && !draft.descricao.trim()) errors.descricao = "Descreva o gasto.";
-    if (expenseNeedsKm(draft.categoria) && parseIntegerInput(draft.kmInformado) <= 0) errors.kmInformado = "Informe o KM.";
-    if (expenseNeedsLiters(draft.categoria) && parseDecimalInput(draft.litros) <= 0) errors.litros = "Informe os litros.";
+    if (!paymentMethod) errors.formaPagamentoId = "Selecione a forma de pagamento.";
+    if (rules.exigeKm && parseIntegerInput(draft.kmInformado) <= 0) errors.kmInformado = "Informe o KM.";
+    if (rules.exigeLitros && parseDecimalInput(draft.litros) <= 0) errors.litros = "Informe os litros.";
+    if (photos.length === 0) errors.photos = "Adicione ao menos uma foto do comprovante.";
     return errors;
   }
-  function normalizeExpenseFields(draft) {
-    const errors = validateExpenseDraft(draft);
+  function normalizeExpenseFields(draft, photos, referenceData) {
+    const errors = validateExpenseDraft(draft, photos, referenceData);
     if (Object.keys(errors).length) throw new Error(Object.values(errors).filter(Boolean).join(" "));
+    const categoria = findExpenseCategory(referenceData, draft.categoriaId);
+    const formaPagamento = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
+    if (!categoria || !formaPagamento) throw new Error("Categoria ou forma de pagamento n\xE3o carregada.");
+    const rules = getExpenseCategoryRules(categoria);
     const kmInformado = parseIntegerInput(draft.kmInformado);
     const litros = parseDecimalInput(draft.litros);
     return {
-      categoria: draft.categoria.trim(),
-      cidade: draft.cidade.trim(),
+      categoria,
+      formaPagamento,
       valor: parseCurrencyInput(draft.valor),
       dataGasto: draft.dataGasto,
-      formaPagamento: draft.formaPagamento.trim(),
-      descricao: draft.descricao.trim(),
-      kmInformado: expenseNeedsKm(draft.categoria) && kmInformado > 0 ? kmInformado : void 0,
-      litros: expenseNeedsLiters(draft.categoria) && litros > 0 ? litros : void 0,
-      observacao: draft.observacao.trim() || void 0
+      estabelecimento: draft.estabelecimento.trim() || void 0,
+      descricao: draft.descricao.trim() || void 0,
+      kmInformado: rules.exigeKm && kmInformado > 0 ? kmInformado : void 0,
+      litros: rules.exigeLitros && litros > 0 ? litros : void 0,
+      veiculoId: draft.veiculoId.trim() || void 0
     };
   }
   function formatDateLabel(value) {
@@ -29342,333 +29732,67 @@ select,
   }
   function buildExpenseCreatePayload({
     draft,
+    photos,
+    referenceData,
     motoristaId,
-    veiculoId
+    veiculoId,
+    reservaId,
+    categoryEntitySet,
+    paymentMethodEntitySet,
+    motoristaEntitySet,
+    veiculoEntitySet,
+    reservaEntitySet,
+    lookupNavigationNames
   }) {
-    const fields = normalizeExpenseFields(draft);
-    const description = [
-      `Categoria: ${fields.categoria}`,
-      `Cidade: ${fields.cidade}`,
-      `Forma de pagamento: ${fields.formaPagamento}`,
-      fields.litros ? `Litros: ${fields.litros.toLocaleString("pt-BR")} L` : "",
+    const fields = normalizeExpenseFields(draft, photos, referenceData);
+    const vehicleToBind = fields.veiculoId || veiculoId || "";
+    const name = `${fields.categoria.name} - ${formatDateLabel(fields.dataGasto)}`;
+    const observation = [
       fields.descricao ? `Descri\xE7\xE3o: ${fields.descricao}` : "",
-      fields.observacao ? `Observa\xE7\xE3o: ${fields.observacao}` : ""
+      fields.estabelecimento ? `Estabelecimento: ${fields.estabelecimento}` : "",
+      fields.litros ? `Litros: ${fields.litros.toLocaleString("pt-BR")} L` : "",
+      `Forma de pagamento: ${fields.formaPagamento.name}`,
+      `Categoria: ${fields.categoria.name}`,
+      photos.length ? `Comprovantes: ${photos.length}` : ""
     ].filter(Boolean).join("\n");
     const payload = {
-      cr40f_nome: `${fields.categoria} - ${formatDateLabel(fields.dataGasto)}`,
-      cr40f_descricaoorigem: fields.categoria,
-      cr40f_observacao: description,
-      cr40f_cidade: fields.cidade,
+      cr40f_nome: name,
       cr40f_datagasto: toDataverseDate(fields.dataGasto),
-      cr40f_valorbruto: fields.valor,
-      cr40f_valorliquido: fields.valor
+      cr40f_valor: fields.valor,
+      cr40f_statusoperacional: 1e8,
+      cr40f_statusfinanceiro: 1e8,
+      cr40f_statusanexo: photos.length ? 100000001 : 1e8,
+      cr40f_origem: 1e8,
+      cr40f_observacao: observation,
+      [`${lookupNavigationNames.motorista}@odata.bind`]: `/${motoristaEntitySet}(${motoristaId})`,
+      [`${lookupNavigationNames.categoria}@odata.bind`]: `/${categoryEntitySet}(${fields.categoria.id})`,
+      [`${lookupNavigationNames.formaPagamento}@odata.bind`]: `/${paymentMethodEntitySet}(${fields.formaPagamento.id})`
     };
     if (fields.kmInformado) payload.cr40f_kminformado = Math.trunc(fields.kmInformado);
-    if (motoristaId) payload["cr40f_Motorista@odata.bind"] = bind2(EXPENSE_ENTITY_SETS.funcionarios, motoristaId);
-    if (veiculoId) payload["cr40f_Veiculo@odata.bind"] = bind2(EXPENSE_ENTITY_SETS.veiculos, veiculoId);
+    if (fields.litros) payload.cr40f_litros = fields.litros;
+    if (fields.estabelecimento) payload.cr40f_estabelecimento = fields.estabelecimento;
+    if (vehicleToBind) {
+      if (!lookupNavigationNames.veiculo) throw new Error("Navigation property de ve\xEDculo n\xE3o resolvido para despesa.");
+      payload[`${lookupNavigationNames.veiculo}@odata.bind`] = `/${veiculoEntitySet}(${vehicleToBind})`;
+    }
+    if (reservaId) {
+      if (!lookupNavigationNames.reserva) throw new Error("Navigation property de reserva n\xE3o resolvido para despesa.");
+      payload[`${lookupNavigationNames.reserva}@odata.bind`] = `/${reservaEntitySet}(${reservaId})`;
+    }
     return payload;
   }
-
-  // src/screens/ExpenseScreen.tsx
-  var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
-  function focusInvalidField(element) {
-    element?.focus({ preventScroll: false });
-    element?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }
-  function readFileAsDataUrl(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result ?? ""));
-      reader.onerror = () => reject(reader.error ?? new Error("Falha ao ler arquivo."));
-      reader.readAsDataURL(file);
-    });
-  }
-  function ExpenseScreen({
-    draft,
-    onDraftChange,
-    onBack,
-    onSubmit,
-    submitState,
-    vehicles,
-    vehiclesLoading,
-    currentVehicleId
-  }) {
-    const isSubmitting = submitState !== "idle";
-    const categoryRef = (0, import_react30.useRef)(null);
-    const vehicleRef = (0, import_react30.useRef)(null);
-    const cityRef = (0, import_react30.useRef)(null);
-    const valueRef = (0, import_react30.useRef)(null);
-    const dateRef = (0, import_react30.useRef)(null);
-    const paymentRef = (0, import_react30.useRef)(null);
-    const kmRef = (0, import_react30.useRef)(null);
-    const litersRef = (0, import_react30.useRef)(null);
-    const descriptionRef = (0, import_react30.useRef)(null);
-    const [errors, setErrors] = (0, import_react30.useState)({});
-    const [fileError, setFileError] = (0, import_react30.useState)("");
-    const updateDraft = (updates) => onDraftChange({ ...draft, ...updates });
-    const clearError = (key) => {
-      if (!errors[key]) return;
-      setErrors((current) => ({ ...current, [key]: void 0 }));
-    };
-    const submit = () => {
-      if (isSubmitting) return;
-      const nextErrors = validateExpenseDraft(draft);
-      setErrors(nextErrors);
-      if (nextErrors.categoria) return focusInvalidField(categoryRef.current);
-      if (nextErrors.veiculoId) return focusInvalidField(vehicleRef.current);
-      if (nextErrors.cidade) return focusInvalidField(cityRef.current);
-      if (nextErrors.valor) return focusInvalidField(valueRef.current);
-      if (nextErrors.dataGasto) return focusInvalidField(dateRef.current);
-      if (nextErrors.formaPagamento) return focusInvalidField(paymentRef.current);
-      if (nextErrors.kmInformado) return focusInvalidField(kmRef.current);
-      if (nextErrors.litros) return focusInvalidField(litersRef.current);
-      if (nextErrors.descricao) return focusInvalidField(descriptionRef.current);
-      normalizeExpenseFields(draft);
-      onSubmit(draft);
-    };
-    const errorCount = Object.values(errors).filter(Boolean).length;
-    const hasCategory = Boolean(draft.categoria);
-    const showVehicle = expenseNeedsVehicle(draft.categoria);
-    const showKm = expenseNeedsKm(draft.categoria);
-    const showLiters = expenseNeedsLiters(draft.categoria);
-    const showDescriptionRequired = expenseNeedsDescription(draft.categoria);
-    return /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(AppShell, { screenLabel: "TelaGastos", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(FormMenu, { title: "Registrar gasto", onBack: isSubmitting ? void 0 : onBack }),
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("section", { className: "main-panel maintenance-request-main", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("article", { className: "finalize-card maintenance-request-card", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "finalize-scroll", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "finalize-form maintenance maintenance-request-form expense-form", children: [
-          errorCount ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "form-error-summary", children: [
-            "Revise ",
-            errorCount,
-            " campo(s) destacado(s)."
-          ] }) : null,
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.categoria ? "is-invalid" : ""}`, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Categoria" }),
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
-              "select",
-              {
-                ref: categoryRef,
-                "aria-invalid": Boolean(errors.categoria),
-                value: draft.categoria,
-                disabled: isSubmitting,
-                onChange: (event) => {
-                  const categoria = event.target.value;
-                  updateDraft({
-                    categoria,
-                    veiculoId: expenseNeedsVehicle(categoria) ? draft.veiculoId || currentVehicleId : "",
-                    kmInformado: expenseNeedsKm(categoria) ? draft.kmInformado : "",
-                    litros: expenseNeedsLiters(categoria) ? draft.litros : "",
-                    descricao: expenseNeedsDescription(categoria) ? draft.descricao : draft.descricao
-                  });
-                  clearError("categoria");
-                },
-                children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "", disabled: true, children: "Selecione" }),
-                  EXPENSE_CATEGORIES.map((category) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: category, children: category }, category))
-                ]
-              }
-            ),
-            errors.categoria ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.categoria }) : null
-          ] }),
-          hasCategory ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(import_jsx_runtime16.Fragment, { children: [
-            showVehicle ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Ve\xEDculo" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
-                "select",
-                {
-                  ref: vehicleRef,
-                  "aria-invalid": Boolean(errors.veiculoId),
-                  value: draft.veiculoId,
-                  disabled: isSubmitting || vehiclesLoading,
-                  onChange: (event) => {
-                    updateDraft({ veiculoId: event.target.value });
-                    clearError("veiculoId");
-                  },
-                  children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "", disabled: true, children: vehiclesLoading ? "Carregando ve\xEDculos" : "Selecione" }),
-                    vehicles.map((vehicle) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: vehicle.id, children: vehicle.label }, vehicle.id))
-                  ]
-                }
-              ),
-              errors.veiculoId ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.veiculoId }) : null
-            ] }) : null,
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.cidade ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Cidade" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "input",
-                {
-                  ref: cityRef,
-                  "aria-invalid": Boolean(errors.cidade),
-                  placeholder: "Ex.: S\xE3o Paulo",
-                  value: draft.cidade,
-                  onChange: (event) => {
-                    updateDraft({ cidade: event.target.value });
-                    clearError("cidade");
-                  }
-                }
-              ),
-              errors.cidade ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.cidade }) : null
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.valor ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Valor" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "input",
-                {
-                  ref: valueRef,
-                  "aria-invalid": Boolean(errors.valor),
-                  inputMode: "decimal",
-                  placeholder: "Ex.: R$ 238,70",
-                  value: draft.valor,
-                  onChange: (event) => {
-                    updateDraft({ valor: event.target.value });
-                    clearError("valor");
-                  }
-                }
-              ),
-              errors.valor ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.valor }) : null
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.dataGasto ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Data do gasto" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "input",
-                {
-                  ref: dateRef,
-                  "aria-invalid": Boolean(errors.dataGasto),
-                  type: "date",
-                  value: draft.dataGasto,
-                  onChange: (event) => {
-                    updateDraft({ dataGasto: event.target.value });
-                    clearError("dataGasto");
-                  }
-                }
-              ),
-              errors.dataGasto ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.dataGasto }) : null
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.formaPagamento ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Forma de pagamento" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
-                "select",
-                {
-                  ref: paymentRef,
-                  "aria-invalid": Boolean(errors.formaPagamento),
-                  value: draft.formaPagamento,
-                  disabled: isSubmitting,
-                  onChange: (event) => {
-                    updateDraft({ formaPagamento: event.target.value });
-                    clearError("formaPagamento");
-                  },
-                  children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "", disabled: true, children: "Selecione" }),
-                    EXPENSE_PAYMENT_METHODS.map((method) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: method, children: method }, method))
-                  ]
-                }
-              ),
-              errors.formaPagamento ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.formaPagamento }) : null
-            ] }),
-            showKm ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.kmInformado ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "KM" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "input",
-                {
-                  ref: kmRef,
-                  "aria-invalid": Boolean(errors.kmInformado),
-                  inputMode: "numeric",
-                  placeholder: "Ex.: 58230",
-                  value: draft.kmInformado,
-                  onChange: (event) => {
-                    updateDraft({ kmInformado: event.target.value });
-                    clearError("kmInformado");
-                  }
-                }
-              ),
-              errors.kmInformado ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.kmInformado }) : null
-            ] }) : null,
-            showLiters ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.litros ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Litros" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "input",
-                {
-                  ref: litersRef,
-                  "aria-invalid": Boolean(errors.litros),
-                  inputMode: "decimal",
-                  placeholder: "Ex.: 42,5",
-                  value: draft.litros,
-                  onChange: (event) => {
-                    updateDraft({ litros: event.target.value });
-                    clearError("litros");
-                  }
-                }
-              ),
-              errors.litros ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.litros }) : null
-            ] }) : null,
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.descricao ? "is-invalid" : ""}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: showDescriptionRequired ? "Descri\xE7\xE3o" : "Descri\xE7\xE3o opcional" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "textarea",
-                {
-                  ref: descriptionRef,
-                  "aria-invalid": Boolean(errors.descricao),
-                  placeholder: showDescriptionRequired ? "Descreva o gasto" : "Opcional",
-                  rows: 3,
-                  value: draft.descricao,
-                  onChange: (event) => {
-                    updateDraft({ descricao: event.target.value });
-                    clearError("descricao");
-                  }
-                }
-              ),
-              errors.descricao ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.descricao }) : null
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "finalize-input-block", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Nota fiscal" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "input",
-                {
-                  type: "file",
-                  accept: "image/*,.pdf",
-                  disabled: isSubmitting,
-                  onChange: (event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) {
-                      updateDraft({ notaFiscalDataUrl: "", notaFiscalFileName: "" });
-                      return;
-                    }
-                    setFileError("");
-                    readFileAsDataUrl(file).then((dataUrl) => updateDraft({ notaFiscalDataUrl: dataUrl, notaFiscalFileName: file.name })).catch(() => setFileError("Falha ao carregar nota fiscal."));
-                  }
-                }
-              ),
-              draft.notaFiscalFileName ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-hint", children: draft.notaFiscalFileName }) : null,
-              fileError ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: fileError }) : null
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "finalize-input-block", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Observa\xE7\xE3o" }),
-              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                "textarea",
-                {
-                  placeholder: "Opcional",
-                  rows: 3,
-                  value: draft.observacao,
-                  onChange: (event) => updateDraft({ observacao: event.target.value })
-                }
-              )
-            ] })
-          ] }) : null
-        ] }) }),
-        hasCategory ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "finalize-actions maintenance-actions", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(FlowSubmitButton, { className: "finalize-primary", idleLabel: "REGISTRAR", loadingLabel: "REGISTRANDO", successLabel: "REGISTRADO", state: submitState, onClick: submit }) }) : null
-      ] }) })
-    ] });
-  }
-
-  // src/screens/FinalizeScreen.tsx
-  var import_react31 = __toESM(require_react(), 1);
 
   // src/lib/photoOrientation.ts
   function isLandscapeViewport() {
     if (typeof window === "undefined") return false;
-    return window.innerWidth / Math.max(window.innerHeight, 1) >= 1.2;
+    return window.innerWidth / Math.max(window.innerHeight, 1) >= 1.45;
   }
   function getViewportOrientationAngle() {
     if (typeof window === "undefined") return 0;
+    const angle = Number(window.screen?.orientation?.angle ?? 0);
+    if (isLandscapeViewport() && (angle === 90 || angle === -270)) return 90;
+    if (isLandscapeViewport() && (angle === 270 || angle === -90)) return 270;
+    if (!isLandscapeViewport() && Math.abs(angle) === 180) return 180;
     return isLandscapeViewport() ? 90 : 0;
   }
   function normalizeAngle(angle) {
@@ -29710,7 +29834,7 @@ select,
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/jpeg", 0.92);
   }
-  function readFileAsDataUrl2(file) {
+  function readFileAsDataUrl(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
@@ -29719,7 +29843,7 @@ select,
     });
   }
   async function readPhotoFileAsDataUrl(file, orientationAngle = getViewportOrientationAngle()) {
-    const fallbackDataUrl = await readFileAsDataUrl2(file);
+    const fallbackDataUrl = await readFileAsDataUrl(file);
     const normalizedAngle = normalizeAngle(orientationAngle);
     if (normalizedAngle === 0) return fallbackDataUrl;
     try {
@@ -29737,7 +29861,322 @@ select,
     }
   }
 
+  // src/screens/ExpenseScreen.tsx
+  var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
+  function focusInvalidField(element) {
+    element?.focus({ preventScroll: false });
+    element?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+  function isIosDevice() {
+    if (typeof navigator === "undefined") return false;
+    const userAgent = navigator.userAgent || "";
+    const platform = navigator.platform || "";
+    return /iPad|iPhone|iPod/i.test(userAgent) || platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  }
+  function ExpenseScreen({
+    draft,
+    photos,
+    referenceData,
+    referenceLoading,
+    referenceError = "",
+    onDraftChange,
+    onAddPhoto,
+    onNativeAddPhoto,
+    onPreviewPhoto,
+    onBack,
+    onSubmit,
+    submitState,
+    vehicles,
+    vehiclesLoading,
+    currentVehicleId
+  }) {
+    const isSubmitting = submitState !== "idle";
+    const categoryRef = (0, import_react30.useRef)(null);
+    const vehicleRef = (0, import_react30.useRef)(null);
+    const valueRef = (0, import_react30.useRef)(null);
+    const dateRef = (0, import_react30.useRef)(null);
+    const paymentRef = (0, import_react30.useRef)(null);
+    const kmRef = (0, import_react30.useRef)(null);
+    const litersRef = (0, import_react30.useRef)(null);
+    const photosRef = (0, import_react30.useRef)(null);
+    const nativePhotoRef = (0, import_react30.useRef)(null);
+    const [errors, setErrors] = (0, import_react30.useState)({});
+    const iosDevice = isIosDevice();
+    const category = findExpenseCategory(referenceData, draft.categoriaId);
+    const rules = getExpenseCategoryRules(category);
+    const categoriesReady = referenceData.categories.length > 0;
+    const paymentReady = referenceData.paymentMethods.length > 0;
+    (0, import_react30.useEffect)(() => {
+      if (!currentVehicleId || draft.veiculoId) return;
+      if (rules.exigeVeiculo) onDraftChange({ ...draft, veiculoId: currentVehicleId });
+    }, [currentVehicleId, draft, onDraftChange, rules.exigeVeiculo]);
+    const updateDraft = (updates) => onDraftChange({ ...draft, ...updates });
+    const clearError = (key) => {
+      if (!errors[key]) return;
+      setErrors((current) => ({ ...current, [key]: void 0 }));
+    };
+    const submit = () => {
+      if (isSubmitting) return;
+      const nextErrors = validateExpenseDraft(draft, photos, referenceData);
+      setErrors(nextErrors);
+      if (nextErrors.categoriaId) return focusInvalidField(categoryRef.current);
+      if (nextErrors.veiculoId) return focusInvalidField(vehicleRef.current);
+      if (nextErrors.valor) return focusInvalidField(valueRef.current);
+      if (nextErrors.dataGasto) return focusInvalidField(dateRef.current);
+      if (nextErrors.formaPagamentoId) return focusInvalidField(paymentRef.current);
+      if (nextErrors.kmInformado) return focusInvalidField(kmRef.current);
+      if (nextErrors.litros) return focusInvalidField(litersRef.current);
+      if (nextErrors.photos) return focusInvalidField(photosRef.current);
+      normalizeExpenseFields(draft, photos, referenceData);
+      onSubmit(draft);
+    };
+    const addPhoto = () => {
+      if (iosDevice) {
+        nativePhotoRef.current?.click();
+        return;
+      }
+      clearError("photos");
+      onAddPhoto();
+    };
+    const handleNativePhoto = async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const dataUrl = await readPhotoFileAsDataUrl(file);
+      clearError("photos");
+      onNativeAddPhoto(dataUrl);
+      event.target.value = "";
+    };
+    const errorCount = Object.values(errors).filter(Boolean).length;
+    return /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(AppShell, { screenLabel: "TelaGastos", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(FormMenu, { title: "Registrar gasto", onBack: isSubmitting ? void 0 : onBack }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("section", { className: "main-panel maintenance-request-main", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("article", { className: "finalize-card maintenance-request-card", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "finalize-scroll", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "finalize-form maintenance maintenance-request-form expense-form", children: [
+          referenceLoading ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "form-error-summary", children: "Carregando regras de despesa." }) : null,
+          !referenceLoading && referenceError ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "form-error-summary", children: referenceError }) : null,
+          !referenceLoading && !referenceError && (!categoriesReady || !paymentReady) ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "form-error-summary", children: "Categorias ou formas de pagamento n\xE3o encontradas no Dataverse." }) : null,
+          errorCount ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "form-error-summary", children: [
+            "Revise ",
+            errorCount,
+            " campo(s) destacado(s)."
+          ] }) : null,
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.categoriaId ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Categoria" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
+              "select",
+              {
+                ref: categoryRef,
+                "aria-invalid": Boolean(errors.categoriaId),
+                value: draft.categoriaId,
+                disabled: isSubmitting || referenceLoading,
+                onChange: (event) => {
+                  const nextCategory = findExpenseCategory(referenceData, event.target.value);
+                  const nextRules = getExpenseCategoryRules(nextCategory);
+                  updateDraft({
+                    categoriaId: event.target.value,
+                    veiculoId: nextRules.exigeVeiculo ? draft.veiculoId || currentVehicleId : "",
+                    kmInformado: nextRules.exigeKm ? draft.kmInformado : "",
+                    litros: nextRules.exigeLitros ? draft.litros : ""
+                  });
+                  clearError("categoriaId");
+                },
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "", disabled: true, children: "Selecione" }),
+                  referenceData.categories.map((item) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: item.id, children: item.name }, item.id))
+                ]
+              }
+            ),
+            errors.categoriaId ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.categoriaId }) : null
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.valor ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Valor" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+              "input",
+              {
+                ref: valueRef,
+                "aria-invalid": Boolean(errors.valor),
+                inputMode: "decimal",
+                placeholder: "Ex.: R$ 238,70",
+                value: draft.valor,
+                onChange: (event) => {
+                  updateDraft({ valor: event.target.value });
+                  clearError("valor");
+                }
+              }
+            ),
+            errors.valor ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.valor }) : null
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.dataGasto ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Data do gasto" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+              "input",
+              {
+                ref: dateRef,
+                "aria-invalid": Boolean(errors.dataGasto),
+                type: "date",
+                value: draft.dataGasto,
+                onChange: (event) => {
+                  updateDraft({ dataGasto: event.target.value });
+                  clearError("dataGasto");
+                }
+              }
+            ),
+            errors.dataGasto ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.dataGasto }) : null
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.formaPagamentoId ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Forma de pagamento" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
+              "select",
+              {
+                ref: paymentRef,
+                "aria-invalid": Boolean(errors.formaPagamentoId),
+                value: draft.formaPagamentoId,
+                disabled: isSubmitting || referenceLoading,
+                onChange: (event) => {
+                  updateDraft({ formaPagamentoId: event.target.value });
+                  clearError("formaPagamentoId");
+                },
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "", disabled: true, children: "Selecione" }),
+                  referenceData.paymentMethods.map((item) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: item.id, children: item.name }, item.id))
+                ]
+              }
+            ),
+            errors.formaPagamentoId ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.formaPagamentoId }) : null
+          ] }),
+          rules.exigeVeiculo ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Ve\xEDculo" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
+              "select",
+              {
+                ref: vehicleRef,
+                "aria-invalid": Boolean(errors.veiculoId),
+                value: draft.veiculoId,
+                disabled: isSubmitting || vehiclesLoading,
+                onChange: (event) => {
+                  updateDraft({ veiculoId: event.target.value });
+                  clearError("veiculoId");
+                },
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "", children: vehiclesLoading ? "Carregando ve\xEDculos" : "Selecione" }),
+                  vehicles.map((vehicle) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: vehicle.id, children: vehicle.isCurrent ? `${vehicle.label} - atual` : vehicle.label }, vehicle.id))
+                ]
+              }
+            ),
+            errors.veiculoId ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.veiculoId }) : null
+          ] }) : null,
+          rules.exigeKm ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.kmInformado ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "KM" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+              "input",
+              {
+                ref: kmRef,
+                "aria-invalid": Boolean(errors.kmInformado),
+                inputMode: "numeric",
+                placeholder: "Ex.: 58230",
+                value: draft.kmInformado,
+                onChange: (event) => {
+                  updateDraft({ kmInformado: event.target.value });
+                  clearError("kmInformado");
+                }
+              }
+            ),
+            errors.kmInformado ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.kmInformado }) : null
+          ] }) : null,
+          rules.exigeLitros ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `finalize-input-block ${errors.litros ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Litros" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+              "input",
+              {
+                ref: litersRef,
+                "aria-invalid": Boolean(errors.litros),
+                inputMode: "decimal",
+                placeholder: "Ex.: 42,5",
+                value: draft.litros,
+                onChange: (event) => {
+                  updateDraft({ litros: event.target.value });
+                  clearError("litros");
+                }
+              }
+            ),
+            errors.litros ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.litros }) : null
+          ] }) : null,
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "finalize-input-block", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Estabelecimento" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+              "input",
+              {
+                placeholder: "Ex.: Posto, estacionamento, hotel",
+                value: draft.estabelecimento,
+                onChange: (event) => updateDraft({ estabelecimento: event.target.value })
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "finalize-input-block", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Descri\xE7\xE3o opcional" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+              "textarea",
+              {
+                placeholder: "Opcional",
+                rows: 3,
+                value: draft.descricao,
+                onChange: (event) => {
+                  updateDraft({ descricao: event.target.value });
+                }
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { ref: photosRef, className: `finalize-input-block ${errors.photos ? "is-invalid" : ""}`, tabIndex: -1, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { children: "Comprovantes" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "maintenance-photo-grid", children: [
+              photos.map((photo, index) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+                "button",
+                {
+                  type: "button",
+                  className: "maintenance-photo-thumb",
+                  disabled: isSubmitting,
+                  onClick: () => onPreviewPhoto(photo.id),
+                  "aria-label": `Ver comprovante ${index + 1}`,
+                  children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("img", { src: photo.dataUrl, alt: `Comprovante ${index + 1}` })
+                },
+                photo.id
+              )),
+              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { type: "button", className: "maintenance-photo-add", disabled: isSubmitting, onClick: addPhoto, "aria-label": "Adicionar comprovante", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { children: "+" }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+                "input",
+                {
+                  ref: nativePhotoRef,
+                  className: "native-camera-input",
+                  type: "file",
+                  accept: "image/*",
+                  capture: "environment",
+                  onChange: handleNativePhoto
+                }
+              )
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "field-hint", children: [
+              photos.length,
+              " comprovante(s)"
+            ] }),
+            errors.photos ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "field-error", children: errors.photos }) : null
+          ] })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "finalize-actions maintenance-actions", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+          FlowSubmitButton,
+          {
+            className: "finalize-primary",
+            idleLabel: "REGISTRAR",
+            loadingLabel: "REGISTRANDO",
+            successLabel: "REGISTRADO",
+            state: submitState,
+            onClick: submit
+          }
+        ) })
+      ] }) })
+    ] });
+  }
+
   // src/screens/FinalizeScreen.tsx
+  var import_react31 = __toESM(require_react(), 1);
   var import_jsx_runtime17 = __toESM(require_jsx_runtime(), 1);
   function parseCurrencyNumber2(value) {
     return Number(value.replace("R$", "").replace(/\./g, "").replace(",", ".").trim() || "0");
@@ -29748,7 +30187,7 @@ select,
       element?.focus({ preventScroll: true });
     }, 40);
   }
-  function isIosDevice() {
+  function isIosDevice2() {
     if (typeof navigator === "undefined") return false;
     const userAgent = navigator.userAgent || "";
     const platform = navigator.platform || "";
@@ -29813,7 +30252,7 @@ select,
   }) {
     const fileInputRef = (0, import_react31.useRef)(null);
     const nativeKindRef = (0, import_react31.useRef)(kinds[0]);
-    const iosDevice = isIosDevice();
+    const iosDevice = isIosDevice2();
     const invoiceItems = Object.entries(photos).filter(([kind, dataUrl]) => kind.startsWith("NOTAFISCAL") && Boolean(dataUrl)).sort(([left], [right]) => {
       const leftIndex = left === "NOTAFISCAL" ? 1 : Number(left.replace("NOTAFISCAL_", ""));
       const rightIndex = right === "NOTAFISCAL" ? 1 : Number(right.replace("NOTAFISCAL_", ""));
@@ -30682,7 +31121,7 @@ select,
     if (kind === "FOTO2") return "Tire a foto 2 de 3";
     return "Tire a foto 3 de 3";
   }
-  function isIosDevice2() {
+  function isIosDevice3() {
     if (typeof navigator === "undefined") return false;
     const userAgent = navigator.userAgent || "";
     const platform = navigator.platform || "";
@@ -30703,7 +31142,7 @@ select,
     const defaultLaunchAttemptedRef = (0, import_react41.useRef)(false);
     const orientationAngleRef = (0, import_react41.useRef)(getViewportOrientationAngle());
     const lastDeviceOrientationAtRef = (0, import_react41.useRef)(0);
-    const iosDevice = isIosDevice2();
+    const iosDevice = isIosDevice3();
     const [facingMode, setFacingMode] = (0, import_react41.useState)("environment");
     const [cameraError, setCameraError] = (0, import_react41.useState)("");
     const [ready, setReady] = (0, import_react41.useState)(false);
@@ -30729,13 +31168,13 @@ select,
         lastDeviceOrientationAtRef.current = Date.now();
         const currentAngle = orientationAngleRef.current;
         const tiltX = Math.abs(event.gamma);
-        const enterLandscapeAt = 50;
-        const exitLandscapeAt = 30;
+        const enterLandscapeAt = 72;
+        const exitLandscapeAt = 58;
         if (tiltX >= enterLandscapeAt) {
           orientationAngleRef.current = event.gamma > 0 ? 90 : 270;
           return;
         }
-        if (event.beta < -45) {
+        if (event.beta < -125) {
           orientationAngleRef.current = 180;
           return;
         }
@@ -30914,7 +31353,7 @@ select,
     if (kind === "FOTO2") return "Foto 2 de 3";
     return "Foto 3 de 3";
   }
-  function isIosDevice3() {
+  function isIosDevice4() {
     if (typeof navigator === "undefined") return false;
     const userAgent = navigator.userAgent || "";
     const platform = navigator.platform || "";
@@ -30936,7 +31375,7 @@ select,
     const isInvoice = kind.startsWith("NOTAFISCAL");
     const fileInputRef = (0, import_react42.useRef)(null);
     const [confirmDelete, setConfirmDelete] = (0, import_react42.useState)(false);
-    const iosDevice = isIosDevice3();
+    const iosDevice = isIosDevice4();
     const handleRetake = () => {
       if (iosDevice) {
         fileInputRef.current?.click();
@@ -31024,7 +31463,7 @@ select,
   function parseKm(value) {
     return Number(value.replace(/[^\d]/g, ""));
   }
-  function isIosDevice4() {
+  function isIosDevice5() {
     if (typeof navigator === "undefined") return false;
     const userAgent = navigator.userAgent || "";
     const platform = navigator.platform || "";
@@ -31055,7 +31494,7 @@ select,
     const descricaoRef = (0, import_react43.useRef)(null);
     const photoInputRef = (0, import_react43.useRef)(null);
     const [errors, setErrors] = (0, import_react43.useState)({});
-    const iosDevice = isIosDevice4();
+    const iosDevice = isIosDevice5();
     (0, import_react43.useEffect)(() => {
       if (initialVehicleId && !draft.veiculoId) onDraftChange({ ...draft, veiculoId: initialVehicleId });
     }, [draft, initialVehicleId, onDraftChange]);
@@ -31718,6 +32157,8 @@ select,
     voucher: 3,
     finalizar: 3,
     gastos: 1,
+    fotoGasto: 2,
+    previewFotoGasto: 3,
     solicitarManutencao: 1,
     fotoSolicitacaoManutencao: 2,
     previewFotoSolicitacaoManutencao: 3,
@@ -31757,7 +32198,7 @@ select,
   var isListScreen = (screenName) => screenName === "servicos" || screenName === "historico" || screenName === "gastos";
   var isDetailScreen = (screenName) => screenName === "detalhes" || screenName === "detalhesHistorico";
   var isTaskScreen = (screenName) => screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
-  var isCaptureScreen = (screenName) => screenName === "fotoManutencao" || screenName === "previewFotoManutencao";
+  var isCaptureScreen = (screenName) => screenName === "fotoManutencao" || screenName === "previewFotoManutencao" || screenName === "fotoGasto" || screenName === "previewFotoGasto";
   function getScreenMotion(current, previous) {
     const delta = SCREEN_DEPTH[current] - SCREEN_DEPTH[previous];
     if (previous === "inicio" && isListScreen(current)) {
@@ -31954,19 +32395,22 @@ select,
       gravidade: ""
     });
     const [expenseDraft, setExpenseDraft] = (0, import_react48.useState)({
-      categoria: "",
+      categoriaId: "",
       veiculoId: "",
-      cidade: "",
       valor: "",
       dataGasto: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
-      formaPagamento: "",
+      formaPagamentoId: "",
+      estabelecimento: "",
       descricao: "",
       kmInformado: "",
-      litros: "",
-      observacao: "",
-      notaFiscalDataUrl: "",
-      notaFiscalFileName: ""
+      litros: ""
     });
+    const [expenseReferenceData, setExpenseReferenceData] = (0, import_react48.useState)(DEFAULT_EXPENSE_REFERENCE_DATA);
+    const [expenseReferenceLoading, setExpenseReferenceLoading] = (0, import_react48.useState)(false);
+    const [expenseReferenceError, setExpenseReferenceError] = (0, import_react48.useState)("");
+    const [expensePhotos, setExpensePhotos] = (0, import_react48.useState)([]);
+    const [expensePhotoDraft, setExpensePhotoDraft] = (0, import_react48.useState)("");
+    const [expensePreviewPhotoId, setExpensePreviewPhotoId] = (0, import_react48.useState)("");
     const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = (0, import_react48.useState)([]);
     const [maintenanceRequestPhotoDraft, setMaintenanceRequestPhotoDraft] = (0, import_react48.useState)("");
     const [maintenanceRequestPreviewPhotoId, setMaintenanceRequestPreviewPhotoId] = (0, import_react48.useState)("");
@@ -32122,6 +32566,35 @@ select,
         setToast(error instanceof Error ? error.message : "Falha ao carregar ve\xEDculos.");
       }).finally(() => {
         if (alive) setMaintenanceVehiclesLoading(false);
+      });
+      return () => {
+        alive = false;
+      };
+    }, [screen, remoteMode]);
+    (0, import_react48.useEffect)(() => {
+      if (screen !== "gastos" || !remoteMode) return;
+      let alive = true;
+      setExpenseReferenceLoading(true);
+      setExpenseReferenceError("");
+      setExpenseReferenceData({ categories: [], paymentMethods: [] });
+      loadExpenseReferenceDataRemote().then((referenceData) => {
+        if (!alive) return;
+        setExpenseReferenceData(referenceData);
+        setExpenseReferenceError("");
+      }).catch((error) => {
+        if (!alive) return;
+        reportAppError(error, {
+          severity: "error",
+          source: "app",
+          action: "loadExpenseReferenceDataRemote",
+          phase: "expense-form",
+          screen
+        });
+        const message = error instanceof Error ? error.message : "Falha ao carregar categorias de despesas.";
+        setExpenseReferenceError(message);
+        setToast(message);
+      }).finally(() => {
+        if (alive) setExpenseReferenceLoading(false);
       });
       return () => {
         alive = false;
@@ -32362,6 +32835,7 @@ select,
         setToast("Abra no Power Apps para registrar no Dataverse.");
         return;
       }
+      let createdExpenseId = "";
       try {
         setRemoteOperation({
           title: "Registrando gasto",
@@ -32370,6 +32844,17 @@ select,
         });
         const driver = driverContext ?? await getDriverContext();
         const veiculoId = draft.veiculoId || getDriverCurrentVehicleId(driver);
+        const photosToSubmit = expensePhotos.filter((photo) => Boolean(photo.dataUrl));
+        setRemoteOperation({
+          title: "Registrando gasto",
+          message: "Conferindo schema do Dataverse.",
+          phase: "loading"
+        });
+        await assertExpenseSchemaReadyRemote();
+        const lookupNavigationNames = await loadExpenseLookupNavigationNamesRemote({
+          includeVeiculo: Boolean(draft.veiculoId || veiculoId),
+          includeReserva: false
+        });
         setRemoteOperation({
           title: "Registrando gasto",
           message: "Criando despesa.",
@@ -32377,17 +32862,27 @@ select,
         });
         const payload = buildExpenseCreatePayload({
           draft,
+          photos: photosToSubmit,
+          referenceData: expenseReferenceData,
           motoristaId: driver.id,
-          veiculoId
+          veiculoId,
+          categoryEntitySet: DATAVERSE.categoriasDespesasOperacionais,
+          paymentMethodEntitySet: DATAVERSE.formasPagamentoDespesas,
+          motoristaEntitySet: DATAVERSE.funcionarios,
+          veiculoEntitySet: DATAVERSE.veiculos,
+          reservaEntitySet: DATAVERSE.geral,
+          lookupNavigationNames
         });
-        const result = await createOne(DATAVERSE.despesas, payload);
-        if (draft.notaFiscalDataUrl) {
+        const result = await createOne(DATAVERSE.despesasOperacionais, payload);
+        createdExpenseId = result.id;
+        for (const [index, photo] of photosToSubmit.entries()) {
           await uploadExpenseInvoiceRemote({
             expenseId: result.id,
             expenseName: String(payload.cr40f_nome ?? "Despesa"),
             motoristaId: driver.id,
-            dataUrl: draft.notaFiscalDataUrl,
-            fileName: draft.notaFiscalFileName,
+            dataUrl: photo.dataUrl,
+            fileName: `comprovante-${index + 1}`,
+            order: index + 1,
             onProgress: (message) => setRemoteOperation({
               title: "Registrando gasto",
               message,
@@ -32395,6 +32890,9 @@ select,
               phase: "loading"
             })
           });
+        }
+        if (photosToSubmit.length) {
+          await updateOne(DATAVERSE.despesasOperacionais, result.id, { cr40f_statusanexo: 100000002 });
         }
         setRemoteOperation({
           title: "Registrando gasto",
@@ -32405,22 +32903,29 @@ select,
         await wait(720);
         setRemoteOperation(null);
         setExpenseDraft({
-          categoria: "",
+          categoriaId: "",
           veiculoId: "",
-          cidade: "",
           valor: "",
           dataGasto: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
-          formaPagamento: "",
+          formaPagamentoId: "",
+          estabelecimento: "",
           descricao: "",
           kmInformado: "",
-          litros: "",
-          observacao: "",
-          notaFiscalDataUrl: "",
-          notaFiscalFileName: ""
+          litros: ""
         });
+        setExpensePhotos([]);
+        setExpensePhotoDraft("");
+        setExpensePreviewPhotoId("");
         setScreen("inicio");
         setToast("Gasto registrado.");
       } catch (error) {
+        if (createdExpenseId) {
+          try {
+            await updateOne(DATAVERSE.despesasOperacionais, createdExpenseId, { cr40f_statusanexo: 100000003 });
+          } catch (statusError) {
+            logAppError(statusError, "submitExpense", "statusanexo");
+          }
+        }
         logAppError(error, "submitExpense", "create");
         setRemoteOperation(null);
         setCriticalError(error instanceof Error ? error.message : "Falha ao registrar gasto.");
@@ -32516,6 +33021,47 @@ select,
       setMaintenanceRequestPreviewPhotoId("");
       setScreen("solicitarManutencao");
     };
+    const openExpenseCamera = () => {
+      setExpensePhotoDraft("");
+      setExpensePreviewPhotoId("");
+      setScreen("fotoGasto");
+    };
+    const openExpenseNativePreview = (photoDataUrl) => {
+      setExpensePhotoDraft(photoDataUrl);
+      setExpensePreviewPhotoId("");
+      setScreen("previewFotoGasto");
+    };
+    const openExpensePreview = (photoId) => {
+      const photo = expensePhotos.find((item) => item.id === photoId);
+      if (!photo) return;
+      setExpensePhotoDraft(photo.dataUrl);
+      setExpensePreviewPhotoId(photoId);
+      setScreen("previewFotoGasto");
+    };
+    const confirmExpensePhoto = () => {
+      if (!expensePhotoDraft) return setScreen("gastos");
+      if (expensePreviewPhotoId) {
+        setExpensePhotos(
+          (current) => current.map((photo) => photo.id === expensePreviewPhotoId ? { ...photo, dataUrl: expensePhotoDraft } : photo)
+        );
+      } else {
+        setExpensePhotos((current) => [
+          ...current,
+          { id: `expense-photo-${Date.now()}-${current.length + 1}`, dataUrl: expensePhotoDraft }
+        ]);
+      }
+      setExpensePhotoDraft("");
+      setExpensePreviewPhotoId("");
+      setScreen("gastos");
+    };
+    const deleteExpensePhoto = () => {
+      if (expensePreviewPhotoId) {
+        setExpensePhotos((current) => current.filter((photo) => photo.id !== expensePreviewPhotoId));
+      }
+      setExpensePhotoDraft("");
+      setExpensePreviewPhotoId("");
+      setScreen("gastos");
+    };
     if (screen === "canceladoLocal" && selectedDetail) {
       return show(
         /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
@@ -32570,6 +33116,60 @@ select,
         )
       );
     }
+    if (screen === "fotoGasto") {
+      return show(
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+          MaintenancePhotoScreen,
+          {
+            kind: "NOTAFISCAL",
+            title: "Tire a foto do comprovante",
+            onBack: () => setScreen("gastos"),
+            onCapture: (photoDataUrl) => {
+              setExpensePhotoDraft(photoDataUrl);
+              setExpensePreviewPhotoId("");
+              setScreen("previewFotoGasto");
+            },
+            onSwitchCamera: () => setToast("C\xE2mera alternada localmente.")
+          }
+        )
+      );
+    }
+    if (screen === "previewFotoGasto") {
+      return show(
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+          MaintenancePhotoPreviewScreen,
+          {
+            kind: "NOTAFISCAL",
+            title: "Comprovante",
+            prompt: "O comprovante est\xE1 leg\xEDvel?",
+            photoDataUrl: expensePhotoDraft,
+            onBack: () => {
+              setExpensePhotoDraft("");
+              setExpensePreviewPhotoId("");
+              setScreen("gastos");
+            },
+            onRetake: () => {
+              setExpensePhotoDraft("");
+              setExpensePreviewPhotoId("");
+              setScreen("fotoGasto");
+            },
+            onNativeRetake: (photoDataUrl) => {
+              if (expensePreviewPhotoId) {
+                setExpensePhotos(
+                  (current) => current.map((photo) => photo.id === expensePreviewPhotoId ? { ...photo, dataUrl: photoDataUrl } : photo)
+                );
+              }
+              setExpensePhotoDraft(photoDataUrl);
+              setScreen("previewFotoGasto");
+            },
+            onDelete: expensePreviewPhotoId ? deleteExpensePhoto : void 0,
+            onConfirm: confirmExpensePhoto,
+            confirmLabel: expensePreviewPhotoId ? "Voltar" : "Confirmar",
+            deleteOnly: Boolean(expensePreviewPhotoId)
+          }
+        )
+      );
+    }
     if (screen === "solicitarManutencao") {
       return show(
         /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
@@ -32597,7 +33197,14 @@ select,
           ExpenseScreen,
           {
             draft: expenseDraft,
+            photos: expensePhotos,
+            referenceData: expenseReferenceData,
+            referenceLoading: expenseReferenceLoading,
+            referenceError: !remoteMode ? "Visualiza\xE7\xE3o local. Para gravar, abra o app publicado no Model-driven." : expenseReferenceError,
             onDraftChange: setExpenseDraft,
+            onAddPhoto: openExpenseCamera,
+            onNativeAddPhoto: openExpenseNativePreview,
+            onPreviewPhoto: openExpensePreview,
             onBack: () => setScreen("inicio"),
             onSubmit: submitExpense,
             submitState: remoteOperation?.phase ?? "idle",

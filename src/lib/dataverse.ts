@@ -1,5 +1,7 @@
 ﻿import type { AgendaItem, DetailAction, DetailData, DetailField, MaintenancePhotoKind } from "../types";
 
+import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
+
 type XrmLike = {
   Utility?: {
     getGlobalContext?: () => {
@@ -101,8 +103,10 @@ export const DATAVERSE = {
   funcionarios: "cr40f_funcionarioses",
   bancoDeDados: "cr40f_bancodedadoses",
   manutencoes: "cr40f_manutencoeses",
-  despesas: "cr40f_despesas",
-  anexosDespesas: "cr40f_anexodespesas",
+  despesasOperacionais: "cr40f_despesaoperacionals",
+  anexosDespesasOperacionais: "cr40f_anexodespesaoperacionals",
+  categoriasDespesasOperacionais: "cr40f_categoriadespesaoperacionals",
+  formasPagamentoDespesas: "cr40f_formapagamentodespesas",
   trocas: "cr40f_trocasdecarros",
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
   posseVeiculos: "new_possedeveiculos",
@@ -121,8 +125,10 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.funcionarios]: "cr40f_funcionarios",
   [DATAVERSE.bancoDeDados]: "cr40f_bancodedados",
   [DATAVERSE.manutencoes]: "cr40f_manutencoes",
-  [DATAVERSE.despesas]: "cr40f_despesa",
-  [DATAVERSE.anexosDespesas]: "cr40f_anexodespesa",
+  [DATAVERSE.despesasOperacionais]: "cr40f_despesaoperacional",
+  [DATAVERSE.anexosDespesasOperacionais]: "cr40f_anexodespesaoperacional",
+  [DATAVERSE.categoriasDespesasOperacionais]: "cr40f_categoriadespesaoperacional",
+  [DATAVERSE.formasPagamentoDespesas]: "cr40f_formapagamentodespesa",
   [DATAVERSE.trocas]: "cr40f_trocasdecarro",
   [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
   [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
@@ -454,6 +460,91 @@ export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext
     .filter((vehicle) => Boolean(vehicle.id && vehicle.label));
 }
 
+function getBooleanValue(record: DataverseRecord, logicalName: string) {
+  const value = record[logicalName];
+  return value === true || value === 1 || value === "true";
+}
+
+const EXPENSE_CATEGORY_ACTIVE_QUERY =
+  "$select=cr40f_categoriadespesaoperacionalid,cr40f_nome,cr40f_ordem,cr40f_exigeveiculo,cr40f_exigereserva,cr40f_exigekm,cr40f_exigelitros,cr40f_ativa&$filter=cr40f_ativa eq true&$orderby=cr40f_ordem asc,cr40f_nome asc";
+const EXPENSE_CATEGORY_ALL_QUERY =
+  "$select=cr40f_categoriadespesaoperacionalid,cr40f_nome,cr40f_ordem,cr40f_exigeveiculo,cr40f_exigereserva,cr40f_exigekm,cr40f_exigelitros,cr40f_ativa&$orderby=cr40f_ordem asc,cr40f_nome asc";
+const EXPENSE_CATEGORY_MINIMAL_QUERY =
+  "$select=cr40f_categoriadespesaoperacionalid,cr40f_nome&$orderby=cr40f_nome asc";
+const EXPENSE_PAYMENT_ACTIVE_QUERY =
+  "$select=cr40f_formapagamentodespesaid,cr40f_nome,cr40f_ordem,cr40f_tipo,cr40f_ativa&$filter=cr40f_ativa eq true&$orderby=cr40f_ordem asc,cr40f_nome asc";
+const EXPENSE_PAYMENT_ALL_QUERY =
+  "$select=cr40f_formapagamentodespesaid,cr40f_nome,cr40f_ordem,cr40f_tipo,cr40f_ativa&$orderby=cr40f_ordem asc,cr40f_nome asc";
+const EXPENSE_PAYMENT_MINIMAL_QUERY =
+  "$select=cr40f_formapagamentodespesaid,cr40f_nome&$orderby=cr40f_nome asc";
+
+async function retrieveExpenseReferenceRecords(entitySetName: string, label: string, activeQuery: string, allQuery: string, minimalQuery: string) {
+  let activeError: unknown = null;
+  try {
+    const activeResult = await retrieveMultiple(entitySetName, activeQuery);
+    if (activeResult.entities.length) return activeResult;
+    dataverseWarn(`Referencia de despesa sem registros ativos: ${label}. Tentando consulta sem filtro de ativo.`);
+  } catch (error) {
+    activeError = error;
+    dataverseWarn(`Consulta ativa de referencia de despesa falhou: ${label}. Tentando consulta sem filtro de ativo.`, describeDataverseError(error));
+  }
+
+  try {
+    const allResult = await retrieveMultiple(entitySetName, allQuery);
+    if (allResult.entities.length) return allResult;
+    dataverseWarn(`Referencia de despesa vazia: ${label}. Tentando consulta minima.`);
+  } catch (error) {
+    dataverseWarn(`Consulta completa de referencia de despesa falhou: ${label}. Tentando consulta minima.`, describeDataverseError(error));
+  }
+
+  try {
+    return await retrieveMultiple(entitySetName, minimalQuery);
+  } catch (error) {
+    throw activeError ?? error;
+  }
+}
+
+export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReferenceData> {
+  const [categoryResult, paymentResult] = await Promise.all([
+    retrieveExpenseReferenceRecords(
+      DATAVERSE.categoriasDespesasOperacionais,
+      "categorias",
+      EXPENSE_CATEGORY_ACTIVE_QUERY,
+      EXPENSE_CATEGORY_ALL_QUERY,
+      EXPENSE_CATEGORY_MINIMAL_QUERY
+    ),
+    retrieveExpenseReferenceRecords(
+      DATAVERSE.formasPagamentoDespesas,
+      "formas de pagamento",
+      EXPENSE_PAYMENT_ACTIVE_QUERY,
+      EXPENSE_PAYMENT_ALL_QUERY,
+      EXPENSE_PAYMENT_MINIMAL_QUERY
+    )
+  ]);
+
+  return {
+    categories: categoryResult.entities
+      .map((record) => ({
+        id: cleanODataGuid(record.cr40f_categoriadespesaoperacionalid),
+        name: String(record.cr40f_nome ?? "").trim(),
+        order: Number(record.cr40f_ordem ?? 9999),
+        exigeVeiculo: getBooleanValue(record, "cr40f_exigeveiculo"),
+        exigeReserva: getBooleanValue(record, "cr40f_exigereserva"),
+        exigeKm: getBooleanValue(record, "cr40f_exigekm"),
+        exigeLitros: getBooleanValue(record, "cr40f_exigelitros")
+      }))
+      .filter((category) => Boolean(category.id && category.name)),
+    paymentMethods: paymentResult.entities
+      .map((record) => ({
+        id: cleanODataGuid(record.cr40f_formapagamentodespesaid),
+        name: String(record.cr40f_nome ?? "").trim(),
+        order: Number(record.cr40f_ordem ?? 9999),
+        tipo: String(record.cr40f_tipo ?? "").trim()
+      }))
+      .filter((method) => Boolean(method.id && method.name))
+  };
+}
+
 export function buildMaintenanceRequestRecord(payload: MaintenanceRequestPayload) {
   const descricao = payload.descricao.trim();
   const kmAtual = Number(payload.kmAtual);
@@ -757,6 +848,7 @@ export async function uploadExpenseInvoiceRemote({
   motoristaId,
   dataUrl,
   fileName,
+  order = 1,
   onProgress
 }: {
   expenseId: string;
@@ -764,29 +856,36 @@ export async function uploadExpenseInvoiceRemote({
   motoristaId?: string;
   dataUrl: string;
   fileName?: string;
+  order?: number;
   onProgress?: (message: string) => void;
 }) {
   if (!dataUrl) return "";
-  const baseName = sanitizePathSegment(fileName?.replace(/\.[^.]+$/, ""), "nota-fiscal");
+  const baseName = sanitizePathSegment(fileName?.replace(/\.[^.]+$/, ""), `comprovante-${order}`);
   const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
   const path = `Despesas/${devPrefix}${sanitizePathSegment(expenseName, "Sem nome")}`;
-  onProgress?.("Enviando nota fiscal.");
+  const lookupNavigationNames = await loadExpenseAttachmentLookupNavigationNamesRemote();
+  onProgress?.(`Enviando comprovante ${order}.`);
   const link = await uploadMaintenancePhoto(path, dataUrl, baseName, {
     despesaGuid: expenseId,
     despesaNome: expenseName,
-    tipo: "NOTA_FISCAL"
+    tipo: "COMPROVANTE",
+    indice: order
   });
 
-  onProgress?.("Vinculando nota fiscal à despesa.");
+  onProgress?.(`Vinculando comprovante ${order} à despesa.`);
   const record: Record<string, unknown> = {
-    cr40f_nome: `Nota fiscal - ${expenseName}`,
+    cr40f_nome: `Comprovante ${order} - ${expenseName}`,
     cr40f_nomearquivo: fileName || `${baseName}`,
     cr40f_urlsharepoint: link,
+    cr40f_sharelink: link,
     cr40f_dataenvio: new Date().toISOString(),
-    "cr40f_Despesa@odata.bind": bind(DATAVERSE.despesas, expenseId)
+    cr40f_ordem: order,
+    cr40f_status: 100000001,
+    cr40f_tipo: 100000000,
+    [`${lookupNavigationNames.despesa}@odata.bind`]: bind(DATAVERSE.despesasOperacionais, expenseId)
   };
-  if (motoristaId) record["cr40f_EnviadoPor@odata.bind"] = bind(DATAVERSE.funcionarios, motoristaId);
-  await createOne(DATAVERSE.anexosDespesas, record);
+  if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+  await createOne(DATAVERSE.anexosDespesasOperacionais, record);
   return link;
 }
 
@@ -914,6 +1013,279 @@ function assertFlowSuccess(result: unknown, flowName: string) {
 
 function bind(entitySetName: string, id: string) {
   return `/${entitySetName}(${cleanGuid(id)})`;
+}
+
+type RelationshipMetadataRecord = {
+  SchemaName?: string;
+  ReferencedEntity?: string;
+  ReferencingEntity?: string;
+  ReferencingAttribute?: string;
+  ReferencingEntityNavigationPropertyName?: string;
+};
+
+type RelationshipMetadataResult = {
+  value?: RelationshipMetadataRecord[];
+};
+
+type LookupNavigationRequest = {
+  referencingEntitySetName: string;
+  referencedEntitySetName: string;
+  referencingAttribute: string;
+  label: string;
+  required?: boolean;
+};
+
+type ExpenseAttachmentLookupNavigationNames = {
+  despesa: string;
+  enviadoPor: string;
+};
+
+const lookupNavigationNameCache = new Map<string, string>();
+
+function normalizeMetadataName(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function getClientUrl() {
+  const clientUrl = getWindowXrm()?.Utility?.getGlobalContext?.().getClientUrl?.();
+  if (!clientUrl) throw new Error("URL do Dataverse nao encontrada no runtime Xrm.");
+  return clientUrl.replace(/\/$/, "");
+}
+
+async function fetchDataverseMetadataJson<T>(path: string): Promise<T> {
+  const response = await fetch(encodeURI(`${getClientUrl()}/api/data/v9.2/${path}`), {
+    headers: {
+      Accept: "application/json",
+      "OData-MaxVersion": "4.0",
+      "OData-Version": "4.0"
+    }
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`GET ${path}\n${response.status} ${response.statusText}\n${text}`);
+  }
+  return (text ? JSON.parse(text) : {}) as T;
+}
+
+async function fetchManyToOneRelationshipMetadata(referencingEntityName: string) {
+  const select = "$select=SchemaName,ReferencedEntity,ReferencingEntity,ReferencingAttribute,ReferencingEntityNavigationPropertyName";
+  try {
+    const metadata = await fetchDataverseMetadataJson<RelationshipMetadataResult>(
+      `EntityDefinitions(LogicalName='${escapeODataText(referencingEntityName)}')/ManyToOneRelationships?${select}`
+    );
+    return metadata.value ?? [];
+  } catch (error) {
+    dataverseWarn("Consulta de relacionamentos pela EntityDefinitions falhou. Tentando RelationshipDefinitions.", describeDataverseError(error));
+    const metadata = await fetchDataverseMetadataJson<RelationshipMetadataResult>(
+      `RelationshipDefinitions/Microsoft.Dynamics.CRM.OneToManyRelationshipMetadata?${select}&$filter=ReferencingEntity eq '${escapeODataText(referencingEntityName)}'`
+    );
+    return metadata.value ?? [];
+  }
+}
+
+async function assertEntityHasAttributes(entitySetName: string, label: string, requiredAttributes: string[]) {
+  try {
+    await retrieveMultiple(entitySetName, `$select=${requiredAttributes.join(",")}&$top=1`);
+  } catch (error) {
+    throw new Error(
+      `Schema de ${label} nao passou na consulta real do Dataverse. Rode repair-despesas-operacionais-relacionamentos.console.js se o erro citar campo inexistente. Detalhe: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+export async function assertExpenseSchemaReadyRemote() {
+  await Promise.all([
+    assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", [
+      "cr40f_nome",
+      "cr40f_datagasto",
+      "cr40f_valor",
+      "cr40f_statusoperacional",
+      "cr40f_statusfinanceiro",
+      "cr40f_statusanexo",
+      "cr40f_origem",
+      "cr40f_observacao",
+      "cr40f_estabelecimento",
+      "cr40f_kminformado",
+      "cr40f_litros"
+    ]),
+    assertEntityHasAttributes(DATAVERSE.anexosDespesasOperacionais, "Anexos de Despesas", [
+      "cr40f_nome",
+      "cr40f_nomearquivo",
+      "cr40f_urlsharepoint",
+      "cr40f_sharelink",
+      "cr40f_dataenvio",
+      "cr40f_ordem",
+      "cr40f_status",
+      "cr40f_tipo"
+    ]),
+    assertEntityHasAttributes(DATAVERSE.categoriasDespesasOperacionais, "Categorias de Despesas", [
+      "cr40f_nome",
+      "cr40f_ativa",
+      "cr40f_exigeveiculo",
+      "cr40f_exigereserva",
+      "cr40f_exigekm",
+      "cr40f_exigelitros",
+      "cr40f_ordem"
+    ]),
+    assertEntityHasAttributes(DATAVERSE.formasPagamentoDespesas, "Formas de Pagamento", [
+      "cr40f_nome",
+      "cr40f_ativa",
+      "cr40f_tipo",
+      "cr40f_ordem"
+    ])
+  ]);
+}
+
+async function resolveLookupNavigationName({
+  referencingEntitySetName,
+  referencedEntitySetName,
+  referencingAttribute,
+  label
+}: LookupNavigationRequest) {
+  const referencingEntityName = getWebApiEntityName(referencingEntitySetName);
+  const referencedEntityName = getWebApiEntityName(referencedEntitySetName);
+  const cacheKey = `${referencingEntityName}:${referencedEntityName}:${referencingAttribute}`;
+  const cached = lookupNavigationNameCache.get(cacheKey);
+  if (cached) return cached;
+
+  const relationships = await fetchManyToOneRelationshipMetadata(referencingEntityName);
+  const match = relationships.find((relationship) =>
+    normalizeMetadataName(relationship.ReferencingAttribute) === normalizeMetadataName(referencingAttribute) &&
+    normalizeMetadataName(relationship.ReferencedEntity) === normalizeMetadataName(referencedEntityName)
+  );
+  const navigationName = String(match?.ReferencingEntityNavigationPropertyName ?? "").trim();
+  if (!navigationName) {
+    const candidates = relationships
+      .filter((relationship) => normalizeMetadataName(relationship.ReferencingAttribute) === normalizeMetadataName(referencingAttribute))
+      .map((relationship) => ({
+        schemaName: relationship.SchemaName,
+        referencedEntity: relationship.ReferencedEntity,
+        referencingAttribute: relationship.ReferencingAttribute,
+        navigationName: relationship.ReferencingEntityNavigationPropertyName
+      }));
+    throw new Error(`Navigation property nao encontrado para ${label} (${referencingEntityName}.${referencingAttribute}). Candidatos: ${JSON.stringify(candidates)}`);
+  }
+
+  lookupNavigationNameCache.set(cacheKey, navigationName);
+  dataverseLog("Navigation property resolvido.", {
+    label,
+    referencingEntityName,
+    referencedEntityName,
+    referencingAttribute,
+    navigationName,
+    schemaName: match?.SchemaName
+  });
+  return navigationName;
+}
+
+export async function loadExpenseLookupNavigationNamesRemote(options: { includeVeiculo?: boolean; includeReserva?: boolean } = {}): Promise<ExpenseLookupNavigationNames> {
+  const requests: Array<LookupNavigationRequest & { key: keyof ExpenseLookupNavigationNames }> = [
+    {
+      key: "motorista",
+      referencingEntitySetName: DATAVERSE.despesasOperacionais,
+      referencedEntitySetName: DATAVERSE.funcionarios,
+      referencingAttribute: "cr40f_motorista",
+      label: "Despesa.Motorista",
+      required: true
+    },
+    {
+      key: "categoria",
+      referencingEntitySetName: DATAVERSE.despesasOperacionais,
+      referencedEntitySetName: DATAVERSE.categoriasDespesasOperacionais,
+      referencingAttribute: "cr40f_categoria",
+      label: "Despesa.Categoria",
+      required: true
+    },
+    {
+      key: "formaPagamento",
+      referencingEntitySetName: DATAVERSE.despesasOperacionais,
+      referencedEntitySetName: DATAVERSE.formasPagamentoDespesas,
+      referencingAttribute: "cr40f_formapagamento",
+      label: "Despesa.FormaPagamento",
+      required: true
+    }
+  ];
+
+  if (options.includeVeiculo) {
+    requests.push({
+      key: "veiculo",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.veiculos,
+        referencingAttribute: "cr40f_veiculo",
+      label: "Despesa.Veiculo"
+    });
+  }
+  if (options.includeReserva) {
+    requests.push({
+      key: "reserva",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.geral,
+        referencingAttribute: "cr40f_reserva",
+        label: "Despesa.Reserva"
+    });
+  }
+
+  const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+  const names: Partial<ExpenseLookupNavigationNames> = {};
+  const failures: string[] = [];
+  settled.forEach((result, index) => {
+    const request = requests[index];
+    if (result.status === "fulfilled") {
+      names[request.key] = result.value;
+      return;
+    }
+    failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+  });
+  if (failures.length) {
+    throw new Error(`Schema de Despesas incompleto. Rode repair-despesas-operacionais-relacionamentos.console.js. Falhas: ${failures.join(" | ")}`);
+  }
+  if (!names.motorista || !names.categoria || !names.formaPagamento) {
+    throw new Error("Schema de Despesas incompleto. Lookups obrigatorios nao resolvidos.");
+  }
+  return {
+    motorista: names.motorista,
+    categoria: names.categoria,
+    formaPagamento: names.formaPagamento,
+    veiculo: names.veiculo,
+    reserva: names.reserva
+  };
+}
+
+async function loadExpenseAttachmentLookupNavigationNamesRemote(): Promise<ExpenseAttachmentLookupNavigationNames> {
+  const requests: Array<LookupNavigationRequest & { key: keyof ExpenseAttachmentLookupNavigationNames }> = [
+    {
+      key: "despesa",
+      referencingEntitySetName: DATAVERSE.anexosDespesasOperacionais,
+      referencedEntitySetName: DATAVERSE.despesasOperacionais,
+      referencingAttribute: "cr40f_despesa",
+      label: "AnexoDespesa.Despesa"
+    },
+    {
+      key: "enviadoPor",
+      referencingEntitySetName: DATAVERSE.anexosDespesasOperacionais,
+      referencedEntitySetName: DATAVERSE.funcionarios,
+      referencingAttribute: "cr40f_enviadopor",
+      label: "AnexoDespesa.EnviadoPor"
+    }
+  ];
+
+  const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+  const names: Partial<ExpenseAttachmentLookupNavigationNames> = {};
+  const failures: string[] = [];
+  settled.forEach((result, index) => {
+    const request = requests[index];
+    if (result.status === "fulfilled") {
+      names[request.key] = result.value;
+      return;
+    }
+    failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+  });
+  if (failures.length || !names.despesa || !names.enviadoPor) {
+    throw new Error(`Schema de Anexos de Despesas incompleto. Rode repair-despesas-operacionais-relacionamentos.console.js. Falhas: ${failures.join(" | ")}`);
+  }
+  return { despesa: names.despesa, enviadoPor: names.enviadoPor };
 }
 
 function getGeralId(record: DataverseRecord) {

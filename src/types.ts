@@ -8,6 +8,8 @@ export type Screen =
   | "assinatura"
   | "finalizar"
   | "gastos"
+  | "fotoGasto"
+  | "previewFotoGasto"
   | "solicitarManutencao"
   | "fotoSolicitacaoManutencao"
   | "previewFotoSolicitacaoManutencao"
