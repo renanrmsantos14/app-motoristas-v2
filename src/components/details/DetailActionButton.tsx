@@ -10,6 +10,10 @@ export function DetailActionButton({ action, onClick }: DetailActionButtonProps)
     return <button className="detail-action cancel" onClick={onClick}>Cancelar no local</button>;
   }
 
+  if (action === "receber") {
+    return <button className="detail-action finish" onClick={onClick}>Receber</button>;
+  }
+
   if (action === "voucher") {
     return <button className="detail-action voucher" onClick={onClick}>Voucher</button>;
   }

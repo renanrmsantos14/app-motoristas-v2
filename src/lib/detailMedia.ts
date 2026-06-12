@@ -4,7 +4,7 @@ const urlPattern = /https?:\/\/[^\s<>"']+/gi;
 export function isMaintenancePhotoPreviewField(label: string, value: string) {
   const cleanLabel = label.trim();
   if (!cleanLabel || extractMaintenancePhotoUrls(value).length === 0) return false;
-  return /^link foto\b/i.test(cleanLabel);
+  return /^link\b/i.test(cleanLabel);
 }
 
 export function extractMaintenancePhotoUrls(value: string) {

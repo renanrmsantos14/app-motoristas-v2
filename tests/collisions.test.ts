@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildCollisionCreatePayload,
+  buildCollisionWhatsAppMessage,
   buildCollisionWhatsAppUrl,
   createEmptyCollisionDraft,
   validateCollisionDraft,
@@ -46,7 +47,7 @@ test("validateCollisionDraft sem terceiro exige apenas dados base e fotos base",
   assert.equal(errors.documentoTerceiro, undefined);
 });
 
-test("validateCollisionDraft com terceiro exige dados e fotos do terceiro", () => {
+test("validateCollisionDraft em Eu bati com terceiro nao exige documento nem seguradora", () => {
   const errors = validateCollisionDraft(
     createEmptyCollisionDraft(new Date("2026-06-11T10:30:00-03:00")),
     []
@@ -57,14 +58,14 @@ test("validateCollisionDraft com terceiro exige dados e fotos do terceiro", () =
   assert.equal(thirdPartyErrors.terceiroNome, "Informe o nome do terceiro.");
   assert.equal(thirdPartyErrors.terceiroPlaca, "Informe a placa do terceiro.");
   assert.equal(thirdPartyErrors.terceiroVeiculo, "Informe modelo e cor do veiculo do terceiro.");
-  assert.equal(thirdPartyErrors.terceiroDocumento, "Informe CPF/CNH/RG do terceiro.");
-  assert.equal(thirdPartyErrors.terceiroSeguradora, "Informe a seguradora do terceiro.");
+  assert.equal(thirdPartyErrors.terceiroDocumento, undefined);
+  assert.equal(thirdPartyErrors.terceiroSeguradora, undefined);
   assert.equal(errors.danoTerceiro, undefined);
   assert.equal(thirdPartyErrors.danoTerceiro, "Adicione foto: CNH da pessoa.");
   assert.equal(thirdPartyErrors.documentoTerceiro, "Adicione foto: Documento do veículo da pessoa.");
 });
 
-test("validateCollisionDraft em Bateram em mim trata terceiro como obrigatorio", () => {
+test("validateCollisionDraft em Bateram em mim nao exige documento nem seguradora", () => {
   const errors = validateCollisionDraft(
     {
       ...baseDraft({ houveTerceiro: false }),
@@ -82,8 +83,8 @@ test("validateCollisionDraft em Bateram em mim trata terceiro como obrigatorio",
   assert.equal(errors.terceiroTelefone, "Informe o WhatsApp/telefone.");
   assert.equal(errors.terceiroPlaca, "Informe a placa do terceiro.");
   assert.equal(errors.terceiroVeiculo, "Informe modelo e cor do veiculo do terceiro.");
-  assert.equal(errors.terceiroDocumento, "Informe CPF/CNH/RG do terceiro.");
-  assert.equal(errors.terceiroSeguradora, "Informe a seguradora do terceiro.");
+  assert.equal(errors.terceiroDocumento, undefined);
+  assert.equal(errors.terceiroSeguradora, undefined);
   assert.equal(errors.danoTerceiro, "Adicione foto: CNH da pessoa.");
   assert.equal(errors.documentoTerceiro, "Adicione foto: Documento do veículo da pessoa.");
 });
@@ -122,6 +123,8 @@ test("buildCollisionCreatePayload monta payload Dataverse com Local", () => {
   assert.equal(payload.cr40f_local, "Av. Paulista, 1000");
   assert.equal(payload.cr40f_houveterceiro, true);
   assert.equal(payload.cr40f_terceiroplaca, "ABC1D23");
+  assert.equal(payload.cr40f_terceirodocumento, "");
+  assert.equal(payload.cr40f_terceiroseguradora, "");
   assert.equal(payload.cr40f_statusoperacional, 100000000);
   assert.equal(payload.cr40f_statusanexo, 100000001);
   assert.equal(payload["nav_motorista@odata.bind"], "/cr40f_funcionarioses(driver-1)");
@@ -163,4 +166,15 @@ test("buildCollisionWhatsAppUrl limpa telefone e codifica mensagem", () => {
   const url = buildCollisionWhatsAppUrl("(11) 99999-8888", "Mensagem pronta Betinhos");
 
   assert.equal(url, "https://wa.me/5511999998888?text=Mensagem%20pronta%20Betinhos");
+});
+
+test("buildCollisionWhatsAppMessage personaliza terceiro e motorista", () => {
+  const message = buildCollisionWhatsAppMessage({
+    thirdPartyName: "Carlos Silva",
+    driverName: "Joao Motorista Completo"
+  });
+
+  assert.match(message, /^Olá, Carlos Silva\.\n\nSou Joao, trabalho na empresa Betinhos Executive Service, e estou registrando/);
+  assert.match(message, /todo contato sobre esta ocorrência deve ser feito diretamente com o gestor da frota, Júnior, pelo número \+55 \(12\) 99723-6961/);
+  assert.match(message, /não representa reconhecimento de culpa, responsabilidade, obrigação de pagamento, acordo ou renúncia de direitos/);
 });

@@ -13,7 +13,7 @@ type XrmLike = {
     };
   };
   WebApi?: {
-    retrieveMultipleRecords: (entitySetName: string, options?: string) => Promise<{ entities: DataverseRecord[] }>;
+    retrieveMultipleRecords: (entitySetName: string, options?: string) => Promise<{ entities: DataverseRecord[]; nextLink?: string }>;
     retrieveRecord: (entitySetName: string, id: string, options?: string) => Promise<DataverseRecord>;
     updateRecord: (entitySetName: string, id: string, data: Record<string, unknown>) => Promise<unknown>;
     createRecord: (entitySetName: string, data: Record<string, unknown>) => Promise<{ id: string }>;
@@ -87,6 +87,11 @@ const OPERATION_STATUS = {
   concluido: 202410008
 } as const;
 
+const DRIVER_LINK_TYPE = {
+  colaborador: 0,
+  terceiro: 1
+} as const;
+
 const MAINTENANCE_PAYMENT: Record<string, number> = {
   cartao: 202410000,
   "cartao de credito": 202410000,
@@ -97,6 +102,10 @@ const MAINTENANCE_PAYMENT: Record<string, number> = {
 
 const MAINTENANCE_STATUS = {
   realizado: 202410002
+} as const;
+
+const VEHICLE_CATEGORY = {
+  proprio: 100000000
 } as const;
 
 const COLLISION_DATAVERSE_ATTACHMENT_TYPE: Record<CollisionPhotoKind, number> = {
@@ -121,6 +130,7 @@ export const DATAVERSE = {
   clientes: "cr40f_clientes1s",
   veiculos: "cr40f_veiculoses",
   geral: "cr40f_reservadeveculoses",
+  anexosRecebimento: "cr40f_anexorecebimentos",
   funcionarios: "cr40f_funcionarioses",
   bancoDeDados: "cr40f_bancodedadoses",
   manutencoes: "cr40f_manutencoeses",
@@ -128,6 +138,7 @@ export const DATAVERSE = {
   anexosDespesasOperacionais: "cr40f_anexodespesaoperacionals",
   categoriasDespesasOperacionais: "cr40f_categoriadespesaoperacionals",
   formasPagamentoDespesas: "cr40f_formapagamentodespesas",
+  cidades: "cr40f_cidades",
   colisoes: "cr40f_colisaos",
   anexosColisoes: "cr40f_anexocolisaos",
   trocas: "cr40f_trocasdecarros",
@@ -145,6 +156,7 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.clientes]: "cr40f_clientes1",
   [DATAVERSE.veiculos]: "cr40f_veiculos",
   [DATAVERSE.geral]: "cr40f_reservadeveculos",
+  [DATAVERSE.anexosRecebimento]: "cr40f_anexorecebimento",
   [DATAVERSE.funcionarios]: "cr40f_funcionarios",
   [DATAVERSE.bancoDeDados]: "cr40f_bancodedados",
   [DATAVERSE.manutencoes]: "cr40f_manutencoes",
@@ -152,6 +164,7 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.anexosDespesasOperacionais]: "cr40f_anexodespesaoperacional",
   [DATAVERSE.categoriasDespesasOperacionais]: "cr40f_categoriadespesaoperacional",
   [DATAVERSE.formasPagamentoDespesas]: "cr40f_formapagamentodespesa",
+  [DATAVERSE.cidades]: "cr40f_cidade",
   [DATAVERSE.colisoes]: "cr40f_colisao",
   [DATAVERSE.anexosColisoes]: "cr40f_anexocolisao",
   [DATAVERSE.trocas]: "cr40f_trocasdecarro",
@@ -342,6 +355,24 @@ export async function retrieveMultiple(entitySetName: string, options = "") {
   }
 }
 
+async function retrieveMultipleAll(entitySetName: string, options = "") {
+  const entities: DataverseRecord[] = [];
+  let nextOptions = options;
+  let page = 0;
+
+  while (nextOptions) {
+    page += 1;
+    const result = await retrieveMultiple(entitySetName, nextOptions);
+    entities.push(...result.entities);
+    if (!result.nextLink) break;
+    const queryIndex = result.nextLink.indexOf("?");
+    nextOptions = queryIndex >= 0 ? result.nextLink.slice(queryIndex) : "";
+    if (page > 20) throw new Error(`Consulta paginada excedeu limite de seguranca para ${entitySetName}.`);
+  }
+
+  return { entities };
+}
+
 export async function retrieveOne(entitySetName: string, id: string, options = "") {
   const cleanId = cleanGuid(id);
   const startedAt = performance.now();
@@ -438,7 +469,7 @@ export async function getDriverContext(): Promise<DriverContext> {
 
   const result = await retrieveMultiple(
     DATAVERSE.funcionarios,
-    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value&$filter=cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=1`
+    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo&$filter=cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=1`
   );
   const funcionario = result.entities[0] ?? null;
   if (!funcionario) throw new Error("Motorista nao encontrado em Funcionarios pelo Email Microsoft.");
@@ -446,7 +477,8 @@ export async function getDriverContext(): Promise<DriverContext> {
   dataverseLog("Motorista Dataverse resolvido.", {
     id: funcionario.cr40f_funcionariosid,
     email,
-    fullName: funcionario.cr40f_nomecompleto
+    fullName: funcionario.cr40f_nomecompleto,
+    tipoDeVinculo: funcionario.cr40f_tipodevinculo
   });
 
   return {
@@ -467,11 +499,12 @@ function getVehicleLabel(record: DataverseRecord) {
   return [placa, modelo].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
 }
 
-export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext) {
+export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext, options: { onlyOwnCategory?: boolean } = {}) {
   const currentVehicleId = getDriverCurrentVehicleId(driver);
+  const categoryFilter = options.onlyOwnCategory ? `&$filter=new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}` : "";
   const result = await retrieveMultiple(
     DATAVERSE.veiculos,
-    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value&$orderby=cr40f_placa asc&$top=200"
+    `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`
   );
   return result.entities
     .map((record): MaintenanceRequestVehicleOption => {
@@ -502,6 +535,10 @@ const EXPENSE_PAYMENT_ALL_QUERY =
   "$select=cr40f_formapagamentodespesaid,cr40f_nome,cr40f_ordem,cr40f_tipo,cr40f_ativa&$orderby=cr40f_ordem asc,cr40f_nome asc";
 const EXPENSE_PAYMENT_MINIMAL_QUERY =
   "$select=cr40f_formapagamentodespesaid,cr40f_nome&$orderby=cr40f_nome asc";
+const EXPENSE_CITY_QUERY =
+  "$select=cr40f_cidadeid,cr40f_name,cr40f_nome,cr40f_uf,cr40f_pais,cr40f_codigo_ibge,cr40f_ativa&$filter=cr40f_ativa eq true&$orderby=cr40f_uf asc,cr40f_nome asc";
+const EXPENSE_CITY_ALL_QUERY =
+  "$select=cr40f_cidadeid,cr40f_name,cr40f_nome,cr40f_uf,cr40f_pais,cr40f_codigo_ibge,cr40f_ativa&$orderby=cr40f_uf asc,cr40f_nome asc";
 
 async function retrieveExpenseReferenceRecords(entitySetName: string, label: string, activeQuery: string, allQuery: string, minimalQuery: string) {
   let activeError: unknown = null;
@@ -530,7 +567,7 @@ async function retrieveExpenseReferenceRecords(entitySetName: string, label: str
 }
 
 export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReferenceData> {
-  const [categoryResult, paymentResult] = await Promise.all([
+  const [categoryResult, paymentResult, cityResult] = await Promise.all([
     retrieveExpenseReferenceRecords(
       DATAVERSE.categoriasDespesasOperacionais,
       "categorias",
@@ -544,7 +581,11 @@ export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReference
       EXPENSE_PAYMENT_ACTIVE_QUERY,
       EXPENSE_PAYMENT_ALL_QUERY,
       EXPENSE_PAYMENT_MINIMAL_QUERY
-    )
+    ),
+    retrieveMultipleAll(DATAVERSE.cidades, EXPENSE_CITY_QUERY).catch((error) => {
+      dataverseWarn("Consulta ativa de cidades falhou. Tentando consulta sem filtro de ativo.", describeDataverseError(error));
+      return retrieveMultipleAll(DATAVERSE.cidades, EXPENSE_CITY_ALL_QUERY);
+    })
   ]);
 
   return {
@@ -566,7 +607,22 @@ export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReference
         order: Number(record.cr40f_ordem ?? 9999),
         tipo: String(record.cr40f_tipo ?? "").trim()
       }))
-      .filter((method) => Boolean(method.id && method.name))
+      .filter((method) => Boolean(method.id && method.name)),
+    cities: cityResult.entities
+      .map((record) => {
+        const nome = String(record.cr40f_nome ?? record.cr40f_name ?? "").trim();
+        const uf = String(record.cr40f_uf ?? "").trim().toUpperCase();
+        const pais = String(record.cr40f_pais ?? "Brasil").trim() || "Brasil";
+        return {
+          id: cleanODataGuid(record.cr40f_cidadeid),
+          name: [nome, uf].filter(Boolean).join(" - "),
+          order: 0,
+          uf,
+          pais,
+          codigoIbge: String(record.cr40f_codigo_ibge ?? "").trim()
+        };
+      })
+      .filter((city) => Boolean(city.id && city.name))
   };
 }
 
@@ -600,14 +656,15 @@ export function buildMaintenanceRequestRecord(payload: MaintenanceRequestPayload
 }
 
 export async function createMaintenanceRequestRemote(payload: MaintenanceRequestPayload) {
+  const photos = payload.photos?.filter(Boolean) ?? [];
+  if (!photos.length) throw new Error("Adicione ao menos uma foto do pedido de manutencao.");
+
   dataverseLog("Solicitacao de manutencao iniciada.", {
     kmAtual: payload.kmAtual,
     hasAgendarPara: Boolean(payload.agendarPara),
-    photoCount: payload.photos?.length ?? 0
+    photoCount: photos.length
   });
   const result = await createOne(DATAVERSE.manutencoes, buildMaintenanceRequestRecord(payload));
-  const photos = payload.photos?.filter(Boolean) ?? [];
-  if (!photos.length) return result;
 
   payload.onProgress?.("Preparando pasta das fotos.");
   const maintenance = await retrieveOne(DATAVERSE.manutencoes, result.id, MAINTENANCE_SELECT);
@@ -956,6 +1013,60 @@ export async function uploadExpenseInvoiceRemote({
   return link;
 }
 
+export async function uploadReceiveProofRemote({
+  reservaId,
+  reservaName,
+  motoristaId,
+  dataUrl,
+  fileName,
+  order = 1,
+  onProgress
+}: {
+  reservaId: string;
+  reservaName: string;
+  motoristaId?: string;
+  dataUrl: string;
+  fileName?: string;
+  order?: number;
+  onProgress?: (message: string) => void;
+}) {
+  if (!dataUrl) return "";
+  const isVideo = getDataUrlMimeType(dataUrl).startsWith("video/");
+  const extension = getFileExtensionFromMimeType(getDataUrlMimeType(dataUrl));
+  const baseName = sanitizePathSegment(fileName?.replace(/\.[^.]+$/, ""), `comprovante-recebimento-${order}`);
+  const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+  const path = `Recebimentos/${devPrefix}${sanitizePathSegment(reservaName, "Sem nome")}`;
+  const lookupNavigationNames = await loadReceiveAttachmentLookupNavigationNamesRemote();
+
+  onProgress?.(`Enviando comprovante ${order}.`);
+  const link = await uploadMaintenancePhoto(path, dataUrl, baseName, {
+    reservaGuid: reservaId,
+    reservaNome: reservaName,
+    tipo: "COMPROVANTE_RECEBIMENTO",
+    tipoMidia: isVideo ? "video" : "foto",
+    indice: order
+  });
+
+  onProgress?.(`Vinculando comprovante ${order} ao serviço.`);
+  const recordName = `Comprovante ${order} - ${reservaName}`.slice(0, 100);
+  const record: Record<string, unknown> = {
+    cr40f_name: recordName,
+    cr40f_nome: recordName,
+    cr40f_nomearquivo: `${baseName}.${extension}`,
+    cr40f_urlsharepoint: link,
+    cr40f_sharelink: link,
+    cr40f_dataenvio: new Date().toISOString(),
+    cr40f_ordem: order,
+    cr40f_status: 100000001,
+    cr40f_tipo: 100000000,
+    cr40f_tipomidia: isVideo ? 100000001 : 100000000,
+    [`${lookupNavigationNames.reserva}@odata.bind`]: bind(DATAVERSE.geral, reservaId)
+  };
+  if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+  await createOne(DATAVERSE.anexosRecebimento, record);
+  return link;
+}
+
 export async function uploadCollisionPhotoRemote({
   collisionId,
   collisionName,
@@ -1162,6 +1273,11 @@ type ExpenseAttachmentLookupNavigationNames = {
   enviadoPor: string;
 };
 
+type ReceiveAttachmentLookupNavigationNames = {
+  reserva: string;
+  enviadoPor: string;
+};
+
 type CollisionAttachmentLookupNavigationNames = {
   colisao: string;
   enviadoPor: string;
@@ -1261,6 +1377,14 @@ export async function assertExpenseSchemaReadyRemote() {
       "cr40f_ativa",
       "cr40f_tipo",
       "cr40f_ordem"
+    ]),
+    assertEntityHasAttributes(DATAVERSE.cidades, "Cidades", [
+      "cr40f_name",
+      "cr40f_nome",
+      "cr40f_uf",
+      "cr40f_pais",
+      "cr40f_codigo_ibge",
+      "cr40f_ativa"
     ])
   ]);
 }
@@ -1367,6 +1491,14 @@ export async function loadExpenseLookupNavigationNamesRemote(options: { includeV
       referencingAttribute: "cr40f_formapagamento",
       label: "Despesa.FormaPagamento",
       required: true
+    },
+    {
+      key: "cidade",
+      referencingEntitySetName: DATAVERSE.despesasOperacionais,
+      referencedEntitySetName: DATAVERSE.cidades,
+      referencingAttribute: "cr40f_cidade",
+      label: "Despesa.Cidade",
+      required: true
     }
   ];
 
@@ -1403,13 +1535,14 @@ export async function loadExpenseLookupNavigationNamesRemote(options: { includeV
   if (failures.length) {
     throw new Error(`Schema de Despesas incompleto. Rode repair-despesas-operacionais-relacionamentos.console.js. Falhas: ${failures.join(" | ")}`);
   }
-  if (!names.motorista || !names.categoria || !names.formaPagamento) {
+  if (!names.motorista || !names.categoria || !names.formaPagamento || !names.cidade) {
     throw new Error("Schema de Despesas incompleto. Lookups obrigatorios nao resolvidos.");
   }
   return {
     motorista: names.motorista,
     categoria: names.categoria,
     formaPagamento: names.formaPagamento,
+    cidade: names.cidade,
     veiculo: names.veiculo,
     reserva: names.reserva
   };
@@ -1485,6 +1618,41 @@ async function loadExpenseAttachmentLookupNavigationNamesRemote(): Promise<Expen
     throw new Error(`Schema de Anexos de Despesas incompleto. Rode repair-despesas-operacionais-relacionamentos.console.js. Falhas: ${failures.join(" | ")}`);
   }
   return { despesa: names.despesa, enviadoPor: names.enviadoPor };
+}
+
+async function loadReceiveAttachmentLookupNavigationNamesRemote(): Promise<ReceiveAttachmentLookupNavigationNames> {
+  const requests: Array<LookupNavigationRequest & { key: keyof ReceiveAttachmentLookupNavigationNames }> = [
+    {
+      key: "reserva",
+      referencingEntitySetName: DATAVERSE.anexosRecebimento,
+      referencedEntitySetName: DATAVERSE.geral,
+      referencingAttribute: "cr40f_reserva",
+      label: "AnexoRecebimento.Reserva"
+    },
+    {
+      key: "enviadoPor",
+      referencingEntitySetName: DATAVERSE.anexosRecebimento,
+      referencedEntitySetName: DATAVERSE.funcionarios,
+      referencingAttribute: "cr40f_enviadopor",
+      label: "AnexoRecebimento.EnviadoPor"
+    }
+  ];
+
+  const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+  const names: Partial<ReceiveAttachmentLookupNavigationNames> = {};
+  const failures: string[] = [];
+  settled.forEach((result, index) => {
+    const request = requests[index];
+    if (result.status === "fulfilled") {
+      names[request.key] = result.value;
+      return;
+    }
+    failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+  });
+  if (failures.length || !names.reserva || !names.enviadoPor) {
+    throw new Error(`Schema de Anexos de Recebimento incompleto. Falhas: ${failures.join(" | ")}`);
+  }
+  return { reserva: names.reserva, enviadoPor: names.enviadoPor };
 }
 
 async function loadCollisionAttachmentLookupNavigationNamesRemote(): Promise<CollisionAttachmentLookupNavigationNames> {
@@ -1641,6 +1809,8 @@ function buildFields(record: DataverseRecord, passengerHtml = ""): DetailField[]
 
 function serviceActions(record: DataverseRecord): DetailAction[] {
   const cliente = getLookupName(record, "cr40f_cliente");
+  const isReceber = getBooleanValue(record, "cr40f_receber");
+  if (isReceber) return ["cancel", "receber"];
   return /tenn?aris/i.test(cliente) ? ["cancel", "voucher"] : ["cancel", "finalizar"];
 }
 
@@ -1653,7 +1823,7 @@ function mapGeralService(record: DataverseRecord, passengerHtml = ""): AgendaIte
   const viewedAt = toDate(record.new_visualizacaodomotorista);
   const modifiedAt = toDate(record.modifiedon);
   const wasEditedAfterView = viewedAt && modifiedAt ? (modifiedAt.getTime() - viewedAt.getTime()) / 1000 > 10 : !viewedAt;
-  const isReceber = normalizeText(getFormatted(record, "cr40f_receber")) === "sim";
+  const isReceber = getBooleanValue(record, "cr40f_receber");
   const detail: DetailData = {
     type: "SERVICO",
     id: businessId,
@@ -1840,11 +2010,13 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   dataverseLog("Carga remota iniciada.");
   const driver = await getDriverContext();
   const now = new Date();
+  const isThirdPartyDriver = Number(driver.funcionario?.cr40f_tipodevinculo) === DRIVER_LINK_TYPE.terceiro;
+  const historyLookbackDays = isThirdPartyDriver ? 45 : 5;
   const start = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
   const end = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
-  const historyStart = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString();
+  const historyStart = new Date(now.getTime() - historyLookbackDays * 24 * 60 * 60 * 1000).toISOString();
   const historyEnd = new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString();
-  dataverseLog("Janela da agenda calculada.", { start, end, driverId: driver.id });
+  dataverseLog("Janela da agenda calculada.", { start, end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
 
   const geralSelect =
     "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,modifiedon";

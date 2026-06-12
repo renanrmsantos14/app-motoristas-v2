@@ -73,8 +73,29 @@ export const COLLISION_THIRD_PARTY_REQUIRED_PHOTOS: Array<{ kind: CollisionPhoto
   { kind: "documentoTerceiro", label: "Documento do veículo da pessoa" }
 ];
 
-export const COLLISION_WHATSAPP_MESSAGE =
-  "Olá. Sou da Betinhos Executive Service. Precisamos confirmar os dados da ocorrência registrada hoje. Pode me retornar por aqui?";
+function getFirstName(value: string) {
+  return String(value ?? "").trim().split(/\s+/).filter(Boolean)[0] ?? "";
+}
+
+export function buildCollisionWhatsAppMessage({
+  thirdPartyName,
+  driverName
+}: {
+  thirdPartyName?: string;
+  driverName?: string;
+}) {
+  const thirdParty = cleanText(thirdPartyName ?? "");
+  const driver = getFirstName(driverName ?? "");
+  const greeting = thirdParty ? `Olá, ${thirdParty}.` : "Olá.";
+  const presentation = driver
+    ? `Sou ${driver}, trabalho na empresa Betinhos Executive Service, e estou registrando a ocorrência de trânsito envolvendo nosso veículo.`
+    : "Sou da Betinhos Executive Service e estou registrando a ocorrência de trânsito envolvendo nosso veículo.";
+
+  return `${greeting}\n\n${presentation} Precisamos confirmar algumas informações para fins de documentação interna, seguradora e acompanhamento do caso.\n\n` +
+    "Por favor, envie por aqui qualquer informação relevante sobre o ocorrido.\n\n" +
+    "Daqui para frente, todo contato sobre esta ocorrência deve ser feito diretamente com o gestor da frota, Júnior, pelo número +55 (12) 99723-6961.\n\n" +
+    "Esta mensagem tem finalidade exclusiva de coleta de dados e preservação de informações. Ela não representa reconhecimento de culpa, responsabilidade, obrigação de pagamento, acordo ou renúncia de direitos por nenhuma das partes. A análise será feita posteriormente pela empresa, seguradora e, se necessário, pelas autoridades competentes.";
+}
 
 export function createEmptyCollisionDraft(now = new Date()): CollisionDraft {
   return {
@@ -147,15 +168,13 @@ export function validateCollisionDraft(draft: CollisionDraft, photos: CollisionP
   if (!draft.tipoOcorrencia) errors.tipoOcorrencia = "Informe o que aconteceu.";
   if (!cleanText(draft.local)) errors.local = "Informe o local.";
   if (!cleanText(draft.veiculoId)) errors.veiculoId = "Selecione o veículo.";
-  if (!cleanText(draft.descricao)) errors.descricao = "Descreva rapidamente o ocorrido.";
+  if (!cleanText(draft.descricao)) errors.descricao = "Descreva detalhadamente o ocorrido.";
   const hasThirdParty = hasCollisionThirdParty(draft);
   if (hasThirdParty) {
     if (!cleanText(draft.terceiroNome)) errors.terceiroNome = "Informe o nome do terceiro.";
     if (!normalizePhone(draft.terceiroTelefone)) errors.terceiroTelefone = "Informe o WhatsApp/telefone.";
     if (!cleanText(draft.terceiroPlaca)) errors.terceiroPlaca = "Informe a placa do terceiro.";
     if (!cleanText(draft.terceiroVeiculo)) errors.terceiroVeiculo = "Informe modelo e cor do veiculo do terceiro.";
-    if (!cleanText(draft.terceiroDocumento)) errors.terceiroDocumento = "Informe CPF/CNH/RG do terceiro.";
-    if (!cleanText(draft.terceiroSeguradora)) errors.terceiroSeguradora = "Informe a seguradora do terceiro.";
   }
 
   for (const requiredPhoto of getRequiredCollisionPhotos(hasThirdParty)) {
@@ -167,7 +186,7 @@ export function validateCollisionDraft(draft: CollisionDraft, photos: CollisionP
   return errors;
 }
 
-export function buildCollisionWhatsAppUrl(phone: string, message = COLLISION_WHATSAPP_MESSAGE) {
+export function buildCollisionWhatsAppUrl(phone: string, message: string) {
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) return "";
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
@@ -212,8 +231,8 @@ export function buildCollisionCreatePayload({
     cr40f_terceirotelefone: hasCollisionThirdParty(draft) ? cleanText(draft.terceiroTelefone) : "",
     cr40f_terceiroplaca: hasCollisionThirdParty(draft) ? cleanText(draft.terceiroPlaca).toUpperCase() : "",
     cr40f_terceiroveiculo: hasCollisionThirdParty(draft) ? cleanText(draft.terceiroVeiculo) : "",
-    cr40f_terceirodocumento: hasCollisionThirdParty(draft) ? cleanText(draft.terceiroDocumento) : "",
-    cr40f_terceiroseguradora: hasCollisionThirdParty(draft) ? cleanText(draft.terceiroSeguradora) : "",
+    cr40f_terceirodocumento: "",
+    cr40f_terceiroseguradora: "",
     cr40f_terceiroobservacao: hasCollisionThirdParty(draft) ? cleanText(draft.terceiroObservacao) : "",
     cr40f_statusoperacional: COLLISION_STATUS.enviado,
     cr40f_statusanexo: photos.length ? COLLISION_ATTACHMENT_STATUS.enviando : COLLISION_ATTACHMENT_STATUS.semAnexo,

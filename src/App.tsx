@@ -26,6 +26,7 @@ import {
   updateOne,
   uploadCollisionPhotoRemote,
   uploadExpenseInvoiceRemote,
+  uploadReceiveProofRemote,
   type DriverContext,
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
@@ -53,6 +54,7 @@ import { InitialScreen } from "./screens/InitialScreen";
 import { LocalCancelScreen } from "./screens/LocalCancelScreen";
 import { MaintenancePhotoScreen } from "./screens/MaintenancePhotoScreen";
 import { MaintenancePhotoPreviewScreen } from "./screens/MaintenancePhotoPreviewScreen";
+import { ReceiveScreen } from "./screens/ReceiveScreen";
 import {
   MaintenanceRequestScreen,
   type MaintenanceRequestDraft,
@@ -91,9 +93,12 @@ const SCREEN_DEPTH: Record<Screen, number> = {
   historico: 1,
   detalhes: 2,
   detalhesHistorico: 2,
+  receber: 3,
   voucher: 3,
   finalizar: 3,
   gastos: 1,
+  fotoReceber: 4,
+  previewFotoReceber: 5,
   fotoGasto: 2,
   previewFotoGasto: 3,
   colisoesInicio: 1,
@@ -145,8 +150,10 @@ const fastFade = {
 const isListScreen = (screenName: Screen) => screenName === "servicos" || screenName === "historico" || screenName === "gastos" || screenName === "colisoesInicio";
 const isDetailScreen = (screenName: Screen) => screenName === "detalhes" || screenName === "detalhesHistorico";
 const isTaskScreen = (screenName: Screen) =>
-  screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
+  screenName === "receber" || screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
 const isCaptureScreen = (screenName: Screen) =>
+  screenName === "fotoReceber" ||
+  screenName === "previewFotoReceber" ||
   screenName === "fotoManutencao" ||
   screenName === "previewFotoManutencao" ||
   screenName === "fotoGasto" ||
@@ -374,6 +381,42 @@ function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function getDetailFieldValue(detail: DetailData, label: string) {
+  return detail.fields.find((field) => field.label.toLowerCase() === label.toLowerCase())?.value ?? "";
+}
+
+function isTrueLike(value: unknown) {
+  return value === true || value === 1 || value === "true";
+}
+
+function shouldRequireReceiveStep(detail: DetailData) {
+  return (
+    detail.type === "SERVICO" &&
+    (
+      detail.actions.includes("receber") ||
+      isTrueLike(detail.dataverse?.record?.cr40f_receber) ||
+      getDetailFieldValue(detail, "Receber").trim().toLowerCase() === "sim"
+    )
+  );
+}
+
+function shouldRouteServiceToVoucher(detail: DetailData) {
+  return detail.type === "SERVICO" && /tenn?aris/i.test(getDetailFieldValue(detail, "Cliente"));
+}
+
+function getServiceTaskBackScreen(detail: DetailData): Screen {
+  return shouldRequireReceiveStep(detail) ? "receber" : "servicos";
+}
+
+function hasReceiveProofs(detail: DetailData, receiveProofs: Record<string, ExpensePhoto[]>) {
+  return (receiveProofs[detail.id]?.length ?? 0) > 0;
+}
+
+function hasUploadedReceiveProofs(detail: DetailData, receiveProofs: Record<string, ExpensePhoto[]>, receiveUploadedCounts: Record<string, number>) {
+  const proofCount = receiveProofs[detail.id]?.length ?? 0;
+  return proofCount > 0 && receiveUploadedCounts[detail.id] === proofCount;
+}
+
 function App() {
   const [store, setStore] = useState<LocalStore>(() => loadStore());
   const initialDetailRef = useRef<DetailData | null>(getInitialDetail(store));
@@ -406,6 +449,7 @@ function App() {
     valor: "",
     dataGasto: new Date().toISOString().slice(0, 10),
     formaPagamentoId: "",
+    cidadeId: "",
     estabelecimento: "",
     descricao: "",
     kmInformado: "",
@@ -420,6 +464,13 @@ function App() {
   const [expensePhotoPosterUrl, setExpensePhotoPosterUrl] = useState("");
   const [expensePhotoDurationLabel, setExpensePhotoDurationLabel] = useState("");
   const [expensePreviewPhotoId, setExpensePreviewPhotoId] = useState("");
+  const [receiveProofs, setReceiveProofs] = useState<Record<string, ExpensePhoto[]>>({});
+  const [receiveUploadedCounts, setReceiveUploadedCounts] = useState<Record<string, number>>({});
+  const [receivePhotoDraft, setReceivePhotoDraft] = useState("");
+  const [receivePhotoPreviewUrl, setReceivePhotoPreviewUrl] = useState("");
+  const [receivePhotoPosterUrl, setReceivePhotoPosterUrl] = useState("");
+  const [receivePhotoDurationLabel, setReceivePhotoDurationLabel] = useState("");
+  const [receivePreviewPhotoId, setReceivePreviewPhotoId] = useState("");
   const [collisionDraft, setCollisionDraft] = useState<CollisionDraft>(() => createEmptyCollisionDraft());
   const [collisionPhotos, setCollisionPhotos] = useState<CollisionPhoto[]>([]);
   const [collisionPhotoDraft, setCollisionPhotoDraft] = useState("");
@@ -593,10 +644,17 @@ function App() {
     setMaintenanceVehiclesLoading(true);
     getDriverContext()
       .then(async (driver) => {
-        const vehicles = await loadMaintenanceRequestVehiclesRemote(driver);
+        const vehicles = await loadMaintenanceRequestVehiclesRemote(driver, { onlyOwnCategory: screen === "solicitarManutencao" });
         if (!alive) return;
+        setDriverContext(driver);
         const currentVehicleId = getDriverCurrentVehicleId(driver);
-        setMaintenanceCurrentVehicleId(currentVehicleId);
+        const availableCurrentVehicleId = vehicles.some((vehicle) => vehicle.id === currentVehicleId) ? currentVehicleId : "";
+        setMaintenanceCurrentVehicleId(availableCurrentVehicleId);
+        setMaintenanceRequestDraft((current) => (
+          current.veiculoId && !vehicles.some((vehicle) => vehicle.id === current.veiculoId)
+            ? { ...current, veiculoId: "" }
+            : current
+        ));
         setMaintenanceVehicles(vehicles);
       })
       .catch((error) => {
@@ -623,7 +681,7 @@ function App() {
     let alive = true;
     setExpenseReferenceLoading(true);
     setExpenseReferenceError("");
-    setExpenseReferenceData({ categories: [], paymentMethods: [] });
+    setExpenseReferenceData({ categories: [], paymentMethods: [], cities: [] });
     loadExpenseReferenceDataRemote()
       .then((referenceData) => {
         if (!alive) return;
@@ -710,6 +768,8 @@ function App() {
   const resetLocal = () => {
     const next = initialStore();
     setStore(next);
+    setReceiveProofs({});
+    setReceiveUploadedCounts({});
     setSelectedDetail(null);
     setScreen("inicio");
     setToast("Dados locais reiniciados.");
@@ -718,6 +778,11 @@ function App() {
   const finalizeSelected = async (fields: Record<string, string>) => {
     if (!selectedDetail || remoteOperation) return;
     const detailToFinalize = selectedDetail;
+    const receiveProofCount = receiveProofs[detailToFinalize.id]?.length ?? 0;
+    const finalFields =
+      receiveProofCount > 0
+        ? { ...fields, "Comprovantes de Recebimento": `${receiveProofCount} comprovante(s) anexado(s).` }
+        : fields;
     const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
     const firstPendingDetail = findFirstPendingDetail(store.agenda);
 
@@ -731,7 +796,7 @@ function App() {
     if (completingClearTimerRef.current) window.clearTimeout(completingClearTimerRef.current);
 
     if (remoteMode) {
-      const isVoucher = "Horario Inicial" in fields || "Horário Inicial" in fields;
+      const isVoucher = "Horario Inicial" in finalFields || "Horário Inicial" in finalFields;
       const operationTitle =
         detailToFinalize.type === "SERVICO" && isVoucher
           ? "Enviando voucher"
@@ -772,16 +837,16 @@ function App() {
 
         const signatureDataUrl = store.signatures[detailToFinalize.id];
         const photos = store.photos[detailToFinalize.id];
-        const isVoucher = "Horario Inicial" in fields || "Horário Inicial" in fields;
+        const isVoucher = "Horario Inicial" in finalFields || "Horário Inicial" in finalFields;
 
         if (detailToFinalize.type === "SERVICO" && isVoucher) {
-          await saveVoucherRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
+          await saveVoucherRemote({ detail: detailToFinalize, fields: finalFields, signatureDataUrl, photos, onProgress: setProgress });
         } else if (detailToFinalize.type === "SERVICO") {
-          await finalizeServiceRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
+          await finalizeServiceRemote({ detail: detailToFinalize, fields: finalFields, signatureDataUrl, photos, onProgress: setProgress });
         } else if (detailToFinalize.type === "MANUTENCAO") {
-          await finalizeMaintenanceRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
+          await finalizeMaintenanceRemote({ detail: detailToFinalize, fields: finalFields, signatureDataUrl, photos, onProgress: setProgress });
         } else if (detailToFinalize.type === "TROCA") {
-          await finalizeExchangeRemote({ detail: detailToFinalize, fields, signatureDataUrl, photos, onProgress: setProgress });
+          await finalizeExchangeRemote({ detail: detailToFinalize, fields: finalFields, signatureDataUrl, photos, onProgress: setProgress });
         }
         setSuccess("Enviado com sucesso.");
         await wait(720);
@@ -810,11 +875,23 @@ function App() {
             history: remote.history
           }));
         } catch {
-          setStore((current) => finalizeDetailLocally(current, detailToFinalize, fields));
+          setStore((current) => finalizeDetailLocally(current, detailToFinalize, finalFields));
         }
       } else {
-        setStore((current) => finalizeDetailLocally(current, detailToFinalize, fields));
+        setStore((current) => finalizeDetailLocally(current, detailToFinalize, finalFields));
       }
+      setReceiveProofs((current) => {
+        if (!current[detailToFinalize.id]) return current;
+        const next = { ...current };
+        delete next[detailToFinalize.id];
+        return next;
+      });
+      setReceiveUploadedCounts((current) => {
+        if (!current[detailToFinalize.id]) return current;
+        const next = { ...current };
+        delete next[detailToFinalize.id];
+        return next;
+      });
       setRemoteOperation(null);
       finalizeTimerRef.current = null;
       completingClearTimerRef.current = window.setTimeout(() => {
@@ -826,25 +903,38 @@ function App() {
 
   const cancelSelected = async (reason: string) => {
     if (!selectedDetail || remoteOperation) return;
+    const detailToCancel = selectedDetail;
     if (remoteMode) {
       try {
         setRemoteOperation({
           title: "Enviando cancelamento",
           message: "Atualizando status no Dataverse.",
-          detailId: selectedDetail.id,
+          detailId: detailToCancel.id,
           phase: "loading"
         });
-        await cancelServiceRemote(selectedDetail, reason);
+        await cancelServiceRemote(detailToCancel, reason);
         setRemoteOperation({
           title: "Enviando cancelamento",
           message: "Enviado com sucesso.",
-          detailId: selectedDetail.id,
+          detailId: detailToCancel.id,
           phase: "success"
         });
         await wait(720);
         setSelectedDetail(null);
         setScreen("servicos");
         setToast("Cancelamento enviado para analise.");
+        setReceiveProofs((current) => {
+          if (!current[detailToCancel.id]) return current;
+          const next = { ...current };
+          delete next[detailToCancel.id];
+          return next;
+        });
+        setReceiveUploadedCounts((current) => {
+          if (!current[detailToCancel.id]) return current;
+          const next = { ...current };
+          delete next[detailToCancel.id];
+          return next;
+        });
         loadRemoteStore()
           .then((remote) => setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history })))
           .catch((error) => {
@@ -854,8 +944,8 @@ function App() {
               action: "loadRemoteStore",
               phase: "after-cancel",
               screen: "servicos",
-              detailId: selectedDetail.id,
-              detailType: selectedDetail.type
+              detailId: detailToCancel.id,
+              detailType: detailToCancel.type
             });
             setToast(error instanceof Error ? error.message : "Cancelado, mas falhou ao atualizar a agenda.");
           })
@@ -864,15 +954,27 @@ function App() {
           });
         return;
       } catch (error) {
-        logAppError(error, "cancelSelected", selectedDetail.type);
+        logAppError(error, "cancelSelected", detailToCancel.type);
         setRemoteOperation(null);
         setToast(error instanceof Error ? error.message : "Falha ao cancelar no Dataverse.");
         return;
       }
     }
-    const next = cancelDetailLocally(store, selectedDetail, reason);
+    const next = cancelDetailLocally(store, detailToCancel, reason);
     const historyItem = next.history[0];
     setStore(next);
+    setReceiveProofs((current) => {
+      if (!current[detailToCancel.id]) return current;
+      const copy = { ...current };
+      delete copy[detailToCancel.id];
+      return copy;
+    });
+    setReceiveUploadedCounts((current) => {
+      if (!current[detailToCancel.id]) return current;
+      const copy = { ...current };
+      delete copy[detailToCancel.id];
+      return copy;
+    });
     setSelectedDetail(historyItem.detail ?? null);
     setScreen("historico");
     setToast("Cancelado localmente.");
@@ -950,6 +1052,7 @@ function App() {
         veiculoId,
         categoryEntitySet: DATAVERSE.categoriasDespesasOperacionais,
         paymentMethodEntitySet: DATAVERSE.formasPagamentoDespesas,
+        cityEntitySet: DATAVERSE.cidades,
         motoristaEntitySet: DATAVERSE.funcionarios,
         veiculoEntitySet: DATAVERSE.veiculos,
         reservaEntitySet: DATAVERSE.geral,
@@ -1011,6 +1114,7 @@ function App() {
         valor: "",
         dataGasto: new Date().toISOString().slice(0, 10),
         formaPagamentoId: "",
+        cidadeId: "",
         estabelecimento: "",
         descricao: "",
         kmInformado: "",
@@ -1361,6 +1465,203 @@ function App() {
     setScreen("gastos");
   };
 
+  const openReceiveCamera = () => {
+    setReceivePhotoDraft("");
+    setReceivePhotoPreviewUrl("");
+    setReceivePhotoPosterUrl("");
+    setReceivePhotoDurationLabel("");
+    setReceivePreviewPhotoId("");
+    setScreen("fotoReceber");
+  };
+
+  const openReceiveVideoPreview = (videoDataUrl: string, _previewUrl: string, posterUrl: string, durationLabel = "") => {
+    setReceivePhotoDraft(videoDataUrl);
+    setReceivePhotoPreviewUrl("");
+    setReceivePhotoPosterUrl(posterUrl);
+    setReceivePhotoDurationLabel(durationLabel);
+    setReceivePreviewPhotoId("");
+    setScreen("previewFotoReceber");
+  };
+
+  const openReceivePreview = (photoId: string) => {
+    if (!selectedDetail) return;
+    const photo = receiveProofs[selectedDetail.id]?.find((item) => item.id === photoId);
+    if (!photo) return;
+    setReceivePhotoDraft(photo.dataUrl);
+    setReceivePhotoPreviewUrl(photo.previewUrl ?? "");
+    setReceivePhotoPosterUrl(photo.posterUrl ?? "");
+    setReceivePhotoDurationLabel(photo.durationLabel ?? "");
+    setReceivePreviewPhotoId(photoId);
+    setScreen("previewFotoReceber");
+  };
+
+  const confirmReceivePhoto = () => {
+    if (!selectedDetail) return setScreen("servicos");
+    if (!receivePhotoDraft) return setScreen("receber");
+
+    setReceiveProofs((current) => {
+      const detailPhotos = current[selectedDetail.id] ?? [];
+      const nextPhotos = receivePreviewPhotoId
+        ? detailPhotos.map((photo) => photo.id === receivePreviewPhotoId ? {
+            ...photo,
+            dataUrl: receivePhotoDraft,
+            previewUrl: receivePhotoPreviewUrl || undefined,
+            posterUrl: receivePhotoPosterUrl || undefined,
+            durationLabel: receivePhotoDurationLabel || undefined,
+            mediaType: receivePhotoDraft.startsWith("data:video/") ? "video" : "foto"
+          } : photo)
+        : [
+            ...detailPhotos,
+            {
+              id: `receive-photo-${Date.now()}-${detailPhotos.length + 1}`,
+              dataUrl: receivePhotoDraft,
+              previewUrl: receivePhotoPreviewUrl || undefined,
+              posterUrl: receivePhotoPosterUrl || undefined,
+              durationLabel: receivePhotoDurationLabel || undefined,
+              mediaType: receivePhotoDraft.startsWith("data:video/") ? "video" : "foto"
+            }
+          ];
+      return {
+        ...current,
+        [selectedDetail.id]: nextPhotos
+      };
+    });
+    setReceiveUploadedCounts((current) => {
+      if (!current[selectedDetail.id]) return current;
+      const next = { ...current };
+      delete next[selectedDetail.id];
+      return next;
+    });
+
+    setReceivePhotoDraft("");
+    setReceivePhotoPreviewUrl("");
+    setReceivePhotoPosterUrl("");
+    setReceivePhotoDurationLabel("");
+    setReceivePreviewPhotoId("");
+    setScreen("receber");
+  };
+
+  const deleteReceivePhoto = () => {
+    if (!selectedDetail) return;
+    if (receivePreviewPhotoId) {
+      setReceiveProofs((current) => ({
+        ...current,
+        [selectedDetail.id]: (current[selectedDetail.id] ?? []).filter((photo) => photo.id !== receivePreviewPhotoId)
+      }));
+    }
+    setReceiveUploadedCounts((current) => {
+      if (!current[selectedDetail.id]) return current;
+      const next = { ...current };
+      delete next[selectedDetail.id];
+      return next;
+    });
+    setReceivePhotoDraft("");
+    setReceivePhotoPreviewUrl("");
+    setReceivePhotoPosterUrl("");
+    setReceivePhotoDurationLabel("");
+    setReceivePreviewPhotoId("");
+    setScreen("receber");
+  };
+
+  const continueAfterReceive = async () => {
+    if (!selectedDetail || remoteOperation) return;
+    const detailToContinue = selectedDetail;
+    const photos = receiveProofs[detailToContinue.id] ?? [];
+    if (!photos.length) return;
+
+    const goNext = () => setScreen(shouldRouteServiceToVoucher(detailToContinue) ? "voucher" : "finalizar");
+
+    if (hasUploadedReceiveProofs(detailToContinue, receiveProofs, receiveUploadedCounts) || !remoteMode) {
+      goNext();
+      return;
+    }
+
+    const dvId = detailToContinue.dataverse?.id;
+    if (!dvId) {
+      goNext();
+      return;
+    }
+
+    try {
+      setRemoteOperation({
+        title: "Enviando comprovantes",
+        message: "Preparando upload dos comprovantes.",
+        detailId: detailToContinue.id,
+        phase: "loading"
+      });
+      let completedUploads = 0;
+      const uploadResults = await Promise.allSettled(
+        photos.map(async (photo, index) => {
+          const link = await uploadReceiveProofRemote({
+            reservaId: dvId,
+            reservaName: detailToContinue.id,
+            motoristaId: driverContext?.id,
+            dataUrl: photo.dataUrl,
+            fileName: photo.id,
+            order: index + 1,
+            onProgress: (message) =>
+              setRemoteOperation({
+                title: "Enviando comprovantes",
+                message,
+                detailId: detailToContinue.id,
+                phase: "loading"
+              })
+          });
+          completedUploads += 1;
+          setRemoteOperation({
+            title: "Enviando comprovantes",
+            message: `Comprovantes enviados (${completedUploads}/${photos.length}).`,
+            detailId: detailToContinue.id,
+            phase: "loading"
+          });
+          return link;
+        })
+      );
+      const failedUploads = uploadResults.filter((result) => result.status === "rejected").length;
+      if (failedUploads) {
+        throw new Error(`${failedUploads} de ${photos.length} comprovante(s) falharam no upload.`);
+      }
+      setReceiveUploadedCounts((current) => ({ ...current, [detailToContinue.id]: photos.length }));
+      setRemoteOperation({
+        title: "Enviando comprovantes",
+        message: "Comprovantes enviados com sucesso.",
+        detailId: detailToContinue.id,
+        phase: "success"
+      });
+      await wait(420);
+      setRemoteOperation(null);
+      goNext();
+    } catch (error) {
+      logAppError(error, "continueAfterReceive", detailToContinue.type);
+      setRemoteOperation(null);
+      setCriticalError(error instanceof Error ? error.message : "Falha ao enviar comprovantes de recebimento.");
+    }
+  };
+
+  const openVoucherFlow = () => {
+    if (!selectedDetail) return;
+    if (
+      shouldRequireReceiveStep(selectedDetail) &&
+      (!hasReceiveProofs(selectedDetail, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts)))
+    ) {
+      setScreen("receber");
+      return;
+    }
+    setScreen("voucher");
+  };
+
+  const openFinalizeFlow = () => {
+    if (!selectedDetail) return;
+    if (
+      shouldRequireReceiveStep(selectedDetail) &&
+      (!hasReceiveProofs(selectedDetail, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts)))
+    ) {
+      setScreen("receber");
+      return;
+    }
+    setScreen("finalizar");
+  };
+
   const startCollision = (type: CollisionDraft["tipoOcorrencia"]) => {
     setCollisionDraft((current) => ({
       ...current,
@@ -1665,6 +1966,7 @@ function App() {
         vehicles={maintenanceVehicles}
         vehiclesLoading={maintenanceVehiclesLoading}
         currentVehicleId={maintenanceCurrentVehicleId}
+        driverName={driverContext?.fullName}
       />
     );
   }
@@ -1723,11 +2025,93 @@ function App() {
     );
   }
 
+  if (screen === "receber" && selectedDetail) {
+    return show(
+      <ReceiveScreen
+        detail={selectedDetail}
+        photos={receiveProofs[selectedDetail.id] ?? []}
+        onAddPhoto={openReceiveCamera}
+        onPreviewPhoto={openReceivePreview}
+        onBack={() => setScreen("detalhes")}
+        onContinue={continueAfterReceive}
+        submitState={remoteOperation?.phase ?? "idle"}
+      />
+    );
+  }
+
+  if (screen === "fotoReceber") {
+    return show(
+      <MaintenancePhotoScreen
+        kind="NOTAFISCAL"
+        title="Comprovante"
+        onBack={() => setScreen("receber")}
+        onCapture={(photoDataUrl) => {
+          setReceivePhotoDraft(photoDataUrl);
+          setReceivePhotoPreviewUrl("");
+          setReceivePhotoPosterUrl("");
+          setReceivePhotoDurationLabel("");
+          setReceivePreviewPhotoId("");
+          setScreen("previewFotoReceber");
+        }}
+        onCaptureVideo={openReceiveVideoPreview}
+        onSwitchCamera={() => setToast("Câmera alternada localmente.")}
+      />
+    );
+  }
+
+  if (screen === "previewFotoReceber") {
+    return show(
+      <MaintenancePhotoPreviewScreen
+        kind="NOTAFISCAL"
+        title="Comprovante"
+        prompt={receivePhotoDraft.startsWith("data:video/") ? "O vídeo está correto?" : "O comprovante está legível?"}
+        photoDataUrl={receivePhotoDraft}
+        videoPreviewUrl={receivePhotoPreviewUrl}
+        onBack={() => {
+          setReceivePhotoDraft("");
+          setReceivePhotoPreviewUrl("");
+          setReceivePhotoPosterUrl("");
+          setReceivePhotoDurationLabel("");
+          setReceivePreviewPhotoId("");
+          setScreen("receber");
+        }}
+        onRetake={() => {
+          setReceivePhotoDraft("");
+          setReceivePhotoPreviewUrl("");
+          setReceivePhotoPosterUrl("");
+          setReceivePhotoDurationLabel("");
+          setReceivePreviewPhotoId("");
+          setScreen("fotoReceber");
+        }}
+        onDelete={receivePreviewPhotoId ? deleteReceivePhoto : undefined}
+        onConfirm={confirmReceivePhoto}
+        confirmLabel={receivePreviewPhotoId ? "Voltar" : "Confirmar"}
+        deleteOnly={Boolean(receivePreviewPhotoId)}
+      />
+    );
+  }
+
   if (screen === "finalizar" && selectedDetail) {
+    if (
+      shouldRequireReceiveStep(selectedDetail) &&
+      (!hasReceiveProofs(selectedDetail, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts)))
+    ) {
+      return show(
+        <ReceiveScreen
+          detail={selectedDetail}
+          photos={receiveProofs[selectedDetail.id] ?? []}
+          onAddPhoto={openReceiveCamera}
+          onPreviewPhoto={openReceivePreview}
+          onBack={() => setScreen("detalhes")}
+          onContinue={continueAfterReceive}
+          submitState={remoteOperation?.phase ?? "idle"}
+        />
+      );
+    }
     return show(
       <FinalizeScreen
         detail={selectedDetail}
-        onBack={() => setScreen("servicos")}
+        onBack={() => setScreen(getServiceTaskBackScreen(selectedDetail))}
         onDone={finalizeSelected}
         confirmedPhotos={confirmedMaintenancePhotos}
         maintenancePhotos={store.photos[selectedDetail.id] ?? {}}
@@ -1776,12 +2160,28 @@ function App() {
   }
 
   if (screen === "voucher" && selectedDetail) {
+    if (
+      shouldRequireReceiveStep(selectedDetail) &&
+      (!hasReceiveProofs(selectedDetail, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts)))
+    ) {
+      return show(
+        <ReceiveScreen
+          detail={selectedDetail}
+          photos={receiveProofs[selectedDetail.id] ?? []}
+          onAddPhoto={openReceiveCamera}
+          onPreviewPhoto={openReceivePreview}
+          onBack={() => setScreen("detalhes")}
+          onContinue={continueAfterReceive}
+          submitState={remoteOperation?.phase ?? "idle"}
+        />
+      );
+    }
     return show(
       <VoucherScreen
         detail={selectedDetail}
         hasSignature={Boolean(store.signatures[selectedDetail.id])}
         initialDraft={voucherDrafts[getVoucherDraftKey(selectedDetail)]}
-        onBack={() => setScreen("servicos")}
+        onBack={() => setScreen(getServiceTaskBackScreen(selectedDetail))}
         onOpenSignature={() => setScreen("assinatura")}
         onFinalize={finalizeSelected}
         onDraftChange={saveVoucherDraft}
@@ -1795,8 +2195,9 @@ function App() {
       <DetailsScreen
         detail={selectedDetail}
         onBack={() => setScreen("servicos")}
-        onOpenVoucher={() => setScreen("voucher")}
-        onOpenFinalize={() => setScreen("finalizar")}
+        onOpenReceive={() => setScreen("receber")}
+        onOpenVoucher={openVoucherFlow}
+        onOpenFinalize={openFinalizeFlow}
         onCancelLocal={() => setScreen("canceladoLocal")}
         onRefresh={() => refreshLocal(selectedDetail)}
         onCopy={() => {

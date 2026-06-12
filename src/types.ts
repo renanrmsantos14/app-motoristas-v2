@@ -4,10 +4,13 @@ export type Screen =
   | "historico"
   | "detalhes"
   | "detalhesHistorico"
+  | "receber"
   | "voucher"
   | "assinatura"
   | "finalizar"
   | "gastos"
+  | "fotoReceber"
+  | "previewFotoReceber"
   | "fotoGasto"
   | "previewFotoGasto"
   | "colisoesInicio"
@@ -32,7 +35,7 @@ export type Tile = {
   target?: Screen;
 };
 
-export type DetailAction = "cancel" | "voucher" | "finalizar";
+export type DetailAction = "cancel" | "receber" | "voucher" | "finalizar";
 
 export type MaintenancePhotoKind = "NOTAFISCAL" | `NOTAFISCAL_${number}` | "FOTO1" | "FOTO2" | "FOTO3";
 

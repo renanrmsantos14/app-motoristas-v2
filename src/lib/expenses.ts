@@ -15,15 +15,23 @@ export type ExpensePaymentMethodOption = ExpenseReferenceOption & {
   tipo: string;
 };
 
+export type ExpenseCityOption = ExpenseReferenceOption & {
+  uf: string;
+  pais: string;
+  codigoIbge: string;
+};
+
 export type ExpenseReferenceData = {
   categories: ExpenseCategoryOption[];
   paymentMethods: ExpensePaymentMethodOption[];
+  cities: ExpenseCityOption[];
 };
 
 export type ExpenseLookupNavigationNames = {
   motorista: string;
   categoria: string;
   formaPagamento: string;
+  cidade: string;
   veiculo?: string;
   reserva?: string;
 };
@@ -34,6 +42,7 @@ export type ExpenseDraft = {
   valor: string;
   dataGasto: string;
   formaPagamentoId: string;
+  cidadeId: string;
   estabelecimento: string;
   descricao: string;
   kmInformado: string;
@@ -52,6 +61,7 @@ export type ExpensePhoto = {
 export type ExpenseFields = {
   categoria: ExpenseCategoryOption;
   formaPagamento: ExpensePaymentMethodOption;
+  cidade: ExpenseCityOption;
   valor: number;
   dataGasto: string;
   estabelecimento?: string;
@@ -145,7 +155,8 @@ export const DEFAULT_EXPENSE_REFERENCE_DATA: ExpenseReferenceData = {
     { id: "local-pix-motorista", name: "Pix motorista", order: 40, tipo: "Pix" },
     { id: "local-tag-ctf", name: "Tag CTF", order: 50, tipo: "Tag" },
     { id: "local-sem-parar", name: "Sem Parar", order: 60, tipo: "Tag" }
-  ]
+  ],
+  cities: []
 };
 
 const fallbackCategoryRules: Record<string, Partial<ExpenseCategoryOption>> = {
@@ -160,7 +171,19 @@ function normalizeText(value: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+const CITY_ABBREVIATION_STOP_WORDS = new Set(["de", "da", "do", "das", "dos", "e"]);
+
+function buildExpenseCityAbbreviation(value: string) {
+  const baseName = value.split(" - ")[0] ?? value;
+  return normalizeText(baseName)
+    .split(/\s+/)
+    .filter((part) => part && !CITY_ABBREVIATION_STOP_WORDS.has(part))
+    .map((part) => part[0])
+    .join("");
 }
 
 export function findExpenseCategory(referenceData: ExpenseReferenceData, id: string) {
@@ -169,6 +192,18 @@ export function findExpenseCategory(referenceData: ExpenseReferenceData, id: str
 
 export function findExpensePaymentMethod(referenceData: ExpenseReferenceData, id: string) {
   return referenceData.paymentMethods.find((method) => method.id === id) ?? null;
+}
+
+export function findExpenseCity(referenceData: ExpenseReferenceData, id: string) {
+  return referenceData.cities.find((city) => city.id === id) ?? null;
+}
+
+export function matchesExpenseCitySearch(city: ExpenseCityOption, query: string) {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) return false;
+  const searchableText = normalizeText(`${city.name} ${city.uf} ${city.pais} ${city.codigoIbge}`);
+  if (searchableText.includes(normalizedQuery)) return true;
+  return buildExpenseCityAbbreviation(city.name) === normalizedQuery;
 }
 
 export function getExpenseCategoryRules(category: ExpenseCategoryOption | null) {
@@ -224,6 +259,7 @@ export function validateExpenseDraft(
   const errors: ExpenseValidationErrors = {};
   const category = findExpenseCategory(referenceData, draft.categoriaId);
   const paymentMethod = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
+  const city = findExpenseCity(referenceData, draft.cidadeId);
   const rules = getExpenseCategoryRules(category);
   const valor = parseCurrencyInput(draft.valor);
 
@@ -232,6 +268,7 @@ export function validateExpenseDraft(
   if (!Number.isFinite(valor) || valor <= 0) errors.valor = "Informe um valor maior que zero.";
   if (!draft.dataGasto) errors.dataGasto = "Informe a data do gasto.";
   if (!paymentMethod) errors.formaPagamentoId = "Selecione a forma de pagamento.";
+  if (!city) errors.cidadeId = "Selecione a cidade.";
   if (rules.exigeKm && parseIntegerInput(draft.kmInformado) <= 0) errors.kmInformado = "Informe o KM.";
   if (rules.exigeLitros && parseDecimalInput(draft.litros) <= 0) errors.litros = "Informe os litros.";
   if (photos.length === 0) errors.photos = "Adicione ao menos uma foto do comprovante.";
@@ -249,7 +286,8 @@ export function normalizeExpenseFields(
 
   const categoria = findExpenseCategory(referenceData, draft.categoriaId);
   const formaPagamento = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
-  if (!categoria || !formaPagamento) throw new Error("Categoria ou forma de pagamento não carregada.");
+  const cidade = findExpenseCity(referenceData, draft.cidadeId);
+  if (!categoria || !formaPagamento || !cidade) throw new Error("Categoria, forma de pagamento ou cidade não carregada.");
 
   const rules = getExpenseCategoryRules(categoria);
   const kmInformado = parseIntegerInput(draft.kmInformado);
@@ -258,6 +296,7 @@ export function normalizeExpenseFields(
   return {
     categoria,
     formaPagamento,
+    cidade,
     valor: parseCurrencyInput(draft.valor),
     dataGasto: draft.dataGasto,
     estabelecimento: draft.estabelecimento.trim() || undefined,
@@ -288,6 +327,7 @@ export function buildExpenseCreatePayload({
   reservaId,
   categoryEntitySet,
   paymentMethodEntitySet,
+  cityEntitySet,
   motoristaEntitySet,
   veiculoEntitySet,
   reservaEntitySet,
@@ -301,6 +341,7 @@ export function buildExpenseCreatePayload({
   reservaId?: string;
   categoryEntitySet: string;
   paymentMethodEntitySet: string;
+  cityEntitySet: string;
   motoristaEntitySet: string;
   veiculoEntitySet: string;
   reservaEntitySet: string;
@@ -312,6 +353,8 @@ export function buildExpenseCreatePayload({
   const observation = [
     fields.descricao ? `Descrição: ${fields.descricao}` : "",
     fields.estabelecimento ? `Estabelecimento: ${fields.estabelecimento}` : "",
+    `Cidade: ${fields.cidade.name}`,
+    `Pais: ${fields.cidade.pais || "Brasil"}`,
     fields.litros ? `Litros: ${fields.litros.toLocaleString("pt-BR")} L` : "",
     `Forma de pagamento: ${fields.formaPagamento.name}`,
     `Categoria: ${fields.categoria.name}`,
@@ -329,7 +372,8 @@ export function buildExpenseCreatePayload({
     cr40f_observacao: observation,
     [`${lookupNavigationNames.motorista}@odata.bind`]: `/${motoristaEntitySet}(${motoristaId})`,
     [`${lookupNavigationNames.categoria}@odata.bind`]: `/${categoryEntitySet}(${fields.categoria.id})`,
-    [`${lookupNavigationNames.formaPagamento}@odata.bind`]: `/${paymentMethodEntitySet}(${fields.formaPagamento.id})`
+    [`${lookupNavigationNames.formaPagamento}@odata.bind`]: `/${paymentMethodEntitySet}(${fields.formaPagamento.id})`,
+    [`${lookupNavigationNames.cidade}@odata.bind`]: `/${cityEntitySet}(${fields.cidade.id})`
   };
 
   if (fields.kmInformado) payload.cr40f_kminformado = Math.trunc(fields.kmInformado);

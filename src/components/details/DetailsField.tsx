@@ -1,63 +1,43 @@
 import type { DetailField } from "../../types";
-import { buildOneDrivePreviewCandidates, extractMaintenancePhotoUrls, isMaintenancePhotoPreviewField } from "../../lib/detailMedia";
+import { extractMaintenancePhotoUrls, isMaintenancePhotoPreviewField } from "../../lib/detailMedia";
 import { parseSafeDetailHtml } from "../../lib/detailHtml.ts";
 import { openExternalUrl } from "../../lib/localWorkflow";
 import { buildGoogleMapsSearchUrl } from "../../lib/mapLinks";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 const externalUrlPattern = /^https?:\/\/\S+$/i;
 
-function DetailPhotoPreview({ label, url }: { label: string; url: string }) {
-  const candidates = buildOneDrivePreviewCandidates(url);
-  const [source, setSource] = useState(candidates[0] ?? "");
-  const [candidateIndex, setCandidateIndex] = useState(0);
-  const [photoOpen, setPhotoOpen] = useState(false);
-  const [photoFailed, setPhotoFailed] = useState(false);
+function getExternalHost(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./i, "");
+  } catch {
+    return "Link externo";
+  }
+}
 
-  useEffect(() => {
-    setPhotoFailed(false);
-    setCandidateIndex(0);
-    setSource(candidates[0] ?? "");
-  }, [url]);
+function getPhotoCardTitle(label: string, index: number, total: number) {
+  const cleanLabel = label.replace(/^link\s+/i, "").trim();
+  if (total === 1) return cleanLabel || "Foto";
+  return `${cleanLabel || "Foto"} ${index + 1}`;
+}
 
-  const tryNextCandidate = () => {
-    const nextIndex = candidateIndex + 1;
-    const nextSource = candidates[nextIndex];
-    if (nextSource) {
-      setCandidateIndex(nextIndex);
-      setSource(nextSource);
-      return;
-    }
-    setPhotoFailed(true);
-  };
+function DetailPhotoPreview({ label, url, index, total }: { label: string; url: string; index: number; total: number }) {
+  const title = getPhotoCardTitle(label, index, total);
+  const host = getExternalHost(url);
 
   return (
-    <>
-      <button
-        className={`detail-field-value detail-photo-preview ${photoFailed ? "is-unavailable" : ""}`}
-        type="button"
-        onClick={() => {
-          if (photoFailed) {
-            openExternalUrl(url);
-            return;
-          }
-          setPhotoOpen(true);
-        }}
-        aria-label={`Ampliar ${label}`}
-      >
-        {photoFailed ? (
-          <span>Abrir foto</span>
-        ) : (
-          <img src={source} alt={label} loading="lazy" onError={tryNextCandidate} />
-        )}
+    <div className="detail-photo-card">
+      <button className="detail-photo-open" type="button" onClick={() => openExternalUrl(url)} aria-label={`Abrir ${title} externamente`}>
+        <span className="detail-photo-icon" aria-hidden="true">&gt;</span>
+        <span className="detail-photo-copy">
+          <strong>{title}</strong>
+          <small>{host}</small>
+        </span>
       </button>
-      {photoOpen ? (
-        <div className="detail-photo-overlay" role="dialog" aria-modal="true" aria-label={label} onClick={() => setPhotoOpen(false)}>
-          <button className="detail-photo-close" type="button" aria-label="Fechar preview" onClick={() => setPhotoOpen(false)}>×</button>
-          <img className="detail-photo-expanded" src={source} alt={label} onClick={(event) => event.stopPropagation()} />
-        </div>
-      ) : null}
-    </>
+      <button className="detail-photo-copy-button" type="button" onClick={() => openExternalUrl(url)}>
+        Abrir link
+      </button>
+    </div>
   );
 }
 
@@ -142,7 +122,7 @@ export function DetailsField({ field }: { field: DetailField }) {
       ) : isPhotoPreview ? (
         <div ref={setValueRef} className="detail-photo-list">
           {photoUrls.map((photoUrl, index) => (
-            <DetailPhotoPreview key={`${photoUrl}-${index}`} label={photoUrls.length > 1 ? `${field.label} ${index + 1}` : field.label} url={photoUrl} />
+            <DetailPhotoPreview key={`${photoUrl}-${index}`} label={field.label} url={photoUrl} index={index} total={photoUrls.length} />
           ))}
         </div>
       ) : externalUrlPattern.test(value) ? (

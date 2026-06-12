@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildExpenseCreatePayload,
+  matchesExpenseCitySearch,
   parseCurrencyInput,
   validateExpenseDraft,
   type ExpenseDraft,
@@ -52,6 +53,32 @@ const referenceData: ExpenseReferenceData = {
       order: 20,
       tipo: "Pix"
     }
+  ],
+  cities: [
+    {
+      id: "city-sao-paulo",
+      name: "São Paulo - SP",
+      order: 0,
+      uf: "SP",
+      pais: "Brasil",
+      codigoIbge: "3550308"
+    },
+    {
+      id: "city-campinas",
+      name: "Campinas - SP",
+      order: 0,
+      uf: "SP",
+      pais: "Brasil",
+      codigoIbge: "3509502"
+    },
+    {
+      id: "city-sao-jose-dos-campos",
+      name: "Sao Jose dos Campos - SP",
+      order: 0,
+      uf: "SP",
+      pais: "Brasil",
+      codigoIbge: "3549904"
+    }
   ]
 };
 
@@ -64,6 +91,7 @@ function baseDraft(overrides: Partial<ExpenseDraft> = {}): ExpenseDraft {
     valor: "R$ 50,00",
     dataGasto: "2026-06-09",
     formaPagamentoId: "pay-cartao-empresa",
+    cidadeId: "city-sao-paulo",
     estabelecimento: "Padaria",
     descricao: "",
     kmInformado: "",
@@ -83,7 +111,8 @@ test("validateExpenseDraft exige campos base e comprovante sempre", () => {
     categoriaId: "",
     valor: "0",
     dataGasto: "",
-    formaPagamentoId: ""
+    formaPagamentoId: "",
+    cidadeId: ""
   });
 
   assert.deepEqual(validateExpenseDraft(draft, [], referenceData), {
@@ -91,6 +120,7 @@ test("validateExpenseDraft exige campos base e comprovante sempre", () => {
     valor: "Informe um valor maior que zero.",
     dataGasto: "Informe a data do gasto.",
     formaPagamentoId: "Selecione a forma de pagamento.",
+    cidadeId: "Selecione a cidade.",
     photos: "Adicione ao menos uma foto do comprovante."
   });
 });
@@ -100,6 +130,7 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
     draft: baseDraft({
       categoriaId: "cat-combustivel",
       formaPagamentoId: "pay-pix-motorista",
+      cidadeId: "city-campinas",
       veiculoId: "vehicle-1",
       valor: "R$ 238,70",
       descricao: "Abastecimento no retorno da agenda",
@@ -112,6 +143,7 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
     veiculoId: "vehicle-1",
     categoryEntitySet: "cr40f_categoriadespesaoperacionals",
     paymentMethodEntitySet: "cr40f_formapagamentodespesas",
+    cityEntitySet: "cr40f_cidades",
     motoristaEntitySet: "cr40f_funcionarioses",
     veiculoEntitySet: "cr40f_veiculoses",
     reservaEntitySet: "cr40f_reservadeveculoses",
@@ -119,6 +151,7 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
       motorista: "nav_motorista",
       categoria: "nav_categoria",
       formaPagamento: "nav_formapagamento",
+      cidade: "nav_cidade",
       veiculo: "nav_veiculo",
       reserva: "nav_reserva"
     }
@@ -133,12 +166,15 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
   assert.equal(payload.cr40f_statusfinanceiro, 100000000);
   assert.equal(payload.cr40f_statusanexo, 100000001);
   assert.match(String(payload.cr40f_observacao), /Forma de pagamento: Pix motorista/);
+  assert.match(String(payload.cr40f_observacao), /Cidade: Campinas - SP/);
+  assert.match(String(payload.cr40f_observacao), /Pais: Brasil/);
   assert.match(String(payload.cr40f_observacao), /Litros: 42,5 L/);
   assert.match(String(payload.cr40f_observacao), /Comprovantes: 1/);
   assert.equal(payload["nav_motorista@odata.bind"], "/cr40f_funcionarioses(driver-1)");
   assert.equal(payload["nav_veiculo@odata.bind"], "/cr40f_veiculoses(vehicle-1)");
   assert.equal(payload["nav_categoria@odata.bind"], "/cr40f_categoriadespesaoperacionals(cat-combustivel)");
   assert.equal(payload["nav_formapagamento@odata.bind"], "/cr40f_formapagamentodespesas(pay-pix-motorista)");
+  assert.equal(payload["nav_cidade@odata.bind"], "/cr40f_cidades(city-campinas)");
 });
 
 test("validateExpenseDraft exige veiculo KM e litros so quando regra da categoria pede", () => {
@@ -153,4 +189,12 @@ test("validateExpenseDraft exige veiculo KM e litros so quando regra da categori
 
 test("validateExpenseDraft nunca exige descricao", () => {
   assert.deepEqual(validateExpenseDraft(baseDraft({ categoriaId: "cat-outros", descricao: "" }), photos, referenceData), {});
+});
+
+test("matchesExpenseCitySearch aceita sigla como sjc", () => {
+  const city = referenceData.cities[2];
+
+  assert.equal(matchesExpenseCitySearch(city, "sjc"), true);
+  assert.equal(matchesExpenseCitySearch(city, "sao jose"), true);
+  assert.equal(matchesExpenseCitySearch(city, "3549904"), true);
 });

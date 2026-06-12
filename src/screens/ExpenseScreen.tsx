@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlowSubmitButton, type FlowSubmitState } from "../components/common/FlowSubmitButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
   findExpenseCategory,
+  findExpenseCity,
   getExpenseCategoryRules,
+  matchesExpenseCitySearch,
   normalizeExpenseFields,
   validateExpenseDraft,
   type ExpenseDraft,
@@ -58,15 +60,41 @@ export function ExpenseScreen({
   const valueRef = useRef<HTMLInputElement | null>(null);
   const dateRef = useRef<HTMLInputElement | null>(null);
   const paymentRef = useRef<HTMLSelectElement | null>(null);
+  const cityRef = useRef<HTMLInputElement | null>(null);
   const kmRef = useRef<HTMLInputElement | null>(null);
   const litersRef = useRef<HTMLInputElement | null>(null);
   const photosRef = useRef<HTMLDivElement | null>(null);
   const [errors, setErrors] = useState<ExpenseValidationErrors>({});
+  const [citySearch, setCitySearch] = useState("");
+  const [cityListOpen, setCityListOpen] = useState(false);
 
   const category = findExpenseCategory(referenceData, draft.categoriaId);
+  const selectedCity = findExpenseCity(referenceData, draft.cidadeId);
   const rules = getExpenseCategoryRules(category);
   const categoriesReady = referenceData.categories.length > 0;
   const paymentReady = referenceData.paymentMethods.length > 0;
+  const citiesReady = referenceData.cities.length > 0;
+  const normalizedCitySearch = citySearch
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  const cityMatches = useMemo(() => {
+    const selectedId = draft.cidadeId;
+    const matches = referenceData.cities.filter((city) => {
+      if (!normalizedCitySearch) return city.name.trim().toLowerCase().startsWith("a") || city.id === selectedId;
+      return matchesExpenseCitySearch(city, normalizedCitySearch);
+    });
+    return {
+      total: matches.length,
+      visible: matches.slice(0, 50)
+    };
+  }, [draft.cidadeId, normalizedCitySearch, referenceData.cities]);
+
+  useEffect(() => {
+    if (!selectedCity) return;
+    setCitySearch(selectedCity.name);
+  }, [selectedCity]);
 
   useEffect(() => {
     if (!currentVehicleId || draft.veiculoId) return;
@@ -88,6 +116,7 @@ export function ExpenseScreen({
     if (nextErrors.valor) return focusInvalidField(valueRef.current);
     if (nextErrors.dataGasto) return focusInvalidField(dateRef.current);
     if (nextErrors.formaPagamentoId) return focusInvalidField(paymentRef.current);
+    if (nextErrors.cidadeId) return focusInvalidField(cityRef.current);
     if (nextErrors.kmInformado) return focusInvalidField(kmRef.current);
     if (nextErrors.litros) return focusInvalidField(litersRef.current);
     if (nextErrors.photos) return focusInvalidField(photosRef.current);
@@ -113,10 +142,25 @@ export function ExpenseScreen({
               {!referenceLoading && referenceError ? (
                 <div className="form-error-summary">{referenceError}</div>
               ) : null}
-              {!referenceLoading && !referenceError && (!categoriesReady || !paymentReady) ? (
-                <div className="form-error-summary">Categorias ou formas de pagamento não encontradas no Dataverse.</div>
+              {!referenceLoading && !referenceError && (!categoriesReady || !paymentReady || !citiesReady) ? (
+                <div className="form-error-summary">Categorias, formas de pagamento ou cidades não encontradas no Dataverse.</div>
               ) : null}
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
+
+              <div className={`finalize-input-block ${errors.dataGasto ? "is-invalid" : ""}`}>
+                <label>Data do gasto</label>
+                <input
+                  ref={dateRef}
+                  aria-invalid={Boolean(errors.dataGasto)}
+                  type="date"
+                  value={draft.dataGasto}
+                  onChange={(event) => {
+                    updateDraft({ dataGasto: event.target.value });
+                    clearError("dataGasto");
+                  }}
+                />
+                {errors.dataGasto ? <div className="field-error">{errors.dataGasto}</div> : null}
+              </div>
 
               <div className={`finalize-input-block ${errors.categoriaId ? "is-invalid" : ""}`}>
                 <label>Categoria</label>
@@ -159,21 +203,6 @@ export function ExpenseScreen({
                 {errors.valor ? <div className="field-error">{errors.valor}</div> : null}
               </div>
 
-              <div className={`finalize-input-block ${errors.dataGasto ? "is-invalid" : ""}`}>
-                <label>Data do gasto</label>
-                <input
-                  ref={dateRef}
-                  aria-invalid={Boolean(errors.dataGasto)}
-                  type="date"
-                  value={draft.dataGasto}
-                  onChange={(event) => {
-                    updateDraft({ dataGasto: event.target.value });
-                    clearError("dataGasto");
-                  }}
-                />
-                {errors.dataGasto ? <div className="field-error">{errors.dataGasto}</div> : null}
-              </div>
-
               <div className={`finalize-input-block ${errors.formaPagamentoId ? "is-invalid" : ""}`}>
                 <label>Forma de pagamento</label>
                 <select
@@ -190,6 +219,70 @@ export function ExpenseScreen({
                   {referenceData.paymentMethods.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
                 {errors.formaPagamentoId ? <div className="field-error">{errors.formaPagamentoId}</div> : null}
+              </div>
+
+              <div className={`finalize-input-block expense-city-field ${selectedCity ? "has-selection" : ""} ${errors.cidadeId ? "is-invalid" : ""}`}>
+                <label>Cidade</label>
+                <input
+                  ref={cityRef}
+                  aria-invalid={Boolean(errors.cidadeId)}
+                  placeholder="Digite cidade, UF ou IBGE"
+                  value={citySearch}
+                  disabled={isSubmitting || referenceLoading}
+                  autoComplete="off"
+                  onFocus={() => setCityListOpen(true)}
+                  onBlur={() => window.setTimeout(() => setCityListOpen(false), 120)}
+                  onChange={(event) => {
+                    setCitySearch(event.target.value);
+                    updateDraft({ cidadeId: "" });
+                    clearError("cidadeId");
+                    setCityListOpen(true);
+                  }}
+                />
+                {selectedCity ? (
+                  <button
+                    type="button"
+                    className="expense-city-clear"
+                    disabled={isSubmitting}
+                    aria-label="Limpar cidade"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      updateDraft({ cidadeId: "" });
+                      setCitySearch("");
+                      setCityListOpen(true);
+                      window.setTimeout(() => cityRef.current?.focus(), 0);
+                    }}
+                  >
+                    x
+                  </button>
+                ) : null}
+                {cityListOpen && (citySearch.trim() || !selectedCity) ? (
+                  <div className="expense-city-results" role="listbox" aria-label="Cidades encontradas">
+                    {cityMatches.visible.map((city) => (
+                      <button
+                        key={city.id}
+                        type="button"
+                        className={`expense-city-option ${city.id === draft.cidadeId ? "is-selected" : ""}`}
+                        disabled={isSubmitting}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          updateDraft({ cidadeId: city.id });
+                          setCitySearch(city.name);
+                          clearError("cidadeId");
+                          setCityListOpen(false);
+                        }}
+                      >
+                        <span>{city.name}</span>
+                        <small>{city.codigoIbge ? `${city.pais} · ${city.codigoIbge}` : city.pais}</small>
+                      </button>
+                    ))}
+                    {cityMatches.visible.length && cityMatches.total > cityMatches.visible.length ? (
+                      <div className="expense-city-count">50 de {cityMatches.total}. Digite mais para filtrar.</div>
+                    ) : null}
+                    {!cityMatches.visible.length ? <div className="expense-city-empty">Nenhuma cidade encontrada.</div> : null}
+                  </div>
+                ) : null}
+                {errors.cidadeId ? <div className="field-error">{errors.cidadeId}</div> : null}
               </div>
 
               {rules.exigeVeiculo ? (

@@ -27,7 +27,7 @@ export type MaintenanceRequestDraft = {
   gravidade: string;
 };
 
-type MaintenanceRequestErrors = Partial<Record<"descricao" | "kmAtual" | "veiculoId" | "gravidade", string>>;
+type MaintenanceRequestErrors = Partial<Record<"descricao" | "kmAtual" | "veiculoId" | "gravidade" | "photos", string>>;
 
 type MaintenanceRequestScreenProps = {
   draft: MaintenanceRequestDraft;
@@ -77,6 +77,7 @@ export function MaintenanceRequestScreen({
   const kmRef = useRef<HTMLInputElement | null>(null);
   const severityRef = useRef<HTMLSelectElement | null>(null);
   const descricaoRef = useRef<HTMLTextAreaElement | null>(null);
+  const photoRef = useRef<HTMLButtonElement | null>(null);
   const [errors, setErrors] = useState<MaintenanceRequestErrors>({});
 
   useEffect(() => {
@@ -101,12 +102,14 @@ export function MaintenanceRequestScreen({
     if (!Number.isFinite(parsedKm) || parsedKm <= 0) nextErrors.kmAtual = "Informe o km atual.";
     if (!draft.gravidade) nextErrors.gravidade = "Selecione a gravidade.";
     if (!draft.descricao.trim()) nextErrors.descricao = "Descreva o problema.";
+    if (!photos.length) nextErrors.photos = "Adicione ao menos uma foto do pedido.";
 
     setErrors(nextErrors);
     if (nextErrors.veiculoId) return focusInvalidField(vehicleRef.current);
     if (nextErrors.kmAtual) return focusInvalidField(kmRef.current);
     if (nextErrors.gravidade) return focusInvalidField(severityRef.current);
     if (nextErrors.descricao) return focusInvalidField(descricaoRef.current);
+    if (nextErrors.photos) return focusInvalidField(photoRef.current);
 
     onSubmit({
       descricao: draft.descricao,
@@ -117,6 +120,7 @@ export function MaintenanceRequestScreen({
   };
 
   const addPhoto = () => {
+    clearError("photos");
     onAddPhoto();
   };
 
@@ -197,7 +201,7 @@ export function MaintenanceRequestScreen({
                 />
                 {errors.descricao ? <div className="field-error">{errors.descricao}</div> : null}
               </div>
-              <div className="finalize-input-block">
+              <div className={`finalize-input-block ${errors.photos ? "is-invalid" : ""}`}>
                 <label>Fotos</label>
                 <div className="maintenance-photo-grid">
                   {photos.map((photo, index) => (
@@ -219,10 +223,19 @@ export function MaintenanceRequestScreen({
                       )}
                     </button>
                   ))}
-                  <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label="Adicionar foto">
+                  <button
+                    type="button"
+                    ref={photoRef}
+                    className="maintenance-photo-add"
+                    disabled={isSubmitting}
+                    onClick={addPhoto}
+                    aria-invalid={Boolean(errors.photos)}
+                    aria-label="Adicionar foto"
+                  >
                     <span>+</span>
                   </button>
                 </div>
+                {errors.photos ? <div className="field-error">{errors.photos}</div> : null}
               </div>
             </div>
           </div>

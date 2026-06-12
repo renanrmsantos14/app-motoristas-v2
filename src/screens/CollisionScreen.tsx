@@ -3,6 +3,7 @@ import { FlowSubmitButton, type FlowSubmitState } from "../components/common/Flo
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
+  buildCollisionWhatsAppMessage,
   buildCollisionWhatsAppUrl,
   getCollisionPhotoLabel,
   getCollisionTypeLabel,
@@ -29,6 +30,7 @@ type CollisionScreenProps = {
   vehicles: MaintenanceRequestVehicleOption[];
   vehiclesLoading: boolean;
   currentVehicleId: string;
+  driverName?: string;
 };
 
 function focusInvalidField(element: HTMLElement | null) {
@@ -51,7 +53,8 @@ export function CollisionScreen({
   submitState,
   vehicles,
   vehiclesLoading,
-  currentVehicleId
+  currentVehicleId,
+  driverName
 }: CollisionScreenProps) {
   const isSubmitting = submitState !== "idle";
   const vehicleRef = useRef<HTMLSelectElement | null>(null);
@@ -61,13 +64,14 @@ export function CollisionScreen({
   const thirdPhoneRef = useRef<HTMLInputElement | null>(null);
   const thirdPlateRef = useRef<HTMLInputElement | null>(null);
   const thirdVehicleRef = useRef<HTMLInputElement | null>(null);
-  const thirdDocumentRef = useRef<HTMLInputElement | null>(null);
-  const thirdInsuranceRef = useRef<HTMLInputElement | null>(null);
   const photosRef = useRef<HTMLDivElement | null>(null);
   const [errors, setErrors] = useState<CollisionValidationErrors>({});
   const isHitByThirdParty = draft.tipoOcorrencia === "bateram_em_mim";
   const hasThirdParty = hasCollisionThirdParty(draft);
-  const whatsappUrl = buildCollisionWhatsAppUrl(draft.terceiroTelefone);
+  const whatsappUrl = buildCollisionWhatsAppUrl(draft.terceiroTelefone, buildCollisionWhatsAppMessage({
+    thirdPartyName: draft.terceiroNome,
+    driverName
+  }));
   const requiredPhotos = getRequiredCollisionPhotos(hasThirdParty);
   const completedRequiredPhotos = requiredPhotos.filter((requiredPhoto) =>
     photos.some((photo) => photo.kind === requiredPhoto.kind && photo.dataUrl)
@@ -99,8 +103,6 @@ export function CollisionScreen({
     if (hasThirdParty && nextErrors.terceiroTelefone) return focusInvalidField(thirdPhoneRef.current);
     if (hasThirdParty && nextErrors.terceiroPlaca) return focusInvalidField(thirdPlateRef.current);
     if (hasThirdParty && nextErrors.terceiroVeiculo) return focusInvalidField(thirdVehicleRef.current);
-    if (hasThirdParty && nextErrors.terceiroDocumento) return focusInvalidField(thirdDocumentRef.current);
-    if (hasThirdParty && nextErrors.terceiroSeguradora) return focusInvalidField(thirdInsuranceRef.current);
     if (requiredPhotos.some((photo) => nextErrors[photo.kind])) return focusInvalidField(photosRef.current);
     onSubmit(draft);
   };
@@ -176,7 +178,7 @@ export function CollisionScreen({
                 <textarea
                   ref={descriptionRef}
                   aria-invalid={Boolean(errors.descricao)}
-                  placeholder="Conte em poucas palavras o que aconteceu"
+                  placeholder="Conte em detalhes o que aconteceu"
                   rows={4}
                   value={draft.descricao}
                   disabled={isSubmitting}
@@ -304,35 +306,6 @@ export function CollisionScreen({
                       }}
                     />
                     {errors.terceiroVeiculo ? <div className="field-error">{errors.terceiroVeiculo}</div> : null}
-                  </div>
-
-                  <div className={`finalize-input-block ${errors.terceiroDocumento ? "is-invalid" : ""}`}>
-                    <label>CPF/CNH/RG</label>
-                    <input
-                      ref={thirdDocumentRef}
-                      aria-invalid={Boolean(errors.terceiroDocumento)}
-                      value={draft.terceiroDocumento}
-                      disabled={isSubmitting}
-                      onChange={(event) => {
-                        updateDraft({ terceiroDocumento: event.target.value });
-                        clearError("terceiroDocumento");
-                      }}
-                    />
-                    {errors.terceiroDocumento ? <div className="field-error">{errors.terceiroDocumento}</div> : null}
-                  </div>
-                  <div className={`finalize-input-block ${errors.terceiroSeguradora ? "is-invalid" : ""}`}>
-                    <label>Seguradora</label>
-                    <input
-                      ref={thirdInsuranceRef}
-                      aria-invalid={Boolean(errors.terceiroSeguradora)}
-                      value={draft.terceiroSeguradora}
-                      disabled={isSubmitting}
-                      onChange={(event) => {
-                        updateDraft({ terceiroSeguradora: event.target.value });
-                        clearError("terceiroSeguradora");
-                      }}
-                    />
-                    {errors.terceiroSeguradora ? <div className="field-error">{errors.terceiroSeguradora}</div> : null}
                   </div>
                   {!isHitByThirdParty ? <div className="finalize-input-block">
                     <label>Observação do terceiro</label>

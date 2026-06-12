@@ -10,6 +10,7 @@ import { DetailsMenu } from "../components/navigation/DetailsMenu";
 type DetailsScreenProps = {
   detail: DetailData;
   onBack: () => void;
+  onOpenReceive: () => void;
   onOpenVoucher: () => void;
   onOpenFinalize: () => void;
   onCancelLocal: () => void;
@@ -21,8 +22,15 @@ const getFieldValue = (detail: DetailData, label: string) =>
   detail.fields.find((field) => field.label.toLowerCase() === label.toLowerCase())?.value ?? "";
 
 const isTenarisClient = (detail: DetailData) => /tenn?aris/i.test(getFieldValue(detail, "Cliente"));
+const isTrueLike = (value: unknown) => value === true || value === 1 || value === "true";
+const shouldRequireReceive = (detail: DetailData) =>
+  detail.type === "SERVICO" &&
+  (isTrueLike(detail.dataverse?.record?.cr40f_receber) || getFieldValue(detail, "Receber").trim().toLowerCase() === "sim");
 
 const getVisibleActions = (detail: DetailData) => {
+  if (shouldRequireReceive(detail)) {
+    return detail.actions.includes("cancel") ? ["cancel", "receber"] : ["receber"];
+  }
   if (detail.type !== "SERVICO") return detail.actions.filter((action) => action !== "cancel");
   return isTenarisClient(detail)
     ? detail.actions.filter((action) => action !== "finalizar")
@@ -32,6 +40,7 @@ const getVisibleActions = (detail: DetailData) => {
 export function DetailsScreen({
   detail,
   onBack,
+  onOpenReceive,
   onOpenVoucher,
   onOpenFinalize,
   onCancelLocal,
@@ -149,7 +158,7 @@ export function DetailsScreen({
                 <DetailActionButton
                   key={action}
                   action={action}
-                  onClick={action === "voucher" ? onOpenVoucher : action === "finalizar" ? onOpenFinalize : handleCancel}
+                  onClick={action === "receber" ? onOpenReceive : action === "voucher" ? onOpenVoucher : action === "finalizar" ? onOpenFinalize : handleCancel}
                 />
               ))}
             </div>

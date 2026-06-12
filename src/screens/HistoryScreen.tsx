@@ -27,12 +27,13 @@ export function HistoryScreen({ items, onHome, onRefresh, onOpenDetails }: Histo
         <div ref={listRef} className="agenda-list">
           {filteredAgenda.length > 0 ? (
             filteredAgenda.map((item: AgendaItem, index) => (
-              <AgendaCard
-                key={item.id}
-                item={item}
-                index={index}
-                onOpen={(agendaItem) => agendaItem.detail && onOpenDetails(agendaItem.detail)}
-              />
+              <div key={item.id} className="agenda-layout-item">
+                <AgendaCard
+                  item={item}
+                  index={index}
+                  onOpen={(agendaItem) => agendaItem.detail && onOpenDetails(agendaItem.detail)}
+                />
+              </div>
             ))
           ) : (
             <div className="history-empty">Nenhum serviço disponível no seu histórico.</div>

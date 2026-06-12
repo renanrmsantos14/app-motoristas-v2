@@ -5,10 +5,10 @@ import { buildOneDrivePreviewCandidates, extractMaintenancePhotoUrls, isMaintena
 test("detecta campos de foto de manutencao para preview", () => {
   assert.equal(isMaintenancePhotoPreviewField("Link Foto Solicitação 1", "https://contoso/image.jpg"), true);
   assert.equal(isMaintenancePhotoPreviewField("Link Foto Final 2", "https://contoso/foto.png"), true);
+  assert.equal(isMaintenancePhotoPreviewField("Link Nota Fiscal", "https://contoso/notafiscal.pdf"), true);
 });
 
 test("nao transforma outros links em preview de foto", () => {
-  assert.equal(isMaintenancePhotoPreviewField("Link Nota Fiscal", "https://contoso/notafiscal.pdf"), false);
   assert.equal(isMaintenancePhotoPreviewField("Destino", "https://maps.google.com"), false);
   assert.equal(isMaintenancePhotoPreviewField("Link Foto Final 1", ""), false);
 });
