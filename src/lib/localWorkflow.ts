@@ -1,5 +1,7 @@
 ﻿import type { AgendaItem, DetailData, DetailField, MaintenancePhotoKind } from "../types";
 
+import { getFieldValue, isBlankOrNotInformed } from "./fieldLookup.ts";
+
 export type LocalStore = {
   agenda: AgendaItem[];
   history: AgendaItem[];
@@ -135,9 +137,9 @@ function parseLocalNumber(value: string | undefined) {
 
 export function validateVoucherFields(fields: Record<string, string>): string[] {
   const errors: string[] = [];
-  const startTime = fields["Horário Inicial"] ?? fields["Horario Inicial"] ?? fields["HorÃ¡rio Inicial"] ?? fields["HorÃƒÂ¡rio Inicial"];
+  const startTime = getFieldValue(fields, "Horário Inicial", "Horario Inicial");
 
-  if (!startTime || startTime === "Não informado" || startTime === "Nao informado" || startTime === "NÃ£o informado" || startTime === "NÃƒÂ£o informado") {
+  if (isBlankOrNotInformed(startTime)) {
     errors.push("Horário inicial é obrigatório.");
   }
 
@@ -146,16 +148,13 @@ export function validateVoucherFields(fields: Record<string, string>): string[] 
 
 export function validateMaintenanceFields(fields: Record<string, string>): string[] {
   const value = parseLocalNumber(fields.Valor);
+  const serviceDone = getFieldValue(fields, "Serviço Realizado", "Servico Realizado");
+  const paymentMethod = getFieldValue(fields, "Forma de Pagamento");
+  const establishment = getFieldValue(fields, "Estabelecimento");
   const invalid =
-    !(fields["Serviço Realizado"] ?? fields["Servico Realizado"] ?? fields["ServiÃ§o Realizado"] ?? fields["ServiÃƒÂ§o Realizado"]) ||
-    !fields["Forma de Pagamento"] ||
-    fields["Forma de Pagamento"] === "Não informado" ||
-    fields["Forma de Pagamento"] === "NÃ£o informado" ||
-    fields["Forma de Pagamento"] === "NÃƒÂ£o informado" ||
-    !fields.Estabelecimento ||
-    fields.Estabelecimento === "Não informado" ||
-    fields.Estabelecimento === "NÃ£o informado" ||
-    fields.Estabelecimento === "NÃƒÂ£o informado" ||
+    !serviceDone ||
+    isBlankOrNotInformed(paymentMethod) ||
+    isBlankOrNotInformed(establishment) ||
     value <= 0;
 
   return invalid ? ["Preencha corretamente: Manutenção Realizada, Forma de Pagamento, Estabelecimento e Valor."] : [];

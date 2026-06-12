@@ -1,8 +1,8 @@
 import type { DetailField } from "../../types";
-import { buildOneDrivePreviewCandidates, extractMaintenancePhotoUrls, isMaintenancePhotoPreviewField, loadImagePreviewDataUrl } from "../../lib/detailMedia";
+import { buildOneDrivePreviewCandidates, extractMaintenancePhotoUrls, isMaintenancePhotoPreviewField } from "../../lib/detailMedia";
+import { parseSafeDetailHtml } from "../../lib/detailHtml.ts";
 import { openExternalUrl } from "../../lib/localWorkflow";
 import { buildGoogleMapsSearchUrl } from "../../lib/mapLinks";
-import type { MouseEvent } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const externalUrlPattern = /^https?:\/\/\S+$/i;
@@ -15,26 +15,12 @@ function DetailPhotoPreview({ label, url }: { label: string; url: string }) {
   const [photoFailed, setPhotoFailed] = useState(false);
 
   useEffect(() => {
-    let active = true;
     setPhotoFailed(false);
     setCandidateIndex(0);
     setSource(candidates[0] ?? "");
-    loadImagePreviewDataUrl(url).then((dataUrl) => {
-      if (active && dataUrl) {
-        setSource(dataUrl);
-        setPhotoFailed(false);
-      }
-    });
-    return () => {
-      active = false;
-    };
   }, [url]);
 
   const tryNextCandidate = () => {
-    if (source.startsWith("data:")) {
-      setPhotoFailed(true);
-      return;
-    }
     const nextIndex = candidateIndex + 1;
     const nextSource = candidates[nextIndex];
     if (nextSource) {
@@ -51,12 +37,16 @@ function DetailPhotoPreview({ label, url }: { label: string; url: string }) {
         className={`detail-field-value detail-photo-preview ${photoFailed ? "is-unavailable" : ""}`}
         type="button"
         onClick={() => {
-          if (!photoFailed) setPhotoOpen(true);
+          if (photoFailed) {
+            openExternalUrl(url);
+            return;
+          }
+          setPhotoOpen(true);
         }}
         aria-label={`Ampliar ${label}`}
       >
         {photoFailed ? (
-          <span>Preview indisponível</span>
+          <span>Abrir foto</span>
         ) : (
           <img src={source} alt={label} loading="lazy" onError={tryNextCandidate} />
         )}
@@ -132,20 +122,23 @@ export function DetailsField({ field }: { field: DetailField }) {
     };
   }, [field.label, value, hasExplicitBreak]);
 
-  const openLinkFromHtml = (event: MouseEvent<HTMLDivElement>) => {
-    const link = (event.target as HTMLElement).closest("a[href]");
-    const href = link?.getAttribute("href");
-    if (!href) return;
-    event.preventDefault();
-    event.stopPropagation();
-    openExternalUrl(href);
-  };
-
   return (
     <div ref={fieldRef} className={`detail-field ${fitsInline ? "detail-field--inline" : ""}`}>
       <div ref={labelRef} className={`detail-field-label ${field.strong ? "lato" : ""}`}>{field.label}</div>
       {field.html ? (
-        <div ref={setValueRef} className="detail-field-value" onClick={openLinkFromHtml} dangerouslySetInnerHTML={{ __html: value }} />
+        <div ref={setValueRef} className={`detail-field-value ${field.strong ? "semibold" : ""}`}>
+          {parseSafeDetailHtml(value).map((part, index) => {
+            if (part.type === "break") return <br key={`break-${index}`} />;
+            if (part.type === "link") {
+              return (
+                <button key={`${part.href}-${index}`} className="detail-inline-link" type="button" onClick={() => openExternalUrl(part.href)}>
+                  {part.text}
+                </button>
+              );
+            }
+            return <span key={`text-${index}`}>{part.value}</span>;
+          })}
+        </div>
       ) : isPhotoPreview ? (
         <div ref={setValueRef} className="detail-photo-list">
           {photoUrls.map((photoUrl, index) => (

@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { SystemIcon } from "../components/icons/SystemIcon";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
-import { readPhotoFileAsDataUrl } from "../lib/photoOrientation";
+import { dataUrlToObjectUrl } from "../lib/photoOrientation";
 import type { MaintenancePhotoKind } from "../types";
 
 type MaintenancePhotoPreviewScreenProps = {
@@ -12,9 +12,9 @@ type MaintenancePhotoPreviewScreenProps = {
   photoDataUrl?: string | null;
   onBack: () => void;
   onRetake: () => void;
-  onNativeRetake: (photoDataUrl: string) => void;
   onConfirm: () => void;
   onDelete?: () => void;
+  videoPreviewUrl?: string;
   confirmLabel?: string;
   deleteOnly?: boolean;
 };
@@ -26,13 +26,6 @@ function getTitleByKind(kind: MaintenancePhotoKind) {
   return "Foto 3 de 3";
 }
 
-function isIosDevice() {
-  if (typeof navigator === "undefined") return false;
-  const userAgent = navigator.userAgent || "";
-  const platform = navigator.platform || "";
-  return /iPad|iPhone|iPod/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
 export function MaintenancePhotoPreviewScreen({
   kind,
   title,
@@ -40,32 +33,43 @@ export function MaintenancePhotoPreviewScreen({
   photoDataUrl,
   onBack,
   onRetake,
-  onNativeRetake,
   onConfirm,
   onDelete,
+  videoPreviewUrl: externalVideoPreviewUrl = "",
   confirmLabel = "Sim, Confirmar",
   deleteOnly = false
 }: MaintenancePhotoPreviewScreenProps) {
   const isInvoice = kind.startsWith("NOTAFISCAL");
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const isVideo = Boolean(photoDataUrl?.startsWith("data:video/"));
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const iosDevice = isIosDevice();
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
+  const [videoPreviewError, setVideoPreviewError] = useState(false);
 
-  const handleRetake = () => {
-    if (iosDevice) {
-      fileInputRef.current?.click();
+  useEffect(() => {
+    setVideoPreviewError(false);
+    if (!isVideo || !photoDataUrl) {
+      setVideoPreviewUrl("");
       return;
     }
-    onRetake();
-  };
 
-  const handleNativeRetake = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const dataUrl = await readPhotoFileAsDataUrl(file);
-    onNativeRetake(dataUrl);
-    event.target.value = "";
-  };
+    if (externalVideoPreviewUrl) {
+      setVideoPreviewUrl(externalVideoPreviewUrl);
+      return;
+    }
+
+    let objectUrl = "";
+    try {
+      objectUrl = dataUrlToObjectUrl(photoDataUrl);
+    } catch {
+      setVideoPreviewError(true);
+      setVideoPreviewUrl("");
+      return;
+    }
+    setVideoPreviewUrl(objectUrl);
+    return () => {
+      if (objectUrl.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
+    };
+  }, [externalVideoPreviewUrl, isVideo, photoDataUrl]);
 
   const requestDelete = () => {
     if (!onDelete) return;
@@ -85,7 +89,21 @@ export function MaintenancePhotoPreviewScreen({
           {deleteOnly ? null : <div className="maintenance-preview-title">{prompt ?? "A foto está legível e ideal?"}</div>}
           <div className="maintenance-preview-body">
             <div className={`maintenance-preview-image ${isInvoice ? "invoice" : "vehicle"}`} aria-label="Preview da foto">
-              {photoDataUrl ? (
+              {isVideo && photoDataUrl ? (
+                <>
+                  {videoPreviewUrl ? (
+                    <video key={videoPreviewUrl} className="maintenance-preview-real-image" src={videoPreviewUrl} controls playsInline preload="auto" muted onCanPlay={() => setVideoPreviewError(false)} onLoadedMetadata={() => setVideoPreviewError(false)} onError={() => setVideoPreviewError(true)} />
+                  ) : (
+                    <div className="camera-loading">Preparando previa...</div>
+                  )}
+                  {videoPreviewError ? (
+                    <div className="video-preview-fallback">
+                      <strong>Vídeo anexado</strong>
+                      <span>Prévia indisponível neste navegador. Pode confirmar e enviar.</span>
+                    </div>
+                  ) : null}
+                </>
+              ) : photoDataUrl ? (
                 <img className="maintenance-preview-real-image" src={photoDataUrl} alt="Foto capturada" />
               ) : isInvoice ? (
                 <div className="mock-invoice">
@@ -103,14 +121,6 @@ export function MaintenancePhotoPreviewScreen({
               )}
             </div>
             <div className={`maintenance-preview-actions ${deleteOnly ? "is-delete-only" : ""}`}>
-              <input
-                ref={fileInputRef}
-                className="native-camera-input"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleNativeRetake}
-              />
               {deleteOnly && onDelete ? (
                 <button className="maintenance-preview-delete" onClick={requestDelete} type="button">
                   <SystemIcon name="trash" />
@@ -119,7 +129,7 @@ export function MaintenancePhotoPreviewScreen({
               ) : (
                 <>
                   {onDelete ? <button className="maintenance-preview-secondary" onClick={requestDelete} type="button">Apagar foto</button> : null}
-                  <button className="maintenance-preview-secondary" onClick={handleRetake} type="button">Não, refazer</button>
+                  <button className="maintenance-preview-secondary" onClick={onRetake} type="button">Não, refazer</button>
                   <button className="maintenance-preview-primary" onClick={onConfirm} type="button">{confirmLabel}</button>
                 </>
               )}

@@ -18,6 +18,11 @@ test("extrai multiplos links de foto e cria candidato de download", () => {
   assert.equal(links.length, 2);
 
   const candidates = buildOneDrivePreviewCandidates(links[0]);
-  assert.equal(candidates[0], "https://contoso.sharepoint.com/:i:/s/site/a?e=abc");
-  assert.equal(candidates[1], "https://contoso.sharepoint.com/:i:/s/site/a?e=abc&download=1");
+  assert.equal(candidates[0], "https://contoso.sharepoint.com/:i:/s/site/a?e=abc&download=1");
+  assert.equal(candidates[1], "https://contoso.sharepoint.com/:i:/s/site/a?e=abc");
+});
+
+test("mantem URL comum sem parametro de download artificial", () => {
+  const candidates = buildOneDrivePreviewCandidates("https://cdn.contoso.com/foto.jpg");
+  assert.deepEqual(candidates, ["https://cdn.contoso.com/foto.jpg"]);
 });

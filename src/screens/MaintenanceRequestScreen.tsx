@@ -3,7 +3,6 @@ import { FlowSubmitButton, type FlowSubmitState } from "../components/common/Flo
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { MaintenanceRequestVehicleOption } from "../lib/dataverse";
-import { readPhotoFileAsDataUrl } from "../lib/photoOrientation";
 
 export type MaintenanceRequestFields = {
   descricao: string;
@@ -15,6 +14,10 @@ export type MaintenanceRequestFields = {
 export type MaintenanceRequestPhoto = {
   id: string;
   dataUrl: string;
+  previewUrl?: string;
+  posterUrl?: string;
+  durationLabel?: string;
+  mediaType?: "foto" | "video";
 };
 
 export type MaintenanceRequestDraft = {
@@ -31,7 +34,6 @@ type MaintenanceRequestScreenProps = {
   photos: MaintenanceRequestPhoto[];
   onDraftChange: (draft: MaintenanceRequestDraft) => void;
   onAddPhoto: () => void;
-  onNativeAddPhoto: (photoDataUrl: string) => void;
   onPreviewPhoto: (photoId: string) => void;
   onBack: () => void;
   onSubmit: (fields: MaintenanceRequestFields) => void;
@@ -52,13 +54,6 @@ function parseKm(value: string) {
   return Number(value.replace(/[^\d]/g, ""));
 }
 
-function isIosDevice() {
-  if (typeof navigator === "undefined") return false;
-  const userAgent = navigator.userAgent || "";
-  const platform = navigator.platform || "";
-  return /iPad|iPhone|iPod/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
 function focusInvalidField(element: HTMLElement | null) {
   element?.focus({ preventScroll: false });
   element?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -69,7 +64,6 @@ export function MaintenanceRequestScreen({
   photos,
   onDraftChange,
   onAddPhoto,
-  onNativeAddPhoto,
   onPreviewPhoto,
   onBack,
   onSubmit,
@@ -83,9 +77,7 @@ export function MaintenanceRequestScreen({
   const kmRef = useRef<HTMLInputElement | null>(null);
   const severityRef = useRef<HTMLSelectElement | null>(null);
   const descricaoRef = useRef<HTMLTextAreaElement | null>(null);
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
   const [errors, setErrors] = useState<MaintenanceRequestErrors>({});
-  const iosDevice = isIosDevice();
 
   useEffect(() => {
     if (initialVehicleId && !draft.veiculoId) onDraftChange({ ...draft, veiculoId: initialVehicleId });
@@ -125,22 +117,11 @@ export function MaintenanceRequestScreen({
   };
 
   const addPhoto = () => {
-    if (iosDevice) {
-      photoInputRef.current?.click();
-      return;
-    }
     onAddPhoto();
   };
 
-  const handleNativePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const dataUrl = await readPhotoFileAsDataUrl(file);
-    onNativeAddPhoto(dataUrl);
-    event.target.value = "";
-  };
-
   const errorCount = Object.values(errors).filter(Boolean).length;
+  const isVideo = (photo: MaintenanceRequestPhoto) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
 
   return (
     <AppShell screenLabel="TelaSolicitarManutencao">
@@ -228,20 +209,19 @@ export function MaintenanceRequestScreen({
                       onClick={() => onPreviewPhoto(photo.id)}
                       aria-label={`Ver foto ${index + 1}`}
                     >
-                      <img src={photo.dataUrl} alt={`Foto ${index + 1}`} />
+                      {isVideo(photo) ? (
+                        <>
+                          {photo.posterUrl ? <img src={photo.posterUrl} alt={`Vídeo ${index + 1}`} /> : <video src={photo.previewUrl || photo.dataUrl} muted playsInline preload="metadata" />}
+                          <span className="media-video-badge">{photo.durationLabel || "Vídeo"}</span>
+                        </>
+                      ) : (
+                        <img src={photo.dataUrl} alt={`Foto ${index + 1}`} />
+                      )}
                     </button>
                   ))}
                   <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label="Adicionar foto">
                     <span>+</span>
                   </button>
-                  <input
-                    ref={photoInputRef}
-                    className="native-camera-input"
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleNativePhoto}
-                  />
                 </div>
               </div>
             </div>

@@ -46,10 +46,10 @@ const modules = [
     id: "collisions",
     label: "Colis\u00f5es",
     detail: "Registro de colis\u00f5es",
-    action: "Em breve",
+    action: "Abrir",
     icon: "collisions",
     tone: "neutral",
-    disabled: true,
+    disabled: false,
   },
 ];
 
@@ -113,6 +113,23 @@ const navigationHandlers = [
   "onNavigateTo",
   "handleNavigate",
 ];
+
+const localStorageKeysToReset = ["app-motoristas-local-v1", "app-motoristas-error-log-queue-v1"];
+
+function clearKnownLocalData() {
+  localStorageKeysToReset.forEach((key) => {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // Storage can be blocked by browser policy.
+    }
+    try {
+      window.sessionStorage.removeItem(key);
+    } catch {
+      // Storage can be blocked by browser policy.
+    }
+  });
+}
 
 type InitialScreenProps = {
   onNavigate?: (screen: string) => void;
@@ -325,6 +342,7 @@ function ModuleIcon({ name }: { name: string }) {
 export function InitialScreen(props: InitialScreenProps) {
   const shellRef = useRef<HTMLElement | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const driverName = getFirstName(props.driverName ?? props.motoristaNome);
   const nextService = useMemo(() => getNextServiceItem(props, now), [now, props.nextServiceAt, props.proximoServicoEm, props.services]);
   const nextServiceDate = nextService?.date ?? null;
@@ -353,7 +371,7 @@ export function InitialScreen(props: InitialScreenProps) {
       .find((handler): handler is (screen: string) => void => typeof handler === "function");
 
     const aliases = screenAliases[screen] ?? [screen];
-    const targetScreen = screen === "maintenancePhoto" ? "solicitarManutencao" : aliases[0];
+    const targetScreen = screen === "maintenancePhoto" ? "solicitarManutencao" : screen === "collisions" ? "colisoesInicio" : aliases[0];
     if (navigator) {
       navigator(targetScreen);
       return;
@@ -366,16 +384,17 @@ export function InitialScreen(props: InitialScreenProps) {
     );
   };
   const resetLocalData = () => {
-    const confirmed = window.confirm("Resetar dados locais deste app?");
-    if (!confirmed) return;
+    setResetConfirmOpen(true);
+  };
 
+  const confirmResetLocalData = () => {
+    setResetConfirmOpen(false);
     if (props.onResetLocal) {
       props.onResetLocal();
       return;
     }
 
-    window.localStorage.clear();
-    window.sessionStorage.clear();
+    clearKnownLocalData();
     window.location.reload();
   };
 
@@ -431,6 +450,18 @@ export function InitialScreen(props: InitialScreenProps) {
           Resetar dados locais
         </button>
       </footer>
+      {resetConfirmOpen ? (
+        <div className="maintenance-delete-overlay" role="dialog" aria-modal="true" aria-labelledby="reset-local-title">
+          <div className="maintenance-delete-dialog">
+            <div id="reset-local-title" className="maintenance-delete-title">Resetar dados locais?</div>
+            <p>Rascunhos, fotos locais e sessão offline deste app serão removidos deste navegador.</p>
+            <div className="maintenance-delete-actions">
+              <button className="maintenance-delete-cancel" onClick={() => setResetConfirmOpen(false)} type="button">Cancelar</button>
+              <button className="maintenance-delete-confirm" onClick={confirmResetLocalData} type="button">Resetar</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
     </PullToRefresh>
   );

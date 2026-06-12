@@ -12,6 +12,7 @@ export type SystemIconName =
   | "eraser"
   | "trash"
   | "camera"
+  | "video"
   | "flash"
   | "sync"
   | "rotate";
@@ -67,6 +68,15 @@ export function SystemIcon({ name }: { name: SystemIconName }) {
       <svg viewBox="0 0 48 48" aria-hidden="true">
         <path d="M7 17h9l3-5h10l3 5h9v24H7V17Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
         <circle cx="24" cy="29" r="8" fill="none" stroke="currentColor" strokeWidth="3" />
+      </svg>
+    );
+  }
+
+  if (name === "video") {
+    return (
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M8 15h24v18H8V15Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+        <path d="m32 21 9-5v16l-9-5V21Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
       </svg>
     );
   }

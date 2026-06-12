@@ -1,6 +1,9 @@
 ﻿import type { AgendaItem, DetailAction, DetailData, DetailField, MaintenancePhotoKind } from "../types";
 
+import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
 import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
+
+import { getFieldValue } from "./fieldLookup.ts";
 
 type XrmLike = {
   Utility?: {
@@ -96,6 +99,24 @@ const MAINTENANCE_STATUS = {
   realizado: 202410002
 } as const;
 
+const COLLISION_DATAVERSE_ATTACHMENT_TYPE: Record<CollisionPhotoKind, number> = {
+  cena: 100000000,
+  danoBetinhos: 100000001,
+  danoTerceiro: 100000002,
+  documentoTerceiro: 100000003,
+  extra: 100000004,
+  video: 100000004
+};
+
+function getCollisionAttachmentLabel(kind: CollisionPhotoKind) {
+  if (kind === "cena") return "Local";
+  if (kind === "danoBetinhos") return "Veiculos";
+  if (kind === "danoTerceiro") return "CNH da pessoa";
+  if (kind === "documentoTerceiro") return "Documento do veiculo da pessoa";
+  if (kind === "video") return "Video";
+  return "Extra";
+}
+
 export const DATAVERSE = {
   clientes: "cr40f_clientes1s",
   veiculos: "cr40f_veiculoses",
@@ -107,6 +128,8 @@ export const DATAVERSE = {
   anexosDespesasOperacionais: "cr40f_anexodespesaoperacionals",
   categoriasDespesasOperacionais: "cr40f_categoriadespesaoperacionals",
   formasPagamentoDespesas: "cr40f_formapagamentodespesas",
+  colisoes: "cr40f_colisaos",
+  anexosColisoes: "cr40f_anexocolisaos",
   trocas: "cr40f_trocasdecarros",
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
   posseVeiculos: "new_possedeveiculos",
@@ -129,6 +152,8 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.anexosDespesasOperacionais]: "cr40f_anexodespesaoperacional",
   [DATAVERSE.categoriasDespesasOperacionais]: "cr40f_categoriadespesaoperacional",
   [DATAVERSE.formasPagamentoDespesas]: "cr40f_formapagamentodespesa",
+  [DATAVERSE.colisoes]: "cr40f_colisao",
+  [DATAVERSE.anexosColisoes]: "cr40f_anexocolisao",
   [DATAVERSE.trocas]: "cr40f_trocasdecarro",
   [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
   [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
@@ -588,30 +613,38 @@ export async function createMaintenanceRequestRemote(payload: MaintenanceRequest
   const maintenance = await retrieveOne(DATAVERSE.manutencoes, result.id, MAINTENANCE_SELECT);
   const photoFolderPath = `${await buildMaintenancePhotoFolder(maintenance)}/Solicitação`;
 
-  const uploadedRequestLinks = await Promise.all(photos.map(async (photoDataUrl, index) => {
+  payload.onProgress?.(`Enviando ${photos.length} arquivo(s) em paralelo.`);
+  let completedRequestUploads = 0;
+  const uploadResults = await Promise.allSettled(photos.map(async (photoDataUrl, index) => {
     const fileName = `foto-solicitacao-${index + 1}`;
-    payload.onProgress?.(`Enviando foto ${index + 1} da solicitação.`);
+    payload.onProgress?.(`Uploads paralelos: enviando arquivo ${index + 1}/${photos.length}.`);
     const link = await uploadMaintenancePhoto(photoFolderPath, photoDataUrl, fileName, {
       manutencaoId: maintenance.cr40f_id ?? "",
       manutencaoGuid: result.id,
       tipoFoto: "SOLICITACAO",
       indice: index + 1
     });
+    completedRequestUploads += 1;
+    payload.onProgress?.(`Uploads paralelos concluídos (${completedRequestUploads}/${photos.length}).`);
     return { fileName, link, order: index + 1 };
   }));
+  const uploadedRequestLinks = uploadResults.flatMap((uploadResult) => uploadResult.status === "fulfilled" ? [uploadResult.value] : []);
+  const failedUploads = uploadResults.length - uploadedRequestLinks.length;
 
-  await Promise.all(uploadedRequestLinks.map((item) =>
-    createMaintenancePhotoLinkRecord({
-      maintenanceId: result.id,
-      maintenanceBusinessId: String(maintenance.cr40f_id ?? ""),
-      origin: "PRE_MANUTENCAO",
-      photoType: "SOLICITACAO",
-      link: item.link,
-      path: photoFolderPath,
-      fileName: item.fileName,
-      order: item.order
-    })
-  ));
+  if (uploadedRequestLinks.length) {
+    await Promise.all(uploadedRequestLinks.map((item) =>
+      createMaintenancePhotoLinkRecord({
+        maintenanceId: result.id,
+        maintenanceBusinessId: String(maintenance.cr40f_id ?? ""),
+        origin: "PRE_MANUTENCAO",
+        photoType: "SOLICITACAO",
+        link: item.link,
+        path: photoFolderPath,
+        fileName: item.fileName,
+        order: item.order
+      })
+    ));
+  }
 
   const firstThreeLinks = uploadedRequestLinks
     .map((item) => item.link)
@@ -640,6 +673,9 @@ export async function createMaintenanceRequestRemote(payload: MaintenanceRequest
       });
       throw new Error("Fotos salvas no OneDrive, mas os links nao foram confirmados na manutencao.");
     }
+  }
+  if (failedUploads) {
+    throw new Error(`Solicitação criada, mas ${failedUploads} de ${photos.length} foto(s) falharam no upload.`);
   }
 
   return result;
@@ -709,8 +745,33 @@ function formatFlowDecimal(value: string) {
 }
 
 function dataUrlToBase64(value = "") {
-  const comma = value.indexOf(",");
-  return comma >= 0 ? value.slice(comma + 1) : value;
+  const marker = ";base64,";
+  const markerIndex = value.toLowerCase().indexOf(marker);
+  const raw = markerIndex >= 0
+    ? value.slice(markerIndex + marker.length)
+    : value.slice(value.lastIndexOf(",") + 1);
+  return raw.replace(/\s/g, "");
+}
+
+function assertValidBase64Payload(base64: string, context: Record<string, unknown>) {
+  if (!base64 || base64.includes("data:") || base64.includes(",")) {
+    dataverseError("Conteudo base64 invalido antes de chamar Flow.", {
+      ...context,
+      base64Chars: base64.length,
+      startsWith: base64.slice(0, 48),
+      endsWith: base64.slice(-48)
+    });
+    throw new Error("Arquivo invalido para envio: base64 veio com prefixo ou vazio.");
+  }
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64) || base64.length % 4 !== 0) {
+    dataverseError("Conteudo base64 malformado antes de chamar Flow.", {
+      ...context,
+      base64Chars: base64.length,
+      startsWith: base64.slice(0, 24),
+      endsWith: base64.slice(-24)
+    });
+    throw new Error("Arquivo invalido para envio: base64 malformado.");
+  }
 }
 
 function getDataUrlMimeType(value = "") {
@@ -725,6 +786,9 @@ function getFileExtensionFromMimeType(mimeType: string) {
   if (normalized === "image/webp") return "webp";
   if (normalized === "image/heic") return "heic";
   if (normalized === "image/heif") return "heif";
+  if (normalized === "video/mp4") return "mp4";
+  if (normalized === "video/webm") return "webm";
+  if (normalized === "video/quicktime") return "mov";
   const subtype = normalized.split("/")[1] ?? "";
   return subtype.replace(/[^a-z0-9]/gi, "").toLowerCase() || "bin";
 }
@@ -826,17 +890,20 @@ async function uploadMaintenancePhoto(
 ) {
   const mimeType = getDataUrlMimeType(photoDataUrl);
   const extension = getFileExtensionFromMimeType(mimeType);
+  const base64 = dataUrlToBase64(photoDataUrl);
+  const fileName = `${sanitizePathSegment(fileNameBase, "arquivo")}.${extension}`;
+  assertValidBase64Payload(base64, { path, fileName, mimeType, metadata });
   const flowResult = await runHttpFlow(FLOW_URLS.salvarFotosManutencao, {
     caminhoCompleto: path,
-    nomeArquivo: `${sanitizePathSegment(fileNameBase, "arquivo")}.${extension}`,
-    conteudoBase64: dataUrlToBase64(photoDataUrl),
+    nomeArquivo: fileName,
+    conteudoBase64: base64,
     mimeType,
     metadados: metadata
   });
   assertFlowSuccess(flowResult, "FlowSalvarArquivosOnedrive");
   return requireFlowLink(flowResult, {
     path,
-    fileName: `${sanitizePathSegment(fileNameBase, "arquivo")}.${extension}`,
+    fileName,
     mimeType,
     metadata
   });
@@ -886,6 +953,61 @@ export async function uploadExpenseInvoiceRemote({
   };
   if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
   await createOne(DATAVERSE.anexosDespesasOperacionais, record);
+  return link;
+}
+
+export async function uploadCollisionPhotoRemote({
+  collisionId,
+  collisionName,
+  motoristaId,
+  dataUrl,
+  kind,
+  order = 1,
+  onProgress
+}: {
+  collisionId: string;
+  collisionName: string;
+  motoristaId?: string;
+  dataUrl: string;
+  kind: CollisionPhotoKind;
+  order?: number;
+  onProgress?: (message: string) => void;
+}) {
+  if (!dataUrl) return "";
+  const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+  const isVideo = getDataUrlMimeType(dataUrl).startsWith("video/");
+  const extension = getFileExtensionFromMimeType(getDataUrlMimeType(dataUrl));
+  const label = kind === "video" ? `Video ${order}` : kind === "extra" ? `Extra ${order}` : getCollisionAttachmentLabel(kind);
+  const baseName = sanitizePathSegment(`colisao-${label}-${order}`, `colisao-${order}`);
+  const path = `Colisões/${devPrefix}${sanitizePathSegment(collisionName, "Sem nome")}`;
+  const lookupNavigationNames = await loadCollisionAttachmentLookupNavigationNamesRemote();
+
+  onProgress?.(`Enviando ${isVideo ? "video" : "foto"} ${order}.`);
+  const link = await uploadMaintenancePhoto(path, dataUrl, baseName, {
+    colisaoGuid: collisionId,
+    colisaoNome: collisionName,
+    tipo: kind,
+    tipoMidia: isVideo ? "video" : "foto",
+    indice: order
+  });
+
+  onProgress?.(`Vinculando ${isVideo ? "video" : "foto"} ${order} à colisão.`);
+  const recordName = `${label} ${order} - ${collisionName}`.slice(0, 100);
+  const record: Record<string, unknown> = {
+    cr40f_name: recordName,
+    cr40f_nome: recordName,
+    cr40f_nomearquivo: `${baseName}.${extension}`,
+    cr40f_urlsharepoint: link,
+    cr40f_sharelink: link,
+    cr40f_dataenvio: new Date().toISOString(),
+    cr40f_ordem: order,
+    cr40f_status: 100000001,
+    cr40f_tipo: COLLISION_DATAVERSE_ATTACHMENT_TYPE[kind],
+    cr40f_tipomidia: isVideo ? 100000001 : 100000000,
+    [`${lookupNavigationNames.colisao}@odata.bind`]: bind(DATAVERSE.colisoes, collisionId)
+  };
+  if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+  await createOne(DATAVERSE.anexosColisoes, record);
   return link;
 }
 
@@ -1040,6 +1162,11 @@ type ExpenseAttachmentLookupNavigationNames = {
   enviadoPor: string;
 };
 
+type CollisionAttachmentLookupNavigationNames = {
+  colisao: string;
+  enviadoPor: string;
+};
+
 const lookupNavigationNameCache = new Map<string, string>();
 
 function normalizeMetadataName(value: unknown) {
@@ -1088,7 +1215,7 @@ async function assertEntityHasAttributes(entitySetName: string, label: string, r
     await retrieveMultiple(entitySetName, `$select=${requiredAttributes.join(",")}&$top=1`);
   } catch (error) {
     throw new Error(
-      `Schema de ${label} nao passou na consulta real do Dataverse. Rode repair-despesas-operacionais-relacionamentos.console.js se o erro citar campo inexistente. Detalhe: ${
+      `Schema de ${label} nao passou na consulta real do Dataverse. Confirme tabela, campos e relacionamentos no ambiente real. Detalhe: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
@@ -1134,6 +1261,41 @@ export async function assertExpenseSchemaReadyRemote() {
       "cr40f_ativa",
       "cr40f_tipo",
       "cr40f_ordem"
+    ])
+  ]);
+}
+
+export async function assertCollisionSchemaReadyRemote() {
+  await Promise.all([
+    assertEntityHasAttributes(DATAVERSE.colisoes, "Colisoes", [
+      "cr40f_nome",
+      "cr40f_name",
+      "cr40f_tipoocorrencia",
+      "cr40f_datahora",
+      "cr40f_local",
+      "cr40f_descricao",
+      "cr40f_houveterceiro",
+      "cr40f_terceironome",
+      "cr40f_terceirotelefone",
+      "cr40f_terceiroplaca",
+      "cr40f_terceiroveiculo",
+      "cr40f_terceirodocumento",
+      "cr40f_terceiroseguradora",
+      "cr40f_terceiroobservacao",
+      "cr40f_statusoperacional",
+      "cr40f_statusanexo"
+    ]),
+    assertEntityHasAttributes(DATAVERSE.anexosColisoes, "Anexos de Colisoes", [
+      "cr40f_nome",
+      "cr40f_name",
+      "cr40f_nomearquivo",
+      "cr40f_urlsharepoint",
+      "cr40f_sharelink",
+      "cr40f_dataenvio",
+      "cr40f_ordem",
+      "cr40f_status",
+      "cr40f_tipo",
+      "cr40f_tipomidia"
     ])
   ]);
 }
@@ -1253,6 +1415,43 @@ export async function loadExpenseLookupNavigationNamesRemote(options: { includeV
   };
 }
 
+export async function loadCollisionLookupNavigationNamesRemote(): Promise<CollisionLookupNavigationNames> {
+  const requests: Array<LookupNavigationRequest & { key: keyof CollisionLookupNavigationNames }> = [
+    {
+      key: "motorista",
+      referencingEntitySetName: DATAVERSE.colisoes,
+      referencedEntitySetName: DATAVERSE.funcionarios,
+      referencingAttribute: "cr40f_motorista",
+      label: "Colisao.Motorista",
+      required: true
+    },
+    {
+      key: "veiculo",
+      referencingEntitySetName: DATAVERSE.colisoes,
+      referencedEntitySetName: DATAVERSE.veiculos,
+      referencingAttribute: "cr40f_veiculo",
+      label: "Colisao.Veiculo",
+      required: true
+    }
+  ];
+
+  const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+  const names: Partial<CollisionLookupNavigationNames> = {};
+  const failures: string[] = [];
+  settled.forEach((result, index) => {
+    const request = requests[index];
+    if (result.status === "fulfilled") {
+      names[request.key] = result.value;
+      return;
+    }
+    failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+  });
+  if (failures.length || !names.motorista || !names.veiculo) {
+    throw new Error(`Schema de Colisoes incompleto. Falhas: ${failures.join(" | ")}`);
+  }
+  return { motorista: names.motorista, veiculo: names.veiculo };
+}
+
 async function loadExpenseAttachmentLookupNavigationNamesRemote(): Promise<ExpenseAttachmentLookupNavigationNames> {
   const requests: Array<LookupNavigationRequest & { key: keyof ExpenseAttachmentLookupNavigationNames }> = [
     {
@@ -1286,6 +1485,41 @@ async function loadExpenseAttachmentLookupNavigationNamesRemote(): Promise<Expen
     throw new Error(`Schema de Anexos de Despesas incompleto. Rode repair-despesas-operacionais-relacionamentos.console.js. Falhas: ${failures.join(" | ")}`);
   }
   return { despesa: names.despesa, enviadoPor: names.enviadoPor };
+}
+
+async function loadCollisionAttachmentLookupNavigationNamesRemote(): Promise<CollisionAttachmentLookupNavigationNames> {
+  const requests: Array<LookupNavigationRequest & { key: keyof CollisionAttachmentLookupNavigationNames }> = [
+    {
+      key: "colisao",
+      referencingEntitySetName: DATAVERSE.anexosColisoes,
+      referencedEntitySetName: DATAVERSE.colisoes,
+      referencingAttribute: "cr40f_colisao",
+      label: "AnexoColisao.Colisao"
+    },
+    {
+      key: "enviadoPor",
+      referencingEntitySetName: DATAVERSE.anexosColisoes,
+      referencedEntitySetName: DATAVERSE.funcionarios,
+      referencingAttribute: "cr40f_enviadopor",
+      label: "AnexoColisao.EnviadoPor"
+    }
+  ];
+
+  const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+  const names: Partial<CollisionAttachmentLookupNavigationNames> = {};
+  const failures: string[] = [];
+  settled.forEach((result, index) => {
+    const request = requests[index];
+    if (result.status === "fulfilled") {
+      names[request.key] = result.value;
+      return;
+    }
+    failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+  });
+  if (failures.length || !names.colisao || !names.enviadoPor) {
+    throw new Error(`Schema de Anexos de Colisoes incompleto. Falhas: ${failures.join(" | ")}`);
+  }
+  return { colisao: names.colisao, enviadoPor: names.enviadoPor };
 }
 
 function getGeralId(record: DataverseRecord) {
@@ -1904,6 +2138,7 @@ async function runHttpFlow(envKey: string, payload: Record<string, unknown>) {
       status: response.status,
       statusText: response.statusText,
       durationMs: Math.round(performance.now() - startedAt),
+      payloadResumo: summarizeFlowPayload(payload),
       responseText
     });
     throw new Error(buildHttpFlowErrorMessage(envKey, url, response, responseText));
@@ -1926,6 +2161,18 @@ async function runHttpFlow(envKey: string, payload: Record<string, unknown>) {
   }
 }
 
+function summarizeFlowPayload(payload: Record<string, unknown>) {
+  const content = typeof payload.conteudoBase64 === "string" ? payload.conteudoBase64 : "";
+  return {
+    caminhoCompleto: payload.caminhoCompleto ?? "",
+    nomeArquivo: payload.nomeArquivo ?? "",
+    mimeType: payload.mimeType ?? "",
+    base64Chars: content.length,
+    approxBytes: content ? Math.round((content.length * 3) / 4) : 0,
+    metadados: payload.metadados ?? {}
+  };
+}
+
 export async function saveVoucherRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
   if (!dv?.id) throw new Error("Serviço sem referência Dataverse.");
@@ -1937,16 +2184,16 @@ export async function saveVoucherRemote(payload: FinalizePayload) {
     text: record.cr40f_reservadeveculosid ?? dv.id,
     text_1: dataUrlToBase64(payload.signatureDataUrl ?? ""),
     text_2: payload.fields.Desvio === "Não" ? "Nao" : payload.fields.Desvio ?? "Nao",
-    text_5: payload.fields["Horario Inicial"] ?? payload.fields["Horário Inicial"] ?? payload.fields["HorÃ¡rio Inicial"] ?? "",
-    text_6: payload.fields["Espera Inicio"] ?? payload.fields["Espera Início"] ?? payload.fields["Espera InÃ­cio"] ?? "",
-    text_7: payload.fields["Espera Final"] ?? "",
-    text_8: formatFlowDecimal(payload.fields.Pedagio ?? payload.fields["Pedágio"] ?? payload.fields["PedÃ¡gio"] ?? "0"),
-    text_9: formatFlowDecimal(payload.fields.Estacionamento ?? "0"),
-    text_10: formatFlowDecimal(payload.fields.Combustivel ?? payload.fields["Combustível"] ?? payload.fields["CombustÃ­vel"] ?? "0"),
-    text_11: formatFlowDecimal(payload.fields.Hospedagem ?? "0"),
-    text_12: formatFlowDecimal(payload.fields.Outros ?? "0"),
-    text_13: payload.fields["Observacao Voucher"] ?? payload.fields["Observação Voucher"] ?? payload.fields["ObservaÃ§Ã£o Voucher"] ?? "",
-    text_14: payload.fields["Horario Final"] ?? payload.fields["Horário Final"] ?? payload.fields["HorÃ¡rio Final"] ?? "",
+    text_5: getFieldValue(payload.fields, "Horário Inicial", "Horario Inicial"),
+    text_6: getFieldValue(payload.fields, "Espera Início", "Espera Inicio"),
+    text_7: getFieldValue(payload.fields, "Espera Final"),
+    text_8: formatFlowDecimal(getFieldValue(payload.fields, "Pedágio", "Pedagio") || "0"),
+    text_9: formatFlowDecimal(getFieldValue(payload.fields, "Estacionamento") || "0"),
+    text_10: formatFlowDecimal(getFieldValue(payload.fields, "Combustível", "Combustivel") || "0"),
+    text_11: formatFlowDecimal(getFieldValue(payload.fields, "Hospedagem") || "0"),
+    text_12: formatFlowDecimal(getFieldValue(payload.fields, "Outros") || "0"),
+    text_13: getFieldValue(payload.fields, "Observação Voucher", "Observacao Voucher"),
+    text_14: getFieldValue(payload.fields, "Horário Final", "Horario Final"),
     text_15: new Date().toISOString()
   });
   payload.onProgress?.("Validando retorno do Flow.");
@@ -1968,9 +2215,9 @@ export async function saveVoucherDraftRemote(detail: DetailData, fields: Record<
     await updateOne(DATAVERSE.geral, dv.id, { new_rascunhovoucher: null });
     return;
   }
-  const [horaSaida = "", minSaida = ""] = String(fields["Horário Inicial"] ?? fields["Horario Inicial"] ?? "").split(":");
-  const [esperaIniHora = "", esperaIniMin = ""] = String(fields["Espera Início"] ?? fields["Espera Inicio"] ?? "").split(":");
-  const [esperaFimHora = "", esperaFimMin = ""] = String(fields["Espera Final"] ?? "").split(":");
+  const [horaSaida = "", minSaida = ""] = String(getFieldValue(fields, "Horário Inicial", "Horario Inicial")).split(":");
+  const [esperaIniHora = "", esperaIniMin = ""] = String(getFieldValue(fields, "Espera Início", "Espera Inicio")).split(":");
+  const [esperaFimHora = "", esperaFimMin = ""] = String(getFieldValue(fields, "Espera Final")).split(":");
   const draft = {
     hora_saida: horaSaida,
     min_saida: minSaida,
@@ -1978,13 +2225,13 @@ export async function saveVoucherDraftRemote(detail: DetailData, fields: Record<
     espera_ini_min: esperaIniMin,
     espera_fim_hora: esperaFimHora,
     espera_fim_min: esperaFimMin,
-    desvio: fields.Desvio ?? "Não",
-    obs: fields["Observação Voucher"] ?? fields["Observacao Voucher"] ?? "",
-    pedagio: fields["Pedágio"] ?? fields.Pedagio ?? "",
-    estacionamento: fields.Estacionamento ?? "",
-    combustivel: fields["Combustível"] ?? fields.Combustivel ?? "",
-    hospedagem: fields.Hospedagem ?? "",
-    outros: fields.Outros ?? ""
+    desvio: getFieldValue(fields, "Desvio") || "Não",
+    obs: getFieldValue(fields, "Observação Voucher", "Observacao Voucher"),
+    pedagio: getFieldValue(fields, "Pedágio", "Pedagio"),
+    estacionamento: getFieldValue(fields, "Estacionamento"),
+    combustivel: getFieldValue(fields, "Combustível", "Combustivel"),
+    hospedagem: getFieldValue(fields, "Hospedagem"),
+    outros: getFieldValue(fields, "Outros")
   };
   dataverseLog("Salvando rascunho voucher.", { detailId: detail.id, dataverseId: dv.id });
   await updateOne(DATAVERSE.geral, dv.id, {
@@ -1998,7 +2245,7 @@ export async function finalizeServiceRemote(payload: FinalizePayload) {
   dataverseLog("Finalização simples de serviço iniciada.", { detailId: payload.detail.id, dataverseId: dv.id });
   payload.onProgress?.("Atualizando serviço no Dataverse.");
   await updateOne(DATAVERSE.geral, dv.id, {
-    new_observacaofinal: payload.fields["Observacao Final"] ?? payload.fields["Observação Final"] ?? payload.fields["ObservaÃ§Ã£o Final"] ?? "",
+    new_observacaofinal: getFieldValue(payload.fields, "Observação Final", "Observacao Final"),
     cr40f_status: OPERATION_STATUS.concluido,
     new_datadefinalizacao: new Date().toISOString()
   });
@@ -2125,7 +2372,7 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   if (!dv?.id) throw new Error("Manutenção sem referência Dataverse.");
   const record = dv.record ?? {};
   const geralId = cleanODataGuid(record.__geralId);
-  const paymentKey = normalizeText(payload.fields["Forma de Pagamento"] ?? "");
+  const paymentKey = normalizeText(getFieldValue(payload.fields, "Forma de Pagamento"));
   const paymentValue = MAINTENANCE_PAYMENT[paymentKey];
   dataverseLog("Finalização de manutenção iniciada.", {
     detailId: payload.detail.id,
@@ -2134,10 +2381,10 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   });
   const maintenancePatch: Record<string, unknown> = {
     cr40f_datamanutencao: new Date().toISOString(),
-    cr40f_estabelecimento: payload.fields.Estabelecimento,
-    cr40f_valor: parseCurrencyNumber(payload.fields.Valor ?? "0"),
-    new_comentariosdocolaborador: payload.fields["Comentários do Motorista"] ?? payload.fields["Comentarios do Motorista"] ?? "",
-    cr40f_servicorealizado: payload.fields["Serviço Realizado"] ?? payload.fields["Servico Realizado"] ?? ""
+    cr40f_estabelecimento: getFieldValue(payload.fields, "Estabelecimento"),
+    cr40f_valor: parseCurrencyNumber(getFieldValue(payload.fields, "Valor") || "0"),
+    new_comentariosdocolaborador: getFieldValue(payload.fields, "Comentários do Motorista", "Comentarios do Motorista"),
+    cr40f_servicorealizado: getFieldValue(payload.fields, "Serviço Realizado", "Servico Realizado")
   };
   if (paymentValue !== undefined) maintenancePatch.cr40f_pagamento = paymentValue;
   const motoristaId = cleanODataGuid((record.__geral as DataverseRecord | undefined)?._cr40f_motorista_value);
@@ -2146,7 +2393,6 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   payload.onProgress?.("Salvando dados da manutenção.");
   await updateOne(DATAVERSE.manutencoes, dv.id, maintenancePatch);
   const photoPatch: Record<string, unknown> = {};
-  photoPatch.cr40f_status = MAINTENANCE_STATUS.realizado;
   const photos = payload.photos ?? {};
   const invoiceEntries = Object.entries(photos)
     .filter(([kind, dataUrl]) => kind.startsWith("NOTAFISCAL") && Boolean(dataUrl))
@@ -2169,8 +2415,9 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   const photoFolderPath = await buildMaintenancePhotoFolder(record);
 
   const uploadEntries = photoEntries.filter((entry) => Boolean(photos[entry.kind]));
-  if (uploadEntries.length) payload.onProgress?.(`Enviando ${uploadEntries.length} foto(s) para o OneDrive.`);
-  const uploadedLinks = await Promise.all(uploadEntries.map(async (entry) => ({
+  if (uploadEntries.length) payload.onProgress?.(`Enviando ${uploadEntries.length} arquivo(s) em paralelo.`);
+  let completedMaintenanceUploads = 0;
+  const uploadResults = await Promise.allSettled(uploadEntries.map(async (entry) => ({
     targetField: entry.targetField,
     kind: entry.kind,
     fileName: entry.fileName,
@@ -2179,8 +2426,14 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
       manutencaoGuid: dv.id,
       geralId,
       tipoFoto: entry.kind
+    }).then((link) => {
+      completedMaintenanceUploads += 1;
+      payload.onProgress?.(`Uploads paralelos concluídos (${completedMaintenanceUploads}/${uploadEntries.length}).`);
+      return link;
     })
   })));
+  const uploadedLinks = uploadResults.flatMap((uploadResult) => uploadResult.status === "fulfilled" ? [uploadResult.value] : []);
+  const failedUploads = uploadResults.length - uploadedLinks.length;
 
   const linksByField = uploadedLinks.reduce<Record<string, string[]>>((current, item) => {
     if (!item.link) return current;
@@ -2191,23 +2444,34 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
     photoPatch[field] = links.join("\n");
   });
 
-  await Promise.all(uploadedLinks.map((item, index) => createMaintenancePhotoLinkRecord({
-    maintenanceId: dv.id,
-    maintenanceBusinessId: String(record.cr40f_id ?? ""),
-    origin: item.kind.startsWith("NOTAFISCAL") ? "NOTA_FISCAL" : "POS_MANUTENCAO",
-    photoType: item.kind,
-    link: item.link,
-    path: photoFolderPath,
-    fileName: item.fileName,
-    order: index + 1
-  })));
+  if (uploadedLinks.length) {
+    await Promise.all(uploadedLinks.map((item, index) => createMaintenancePhotoLinkRecord({
+      maintenanceId: dv.id,
+      maintenanceBusinessId: String(record.cr40f_id ?? ""),
+      origin: item.kind.startsWith("NOTAFISCAL") ? "NOTA_FISCAL" : "POS_MANUTENCAO",
+      photoType: item.kind,
+      link: item.link,
+      path: photoFolderPath,
+      fileName: item.fileName,
+      order: index + 1
+    })));
+  }
 
+  if (failedUploads) {
+    if (Object.keys(photoPatch).length) {
+      payload.onProgress?.("Gravando links enviados no Dataverse.");
+      await updateOne(DATAVERSE.manutencoes, dv.id, photoPatch);
+    }
+    throw new Error(`Manutenção salva, mas ${failedUploads} de ${uploadEntries.length} arquivo(s) falharam no upload.`);
+  }
+
+  photoPatch.cr40f_status = MAINTENANCE_STATUS.realizado;
   payload.onProgress?.("Gravando links das fotos no Dataverse.");
   await updateOne(DATAVERSE.manutencoes, dv.id, photoPatch);
   if (geralId) {
     payload.onProgress?.("Concluindo item da agenda.");
     await updateOne(DATAVERSE.geral, geralId, {
-      new_observacaofinal: payload.fields["Comentários do Motorista"] ?? payload.fields["Comentarios do Motorista"] ?? payload.fields["Observações"] ?? payload.fields["Observacoes"] ?? "",
+      new_observacaofinal: getFieldValue(payload.fields, "Comentários do Motorista", "Comentarios do Motorista", "Observações", "Observacoes"),
       cr40f_status: OPERATION_STATUS.concluido,
       new_datadefinalizacao: new Date().toISOString()
     });
@@ -2223,7 +2487,7 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
   const isDriver2 = cleanODataGuid(record._cr40f_motorista2_value) === cleanGuid(driver.id);
   if (!isDriver1 && !isDriver2) throw new Error("Motorista atual não pertence a esta troca.");
 
-  const observation = payload.fields["Observações"] ?? payload.fields.Observacoes ?? payload.fields["Observação da Troca"] ?? payload.fields["Observacao da Troca"] ?? "Sem observação.";
+  const observation = getFieldValue(payload.fields, "Observações", "Observacoes", "Observação da Troca", "Observacao da Troca") || "Sem observação.";
   const exchangePatch: Record<string, unknown> = {};
   if (isDriver1) {
     exchangePatch.new_concluidomotorista1 = true;

@@ -13,7 +13,6 @@ import {
   type ExpenseValidationErrors
 } from "../lib/expenses";
 import type { MaintenanceRequestVehicleOption } from "../lib/dataverse";
-import { readPhotoFileAsDataUrl } from "../lib/photoOrientation";
 
 type ExpenseScreenProps = {
   draft: ExpenseDraft;
@@ -23,7 +22,6 @@ type ExpenseScreenProps = {
   referenceError?: string;
   onDraftChange: (draft: ExpenseDraft) => void;
   onAddPhoto: () => void;
-  onNativeAddPhoto: (photoDataUrl: string) => void;
   onPreviewPhoto: (photoId: string) => void;
   onBack: () => void;
   onSubmit: (draft: ExpenseDraft) => void;
@@ -38,13 +36,6 @@ function focusInvalidField(element: HTMLElement | null) {
   element?.scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
-function isIosDevice() {
-  if (typeof navigator === "undefined") return false;
-  const userAgent = navigator.userAgent || "";
-  const platform = navigator.platform || "";
-  return /iPad|iPhone|iPod/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
 export function ExpenseScreen({
   draft,
   photos,
@@ -53,7 +44,6 @@ export function ExpenseScreen({
   referenceError = "",
   onDraftChange,
   onAddPhoto,
-  onNativeAddPhoto,
   onPreviewPhoto,
   onBack,
   onSubmit,
@@ -71,9 +61,7 @@ export function ExpenseScreen({
   const kmRef = useRef<HTMLInputElement | null>(null);
   const litersRef = useRef<HTMLInputElement | null>(null);
   const photosRef = useRef<HTMLDivElement | null>(null);
-  const nativePhotoRef = useRef<HTMLInputElement | null>(null);
   const [errors, setErrors] = useState<ExpenseValidationErrors>({});
-  const iosDevice = isIosDevice();
 
   const category = findExpenseCategory(referenceData, draft.categoriaId);
   const rules = getExpenseCategoryRules(category);
@@ -108,24 +96,12 @@ export function ExpenseScreen({
   };
 
   const addPhoto = () => {
-    if (iosDevice) {
-      nativePhotoRef.current?.click();
-      return;
-    }
     clearError("photos");
     onAddPhoto();
   };
 
-  const handleNativePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const dataUrl = await readPhotoFileAsDataUrl(file);
-    clearError("photos");
-    onNativeAddPhoto(dataUrl);
-    event.target.value = "";
-  };
-
   const errorCount = Object.values(errors).filter(Boolean).length;
+  const isVideo = (photo: ExpensePhoto) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
   return (
     <AppShell screenLabel="TelaGastos">
       <FormMenu title="Registrar gasto" onBack={isSubmitting ? undefined : onBack} />
@@ -307,20 +283,19 @@ export function ExpenseScreen({
                       onClick={() => onPreviewPhoto(photo.id)}
                       aria-label={`Ver comprovante ${index + 1}`}
                     >
-                      <img src={photo.dataUrl} alt={`Comprovante ${index + 1}`} />
+                      {isVideo(photo) ? (
+                        <>
+                          {photo.posterUrl ? <img src={photo.posterUrl} alt={`Vídeo ${index + 1}`} /> : <video src={photo.previewUrl || photo.dataUrl} muted playsInline preload="metadata" />}
+                          <span className="media-video-badge">{photo.durationLabel || "Vídeo"}</span>
+                        </>
+                      ) : (
+                        <img src={photo.dataUrl} alt={`Comprovante ${index + 1}`} />
+                      )}
                     </button>
                   ))}
                   <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label="Adicionar comprovante">
                     <span>+</span>
                   </button>
-                  <input
-                    ref={nativePhotoRef}
-                    className="native-camera-input"
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleNativePhoto}
-                  />
                 </div>
                 <div className="field-hint">{photos.length} comprovante(s)</div>
                 {errors.photos ? <div className="field-error">{errors.photos}</div> : null}

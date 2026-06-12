@@ -43,6 +43,10 @@ export type ExpenseDraft = {
 export type ExpensePhoto = {
   id: string;
   dataUrl: string;
+  previewUrl?: string;
+  posterUrl?: string;
+  durationLabel?: string;
+  mediaType?: "foto" | "video";
 };
 
 export type ExpenseFields = {

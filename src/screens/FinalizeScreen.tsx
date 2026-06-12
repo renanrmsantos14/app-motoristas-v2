@@ -3,7 +3,6 @@ import { FlowSubmitButton, type FlowSubmitState } from "../components/common/Flo
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { buildWhatsAppUrl, openExternalUrl } from "../lib/localWorkflow";
-import { readPhotoFileAsDataUrl } from "../lib/photoOrientation";
 import type { DetailData, MaintenancePhotoKind } from "../types";
 
 type FinalizeScreenProps = {
@@ -15,7 +14,6 @@ type FinalizeScreenProps = {
   maintenanceDraft?: MaintenanceFinalizeDraft;
   onMaintenanceDraftChange?: (draft: MaintenanceFinalizeDraft) => void;
   onPreviewMaintenancePhoto: (kind: MaintenancePhotoKind) => void;
-  onCaptureMaintenancePhoto: (kind: MaintenancePhotoKind, photoDataUrl: string) => void;
   onClearPhotos?: () => void;
   submitState?: FlowSubmitState;
 };
@@ -40,13 +38,6 @@ function focusInvalidField(element: HTMLElement | null) {
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
     element?.focus({ preventScroll: true });
   }, 40);
-}
-
-function isIosDevice() {
-  if (typeof navigator === "undefined") return false;
-  const userAgent = navigator.userAgent || "";
-  const platform = navigator.platform || "";
-  return /iPad|iPhone|iPod/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
 function FinalizeActions({ onNone, onConfirm, submitState }: { onNone: () => void; onConfirm: () => void; submitState: FlowSubmitState }) {
@@ -124,7 +115,6 @@ function MaintenancePhotoGrid({
   isSubmitting,
   allowMultiple = false,
   onPreview,
-  onNativeCapture
 }: {
   label: string;
   kinds: MaintenancePhotoKind[];
@@ -133,11 +123,7 @@ function MaintenancePhotoGrid({
   isSubmitting: boolean;
   allowMultiple?: boolean;
   onPreview: (kind: MaintenancePhotoKind) => void;
-  onNativeCapture: (kind: MaintenancePhotoKind, photoDataUrl: string) => void;
 }) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const nativeKindRef = useRef<MaintenancePhotoKind>(kinds[0]);
-  const iosDevice = isIosDevice();
   const invoiceItems = Object.entries(photos)
     .filter(([kind, dataUrl]) => kind.startsWith("NOTAFISCAL") && Boolean(dataUrl))
     .sort(([left], [right]) => {
@@ -153,33 +139,12 @@ function MaintenancePhotoGrid({
     : (kinds.find((kind) => !photos[kind]) ?? kinds[kinds.length - 1]);
 
   const addPhoto = () => {
-    nativeKindRef.current = nextEmptyKind;
-    if (iosDevice) {
-      fileInputRef.current?.click();
-      return;
-    }
     onPreview(nextEmptyKind);
-  };
-
-  const handleNativeCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const dataUrl = await readPhotoFileAsDataUrl(file);
-    onNativeCapture(nativeKindRef.current, dataUrl);
-    event.target.value = "";
   };
 
   return (
     <div className={`finalize-input-block maintenance-photo-block ${isInvalid ? "is-invalid" : ""}`}>
       <label>{label}</label>
-      <input
-        ref={fileInputRef}
-        className="native-camera-input"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleNativeCapture}
-      />
       <div className="maintenance-photo-grid">
         {photoItems.map((photo, index) => (
           <button
@@ -190,7 +155,14 @@ function MaintenancePhotoGrid({
             onClick={() => onPreview(photo.kind)}
             aria-label={`Ver ${label} ${index + 1}`}
           >
-            <img src={photo.dataUrl} alt={`${label} ${index + 1}`} />
+            {photo.dataUrl.startsWith("data:video/") ? (
+              <>
+                <video src={photo.dataUrl} muted playsInline preload="metadata" />
+                <span className="media-video-badge">Vídeo</span>
+              </>
+            ) : (
+              <img src={photo.dataUrl} alt={`${label} ${index + 1}`} />
+            )}
           </button>
         ))}
         <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label={`Adicionar ${label}`}>
@@ -209,7 +181,6 @@ function MaintenanceFinalize({
   draft,
   onDraftChange,
   onPreviewMaintenancePhoto,
-  onCaptureMaintenancePhoto,
   submitState
 }: {
   detail: DetailData;
@@ -219,7 +190,6 @@ function MaintenanceFinalize({
   draft?: MaintenanceFinalizeDraft;
   onDraftChange?: (draft: MaintenanceFinalizeDraft) => void;
   onPreviewMaintenancePhoto: (kind: MaintenancePhotoKind) => void;
-  onCaptureMaintenancePhoto: (kind: MaintenancePhotoKind, photoDataUrl: string) => void;
   submitState: FlowSubmitState;
 }) {
   const isSubmitting = submitState !== "idle";
@@ -320,7 +290,6 @@ function MaintenanceFinalize({
             isInvalid={Boolean(errors.invoicePhoto)}
             isSubmitting={isSubmitting}
             allowMultiple
-            onNativeCapture={onCaptureMaintenancePhoto}
             onPreview={(kind) => { if (!isSubmitting) onPreviewMaintenancePhoto(kind); }}
           />
           {errors.invoicePhoto ? <div className="field-error">{errors.invoicePhoto}</div> : null}
@@ -330,7 +299,6 @@ function MaintenanceFinalize({
             photos={maintenancePhotos}
             isInvalid={Boolean(errors.maintenancePhoto)}
             isSubmitting={isSubmitting}
-            onNativeCapture={onCaptureMaintenancePhoto}
             onPreview={(kind) => { if (!isSubmitting) onPreviewMaintenancePhoto(kind); }}
           />
           {errors.maintenancePhoto ? <div className="field-error">{errors.maintenancePhoto}</div> : null}
@@ -365,7 +333,6 @@ export function FinalizeScreen({
   maintenanceDraft,
   onMaintenanceDraftChange,
   onPreviewMaintenancePhoto,
-  onCaptureMaintenancePhoto,
   onClearPhotos,
   submitState = "idle"
 }: FinalizeScreenProps) {
@@ -387,7 +354,6 @@ export function FinalizeScreen({
             draft={maintenanceDraft}
             onDraftChange={onMaintenanceDraftChange}
             onPreviewMaintenancePhoto={onPreviewMaintenancePhoto}
-            onCaptureMaintenancePhoto={onCaptureMaintenancePhoto}
             submitState={submitState}
           />
         ) : null}
