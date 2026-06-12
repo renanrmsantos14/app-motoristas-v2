@@ -8765,7 +8765,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.149","builtAt":"2026-06-12T18:17:16.871Z","builtAtLabel":"12/06/2026, 15:17"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.152","builtAt":"2026-06-12T18:46:24.889Z","builtAtLabel":"12/06/2026, 15:46"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -31683,8 +31683,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   var DEFAULT_EXPENSE_REFERENCE_DATA = {
     categories: [
       {
-        id: "local-combustivel",
-        name: "Combust\xEDvel",
+        id: "local-abastecimento",
+        name: "Abastecimento",
         order: 10,
         exigeVeiculo: true,
         exigeReserva: false,
@@ -31692,9 +31692,27 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         exigeLitros: true
       },
       {
-        id: "local-pedagio",
-        name: "Ped\xE1gio",
+        id: "local-almoco",
+        name: "Almo\xE7o",
         order: 20,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-aplicativos",
+        name: "Aplicativos",
+        order: 30,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-cafe",
+        name: "Caf\xE9",
+        order: 40,
         exigeVeiculo: false,
         exigeReserva: false,
         exigeKm: false,
@@ -31703,33 +31721,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       {
         id: "local-estacionamento",
         name: "Estacionamento",
-        order: 30,
+        order: 50,
         exigeVeiculo: false,
         exigeReserva: false,
         exigeKm: false,
         exigeLitros: false
       },
       {
-        id: "local-lavagem",
-        name: "Lavagem",
-        order: 40,
-        exigeVeiculo: true,
-        exigeReserva: false,
-        exigeKm: false,
-        exigeLitros: false
-      },
-      {
-        id: "local-manutencao-emergencial",
-        name: "Manuten\xE7\xE3o emergencial",
-        order: 50,
-        exigeVeiculo: true,
-        exigeReserva: false,
-        exigeKm: false,
-        exigeLitros: false
-      },
-      {
-        id: "local-alimentacao",
-        name: "Alimenta\xE7\xE3o",
+        id: "local-gastos-cliente",
+        name: "Gastos a pedido do cliente",
         order: 60,
         exigeVeiculo: false,
         exigeReserva: false,
@@ -31746,7 +31746,70 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         exigeLitros: false
       },
       {
+        id: "local-jantar",
+        name: "Jantar",
+        order: 80,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-lanche",
+        name: "Lanche",
+        order: 90,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-lavagem",
+        name: "Lavagem",
+        order: 100,
+        exigeVeiculo: true,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-locacao-carro",
+        name: "Loca\xE7\xE3o de carro",
+        order: 110,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-manutencao",
+        name: "Manuten\xE7\xE3o",
+        order: 120,
+        exigeVeiculo: true,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
         id: "local-outros",
+        name: "Outros",
+        order: 130,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-pedagio",
+        name: "Ped\xE1gio",
+        order: 140,
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      },
+      {
+        id: "local-outros-fallback",
         name: "Outros",
         order: 999,
         exigeVeiculo: false,
@@ -31756,20 +31819,20 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
     ],
     paymentMethods: [
-      { id: "local-cartao-empresa", name: "Cart\xE3o empresa", order: 10, tipo: "Cart\xE3o" },
-      { id: "local-cartao-motorista", name: "Cart\xE3o motorista", order: 20, tipo: "Cart\xE3o" },
-      { id: "local-dinheiro-motorista", name: "Dinheiro motorista", order: 30, tipo: "Dinheiro" },
-      { id: "local-pix-motorista", name: "Pix motorista", order: 40, tipo: "Pix" },
-      { id: "local-tag-ctf", name: "Tag CTF", order: 50, tipo: "Tag" },
-      { id: "local-sem-parar", name: "Sem Parar", order: 60, tipo: "Tag" }
+      { id: "local-cartao-credito", name: "Cart\xE3o de cr\xE9dito", order: 10, tipo: "Cart\xE3o" },
+      { id: "local-ctf-sem-parar", name: "CTF (Sem parar)", order: 20, tipo: "Tag" },
+      { id: "local-ticketlog", name: "TicketLog", order: 30, tipo: "Cart\xE3o" },
+      { id: "local-particular-reembolso", name: "Particular (Reembolso)", order: 40, tipo: "Reembolso" },
+      { id: "local-dinheiro-corporativo", name: "Dinheiro (Corporativo)", order: 50, tipo: "Dinheiro" },
+      { id: "local-faturado-plano-mensal", name: "Faturado (Plano mensal)", order: 60, tipo: "Faturado" }
     ],
     cities: []
   };
   var fallbackCategoryRules = {
-    Combust\u00EDvel: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
-    combustivel: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
+    Abastecimento: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
+    abastecimento: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
     Lavagem: { exigeVeiculo: true },
-    "Manuten\xE7\xE3o emergencial": { exigeVeiculo: true }
+    Manuten\u00E7\u00E3o: { exigeVeiculo: true }
   };
   function normalizeText3(value) {
     return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -34672,6 +34735,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/App.tsx
   var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
   var STORAGE_KEY = "app-motoristas-local-v1";
+  var AUTO_REFRESH_INTERVAL_MS = 6e4;
   function isSameDetail(left, right) {
     return Boolean(left && left.id === right.id && left.type === right.type);
   }
@@ -34736,6 +34800,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   var isDetailScreen = (screenName) => screenName === "detalhes" || screenName === "detalhesHistorico";
   var isTaskScreen = (screenName) => screenName === "receber" || screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
   var isCaptureScreen = (screenName) => screenName === "fotoReceber" || screenName === "previewFotoReceber" || screenName === "fotoManutencao" || screenName === "previewFotoManutencao" || screenName === "fotoGasto" || screenName === "previewFotoGasto" || screenName === "fotoColisao" || screenName === "previewFotoColisao" || screenName === "fotoSolicitacaoManutencao" || screenName === "previewFotoSolicitacaoManutencao";
+  var shouldAutoRefreshScreen = (screenName) => screenName === "inicio" || screenName === "servicos" || screenName === "historico" || screenName === "detalhes" || screenName === "detalhesHistorico";
   function getScreenMotion(current, previous) {
     const delta = SCREEN_DEPTH[current] - SCREEN_DEPTH[previous];
     if (previous === "inicio" && isListScreen(current)) {
@@ -35228,9 +35293,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "critical-error-actions", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("button", { type: "button", onClick: () => setCriticalError(""), children: "Entendi" }) })
       ] }) }) : null
     ] });
-    const refreshLocal = async (detailToRefresh) => {
+    const refreshLocal = async (detailToRefresh, options) => {
+      const silent = options?.silent === true;
       if (remoteMode) {
-        setToast("Atualizando Dataverse.");
+        if (!silent) setToast("Atualizando Dataverse.");
         try {
           const remote = await loadRemoteStore();
           setDriverContext(remote.driver);
@@ -35239,16 +35305,27 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             const refreshedDetail = findDetailByParams([...remote.agenda, ...remote.history], detailToRefresh.id, detailToRefresh.type) ?? await loadRemoteDetailByParams(detailToRefresh.dataverse?.id ?? detailToRefresh.id, detailToRefresh.type);
             if (refreshedDetail) setSelectedDetail(refreshedDetail);
           }
-          setToast("Atualizado do Dataverse.");
+          if (!silent) setToast("Atualizado do Dataverse.");
         } catch (error) {
           logAppError(error, "loadRemoteStore", "refresh");
-          setToast(error instanceof Error ? error.message : "Falha ao atualizar Dataverse.");
+          if (!silent || error instanceof Error) {
+            setToast(error instanceof Error ? error.message : "Falha ao atualizar Dataverse.");
+          }
         }
         return;
       }
       setStore((current) => ({ ...current }));
-      setToast("Atualizado localmente.");
+      if (!silent) setToast("Atualizado localmente.");
     };
+    (0, import_react50.useEffect)(() => {
+      if (!remoteMode || remoteOperation || !shouldAutoRefreshScreen(screen)) return;
+      const autoRefresh = () => {
+        if (document.hidden) return;
+        void refreshLocal(selectedDetail ?? void 0, { silent: true });
+      };
+      const timer = window.setInterval(autoRefresh, AUTO_REFRESH_INTERVAL_MS);
+      return () => window.clearInterval(timer);
+    }, [remoteMode, remoteOperation, screen, selectedDetail]);
     const resetLocal = () => {
       const next = initialStore();
       setStore(next);

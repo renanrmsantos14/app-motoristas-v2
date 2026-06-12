@@ -76,8 +76,8 @@ export type ExpenseValidationErrors = Partial<Record<keyof ExpenseDraft | "photo
 export const DEFAULT_EXPENSE_REFERENCE_DATA: ExpenseReferenceData = {
   categories: [
     {
-      id: "local-combustivel",
-      name: "Combustível",
+      id: "local-abastecimento",
+      name: "Abastecimento",
       order: 10,
       exigeVeiculo: true,
       exigeReserva: false,
@@ -85,9 +85,27 @@ export const DEFAULT_EXPENSE_REFERENCE_DATA: ExpenseReferenceData = {
       exigeLitros: true
     },
     {
-      id: "local-pedagio",
-      name: "Pedágio",
+      id: "local-almoco",
+      name: "Almoço",
       order: 20,
+      exigeVeiculo: false,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-aplicativos",
+      name: "Aplicativos",
+      order: 30,
+      exigeVeiculo: false,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-cafe",
+      name: "Café",
+      order: 40,
       exigeVeiculo: false,
       exigeReserva: false,
       exigeKm: false,
@@ -96,33 +114,15 @@ export const DEFAULT_EXPENSE_REFERENCE_DATA: ExpenseReferenceData = {
     {
       id: "local-estacionamento",
       name: "Estacionamento",
-      order: 30,
+      order: 50,
       exigeVeiculo: false,
       exigeReserva: false,
       exigeKm: false,
       exigeLitros: false
     },
     {
-      id: "local-lavagem",
-      name: "Lavagem",
-      order: 40,
-      exigeVeiculo: true,
-      exigeReserva: false,
-      exigeKm: false,
-      exigeLitros: false
-    },
-    {
-      id: "local-manutencao-emergencial",
-      name: "Manutenção emergencial",
-      order: 50,
-      exigeVeiculo: true,
-      exigeReserva: false,
-      exigeKm: false,
-      exigeLitros: false
-    },
-    {
-      id: "local-alimentacao",
-      name: "Alimentação",
+      id: "local-gastos-cliente",
+      name: "Gastos a pedido do cliente",
       order: 60,
       exigeVeiculo: false,
       exigeReserva: false,
@@ -139,7 +139,70 @@ export const DEFAULT_EXPENSE_REFERENCE_DATA: ExpenseReferenceData = {
       exigeLitros: false
     },
     {
+      id: "local-jantar",
+      name: "Jantar",
+      order: 80,
+      exigeVeiculo: false,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-lanche",
+      name: "Lanche",
+      order: 90,
+      exigeVeiculo: false,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-lavagem",
+      name: "Lavagem",
+      order: 100,
+      exigeVeiculo: true,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-locacao-carro",
+      name: "Locação de carro",
+      order: 110,
+      exigeVeiculo: false,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-manutencao",
+      name: "Manutenção",
+      order: 120,
+      exigeVeiculo: true,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
       id: "local-outros",
+      name: "Outros",
+      order: 130,
+      exigeVeiculo: false,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-pedagio",
+      name: "Pedágio",
+      order: 140,
+      exigeVeiculo: false,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
+    },
+    {
+      id: "local-outros-fallback",
       name: "Outros",
       order: 999,
       exigeVeiculo: false,
@@ -149,21 +212,21 @@ export const DEFAULT_EXPENSE_REFERENCE_DATA: ExpenseReferenceData = {
     }
   ],
   paymentMethods: [
-    { id: "local-cartao-empresa", name: "Cartão empresa", order: 10, tipo: "Cartão" },
-    { id: "local-cartao-motorista", name: "Cartão motorista", order: 20, tipo: "Cartão" },
-    { id: "local-dinheiro-motorista", name: "Dinheiro motorista", order: 30, tipo: "Dinheiro" },
-    { id: "local-pix-motorista", name: "Pix motorista", order: 40, tipo: "Pix" },
-    { id: "local-tag-ctf", name: "Tag CTF", order: 50, tipo: "Tag" },
-    { id: "local-sem-parar", name: "Sem Parar", order: 60, tipo: "Tag" }
+    { id: "local-cartao-credito", name: "Cartão de crédito", order: 10, tipo: "Cartão" },
+    { id: "local-ctf-sem-parar", name: "CTF (Sem parar)", order: 20, tipo: "Tag" },
+    { id: "local-ticketlog", name: "TicketLog", order: 30, tipo: "Cartão" },
+    { id: "local-particular-reembolso", name: "Particular (Reembolso)", order: 40, tipo: "Reembolso" },
+    { id: "local-dinheiro-corporativo", name: "Dinheiro (Corporativo)", order: 50, tipo: "Dinheiro" },
+    { id: "local-faturado-plano-mensal", name: "Faturado (Plano mensal)", order: 60, tipo: "Faturado" }
   ],
   cities: []
 };
 
 const fallbackCategoryRules: Record<string, Partial<ExpenseCategoryOption>> = {
-  Combustível: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
-  combustivel: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
+  Abastecimento: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
+  abastecimento: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
   Lavagem: { exigeVeiculo: true },
-  "Manutenção emergencial": { exigeVeiculo: true }
+  Manutenção: { exigeVeiculo: true }
 };
 
 function normalizeText(value: string) {

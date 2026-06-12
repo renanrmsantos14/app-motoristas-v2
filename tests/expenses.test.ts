@@ -13,8 +13,8 @@ import {
 const referenceData: ExpenseReferenceData = {
   categories: [
     {
-      id: "cat-combustivel",
-      name: "Combustível",
+      id: "cat-abastecimento",
+      name: "Abastecimento",
       order: 10,
       exigeVeiculo: true,
       exigeReserva: false,
@@ -22,8 +22,8 @@ const referenceData: ExpenseReferenceData = {
       exigeLitros: true
     },
     {
-      id: "cat-alimentacao",
-      name: "Alimentação",
+      id: "cat-almoco",
+      name: "Almoço",
       order: 20,
       exigeVeiculo: false,
       exigeReserva: false,
@@ -42,16 +42,16 @@ const referenceData: ExpenseReferenceData = {
   ],
   paymentMethods: [
     {
-      id: "pay-cartao-empresa",
-      name: "Cartão empresa",
+      id: "pay-cartao-credito",
+      name: "Cartão de crédito",
       order: 10,
       tipo: "Cartão"
     },
     {
-      id: "pay-pix-motorista",
-      name: "Pix motorista",
+      id: "pay-particular-reembolso",
+      name: "Particular (Reembolso)",
       order: 20,
-      tipo: "Pix"
+      tipo: "Reembolso"
     }
   ],
   cities: [
@@ -86,11 +86,11 @@ const photos: ExpensePhoto[] = [{ id: "photo-1", dataUrl: "data:image/jpeg;base6
 
 function baseDraft(overrides: Partial<ExpenseDraft> = {}): ExpenseDraft {
   return {
-    categoriaId: "cat-alimentacao",
+    categoriaId: "cat-almoco",
     veiculoId: "",
     valor: "R$ 50,00",
     dataGasto: "2026-06-09",
-    formaPagamentoId: "pay-cartao-empresa",
+    formaPagamentoId: "pay-cartao-credito",
     cidadeId: "city-sao-paulo",
     estabelecimento: "Padaria",
     descricao: "",
@@ -128,8 +128,8 @@ test("validateExpenseDraft exige campos base e comprovante sempre", () => {
 test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () => {
   const payload = buildExpenseCreatePayload({
     draft: baseDraft({
-      categoriaId: "cat-combustivel",
-      formaPagamentoId: "pay-pix-motorista",
+      categoriaId: "cat-abastecimento",
+      formaPagamentoId: "pay-particular-reembolso",
       cidadeId: "city-campinas",
       veiculoId: "vehicle-1",
       valor: "R$ 238,70",
@@ -157,7 +157,7 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
     }
   });
 
-  assert.equal(payload.cr40f_nome, "Combustível - 09/06/2026");
+  assert.equal(payload.cr40f_nome, "Abastecimento - 09/06/2026");
   assert.equal(payload.cr40f_valor, 238.7);
   assert.equal(payload.cr40f_datagasto, "2026-06-09T12:00:00.000Z");
   assert.equal(payload.cr40f_kminformado, 58230);
@@ -165,26 +165,26 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
   assert.equal(payload.cr40f_reembolsavel, undefined);
   assert.equal(payload.cr40f_statusfinanceiro, 100000000);
   assert.equal(payload.cr40f_statusanexo, 100000001);
-  assert.match(String(payload.cr40f_observacao), /Forma de pagamento: Pix motorista/);
+  assert.match(String(payload.cr40f_observacao), /Forma de pagamento: Particular \(Reembolso\)/);
   assert.match(String(payload.cr40f_observacao), /Cidade: Campinas - SP/);
   assert.match(String(payload.cr40f_observacao), /Pais: Brasil/);
   assert.match(String(payload.cr40f_observacao), /Litros: 42,5 L/);
   assert.match(String(payload.cr40f_observacao), /Comprovantes: 1/);
   assert.equal(payload["nav_motorista@odata.bind"], "/cr40f_funcionarioses(driver-1)");
   assert.equal(payload["nav_veiculo@odata.bind"], "/cr40f_veiculoses(vehicle-1)");
-  assert.equal(payload["nav_categoria@odata.bind"], "/cr40f_categoriadespesaoperacionals(cat-combustivel)");
-  assert.equal(payload["nav_formapagamento@odata.bind"], "/cr40f_formapagamentodespesas(pay-pix-motorista)");
+  assert.equal(payload["nav_categoria@odata.bind"], "/cr40f_categoriadespesaoperacionals(cat-abastecimento)");
+  assert.equal(payload["nav_formapagamento@odata.bind"], "/cr40f_formapagamentodespesas(pay-particular-reembolso)");
   assert.equal(payload["nav_cidade@odata.bind"], "/cr40f_cidades(city-campinas)");
 });
 
 test("validateExpenseDraft exige veiculo KM e litros so quando regra da categoria pede", () => {
-  assert.deepEqual(validateExpenseDraft(baseDraft({ categoriaId: "cat-combustivel" }), photos, referenceData), {
+  assert.deepEqual(validateExpenseDraft(baseDraft({ categoriaId: "cat-abastecimento" }), photos, referenceData), {
     veiculoId: "Selecione o veículo.",
     kmInformado: "Informe o KM.",
     litros: "Informe os litros."
   });
 
-  assert.deepEqual(validateExpenseDraft(baseDraft({ categoriaId: "cat-alimentacao" }), photos, referenceData), {});
+  assert.deepEqual(validateExpenseDraft(baseDraft({ categoriaId: "cat-almoco" }), photos, referenceData), {});
 });
 
 test("validateExpenseDraft nunca exige descricao", () => {

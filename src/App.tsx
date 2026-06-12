@@ -78,6 +78,7 @@ import { DEFAULT_EXPENSE_REFERENCE_DATA, buildExpenseCreatePayload, type Expense
 import type { DetailData, MaintenancePhotoKind, Screen } from "./types";
 
 const STORAGE_KEY = "app-motoristas-local-v1";
+const AUTO_REFRESH_INTERVAL_MS = 60_000;
 
 function isSameDetail(left: DetailData | undefined, right: DetailData) {
   return Boolean(left && left.id === right.id && left.type === right.type);
@@ -162,6 +163,12 @@ const isCaptureScreen = (screenName: Screen) =>
   screenName === "previewFotoColisao" ||
   screenName === "fotoSolicitacaoManutencao" ||
   screenName === "previewFotoSolicitacaoManutencao";
+const shouldAutoRefreshScreen = (screenName: Screen) =>
+  screenName === "inicio" ||
+  screenName === "servicos" ||
+  screenName === "historico" ||
+  screenName === "detalhes" ||
+  screenName === "detalhesHistorico";
 
 function getScreenMotion(current: Screen, previous: Screen) {
   const delta = SCREEN_DEPTH[current] - SCREEN_DEPTH[previous];
@@ -359,6 +366,10 @@ type RemoteOperation = {
   message: string;
   detailId?: string;
   phase: "loading" | "success";
+};
+
+type RefreshOptions = {
+  silent?: boolean;
 };
 
 function FlowProgressOverlay({ operation }: { operation: RemoteOperation }) {
@@ -741,9 +752,11 @@ function App() {
     </>
   );
 
-  const refreshLocal = async (detailToRefresh?: DetailData) => {
+  const refreshLocal = async (detailToRefresh?: DetailData, options?: RefreshOptions) => {
+    const silent = options?.silent === true;
+
     if (remoteMode) {
-      setToast("Atualizando Dataverse.");
+      if (!silent) setToast("Atualizando Dataverse.");
       try {
         const remote = await loadRemoteStore();
         setDriverContext(remote.driver);
@@ -754,16 +767,30 @@ function App() {
             await loadRemoteDetailByParams(detailToRefresh.dataverse?.id ?? detailToRefresh.id, detailToRefresh.type);
           if (refreshedDetail) setSelectedDetail(refreshedDetail);
         }
-        setToast("Atualizado do Dataverse.");
+        if (!silent) setToast("Atualizado do Dataverse.");
       } catch (error) {
         logAppError(error, "loadRemoteStore", "refresh");
-        setToast(error instanceof Error ? error.message : "Falha ao atualizar Dataverse.");
+        if (!silent || error instanceof Error) {
+          setToast(error instanceof Error ? error.message : "Falha ao atualizar Dataverse.");
+        }
       }
       return;
     }
     setStore((current) => ({ ...current }));
-    setToast("Atualizado localmente.");
+    if (!silent) setToast("Atualizado localmente.");
   };
+
+  useEffect(() => {
+    if (!remoteMode || remoteOperation || !shouldAutoRefreshScreen(screen)) return;
+
+    const autoRefresh = () => {
+      if (document.hidden) return;
+      void refreshLocal(selectedDetail ?? undefined, { silent: true });
+    };
+
+    const timer = window.setInterval(autoRefresh, AUTO_REFRESH_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [remoteMode, remoteOperation, screen, selectedDetail]);
 
   const resetLocal = () => {
     const next = initialStore();

@@ -25,14 +25,20 @@
   }
 
   const categories = [
-    ["Combustivel", true, false, true, true, 10, "Frota"],
-    ["Pedagio", false, false, false, false, 20, "Operacional"],
-    ["Estacionamento", false, false, false, false, 30, "Operacional"],
-    ["Lavagem", true, false, false, false, 40, "Frota"],
-    ["Manutencao emergencial", true, false, false, false, 50, "Frota"],
-    ["Alimentacao", false, false, false, false, 60, "Equipe"],
+    ["Abastecimento", true, false, true, true, 10, "Frota"],
+    ["Almoço", false, false, false, false, 20, "Equipe"],
+    ["Aplicativos", false, false, false, false, 30, "Operacional"],
+    ["Café", false, false, false, false, 40, "Equipe"],
+    ["Estacionamento", false, false, false, false, 50, "Operacional"],
+    ["Gastos a pedido do cliente", false, false, false, false, 60, "Cliente"],
     ["Hospedagem", false, false, false, false, 70, "Equipe"],
-    ["Outros", false, false, false, false, 999, "Outros"]
+    ["Jantar", false, false, false, false, 80, "Equipe"],
+    ["Lanche", false, false, false, false, 90, "Equipe"],
+    ["Lavagem", true, false, false, false, 100, "Frota"],
+    ["Locação de carro", false, false, false, false, 110, "Operacional"],
+    ["Manutenção", true, false, false, false, 120, "Frota"],
+    ["Outros", false, false, false, false, 130, "Outros"],
+    ["Pedágio", false, false, false, false, 140, "Operacional"]
   ];
 
   for (const [nome, exigeVeiculo, exigeReserva, exigeKm, exigeLitros, ordem, grupo] of categories) {
@@ -49,13 +55,12 @@
   }
 
   const paymentMethods = [
-    ["Cartao empresa", "Cartao", 10],
-    ["Cartao motorista", "Cartao", 20],
-    ["Dinheiro motorista", "Dinheiro", 30],
-    ["Pix motorista", "Pix", 40],
-    ["Tag CTF", "Tag", 50],
-    ["Sem Parar", "Tag", 60],
-    ["Outros", "Outros", 999]
+    ["Cartão de crédito", "Cartão", 10],
+    ["CTF (Sem parar)", "Tag", 20],
+    ["TicketLog", "Cartão", 30],
+    ["Particular (Reembolso)", "Reembolso", 40],
+    ["Dinheiro (Corporativo)", "Dinheiro", 50],
+    ["Faturado (Plano mensal)", "Faturado", 60]
   ];
 
   for (const [nome, tipo, ordem] of paymentMethods) {
