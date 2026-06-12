@@ -61,6 +61,8 @@ export function CollisionScreen({
   const thirdPhoneRef = useRef<HTMLInputElement | null>(null);
   const thirdPlateRef = useRef<HTMLInputElement | null>(null);
   const thirdVehicleRef = useRef<HTMLInputElement | null>(null);
+  const thirdDocumentRef = useRef<HTMLInputElement | null>(null);
+  const thirdInsuranceRef = useRef<HTMLInputElement | null>(null);
   const photosRef = useRef<HTMLDivElement | null>(null);
   const [errors, setErrors] = useState<CollisionValidationErrors>({});
   const isHitByThirdParty = draft.tipoOcorrencia === "bateram_em_mim";
@@ -95,6 +97,10 @@ export function CollisionScreen({
     if (nextErrors.descricao) return focusInvalidField(descriptionRef.current);
     if (hasThirdParty && nextErrors.terceiroNome) return focusInvalidField(thirdNameRef.current);
     if (hasThirdParty && nextErrors.terceiroTelefone) return focusInvalidField(thirdPhoneRef.current);
+    if (hasThirdParty && nextErrors.terceiroPlaca) return focusInvalidField(thirdPlateRef.current);
+    if (hasThirdParty && nextErrors.terceiroVeiculo) return focusInvalidField(thirdVehicleRef.current);
+    if (hasThirdParty && nextErrors.terceiroDocumento) return focusInvalidField(thirdDocumentRef.current);
+    if (hasThirdParty && nextErrors.terceiroSeguradora) return focusInvalidField(thirdInsuranceRef.current);
     if (requiredPhotos.some((photo) => nextErrors[photo.kind])) return focusInvalidField(photosRef.current);
     onSubmit(draft);
   };
@@ -120,7 +126,7 @@ export function CollisionScreen({
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
 
               <div className={`finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`}>
-                <label>Veículo Betinhos</label>
+                <label>Veículo da Betinhos</label>
                 <select
                   ref={vehicleRef}
                   aria-invalid={Boolean(errors.veiculoId)}
@@ -215,6 +221,8 @@ export function CollisionScreen({
                           terceiroTelefone: undefined,
                           terceiroPlaca: undefined,
                           terceiroVeiculo: undefined,
+                          terceiroDocumento: undefined,
+                          terceiroSeguradora: undefined,
                           danoTerceiro: undefined,
                           documentoTerceiro: undefined
                         }));
@@ -266,7 +274,7 @@ export function CollisionScreen({
                     ) : null}
                   </div>
 
-                  {!isHitByThirdParty ? <div className={`finalize-input-block ${errors.terceiroPlaca ? "is-invalid" : ""}`}>
+                  <div className={`finalize-input-block ${errors.terceiroPlaca ? "is-invalid" : ""}`}>
                     <label>Placa</label>
                     <input
                       ref={thirdPlateRef}
@@ -280,9 +288,9 @@ export function CollisionScreen({
                       }}
                     />
                     {errors.terceiroPlaca ? <div className="field-error">{errors.terceiroPlaca}</div> : null}
-                  </div> : null}
+                  </div>
 
-                  {!isHitByThirdParty ? <div className={`finalize-input-block ${errors.terceiroVeiculo ? "is-invalid" : ""}`}>
+                  <div className={`finalize-input-block ${errors.terceiroVeiculo ? "is-invalid" : ""}`}>
                     <label>Modelo/cor do veículo</label>
                     <input
                       ref={thirdVehicleRef}
@@ -296,16 +304,36 @@ export function CollisionScreen({
                       }}
                     />
                     {errors.terceiroVeiculo ? <div className="field-error">{errors.terceiroVeiculo}</div> : null}
-                  </div> : null}
+                  </div>
 
-                  {!isHitByThirdParty ? <div className="finalize-input-block">
+                  <div className={`finalize-input-block ${errors.terceiroDocumento ? "is-invalid" : ""}`}>
                     <label>CPF/CNH/RG</label>
-                    <input value={draft.terceiroDocumento} disabled={isSubmitting} onChange={(event) => updateDraft({ terceiroDocumento: event.target.value })} />
-                  </div> : null}
-                  {!isHitByThirdParty ? <div className="finalize-input-block">
+                    <input
+                      ref={thirdDocumentRef}
+                      aria-invalid={Boolean(errors.terceiroDocumento)}
+                      value={draft.terceiroDocumento}
+                      disabled={isSubmitting}
+                      onChange={(event) => {
+                        updateDraft({ terceiroDocumento: event.target.value });
+                        clearError("terceiroDocumento");
+                      }}
+                    />
+                    {errors.terceiroDocumento ? <div className="field-error">{errors.terceiroDocumento}</div> : null}
+                  </div>
+                  <div className={`finalize-input-block ${errors.terceiroSeguradora ? "is-invalid" : ""}`}>
                     <label>Seguradora</label>
-                    <input value={draft.terceiroSeguradora} disabled={isSubmitting} onChange={(event) => updateDraft({ terceiroSeguradora: event.target.value })} />
-                  </div> : null}
+                    <input
+                      ref={thirdInsuranceRef}
+                      aria-invalid={Boolean(errors.terceiroSeguradora)}
+                      value={draft.terceiroSeguradora}
+                      disabled={isSubmitting}
+                      onChange={(event) => {
+                        updateDraft({ terceiroSeguradora: event.target.value });
+                        clearError("terceiroSeguradora");
+                      }}
+                    />
+                    {errors.terceiroSeguradora ? <div className="field-error">{errors.terceiroSeguradora}</div> : null}
+                  </div>
                   {!isHitByThirdParty ? <div className="finalize-input-block">
                     <label>Observação do terceiro</label>
                     <textarea rows={3} value={draft.terceiroObservacao} disabled={isSubmitting} onChange={(event) => updateDraft({ terceiroObservacao: event.target.value })} />

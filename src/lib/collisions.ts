@@ -152,6 +152,10 @@ export function validateCollisionDraft(draft: CollisionDraft, photos: CollisionP
   if (hasThirdParty) {
     if (!cleanText(draft.terceiroNome)) errors.terceiroNome = "Informe o nome do terceiro.";
     if (!normalizePhone(draft.terceiroTelefone)) errors.terceiroTelefone = "Informe o WhatsApp/telefone.";
+    if (!cleanText(draft.terceiroPlaca)) errors.terceiroPlaca = "Informe a placa do terceiro.";
+    if (!cleanText(draft.terceiroVeiculo)) errors.terceiroVeiculo = "Informe modelo e cor do veiculo do terceiro.";
+    if (!cleanText(draft.terceiroDocumento)) errors.terceiroDocumento = "Informe CPF/CNH/RG do terceiro.";
+    if (!cleanText(draft.terceiroSeguradora)) errors.terceiroSeguradora = "Informe a seguradora do terceiro.";
   }
 
   for (const requiredPhoto of getRequiredCollisionPhotos(hasThirdParty)) {

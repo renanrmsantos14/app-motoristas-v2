@@ -28,6 +28,8 @@ function baseDraft(overrides: Partial<CollisionDraft> = {}): CollisionDraft {
     terceiroTelefone: "(11) 99999-8888",
     terceiroPlaca: "abc1d23",
     terceiroVeiculo: "Corolla prata",
+    terceiroDocumento: "123.456.789-09",
+    terceiroSeguradora: "Porto Seguro",
     ...overrides
   };
 }
@@ -53,18 +55,35 @@ test("validateCollisionDraft com terceiro exige dados e fotos do terceiro", () =
 
   assert.equal(errors.terceiroNome, undefined);
   assert.equal(thirdPartyErrors.terceiroNome, "Informe o nome do terceiro.");
-  assert.equal(thirdPartyErrors.terceiroPlaca, undefined);
-  assert.equal(thirdPartyErrors.terceiroVeiculo, undefined);
+  assert.equal(thirdPartyErrors.terceiroPlaca, "Informe a placa do terceiro.");
+  assert.equal(thirdPartyErrors.terceiroVeiculo, "Informe modelo e cor do veiculo do terceiro.");
+  assert.equal(thirdPartyErrors.terceiroDocumento, "Informe CPF/CNH/RG do terceiro.");
+  assert.equal(thirdPartyErrors.terceiroSeguradora, "Informe a seguradora do terceiro.");
   assert.equal(errors.danoTerceiro, undefined);
   assert.equal(thirdPartyErrors.danoTerceiro, "Adicione foto: CNH da pessoa.");
   assert.equal(thirdPartyErrors.documentoTerceiro, "Adicione foto: Documento do veículo da pessoa.");
 });
 
 test("validateCollisionDraft em Bateram em mim trata terceiro como obrigatorio", () => {
-  const errors = validateCollisionDraft({ ...baseDraft({ houveTerceiro: false }), terceiroNome: "", terceiroTelefone: "" }, photos.slice(0, 2));
+  const errors = validateCollisionDraft(
+    {
+      ...baseDraft({ houveTerceiro: false }),
+      terceiroNome: "",
+      terceiroTelefone: "",
+      terceiroPlaca: "",
+      terceiroVeiculo: "",
+      terceiroDocumento: "",
+      terceiroSeguradora: ""
+    },
+    photos.slice(0, 2)
+  );
 
   assert.equal(errors.terceiroNome, "Informe o nome do terceiro.");
   assert.equal(errors.terceiroTelefone, "Informe o WhatsApp/telefone.");
+  assert.equal(errors.terceiroPlaca, "Informe a placa do terceiro.");
+  assert.equal(errors.terceiroVeiculo, "Informe modelo e cor do veiculo do terceiro.");
+  assert.equal(errors.terceiroDocumento, "Informe CPF/CNH/RG do terceiro.");
+  assert.equal(errors.terceiroSeguradora, "Informe a seguradora do terceiro.");
   assert.equal(errors.danoTerceiro, "Adicione foto: CNH da pessoa.");
   assert.equal(errors.documentoTerceiro, "Adicione foto: Documento do veículo da pessoa.");
 });
@@ -117,7 +136,9 @@ test("buildCollisionCreatePayload sem terceiro limpa campos de terceiro", () => 
       terceiroNome: "Nao deve gravar",
       terceiroTelefone: "(11) 99999-8888",
       terceiroPlaca: "abc1d23",
-      terceiroVeiculo: "Corolla prata"
+      terceiroVeiculo: "Corolla prata",
+      terceiroDocumento: "123.456.789-09",
+      terceiroSeguradora: "Porto Seguro"
     }),
     photos: photos.slice(0, 2),
     motoristaId: "driver-1",
@@ -134,6 +155,8 @@ test("buildCollisionCreatePayload sem terceiro limpa campos de terceiro", () => 
   assert.equal(payload.cr40f_terceironome, "");
   assert.equal(payload.cr40f_terceirotelefone, "");
   assert.equal(payload.cr40f_terceiroplaca, "");
+  assert.equal(payload.cr40f_terceirodocumento, "");
+  assert.equal(payload.cr40f_terceiroseguradora, "");
 });
 
 test("buildCollisionWhatsAppUrl limpa telefone e codifica mensagem", () => {

@@ -8485,7 +8485,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.107","builtAt":"2026-06-12T11:25:16.174Z","builtAtLabel":"12/06/2026, 08:25"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.108","builtAt":"2026-06-12T11:34:03.810Z","builtAtLabel":"12/06/2026, 08:34"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -30175,6 +30175,10 @@ ${text}`);
     if (hasThirdParty) {
       if (!cleanText(draft.terceiroNome)) errors.terceiroNome = "Informe o nome do terceiro.";
       if (!normalizePhone(draft.terceiroTelefone)) errors.terceiroTelefone = "Informe o WhatsApp/telefone.";
+      if (!cleanText(draft.terceiroPlaca)) errors.terceiroPlaca = "Informe a placa do terceiro.";
+      if (!cleanText(draft.terceiroVeiculo)) errors.terceiroVeiculo = "Informe modelo e cor do veiculo do terceiro.";
+      if (!cleanText(draft.terceiroDocumento)) errors.terceiroDocumento = "Informe CPF/CNH/RG do terceiro.";
+      if (!cleanText(draft.terceiroSeguradora)) errors.terceiroSeguradora = "Informe a seguradora do terceiro.";
     }
     for (const requiredPhoto of getRequiredCollisionPhotos(hasThirdParty)) {
       if (!photos.some((photo) => photo.kind === requiredPhoto.kind && photo.dataUrl)) {
@@ -30256,6 +30260,8 @@ ${text}`);
     const thirdPhoneRef = (0, import_react25.useRef)(null);
     const thirdPlateRef = (0, import_react25.useRef)(null);
     const thirdVehicleRef = (0, import_react25.useRef)(null);
+    const thirdDocumentRef = (0, import_react25.useRef)(null);
+    const thirdInsuranceRef = (0, import_react25.useRef)(null);
     const photosRef = (0, import_react25.useRef)(null);
     const [errors, setErrors] = (0, import_react25.useState)({});
     const isHitByThirdParty = draft.tipoOcorrencia === "bateram_em_mim";
@@ -30287,6 +30293,10 @@ ${text}`);
       if (nextErrors.descricao) return focusInvalidField(descriptionRef.current);
       if (hasThirdParty && nextErrors.terceiroNome) return focusInvalidField(thirdNameRef.current);
       if (hasThirdParty && nextErrors.terceiroTelefone) return focusInvalidField(thirdPhoneRef.current);
+      if (hasThirdParty && nextErrors.terceiroPlaca) return focusInvalidField(thirdPlateRef.current);
+      if (hasThirdParty && nextErrors.terceiroVeiculo) return focusInvalidField(thirdVehicleRef.current);
+      if (hasThirdParty && nextErrors.terceiroDocumento) return focusInvalidField(thirdDocumentRef.current);
+      if (hasThirdParty && nextErrors.terceiroSeguradora) return focusInvalidField(thirdInsuranceRef.current);
       if (requiredPhotos.some((photo) => nextErrors[photo.kind])) return focusInvalidField(photosRef.current);
       onSubmit(draft);
     };
@@ -30309,7 +30319,7 @@ ${text}`);
             " campo(s) destacado(s)."
           ] }) : null,
           /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: `finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("label", { children: "Ve\xEDculo Betinhos" }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("label", { children: "Ve\xEDculo da Betinhos" }),
             /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
               "select",
               {
@@ -30414,6 +30424,8 @@ ${text}`);
                       terceiroTelefone: void 0,
                       terceiroPlaca: void 0,
                       terceiroVeiculo: void 0,
+                      terceiroDocumento: void 0,
+                      terceiroSeguradora: void 0,
                       danoTerceiro: void 0,
                       documentoTerceiro: void 0
                     }));
@@ -30462,7 +30474,7 @@ ${text}`);
               errors.terceiroTelefone ? /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "field-error", children: errors.terceiroTelefone }) : null,
               whatsappUrl ? /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("a", { className: "collision-whatsapp", href: whatsappUrl, target: "_blank", rel: "noreferrer", children: "Abrir WhatsApp" }) : null
             ] }),
-            !isHitByThirdParty ? /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: `finalize-input-block ${errors.terceiroPlaca ? "is-invalid" : ""}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: `finalize-input-block ${errors.terceiroPlaca ? "is-invalid" : ""}`, children: [
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("label", { children: "Placa" }),
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
                 "input",
@@ -30479,8 +30491,8 @@ ${text}`);
                 }
               ),
               errors.terceiroPlaca ? /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "field-error", children: errors.terceiroPlaca }) : null
-            ] }) : null,
-            !isHitByThirdParty ? /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: `finalize-input-block ${errors.terceiroVeiculo ? "is-invalid" : ""}`, children: [
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: `finalize-input-block ${errors.terceiroVeiculo ? "is-invalid" : ""}`, children: [
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("label", { children: "Modelo/cor do ve\xEDculo" }),
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
                 "input",
@@ -30497,15 +30509,41 @@ ${text}`);
                 }
               ),
               errors.terceiroVeiculo ? /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "field-error", children: errors.terceiroVeiculo }) : null
-            ] }) : null,
-            !isHitByThirdParty ? /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "finalize-input-block", children: [
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: `finalize-input-block ${errors.terceiroDocumento ? "is-invalid" : ""}`, children: [
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("label", { children: "CPF/CNH/RG" }),
-              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("input", { value: draft.terceiroDocumento, disabled: isSubmitting, onChange: (event) => updateDraft({ terceiroDocumento: event.target.value }) })
-            ] }) : null,
-            !isHitByThirdParty ? /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "finalize-input-block", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+                "input",
+                {
+                  ref: thirdDocumentRef,
+                  "aria-invalid": Boolean(errors.terceiroDocumento),
+                  value: draft.terceiroDocumento,
+                  disabled: isSubmitting,
+                  onChange: (event) => {
+                    updateDraft({ terceiroDocumento: event.target.value });
+                    clearError("terceiroDocumento");
+                  }
+                }
+              ),
+              errors.terceiroDocumento ? /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "field-error", children: errors.terceiroDocumento }) : null
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: `finalize-input-block ${errors.terceiroSeguradora ? "is-invalid" : ""}`, children: [
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("label", { children: "Seguradora" }),
-              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("input", { value: draft.terceiroSeguradora, disabled: isSubmitting, onChange: (event) => updateDraft({ terceiroSeguradora: event.target.value }) })
-            ] }) : null,
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+                "input",
+                {
+                  ref: thirdInsuranceRef,
+                  "aria-invalid": Boolean(errors.terceiroSeguradora),
+                  value: draft.terceiroSeguradora,
+                  disabled: isSubmitting,
+                  onChange: (event) => {
+                    updateDraft({ terceiroSeguradora: event.target.value });
+                    clearError("terceiroSeguradora");
+                  }
+                }
+              ),
+              errors.terceiroSeguradora ? /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "field-error", children: errors.terceiroSeguradora }) : null
+            ] }),
             !isHitByThirdParty ? /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "finalize-input-block", children: [
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("label", { children: "Observa\xE7\xE3o do terceiro" }),
               /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("textarea", { rows: 3, value: draft.terceiroObservacao, disabled: isSubmitting, onChange: (event) => updateDraft({ terceiroObservacao: event.target.value }) })
