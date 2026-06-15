@@ -7,6 +7,7 @@ param(
   [int] $MaxRows = 0,
   [int] $ThrottleEvery = 50,
   [int] $ThrottleMs = 1200,
+  [switch] $SyncReferenceData,
   [switch] $SkipReferenceSync,
   [switch] $DryRun,
   [string] $ReportPath = ""
@@ -72,13 +73,18 @@ function Parse-PositiveNumberOrNull([string] $Value) {
 function Convert-DateToDataverseIso([string] $Value) {
   $text = (Text $Value).Trim()
   $date = $null
-  if ([datetime]::TryParseExact($text, "yyyy-MM-dd", [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$date)) {
-    return ([datetime]::SpecifyKind([datetime]::new($date.Year, $date.Month, $date.Day, 12, 0, 0), [DateTimeKind]::Utc)).ToString("o")
+  try {
+    $date = [datetime]::ParseExact($text, "yyyy-MM-dd", [Globalization.CultureInfo]::InvariantCulture)
   }
-  if ([datetime]::TryParseExact($text, "dd/MM/yyyy", [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$date)) {
-    return ([datetime]::SpecifyKind([datetime]::new($date.Year, $date.Month, $date.Day, 12, 0, 0), [DateTimeKind]::Utc)).ToString("o")
+  catch {
+    try {
+      $date = [datetime]::ParseExact($text, "dd/MM/yyyy", [Globalization.CultureInfo]::InvariantCulture)
+    }
+    catch {
+      throw "Data invalida: $text"
+    }
   }
-  throw "Data invalida: $text"
+  return ([datetime]::SpecifyKind([datetime]::new($date.Year, $date.Month, $date.Day, 12, 0, 0), [DateTimeKind]::Utc)).ToString("o")
 }
 
 function Format-DateLabel([string] $Value) {
@@ -119,31 +125,44 @@ function Resolve-CanonicalLabel([hashtable] $AliasMap, [string] $RawValue, [stri
   return $Fallback
 }
 
+function Pt([int[]] $CodePoints) {
+  return -join ($CodePoints | ForEach-Object { [char]$_ })
+}
+
+$almoco = Pt @(65,108,109,111,231,111)
+$cafe = Pt @(67,97,102,233)
+$locacaoCarro = Pt @(76,111,99,97,231,227,111,32,100,101,32,99,97,114,114,111)
+$manutencao = Pt @(77,97,110,117,116,101,110,231,227,111)
+$pedagio = Pt @(80,101,100,225,103,105,111)
+$cartaoCredito = Pt @(67,97,114,116,227,111,32,100,101,32,99,114,233,100,105,116,111)
+$cartao = Pt @(67,97,114,116,227,111)
+
 $categoryConfigs = @(
   @{ name = "Abastecimento"; ordem = 10; grupo = "Frota"; exigeVeiculo = $true; exigeReserva = $false; exigeKm = $true; exigeLitros = $true; aliases = @("Abastecimento") },
-  @{ name = "Almoço"; ordem = 20; grupo = "Equipe"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Almoço") },
+  @{ name = $almoco; ordem = 20; grupo = "Equipe"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @($almoco) },
   @{ name = "Aplicativos"; ordem = 30; grupo = "Operacional"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Aplicativos") },
-  @{ name = "Café"; ordem = 40; grupo = "Equipe"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Café") },
+  @{ name = $cafe; ordem = 40; grupo = "Equipe"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @($cafe) },
   @{ name = "Estacionamento"; ordem = 50; grupo = "Operacional"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Estacionamento", "Estacionamento ") },
   @{ name = "Gastos a pedido do cliente"; ordem = 60; grupo = "Cliente"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Gastos a pedido do cliente") },
   @{ name = "Hospedagem"; ordem = 70; grupo = "Equipe"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Hospedagem") },
   @{ name = "Jantar"; ordem = 80; grupo = "Equipe"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Jantar") },
   @{ name = "Lanche"; ordem = 90; grupo = "Equipe"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Lanche") },
   @{ name = "Lavagem"; ordem = 100; grupo = "Frota"; exigeVeiculo = $true; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Lavagem") },
-  @{ name = "Locação de carro"; ordem = 110; grupo = "Operacional"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Locação de carro") },
-  @{ name = "Manutenção"; ordem = 120; grupo = "Frota"; exigeVeiculo = $true; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Manutenção") },
+  @{ name = $locacaoCarro; ordem = 110; grupo = "Operacional"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @($locacaoCarro) },
+  @{ name = $manutencao; ordem = 120; grupo = "Frota"; exigeVeiculo = $true; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @($manutencao) },
   @{ name = "Outros"; ordem = 130; grupo = "Outros"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Outros", "Outros (Escreva no item 9)", "Pindamonhangaba", "Pindamonhangaba ", "sjc") },
-  @{ name = "Pedágio"; ordem = 140; grupo = "Operacional"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @("Pedágio", "Pedágio ") }
+  @{ name = $pedagio; ordem = 140; grupo = "Operacional"; exigeVeiculo = $false; exigeReserva = $false; exigeKm = $false; exigeLitros = $false; aliases = @($pedagio, "$pedagio ") }
 )
 
 $paymentMethodConfigs = @(
-  @{ name = "Cartão de crédito"; ordem = 10; tipo = "Cartão"; aliases = @("Cartão de crédito") },
+  @{ name = $cartaoCredito; ordem = 10; tipo = $cartao; aliases = @($cartaoCredito) },
   @{ name = "CTF (Sem parar)"; ordem = 20; tipo = "Tag"; aliases = @("CTF (Sem parar)") },
-  @{ name = "TicketLog"; ordem = 30; tipo = "Cartão"; aliases = @("TicketLog") },
+  @{ name = "TicketLog"; ordem = 30; tipo = $cartao; aliases = @("TicketLog") },
   @{ name = "Particular (Reembolso)"; ordem = 40; tipo = "Reembolso"; aliases = @("Particular (Reembolso)") },
   @{ name = "Dinheiro (Corporativo)"; ordem = 50; tipo = "Dinheiro"; aliases = @("Dinheiro (Corporativo)") },
   @{ name = "Faturado (Plano mensal)"; ordem = 60; tipo = "Faturado"; aliases = @("Faturado (Plano mensal)") }
 )
+
 
 $categoryAliasMap = @{}
 foreach ($config in $categoryConfigs) {
@@ -224,7 +243,8 @@ function Invoke-Dataverse([string] $Method, [string] $Path, $Body = $null) {
       return Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers
     }
     $json = $Body | ConvertTo-Json -Depth 20
-    return Invoke-RestMethod -Method $Method -Uri $uri -Headers $jsonHeaders -Body $json
+    $utf8Body = [System.Text.Encoding]::UTF8.GetBytes($json)
+    return Invoke-RestMethod -Method $Method -Uri $uri -Headers $jsonHeaders -Body $utf8Body
   }
   catch {
     $responseText = ""
@@ -284,8 +304,12 @@ function Resolve-LookupNavigationNames() {
 function Sync-ExpenseReferenceData() {
   Write-Step "Sincronizando referencias."
   $existingCategories = @{}
-  foreach ($item in Get-AllDataverseRows "/cr40f_categoriadespesaoperacionals?`$select=cr40f_categoriadespesaoperacionalid,cr40f_nome&`$top=5000") {
+  $existingCategoriesByOrder = @{}
+  foreach ($item in Get-AllDataverseRows "/cr40f_categoriadespesaoperacionals?`$select=cr40f_categoriadespesaoperacionalid,cr40f_nome,cr40f_ordem&`$top=5000") {
     $existingCategories[(Normalize-Text (Text $item.cr40f_nome))] = $item
+    if ($null -ne $item.cr40f_ordem -and -not $existingCategoriesByOrder.ContainsKey([int]$item.cr40f_ordem)) {
+      $existingCategoriesByOrder[[int]$item.cr40f_ordem] = $item
+    }
   }
   foreach ($config in $categoryConfigs) {
     $payload = @{
@@ -301,14 +325,20 @@ function Sync-ExpenseReferenceData() {
     $key = Normalize-Text ([string]$config.name)
     if ($existingCategories.ContainsKey($key)) {
       Invoke-Dataverse "PATCH" "/cr40f_categoriadespesaoperacionals($($existingCategories[$key].cr40f_categoriadespesaoperacionalid))" $payload | Out-Null
+    } elseif ($existingCategoriesByOrder.ContainsKey([int]$config.ordem)) {
+      Invoke-Dataverse "PATCH" "/cr40f_categoriadespesaoperacionals($($existingCategoriesByOrder[[int]$config.ordem].cr40f_categoriadespesaoperacionalid))" $payload | Out-Null
     } else {
       Invoke-Dataverse "POST" "/cr40f_categoriadespesaoperacionals" $payload | Out-Null
     }
   }
 
   $existingPayments = @{}
-  foreach ($item in Get-AllDataverseRows "/cr40f_formapagamentodespesas?`$select=cr40f_formapagamentodespesaid,cr40f_nome&`$top=5000") {
+  $existingPaymentsByOrder = @{}
+  foreach ($item in Get-AllDataverseRows "/cr40f_formapagamentodespesas?`$select=cr40f_formapagamentodespesaid,cr40f_nome,cr40f_ordem&`$top=5000") {
     $existingPayments[(Normalize-Text (Text $item.cr40f_nome))] = $item
+    if ($null -ne $item.cr40f_ordem -and -not $existingPaymentsByOrder.ContainsKey([int]$item.cr40f_ordem)) {
+      $existingPaymentsByOrder[[int]$item.cr40f_ordem] = $item
+    }
   }
   foreach ($config in $paymentMethodConfigs) {
     $payload = @{
@@ -320,6 +350,8 @@ function Sync-ExpenseReferenceData() {
     $key = Normalize-Text ([string]$config.name)
     if ($existingPayments.ContainsKey($key)) {
       Invoke-Dataverse "PATCH" "/cr40f_formapagamentodespesas($($existingPayments[$key].cr40f_formapagamentodespesaid))" $payload | Out-Null
+    } elseif ($existingPaymentsByOrder.ContainsKey([int]$config.ordem)) {
+      Invoke-Dataverse "PATCH" "/cr40f_formapagamentodespesas($($existingPaymentsByOrder[[int]$config.ordem].cr40f_formapagamentodespesaid))" $payload | Out-Null
     } else {
       Invoke-Dataverse "POST" "/cr40f_formapagamentodespesas" $payload | Out-Null
     }
@@ -371,7 +403,7 @@ function Build-VehicleIndex($Vehicles) {
 }
 
 function Resolve-Vehicle($Row, $VehicleIndex) {
-  $rawVehicle = Get-RowValue $Row "Veículo"
+  $rawVehicle = Get-RowValue $Row (Pt @(86,101,237,99,117,108,111))
   $plate = Extract-Plate $rawVehicle
   if ($plate -and $VehicleIndex.byPlate.ContainsKey($plate)) {
     return $VehicleIndex.byPlate[$plate]
@@ -423,21 +455,37 @@ if ($MaxRows -gt 0) {
 
 Write-Step "CSV carregado: total=$($rows.Count) selecionado=$($selectedRows.Count)"
 
-if (-not $SkipReferenceSync) {
+if ($SyncReferenceData -and -not $SkipReferenceSync) {
   Sync-ExpenseReferenceData
+} else {
+  Write-Step "Referencias: leitura apenas. Use -SyncReferenceData para atualizar categorias/formas."
 }
 
 $lookupNames = Resolve-LookupNavigationNames
-$categories = Get-AllDataverseRows "/cr40f_categoriadespesaoperacionals?`$select=cr40f_categoriadespesaoperacionalid,cr40f_nome&`$top=5000"
-$paymentMethods = Get-AllDataverseRows "/cr40f_formapagamentodespesas?`$select=cr40f_formapagamentodespesaid,cr40f_nome&`$top=5000"
+$categories = Get-AllDataverseRows "/cr40f_categoriadespesaoperacionals?`$select=cr40f_categoriadespesaoperacionalid,cr40f_nome,cr40f_ordem&`$top=5000"
+$paymentMethods = Get-AllDataverseRows "/cr40f_formapagamentodespesas?`$select=cr40f_formapagamentodespesaid,cr40f_nome,cr40f_ordem&`$top=5000"
 $drivers = Get-AllDataverseRows "/cr40f_funcionarioses?`$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft&`$top=5000"
 $vehicles = Get-AllDataverseRows "/cr40f_veiculoses?`$select=cr40f_veiculosid,cr40f_placa,cr40f_modelo,cr40f_marca&`$top=5000"
 $cities = Get-AllDataverseRows "/cr40f_cidades?`$select=cr40f_cidadeid,cr40f_name,cr40f_nome,cr40f_uf,cr40f_pais&`$top=5000"
 
 $categoryByName = @{}
-foreach ($category in $categories) { $categoryByName[(Normalize-Text (Text $category.cr40f_nome))] = $category }
+$categoryConfigByOrder = @{}
+foreach ($config in $categoryConfigs) { $categoryConfigByOrder[[int]$config.ordem] = [string]$config.name }
+foreach ($category in $categories) {
+  $categoryByName[(Normalize-Text (Text $category.cr40f_nome))] = $category
+  if ($null -ne $category.cr40f_ordem -and $categoryConfigByOrder.ContainsKey([int]$category.cr40f_ordem)) {
+    $categoryByName[(Normalize-Text $categoryConfigByOrder[[int]$category.cr40f_ordem])] = $category
+  }
+}
 $paymentByName = @{}
-foreach ($payment in $paymentMethods) { $paymentByName[(Normalize-Text (Text $payment.cr40f_nome))] = $payment }
+$paymentConfigByOrder = @{}
+foreach ($config in $paymentMethodConfigs) { $paymentConfigByOrder[[int]$config.ordem] = [string]$config.name }
+foreach ($payment in $paymentMethods) {
+  $paymentByName[(Normalize-Text (Text $payment.cr40f_nome))] = $payment
+  if ($null -ne $payment.cr40f_ordem -and $paymentConfigByOrder.ContainsKey([int]$payment.cr40f_ordem)) {
+    $paymentByName[(Normalize-Text $paymentConfigByOrder[[int]$payment.cr40f_ordem])] = $payment
+  }
+}
 $driverIndexes = Build-DriverIndexes $drivers
 $vehicleIndex = Build-VehicleIndex $vehicles
 $cityIndex = Build-CityIndex $cities
@@ -492,9 +540,9 @@ foreach ($row in $selectedRows) {
   try {
     $rawCategoryValue = Get-RowValue $row "Tipo do gasto"
     $rawPaymentValue = Get-RowValue $row "Pago com"
-    $rawObservationValue = Get-RowValue $row "Observação em geral"
+    $rawObservationValue = Get-RowValue $row (Pt @(79,98,115,101,114,118,97,231,227,111,32,101,109,32,103,101,114,97,108))
     $rawHospedagemValue = Get-RowValue $row "Em caso de hospedagem, envie a nota fiscal."
-    $rawVehicleValue = Get-RowValue $row "Veículo"
+    $rawVehicleValue = Get-RowValue $row (Pt @(86,101,237,99,117,108,111))
     $rawNomeValue = Get-RowValue $row "Nome"
     $rawEmailValue = Get-RowValue $row "Email"
     $rawCidadeValue = Get-RowValue $row "Cidade"
@@ -546,15 +594,15 @@ foreach ($row in $selectedRows) {
     $rawCategory = $rawCategoryValue.Trim()
     $rawPayment = $rawPaymentValue.Trim()
     $observation = Join-NonEmptyLines @(
-      "Importado de Relatório de despesas CSV.",
+      "Importado de Relatorio de despesas CSV.",
       $(if ($csvId) { "ID CSV: $csvId" }),
       "Motorista CSV: $rawNomeValue <$rawEmailValue>",
       "Cidade CSV: $($rawCidadeValue.Trim())",
       $(if ($rawCategory -and $rawCategory -ne $canonicalCategory) { "Tipo original CSV: $rawCategory" }),
       $(if ($rawPayment -and $rawPayment -ne $canonicalPayment) { "Pagamento original CSV: $rawPayment" }),
-      $(if (-not [string]::IsNullOrWhiteSpace($rawObservationValue)) { "Observação CSV: $($rawObservationValue.Trim())" }),
+      $(if (-not [string]::IsNullOrWhiteSpace($rawObservationValue)) { "Observacao CSV: $($rawObservationValue.Trim())" }),
       $(if (-not [string]::IsNullOrWhiteSpace($rawHospedagemValue)) { "Hospedagem/NF CSV: $($rawHospedagemValue.Trim())" }),
-      $(if ($vehicle) { "Veículo CSV: $($rawVehicleValue.Trim())" }),
+      $(if ($vehicle) { "Veiculo CSV: $($rawVehicleValue.Trim())" }),
       "Forma de pagamento: $canonicalPayment",
       "Categoria: $canonicalCategory"
     )

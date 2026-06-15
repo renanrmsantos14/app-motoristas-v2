@@ -1,0 +1,181 @@
+﻿{
+    "csvPath":  "C:\\Users\\mendo\\Documents\\Relatório de despesas CÓPIA.csv",
+    "environmentUrl":  "https://org23b93544.crm2.dynamics.com/",
+    "dryRun":  true,
+    "startedAt":  "2026-06-12T16:29:45.1740412-03:00",
+    "selectedRowCount":  20,
+    "created":  [
+
+                ],
+    "skipped":  [
+
+                ],
+    "failed":  [
+                   {
+                       "row":  1,
+                       "csvId":  "11225",
+                       "nome":  "Danilo Novaes",
+                       "tipo":  "Jantar",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   },
+                   {
+                       "row":  2,
+                       "csvId":  "11227",
+                       "nome":  "Danilo Novaes",
+                       "tipo":  "Café",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Café"
+                   },
+                   {
+                       "row":  3,
+                       "csvId":  "11489",
+                       "nome":  "Marcos Vinicius Menecucci",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  4,
+                       "csvId":  "11218",
+                       "nome":  "Mauricio Amaral",
+                       "tipo":  "Abastecimento",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   },
+                   {
+                       "row":  5,
+                       "csvId":  "11219",
+                       "nome":  "Isael Neto",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  6,
+                       "csvId":  "11220",
+                       "nome":  "Isael Neto",
+                       "tipo":  "Café",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Café"
+                   },
+                   {
+                       "row":  7,
+                       "csvId":  "11490",
+                       "nome":  "Marcos Vinicius Menecucci",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  8,
+                       "csvId":  "11470",
+                       "nome":  "Marcos Vinicius Menecucci",
+                       "tipo":  "Café",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Café"
+                   },
+                   {
+                       "row":  9,
+                       "csvId":  "11223",
+                       "nome":  "Mauricio Amaral",
+                       "tipo":  "Lavagem",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   },
+                   {
+                       "row":  10,
+                       "csvId":  "11224",
+                       "nome":  "Danilo Novaes",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  11,
+                       "csvId":  "11226",
+                       "nome":  "Danilo Novaes",
+                       "tipo":  "Abastecimento",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   },
+                   {
+                       "row":  12,
+                       "csvId":  "11213",
+                       "nome":  "Washington Santos",
+                       "tipo":  "Outros (Escreva no item 9)",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   },
+                   {
+                       "row":  13,
+                       "csvId":  "11214",
+                       "nome":  "Mauricio Amaral",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  14,
+                       "csvId":  "11215",
+                       "nome":  "Isael Neto",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  15,
+                       "csvId":  "11216",
+                       "nome":  "Isael Neto",
+                       "tipo":  "Outros (Escreva no item 9)",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   },
+                   {
+                       "row":  16,
+                       "csvId":  "11217",
+                       "nome":  "Danilo Novaes",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  17,
+                       "csvId":  "11208",
+                       "nome":  "Washington Santos",
+                       "tipo":  "Lavagem",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   },
+                   {
+                       "row":  18,
+                       "csvId":  "11209",
+                       "nome":  "Washington Santos",
+                       "tipo":  "Almoço",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Almoço"
+                   },
+                   {
+                       "row":  19,
+                       "csvId":  "11195",
+                       "nome":  "Isael Neto",
+                       "tipo":  "Café",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Categoria nao encontrada no Dataverse: Café"
+                   },
+                   {
+                       "row":  20,
+                       "csvId":  "11196",
+                       "nome":  "Isael Neto",
+                       "tipo":  "Lavagem",
+                       "pagamento":  "Cartão de crédito",
+                       "error":  "Forma de pagamento nao encontrada no Dataverse: Cartão de crédito"
+                   }
+               ],
+    "finishedAt":  "2026-06-12T16:29:45.2570587-03:00",
+    "summary":  {
+                    "created":  0,
+                    "skipped":  0,
+                    "failed":  20
+                }
+}

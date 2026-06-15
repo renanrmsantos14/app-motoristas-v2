@@ -41,7 +41,6 @@ function focusInvalidField(element: HTMLElement | null) {
 }
 
 function FinalizeActions({ onNone, onConfirm, submitState }: { onNone: () => void; onConfirm: () => void; submitState: FlowSubmitState }) {
-  const isSubmitting = submitState !== "idle";
   return (
     <div className="finalize-actions">
       <FlowSubmitButton className="finalize-secondary" idleLabel="Não tenho" state={submitState} onClick={onNone} />

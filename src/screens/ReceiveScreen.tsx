@@ -12,6 +12,8 @@ type ReceiveScreenProps = {
   onPreviewPhoto: (photoId: string) => void;
   onBack: () => void;
   onContinue: () => void;
+  onGeneratePersonalReceipt?: () => void;
+  canGeneratePersonalReceipt?: boolean;
   submitState?: FlowSubmitState;
 };
 
@@ -27,6 +29,8 @@ export function ReceiveScreen({
   onPreviewPhoto,
   onBack,
   onContinue,
+  onGeneratePersonalReceipt,
+  canGeneratePersonalReceipt = false,
   submitState = "idle"
 }: ReceiveScreenProps) {
   const isSubmitting = submitState !== "idle";
@@ -47,6 +51,16 @@ export function ReceiveScreen({
       return;
     }
     onContinue();
+  };
+
+  const generatePersonalReceipt = () => {
+    if (isSubmitting) return;
+    if (photos.length === 0) {
+      setPhotosError("Adicione ao menos um comprovante para gerar o recibo.");
+      focusInvalidField(photosRef.current);
+      return;
+    }
+    onGeneratePersonalReceipt?.();
   };
 
   return (

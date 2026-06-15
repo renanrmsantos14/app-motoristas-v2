@@ -1,6 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { agendaMock, historyMock } from "./data/mockData";
+import {
+  findFirstPendingDetail,
+  getInitialDetail,
+  getInitialParams,
+  getVoucherDraftKey,
+  initialStore,
+  isSameDetail,
+  loadStore,
+  STORAGE_KEY
+} from "./app/bootstrap";
+import {
+  getServiceTaskBackScreen,
+  hasReceiveProofs,
+  hasUploadedReceiveProofs,
+  shouldRequireReceiveStep,
+  shouldRouteServiceToVoucher
+} from "./app/detailFlow";
+import { AUTO_REFRESH_INTERVAL_MS, getScreenMotion, shouldAutoRefreshScreen } from "./app/navigation";
 import {
   cancelServiceRemote,
   assertCollisionSchemaReadyRemote,
@@ -77,290 +94,6 @@ import {
 import { DEFAULT_EXPENSE_REFERENCE_DATA, buildExpenseCreatePayload, type ExpenseDraft, type ExpensePhoto, type ExpenseReferenceData } from "./lib/expenses";
 import type { DetailData, MaintenancePhotoKind, Screen } from "./types";
 
-const STORAGE_KEY = "app-motoristas-local-v1";
-const AUTO_REFRESH_INTERVAL_MS = 60_000;
-
-function isSameDetail(left: DetailData | undefined, right: DetailData) {
-  return Boolean(left && left.id === right.id && left.type === right.type);
-}
-
-function findFirstPendingDetail(agenda: LocalStore["agenda"]) {
-  return agenda.find((item) => item.tipo !== "HEADER" && item.detail)?.detail;
-}
-
-const SCREEN_DEPTH: Record<Screen, number> = {
-  inicio: 0,
-  servicos: 1,
-  historico: 1,
-  detalhes: 2,
-  detalhesHistorico: 2,
-  receber: 3,
-  voucher: 3,
-  finalizar: 3,
-  gastos: 1,
-  fotoReceber: 4,
-  previewFotoReceber: 5,
-  fotoGasto: 2,
-  previewFotoGasto: 3,
-  colisoesInicio: 1,
-  colisoes: 2,
-  fotoColisao: 3,
-  previewFotoColisao: 4,
-  solicitarManutencao: 1,
-  fotoSolicitacaoManutencao: 2,
-  previewFotoSolicitacaoManutencao: 3,
-  canceladoLocal: 3,
-  assinatura: 4,
-  fotoManutencao: 4,
-  previewFotoManutencao: 5
-};
-
-const drillSpring = {
-  type: "spring" as const,
-  stiffness: 540,
-  damping: 44,
-  mass: 0.58
-};
-
-const settleSpring = {
-  type: "spring" as const,
-  stiffness: 620,
-  damping: 48,
-  mass: 0.52
-};
-
-const sheetSpring = {
-  type: "spring" as const,
-  stiffness: 680,
-  damping: 54,
-  mass: 0.48
-};
-
-const focusSpring = {
-  type: "spring" as const,
-  stiffness: 760,
-  damping: 56,
-  mass: 0.42
-};
-
-const fastFade = {
-  duration: 0.16,
-  ease: "easeOut" as const
-};
-
-const isListScreen = (screenName: Screen) => screenName === "servicos" || screenName === "historico" || screenName === "gastos" || screenName === "colisoesInicio";
-const isDetailScreen = (screenName: Screen) => screenName === "detalhes" || screenName === "detalhesHistorico";
-const isTaskScreen = (screenName: Screen) =>
-  screenName === "receber" || screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
-const isCaptureScreen = (screenName: Screen) =>
-  screenName === "fotoReceber" ||
-  screenName === "previewFotoReceber" ||
-  screenName === "fotoManutencao" ||
-  screenName === "previewFotoManutencao" ||
-  screenName === "fotoGasto" ||
-  screenName === "previewFotoGasto" ||
-  screenName === "fotoColisao" ||
-  screenName === "previewFotoColisao" ||
-  screenName === "fotoSolicitacaoManutencao" ||
-  screenName === "previewFotoSolicitacaoManutencao";
-const shouldAutoRefreshScreen = (screenName: Screen) =>
-  screenName === "inicio" ||
-  screenName === "servicos" ||
-  screenName === "historico" ||
-  screenName === "detalhes" ||
-  screenName === "detalhesHistorico";
-
-function getScreenMotion(current: Screen, previous: Screen) {
-  const delta = SCREEN_DEPTH[current] - SCREEN_DEPTH[previous];
-
-  if (previous === "inicio" && isListScreen(current)) {
-    return {
-      kind: "module-open",
-      origin: "50% 12%",
-      initial: { opacity: 0, y: 18, scale: 0.986, filter: "blur(2px)" },
-      exit: { opacity: 0, y: -8, scale: 0.998, filter: "blur(1px)" },
-      transition: settleSpring
-    };
-  }
-
-  if (current === "inicio") {
-    return {
-      kind: "home",
-      origin: "50% 0%",
-      initial: { opacity: 0, y: -10, scale: 0.994, filter: "blur(1px)" },
-      exit: { opacity: 0, y: 12, scale: 0.99, filter: "blur(2px)" },
-      transition: fastFade
-    };
-  }
-
-  if (isListScreen(previous) && isDetailScreen(current)) {
-    return {
-      kind: "drill-in",
-      origin: "100% 50%",
-      initial: { opacity: 0, x: 26, scale: 0.992, filter: "blur(1px)" },
-      exit: { opacity: 0, x: -14, scale: 0.996, filter: "blur(1px)" },
-      transition: drillSpring
-    };
-  }
-
-  if (isDetailScreen(previous) && isListScreen(current)) {
-    return {
-      kind: "drill-out",
-      origin: "0% 50%",
-      initial: { opacity: 0, x: -20, scale: 0.996, filter: "blur(1px)" },
-      exit: { opacity: 0, x: 20, scale: 0.992, filter: "blur(1px)" },
-      transition: settleSpring
-    };
-  }
-
-  if (isDetailScreen(previous) && isTaskScreen(current)) {
-    return {
-      kind: "task-open",
-      origin: "50% 100%",
-      initial: { opacity: 0, y: 24, scale: 0.982, filter: "blur(2px)" },
-      exit: { opacity: 0, y: -8, scale: 0.996, filter: "blur(1px)" },
-      transition: sheetSpring
-    };
-  }
-
-  if (isTaskScreen(previous) && isDetailScreen(current)) {
-    return {
-      kind: "task-close",
-      origin: "50% 40%",
-      initial: { opacity: 0, y: -12, scale: 0.996, filter: "blur(1px)" },
-      exit: { opacity: 0, y: 22, scale: 0.986, filter: "blur(1px)" },
-      transition: settleSpring
-    };
-  }
-
-  if (previous === "voucher" && current === "assinatura") {
-    return {
-      kind: "focus-in",
-      origin: "50% 72%",
-      initial: { opacity: 0, y: 12, scale: 0.968, filter: "blur(2px)" },
-      exit: { opacity: 0, y: -4, scale: 1.012, filter: "blur(1px)" },
-      transition: focusSpring
-    };
-  }
-
-  if (previous === "assinatura" && current === "voucher") {
-    return {
-      kind: "focus-out",
-      origin: "50% 72%",
-      initial: { opacity: 0, y: -8, scale: 1.012, filter: "blur(1px)" },
-      exit: { opacity: 0, y: 12, scale: 0.968, filter: "blur(1px)" },
-      transition: focusSpring
-    };
-  }
-
-  if (previous === "finalizar" && current === "fotoManutencao") {
-    return {
-      kind: "capture-open",
-      origin: "50% 88%",
-      initial: { opacity: 0, y: 28, scale: 0.976, filter: "blur(2px)" },
-      exit: { opacity: 0, y: -6, scale: 0.998, filter: "blur(1px)" },
-      transition: sheetSpring
-    };
-  }
-
-  if (previous === "fotoManutencao" && current === "previewFotoManutencao") {
-    return {
-      kind: "capture-preview",
-      origin: "50% 50%",
-      initial: { opacity: 0, scale: 1.018, filter: "blur(2px)" },
-      exit: { opacity: 0, scale: 0.982, filter: "blur(1px)" },
-      transition: focusSpring
-    };
-  }
-
-  if (isCaptureScreen(previous) && current === "finalizar") {
-    return {
-      kind: "capture-close",
-      origin: "50% 84%",
-      initial: { opacity: 0, y: -10, scale: 0.996, filter: "blur(1px)" },
-      exit: { opacity: 0, y: 24, scale: 0.982, filter: "blur(1px)" },
-      transition: settleSpring
-    };
-  }
-
-  if (isTaskScreen(previous) && current === "historico") {
-    return {
-      kind: "complete",
-      origin: "50% 28%",
-      initial: { opacity: 0, y: 18, scale: 0.99, filter: "blur(2px)" },
-      exit: { opacity: 0, y: -12, scale: 0.996, filter: "blur(1px)" },
-      transition: settleSpring
-    };
-  }
-
-  if (delta > 0) {
-    return {
-      kind: "forward",
-      origin: "100% 50%",
-      initial: { opacity: 0, x: 22, scale: 0.994, filter: "blur(1px)" },
-      exit: { opacity: 0, x: -12, scale: 0.998, filter: "blur(1px)" },
-      transition: drillSpring
-    };
-  }
-
-  if (delta < 0) {
-    return {
-      kind: "back",
-      origin: "0% 50%",
-      initial: { opacity: 0, x: -16, scale: 0.998, filter: "blur(1px)" },
-      exit: { opacity: 0, x: 18, scale: 0.994, filter: "blur(1px)" },
-      transition: settleSpring
-    };
-  }
-
-  return {
-    kind: "neutral",
-    origin: "50% 50%",
-    initial: { opacity: 0, y: 8, scale: 0.998, filter: "blur(1px)" },
-    exit: { opacity: 0, y: -6, scale: 0.998, filter: "blur(1px)" },
-    transition: settleSpring
-  };
-}
-
-function initialStore(): LocalStore {
-  return {
-    agenda: agendaMock,
-    history: historyMock,
-    signatures: {},
-    photos: {}
-  };
-}
-
-function loadStore(): LocalStore {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as LocalStore;
-  } catch {
-    // fallback local
-  }
-
-  return initialStore();
-}
-
-function getInitialDetail(store: LocalStore): DetailData | null {
-  const params = new URLSearchParams(window.location.search);
-  const serviceId = params.get("servicoId") ?? "";
-  const type = params.get("tipo") ?? "";
-  return findDetailByParams([...store.agenda, ...store.history], serviceId, type);
-}
-
-function getInitialParams() {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    serviceId: params.get("servicoId") ?? "",
-    type: params.get("tipo") ?? ""
-  };
-}
-
-function getVoucherDraftKey(detail: DetailData) {
-  return `${detail.type}:${detail.id}`;
-}
-
 type RemoteOperation = {
   title: string;
   message: string;
@@ -392,42 +125,6 @@ function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-function getDetailFieldValue(detail: DetailData, label: string) {
-  return detail.fields.find((field) => field.label.toLowerCase() === label.toLowerCase())?.value ?? "";
-}
-
-function isTrueLike(value: unknown) {
-  return value === true || value === 1 || value === "true";
-}
-
-function shouldRequireReceiveStep(detail: DetailData) {
-  return (
-    detail.type === "SERVICO" &&
-    (
-      detail.actions.includes("receber") ||
-      isTrueLike(detail.dataverse?.record?.cr40f_receber) ||
-      getDetailFieldValue(detail, "Receber").trim().toLowerCase() === "sim"
-    )
-  );
-}
-
-function shouldRouteServiceToVoucher(detail: DetailData) {
-  return detail.type === "SERVICO" && /tenn?aris/i.test(getDetailFieldValue(detail, "Cliente"));
-}
-
-function getServiceTaskBackScreen(detail: DetailData): Screen {
-  return shouldRequireReceiveStep(detail) ? "receber" : "servicos";
-}
-
-function hasReceiveProofs(detail: DetailData, receiveProofs: Record<string, ExpensePhoto[]>) {
-  return (receiveProofs[detail.id]?.length ?? 0) > 0;
-}
-
-function hasUploadedReceiveProofs(detail: DetailData, receiveProofs: Record<string, ExpensePhoto[]>, receiveUploadedCounts: Record<string, number>) {
-  const proofCount = receiveProofs[detail.id]?.length ?? 0;
-  return proofCount > 0 && receiveUploadedCounts[detail.id] === proofCount;
-}
-
 function App() {
   const [store, setStore] = useState<LocalStore>(() => loadStore());
   const initialDetailRef = useRef<DetailData | null>(getInitialDetail(store));
@@ -437,7 +134,6 @@ function App() {
   const [maintenancePhotoKind, setMaintenancePhotoKind] = useState<MaintenancePhotoKind>("NOTAFISCAL");
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
   const [photoDraftPreviewUrl, setPhotoDraftPreviewUrl] = useState("");
-  const [photoDraftPosterUrl, setPhotoDraftPosterUrl] = useState("");
   const [toast, setToast] = useState("");
   const [criticalError, setCriticalError] = useState("");
   const [completingDetailKey, setCompletingDetailKey] = useState("");
@@ -1528,26 +1224,17 @@ function App() {
 
     setReceiveProofs((current) => {
       const detailPhotos = current[selectedDetail.id] ?? [];
+      const nextPhoto: ExpensePhoto = {
+        id: receivePreviewPhotoId || `receive-photo-${Date.now()}-${detailPhotos.length + 1}`,
+        dataUrl: receivePhotoDraft,
+        previewUrl: receivePhotoPreviewUrl || undefined,
+        posterUrl: receivePhotoPosterUrl || undefined,
+        durationLabel: receivePhotoDurationLabel || undefined,
+        mediaType: receivePhotoDraft.startsWith("data:video/") ? "video" : "foto"
+      };
       const nextPhotos = receivePreviewPhotoId
-        ? detailPhotos.map((photo) => photo.id === receivePreviewPhotoId ? {
-            ...photo,
-            dataUrl: receivePhotoDraft,
-            previewUrl: receivePhotoPreviewUrl || undefined,
-            posterUrl: receivePhotoPosterUrl || undefined,
-            durationLabel: receivePhotoDurationLabel || undefined,
-            mediaType: receivePhotoDraft.startsWith("data:video/") ? "video" : "foto"
-          } : photo)
-        : [
-            ...detailPhotos,
-            {
-              id: `receive-photo-${Date.now()}-${detailPhotos.length + 1}`,
-              dataUrl: receivePhotoDraft,
-              previewUrl: receivePhotoPreviewUrl || undefined,
-              posterUrl: receivePhotoPosterUrl || undefined,
-              durationLabel: receivePhotoDurationLabel || undefined,
-              mediaType: receivePhotoDraft.startsWith("data:video/") ? "video" : "foto"
-            }
-          ];
+        ? detailPhotos.map((photo) => (photo.id === receivePreviewPhotoId ? nextPhoto : photo))
+        : [...detailPhotos, nextPhoto];
       return {
         ...current,
         [selectedDetail.id]: nextPhotos
@@ -2006,14 +1693,12 @@ function App() {
         onCapture={(photoDataUrl) => {
           setPhotoDraft(photoDataUrl);
           setPhotoDraftPreviewUrl("");
-          setPhotoDraftPosterUrl("");
           setMaintenanceExistingPreview(false);
           setScreen("previewFotoManutencao");
         }}
-        onCaptureVideo={(videoDataUrl, _previewUrl, posterUrl) => {
+        onCaptureVideo={(videoDataUrl) => {
           setPhotoDraft(videoDataUrl);
           setPhotoDraftPreviewUrl("");
-          setPhotoDraftPosterUrl(posterUrl);
           setMaintenanceExistingPreview(false);
           setScreen("previewFotoManutencao");
         }}
@@ -2034,7 +1719,6 @@ function App() {
           setStore((current) => saveMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind, photoDraft ?? ""));
           setToast("Foto salva localmente.");
           setPhotoDraftPreviewUrl("");
-          setPhotoDraftPosterUrl("");
           setMaintenanceExistingPreview(false);
           setScreen("finalizar");
         }}
@@ -2043,7 +1727,6 @@ function App() {
           setToast("Foto apagada.");
           setPhotoDraft(null);
           setPhotoDraftPreviewUrl("");
-          setPhotoDraftPosterUrl("");
           setMaintenanceExistingPreview(false);
           setScreen("finalizar");
         } : undefined}
@@ -2155,14 +1838,12 @@ function App() {
           if (existingPhoto) {
             setPhotoDraft(existingPhoto);
             setPhotoDraftPreviewUrl(existingPhoto.startsWith("data:video/") ? existingPhoto : "");
-            setPhotoDraftPosterUrl("");
             setMaintenanceExistingPreview(true);
             setScreen("previewFotoManutencao");
             return;
           }
           setPhotoDraft(null);
           setPhotoDraftPreviewUrl("");
-          setPhotoDraftPosterUrl("");
           setMaintenanceExistingPreview(false);
           setScreen("fotoManutencao");
         }}

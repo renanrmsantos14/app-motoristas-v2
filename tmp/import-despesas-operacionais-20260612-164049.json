@@ -1,0 +1,321 @@
+﻿{
+    "csvPath":  "C:\\Users\\mendo\\Documents\\Relatório de despesas CÓPIA.csv",
+    "environmentUrl":  "https://org23b93544.crm2.dynamics.com/",
+    "dryRun":  true,
+    "startedAt":  "2026-06-12T16:40:55.2314727-03:00",
+    "selectedRowCount":  50,
+    "created":  [
+                    {
+                        "row":  1,
+                        "csvId":  "11225",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 07/05/2026 - CSV 11225"
+                    },
+                    {
+                        "row":  2,
+                        "csvId":  "11227",
+                        "dryRun":  true,
+                        "nome":  "Café - 07/05/2026 - CSV 11227"
+                    },
+                    {
+                        "row":  3,
+                        "csvId":  "11489",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 01/06/2026 - CSV 11489"
+                    },
+                    {
+                        "row":  4,
+                        "csvId":  "11218",
+                        "dryRun":  true,
+                        "nome":  "Abastecimento - 06/05/2026 - CSV 11218"
+                    },
+                    {
+                        "row":  5,
+                        "csvId":  "11219",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 06/05/2026 - CSV 11219"
+                    },
+                    {
+                        "row":  6,
+                        "csvId":  "11220",
+                        "dryRun":  true,
+                        "nome":  "Café - 06/05/2026 - CSV 11220"
+                    },
+                    {
+                        "row":  7,
+                        "csvId":  "11490",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 01/06/2026 - CSV 11490"
+                    },
+                    {
+                        "row":  8,
+                        "csvId":  "11470",
+                        "dryRun":  true,
+                        "nome":  "Café - 30/05/2026 - CSV 11470"
+                    },
+                    {
+                        "row":  9,
+                        "csvId":  "11223",
+                        "dryRun":  true,
+                        "nome":  "Lavagem - 06/05/2026 - CSV 11223"
+                    },
+                    {
+                        "row":  10,
+                        "csvId":  "11224",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 06/05/2026 - CSV 11224"
+                    },
+                    {
+                        "row":  11,
+                        "csvId":  "11226",
+                        "dryRun":  true,
+                        "nome":  "Abastecimento - 06/05/2026 - CSV 11226"
+                    },
+                    {
+                        "row":  12,
+                        "csvId":  "11213",
+                        "dryRun":  true,
+                        "nome":  "Outros - 05/05/2026 - CSV 11213"
+                    },
+                    {
+                        "row":  13,
+                        "csvId":  "11214",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 05/05/2026 - CSV 11214"
+                    },
+                    {
+                        "row":  14,
+                        "csvId":  "11215",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 05/05/2026 - CSV 11215"
+                    },
+                    {
+                        "row":  15,
+                        "csvId":  "11216",
+                        "dryRun":  true,
+                        "nome":  "Outros - 05/05/2026 - CSV 11216"
+                    },
+                    {
+                        "row":  16,
+                        "csvId":  "11217",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 05/05/2026 - CSV 11217"
+                    },
+                    {
+                        "row":  17,
+                        "csvId":  "11208",
+                        "dryRun":  true,
+                        "nome":  "Lavagem - 04/05/2026 - CSV 11208"
+                    },
+                    {
+                        "row":  18,
+                        "csvId":  "11209",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 04/05/2026 - CSV 11209"
+                    },
+                    {
+                        "row":  19,
+                        "csvId":  "11195",
+                        "dryRun":  true,
+                        "nome":  "Café - 02/05/2026 - CSV 11195"
+                    },
+                    {
+                        "row":  20,
+                        "csvId":  "11196",
+                        "dryRun":  true,
+                        "nome":  "Lavagem - 02/05/2026 - CSV 11196"
+                    },
+                    {
+                        "row":  21,
+                        "csvId":  "11210",
+                        "dryRun":  true,
+                        "nome":  "Lavagem - 02/05/2026 - CSV 11210"
+                    },
+                    {
+                        "row":  22,
+                        "csvId":  "11211",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 02/05/2026 - CSV 11211"
+                    },
+                    {
+                        "row":  23,
+                        "csvId":  "11212",
+                        "dryRun":  true,
+                        "nome":  "Café - 02/05/2026 - CSV 11212"
+                    },
+                    {
+                        "row":  24,
+                        "csvId":  "11188",
+                        "dryRun":  true,
+                        "nome":  "Abastecimento - 01/05/2026 - CSV 11188"
+                    },
+                    {
+                        "row":  25,
+                        "csvId":  "11189",
+                        "dryRun":  true,
+                        "nome":  "Hospedagem - 01/05/2026 - CSV 11189"
+                    },
+                    {
+                        "row":  26,
+                        "csvId":  "11190",
+                        "dryRun":  true,
+                        "nome":  "Café - 01/05/2026 - CSV 11190"
+                    },
+                    {
+                        "row":  27,
+                        "csvId":  "11192",
+                        "dryRun":  true,
+                        "nome":  "Estacionamento - 01/05/2026 - CSV 11192"
+                    },
+                    {
+                        "row":  28,
+                        "csvId":  "11193",
+                        "dryRun":  true,
+                        "nome":  "Estacionamento - 01/05/2026 - CSV 11193"
+                    },
+                    {
+                        "row":  29,
+                        "csvId":  "11194",
+                        "dryRun":  true,
+                        "nome":  "Estacionamento - 01/05/2026 - CSV 11194"
+                    },
+                    {
+                        "row":  30,
+                        "csvId":  "11471",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 30/05/2026 - CSV 11471"
+                    },
+                    {
+                        "row":  31,
+                        "csvId":  "11181",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 30/04/2026 - CSV 11181"
+                    },
+                    {
+                        "row":  32,
+                        "csvId":  "11182",
+                        "dryRun":  true,
+                        "nome":  "Abastecimento - 30/04/2026 - CSV 11182"
+                    },
+                    {
+                        "row":  33,
+                        "csvId":  "11183",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 30/04/2026 - CSV 11183"
+                    },
+                    {
+                        "row":  34,
+                        "csvId":  "11472",
+                        "dryRun":  true,
+                        "nome":  "Lavagem - 30/05/2026 - CSV 11472"
+                    },
+                    {
+                        "row":  35,
+                        "csvId":  "11185",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 30/04/2026 - CSV 11185"
+                    },
+                    {
+                        "row":  36,
+                        "csvId":  "11186",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 30/04/2026 - CSV 11186"
+                    },
+                    {
+                        "row":  37,
+                        "csvId":  "11187",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 30/04/2026 - CSV 11187"
+                    },
+                    {
+                        "row":  38,
+                        "csvId":  "11191",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 30/04/2026 - CSV 11191"
+                    },
+                    {
+                        "row":  39,
+                        "csvId":  "11148",
+                        "dryRun":  true,
+                        "nome":  "Abastecimento - 29/04/2026 - CSV 11148"
+                    },
+                    {
+                        "row":  40,
+                        "csvId":  "11149",
+                        "dryRun":  true,
+                        "nome":  "Abastecimento - 29/04/2026 - CSV 11149"
+                    },
+                    {
+                        "row":  41,
+                        "csvId":  "11156",
+                        "dryRun":  true,
+                        "nome":  "Lavagem - 29/04/2026 - CSV 11156"
+                    },
+                    {
+                        "row":  42,
+                        "csvId":  "11157",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 29/04/2026 - CSV 11157"
+                    },
+                    {
+                        "row":  43,
+                        "csvId":  "11158",
+                        "dryRun":  true,
+                        "nome":  "Almoço - 29/04/2026 - CSV 11158"
+                    },
+                    {
+                        "row":  44,
+                        "csvId":  "11159",
+                        "dryRun":  true,
+                        "nome":  "Lavagem - 29/04/2026 - CSV 11159"
+                    },
+                    {
+                        "row":  45,
+                        "csvId":  "11160",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 29/04/2026 - CSV 11160"
+                    },
+                    {
+                        "row":  46,
+                        "csvId":  "11161",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 29/04/2026 - CSV 11161"
+                    },
+                    {
+                        "row":  47,
+                        "csvId":  "11162",
+                        "dryRun":  true,
+                        "nome":  "Abastecimento - 29/04/2026 - CSV 11162"
+                    },
+                    {
+                        "row":  48,
+                        "csvId":  "11163",
+                        "dryRun":  true,
+                        "nome":  "Jantar - 29/04/2026 - CSV 11163"
+                    },
+                    {
+                        "row":  49,
+                        "csvId":  "11164",
+                        "dryRun":  true,
+                        "nome":  "Hospedagem - 29/04/2026 - CSV 11164"
+                    },
+                    {
+                        "row":  50,
+                        "csvId":  "11165",
+                        "dryRun":  true,
+                        "nome":  "Hospedagem - 29/04/2026 - CSV 11165"
+                    }
+                ],
+    "skipped":  [
+
+                ],
+    "failed":  [
+
+               ],
+    "finishedAt":  "2026-06-12T16:40:55.5679301-03:00",
+    "summary":  {
+                    "created":  50,
+                    "skipped":  0,
+                    "failed":  0
+                }
+}

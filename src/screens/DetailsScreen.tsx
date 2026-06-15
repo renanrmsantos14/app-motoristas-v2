@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { DetailData } from "../types";
+import type { DetailAction, DetailData } from "../types";
 import { DetailActionButton } from "../components/details/DetailActionButton";
 import { DetailsField } from "../components/details/DetailsField";
 import { QuestionsBox } from "../components/details/QuestionsBox";
@@ -27,7 +27,7 @@ const shouldRequireReceive = (detail: DetailData) =>
   detail.type === "SERVICO" &&
   (isTrueLike(detail.dataverse?.record?.cr40f_receber) || getFieldValue(detail, "Receber").trim().toLowerCase() === "sim");
 
-const getVisibleActions = (detail: DetailData) => {
+const getVisibleActions = (detail: DetailData): DetailAction[] => {
   if (shouldRequireReceive(detail)) {
     return detail.actions.includes("cancel") ? ["cancel", "receber"] : ["receber"];
   }

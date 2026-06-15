@@ -5,7 +5,6 @@ import { FormMenu } from "../components/navigation/FormMenu";
 import {
   buildCollisionWhatsAppMessage,
   buildCollisionWhatsAppUrl,
-  getCollisionPhotoLabel,
   getCollisionTypeLabel,
   getRequiredCollisionPhotos,
   hasCollisionThirdParty,

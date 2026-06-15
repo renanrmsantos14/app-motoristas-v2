@@ -469,7 +469,7 @@ export async function getDriverContext(): Promise<DriverContext> {
 
   const result = await retrieveMultiple(
     DATAVERSE.funcionarios,
-    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo&$filter=cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=1`
+    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado&$filter=cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=1`
   );
   const funcionario = result.entities[0] ?? null;
   if (!funcionario) throw new Error("Motorista nao encontrado em Funcionarios pelo Email Microsoft.");
@@ -478,7 +478,8 @@ export async function getDriverContext(): Promise<DriverContext> {
     id: funcionario.cr40f_funcionariosid,
     email,
     fullName: funcionario.cr40f_nomecompleto,
-    tipoDeVinculo: funcionario.cr40f_tipodevinculo
+    tipoDeVinculo: funcionario.cr40f_tipodevinculo,
+    gerarReciboPersonalizado: funcionario.cr40f_gerarrecibopersonalizado
   });
 
   return {
@@ -1120,13 +1121,6 @@ export async function uploadCollisionPhotoRemote({
   if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
   await createOne(DATAVERSE.anexosColisoes, record);
   return link;
-}
-
-function formatMaintenanceRequestPhotoLinks(existingComment: string, links: string[]) {
-  const validLinks = links.map((link) => link.trim()).filter(Boolean);
-  if (!validLinks.length) return existingComment;
-  const linkBlock = validLinks.map((link, index) => `Foto solicitação ${index + 1}: ${link}`).join("\n");
-  return [existingComment.trim(), linkBlock].filter(Boolean).join("\n\n");
 }
 
 type MaintenancePhotoOrigin = "PRE_MANUTENCAO" | "POS_MANUTENCAO" | "NOTA_FISCAL";

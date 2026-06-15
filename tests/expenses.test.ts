@@ -23,7 +23,7 @@ const referenceData: ExpenseReferenceData = {
     },
     {
       id: "cat-almoco",
-      name: "Almoço",
+      name: "Almo\u00e7o",
       order: 20,
       exigeVeiculo: false,
       exigeReserva: false,
@@ -43,9 +43,9 @@ const referenceData: ExpenseReferenceData = {
   paymentMethods: [
     {
       id: "pay-cartao-credito",
-      name: "Cartão de crédito",
+      name: "Cart\u00e3o de cr\u00e9dito",
       order: 10,
-      tipo: "Cartão"
+      tipo: "Cart\u00e3o"
     },
     {
       id: "pay-particular-reembolso",
@@ -57,7 +57,7 @@ const referenceData: ExpenseReferenceData = {
   cities: [
     {
       id: "city-sao-paulo",
-      name: "São Paulo - SP",
+      name: "S\u00e3o Paulo - SP",
       order: 0,
       uf: "SP",
       pais: "Brasil",
@@ -167,7 +167,7 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
   assert.equal(payload.cr40f_statusanexo, 100000001);
   assert.match(String(payload.cr40f_observacao), /Forma de pagamento: Particular \(Reembolso\)/);
   assert.match(String(payload.cr40f_observacao), /Cidade: Campinas - SP/);
-  assert.match(String(payload.cr40f_observacao), /Pais: Brasil/);
+  assert.match(String(payload.cr40f_observacao), /País: Brasil/);
   assert.match(String(payload.cr40f_observacao), /Litros: 42,5 L/);
   assert.match(String(payload.cr40f_observacao), /Comprovantes: 1/);
   assert.equal(payload["nav_motorista@odata.bind"], "/cr40f_funcionarioses(driver-1)");
@@ -179,7 +179,7 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
 
 test("validateExpenseDraft exige veiculo KM e litros so quando regra da categoria pede", () => {
   assert.deepEqual(validateExpenseDraft(baseDraft({ categoriaId: "cat-abastecimento" }), photos, referenceData), {
-    veiculoId: "Selecione o veículo.",
+    veiculoId: "Selecione o ve\u00edculo.",
     kmInformado: "Informe o KM.",
     litros: "Informe os litros."
   });
