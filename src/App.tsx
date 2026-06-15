@@ -60,7 +60,9 @@ import {
   saveSignatureLocally,
   type LocalStore
 } from "./lib/localWorkflow";
+import { LocalToast, type ToastState, type ToastTone } from "./components/common/LocalToast";
 import { CollisionScreen } from "./screens/CollisionScreen";
+import { ButtonPreviewScreen } from "./screens/ButtonPreviewScreen";
 import { CollisionStartScreen } from "./screens/CollisionStartScreen";
 import { DetailsScreen } from "./screens/DetailsScreen";
 import { ExpenseScreen } from "./screens/ExpenseScreen";
@@ -72,6 +74,7 @@ import { LocalCancelScreen } from "./screens/LocalCancelScreen";
 import { MaintenancePhotoScreen } from "./screens/MaintenancePhotoScreen";
 import { MaintenancePhotoPreviewScreen } from "./screens/MaintenancePhotoPreviewScreen";
 import { ReceiveScreen } from "./screens/ReceiveScreen";
+import { ReceiptPreviewScreen, ReceiptScreen } from "./screens/ReceiptScreen";
 import {
   MaintenanceRequestScreen,
   type MaintenanceRequestDraft,
@@ -125,7 +128,58 @@ function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function isTrueLike(value: unknown) {
+  return value === true || value === 1 || value === "true";
+}
+
+function inferToastTone(message: string): ToastTone {
+  const normalized = message.trim().toLowerCase();
+
+  if (
+    normalized.includes("falha") ||
+    normalized.includes("erro") ||
+    normalized.includes("não foi") ||
+    normalized.includes("nao foi") ||
+    normalized.includes("não encontrado") ||
+    normalized.includes("nao encontrado")
+  ) {
+    return "error";
+  }
+
+  if (
+    normalized.includes("atenção") ||
+    normalized.includes("atencao") ||
+    normalized.includes("aviso") ||
+    normalized.includes("conclua") ||
+    normalized.includes("ainda nao") ||
+    normalized.includes("ainda não")
+  ) {
+    return "warning";
+  }
+
+  if (
+    normalized.includes("salva") ||
+    normalized.includes("salvo") ||
+    normalized.includes("enviado") ||
+    normalized.includes("registrado") ||
+    normalized.includes("atualizado") ||
+    normalized.includes("copiadas") ||
+    normalized.includes("copiado") ||
+    normalized.includes("reiniciados") ||
+    normalized.includes("apagada") ||
+    normalized.includes("apagado")
+  ) {
+    return "success";
+  }
+
+  return "info";
+}
+
 function App() {
+  const devMode = useMemo(() => new URLSearchParams(window.location.search).get("dev") ?? "", []);
+  const isButtonPreviewMode = devMode === "preview";
+  const isReceiptPreviewMode = devMode === "recibo";
+  const isLocalhostRuntime = useMemo(() => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname), []);
   const [store, setStore] = useState<LocalStore>(() => loadStore());
   const initialDetailRef = useRef<DetailData | null>(getInitialDetail(store));
   const [screen, setScreen] = useState<Screen>(() => (initialDetailRef.current ? "detalhes" : "inicio"));
@@ -134,7 +188,7 @@ function App() {
   const [maintenancePhotoKind, setMaintenancePhotoKind] = useState<MaintenancePhotoKind>("NOTAFISCAL");
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
   const [photoDraftPreviewUrl, setPhotoDraftPreviewUrl] = useState("");
-  const [toast, setToast] = useState("");
+  const [toast, setToastState] = useState<ToastState | null>(null);
   const [criticalError, setCriticalError] = useState("");
   const [completingDetailKey, setCompletingDetailKey] = useState("");
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
@@ -216,7 +270,22 @@ function App() {
     });
   };
 
+  const setToast = (message: string, tone?: ToastTone) => {
+    const trimmed = message.trim();
+    if (!trimmed) {
+      setToastState(null);
+      return;
+    }
+
+    setToastState({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      message: trimmed,
+      tone: tone ?? inferToastTone(trimmed)
+    });
+  };
+
   useEffect(() => {
+    if (isButtonPreviewMode || isReceiptPreviewMode) return;
     if (remoteMode) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
@@ -229,9 +298,10 @@ function App() {
         screen
       });
     }
-  }, [remoteMode, screen, store]);
+  }, [isButtonPreviewMode, isReceiptPreviewMode, remoteMode, screen, store]);
 
   useEffect(() => {
+    if (isButtonPreviewMode || isReceiptPreviewMode) return;
     if (!hasDataverseRuntime()) return;
     let alive = true;
     setRemoteMode(true);
@@ -318,11 +388,11 @@ function App() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [isButtonPreviewMode, isReceiptPreviewMode]);
 
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => setToast(""), 2600);
+    const timer = window.setTimeout(() => setToastState(null), toast.tone === "error" ? 3600 : 3000);
     return () => window.clearTimeout(timer);
   }, [toast]);
 
@@ -340,6 +410,9 @@ function App() {
   }, [selectedDetail, store.photos]);
 
   const screenMotion = getScreenMotion(screen, previousScreenRef.current);
+  const canGeneratePersonalReceipt =
+    isTrueLike(driverContext?.funcionario?.cr40f_gerarrecibopersonalizado) ||
+    isLocalhostRuntime;
 
   useEffect(() => {
     previousScreenRef.current = screen;
@@ -431,7 +504,7 @@ function App() {
           {node}
         </motion.div>
       </AnimatePresence>
-      {toast ? <div className="local-toast">{toast}</div> : null}
+      <LocalToast toast={toast} onDismiss={() => setToastState(null)} />
       {remoteOperation ? <FlowProgressOverlay operation={remoteOperation} /> : null}
       {criticalError ? (
         <div className="critical-error-overlay" role="dialog" aria-modal="true" aria-labelledby="critical-error-title">
@@ -447,6 +520,14 @@ function App() {
       ) : null}
     </>
   );
+
+  if (isButtonPreviewMode) {
+    return show(<ButtonPreviewScreen onShowToast={setToast} />);
+  }
+
+  if (isReceiptPreviewMode) {
+    return show(<ReceiptPreviewScreen />);
+  }
 
   const refreshLocal = async (detailToRefresh?: DetailData, options?: RefreshOptions) => {
     const silent = options?.silent === true;
@@ -1376,6 +1457,11 @@ function App() {
     setScreen("finalizar");
   };
 
+  const openPersonalReceipt = () => {
+    if (!selectedDetail) return;
+    setScreen("reciboPersonalizado");
+  };
+
   const startCollision = (type: CollisionDraft["tipoOcorrencia"]) => {
     setCollisionDraft((current) => ({
       ...current,
@@ -1744,9 +1830,15 @@ function App() {
         onPreviewPhoto={openReceivePreview}
         onBack={() => setScreen("detalhes")}
         onContinue={continueAfterReceive}
+        onGeneratePersonalReceipt={openPersonalReceipt}
+        canGeneratePersonalReceipt={canGeneratePersonalReceipt}
         submitState={remoteOperation?.phase ?? "idle"}
       />
     );
+  }
+
+  if (screen === "reciboPersonalizado" && selectedDetail) {
+    return show(<ReceiptScreen detail={selectedDetail} onBack={() => setScreen("receber")} />);
   }
 
   if (screen === "fotoReceber") {
@@ -1814,6 +1906,8 @@ function App() {
           onPreviewPhoto={openReceivePreview}
           onBack={() => setScreen("detalhes")}
           onContinue={continueAfterReceive}
+          onGeneratePersonalReceipt={openPersonalReceipt}
+          canGeneratePersonalReceipt={canGeneratePersonalReceipt}
           submitState={remoteOperation?.phase ?? "idle"}
         />
       );
@@ -1880,6 +1974,8 @@ function App() {
           onPreviewPhoto={openReceivePreview}
           onBack={() => setScreen("detalhes")}
           onContinue={continueAfterReceive}
+          onGeneratePersonalReceipt={openPersonalReceipt}
+          canGeneratePersonalReceipt={canGeneratePersonalReceipt}
           submitState={remoteOperation?.phase ?? "idle"}
         />
       );

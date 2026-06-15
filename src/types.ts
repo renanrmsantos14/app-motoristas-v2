@@ -5,6 +5,7 @@ export type Screen =
   | "detalhes"
   | "detalhesHistorico"
   | "receber"
+  | "reciboPersonalizado"
   | "voucher"
   | "assinatura"
   | "finalizar"

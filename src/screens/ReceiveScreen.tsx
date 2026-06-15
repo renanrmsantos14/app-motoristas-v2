@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
+import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
+import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
-import type { FlowSubmitState } from "../components/common/FlowSubmitButton";
 import type { DetailData } from "../types";
 import type { ExpensePhoto } from "../lib/expenses";
 
@@ -14,7 +15,7 @@ type ReceiveScreenProps = {
   onContinue: () => void;
   onGeneratePersonalReceipt?: () => void;
   canGeneratePersonalReceipt?: boolean;
-  submitState?: FlowSubmitState;
+  submitState?: ActionButtonState;
 };
 
 function focusInvalidField(element: HTMLElement | null) {
@@ -55,11 +56,6 @@ export function ReceiveScreen({
 
   const generatePersonalReceipt = () => {
     if (isSubmitting) return;
-    if (photos.length === 0) {
-      setPhotosError("Adicione ao menos um comprovante para gerar o recibo.");
-      focusInvalidField(photosRef.current);
-      return;
-    }
     onGeneratePersonalReceipt?.();
   };
 
@@ -104,10 +100,19 @@ export function ReceiveScreen({
             </div>
           </div>
 
-          <div className="receive-actions">
-            <button type="button" className="finalize-secondary receive-secondary" disabled={isSubmitting} onClick={onBack}>Voltar</button>
-            <button type="button" className="finalize-primary receive-primary" disabled={isSubmitting} onClick={continueFlow}>Finalizar serviço</button>
-          </div>
+          <ActionBar className={`finalize-actions receive-actions ${canGeneratePersonalReceipt ? "has-personal-receipt" : ""}`}>
+            <ActionButton className="finalize-secondary receive-secondary" label="Voltar" disabled={isSubmitting} onClick={onBack} />
+            {canGeneratePersonalReceipt ? (
+              <ActionButton
+                className="finalize-secondary receive-receipt"
+                label="Gerar recibo personalizado"
+                disabled={isSubmitting}
+                onClick={generatePersonalReceipt}
+                icon={<img src={invoiceReceiptIcon} alt="" />}
+              />
+            ) : null}
+            <ActionButton className="finalize-primary receive-primary" variant="primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={continueFlow} />
+          </ActionBar>
         </article>
       </section>
     </AppShell>

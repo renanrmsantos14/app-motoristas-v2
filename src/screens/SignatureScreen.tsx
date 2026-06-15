@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ActionBar, ActionButton } from "../components/common/ActionButton";
 import { SystemIcon } from "../components/icons/SystemIcon";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
@@ -199,12 +200,10 @@ export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
               {signatureError ? <div className="signature-error">{signatureError}</div> : null}
             </div>
 
-            <div className="signature-actions">
+            <ActionBar className="signature-actions">
               <div className="signature-status">{signed ? "Assinatura capturada" : "Aguardando assinatura"}</div>
-              <button className="signature-confirm" onClick={confirmSignature} type="button">
-                Confirmar
-              </button>
-            </div>
+              <ActionButton className="signature-confirm" variant="primary" label="Confirmar" onClick={confirmSignature} />
+            </ActionBar>
           </div>
         </article>
       </section>

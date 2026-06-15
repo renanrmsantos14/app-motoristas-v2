@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import type { Ref, RefObject } from "react";
 import { AppShell } from "../components/layout/AppShell";
-import { FlowSubmitButton, type FlowSubmitState } from "../components/common/FlowSubmitButton";
+import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { VoucherInputRow } from "../components/voucher/VoucherInputRow";
 import { VoucherSection } from "../components/voucher/VoucherSection";
+import { reportAppError } from "../lib/appErrorLogger";
 import type { DetailData } from "../types";
 
 type VoucherScreenProps = {
@@ -15,7 +16,7 @@ type VoucherScreenProps = {
   onOpenSignature: () => void;
   onFinalize: (fields: Record<string, string>) => void;
   onDraftChange?: (fields: Record<string, string>) => void;
-  submitState?: FlowSubmitState;
+  submitState?: ActionButtonState;
 };
 
 type VoucherErrorKey = "startTime" | "signature";
@@ -94,7 +95,16 @@ function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, stri
   if (!raw) return {};
   try {
     return JSON.parse(raw) as Record<string, string>;
-  } catch {
+  } catch (error) {
+    reportAppError(error, {
+      severity: "warning",
+      source: "voucher",
+      action: "parse-draft",
+      component: "VoucherScreen",
+      screen: "TelaVoucher",
+      detailId: detail.id,
+      payload: { raw }
+    });
     return {};
   }
 }
@@ -235,10 +245,19 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
               </VoucherSection>
             </div>
           </div>
-          <div className="voucher-actions">
-            {showSignature ? <button ref={signatureButtonRef} className={`voucher-sign ${errors.signature ? "is-invalid" : ""}`} aria-invalid={Boolean(errors.signature)} disabled={isSubmitting} onClick={() => { clearError("signature"); onOpenSignature(); }}>{hasSignature ? "Refazer assinatura" : "Assinar"}</button> : null}
-            <FlowSubmitButton className="voucher-finish" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
-          </div>
+          <ActionBar className="voucher-actions">
+            {showSignature ? (
+              <ActionButton
+                buttonRef={signatureButtonRef}
+                className={`voucher-sign ${errors.signature ? "is-invalid" : ""}`}
+                label={hasSignature ? "Refazer assinatura" : "Assinar"}
+                disabled={isSubmitting}
+                ariaInvalid={Boolean(errors.signature)}
+                onClick={() => { clearError("signature"); onOpenSignature(); }}
+              />
+            ) : null}
+            <ActionButton className="voucher-finish" variant="primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
+          </ActionBar>
           {errors.signature ? <div className="field-error action-error">{errors.signature}</div> : null}
         </article>
       </section>

@@ -1,6 +1,7 @@
 ﻿import type { AgendaItem, DetailData, DetailField, MaintenancePhotoKind } from "../types";
 
 import { getFieldValue, isBlankOrNotInformed } from "./fieldLookup.ts";
+import { reportAppError } from "./appErrorLogger.ts";
 
 export type LocalStore = {
   agenda: AgendaItem[];
@@ -200,7 +201,13 @@ function getXrmNavigation(): XrmNavigationLike | null {
   try {
     const parentWindow = window.parent as Window & { Xrm?: XrmNavigationLike };
     return current.Xrm?.Navigation?.openUrl ? current.Xrm : parentWindow?.Xrm?.Navigation?.openUrl ? parentWindow.Xrm : null;
-  } catch {
+  } catch (error) {
+    reportAppError(error, {
+      severity: "warning",
+      source: "local-workflow",
+      action: "get-xrm-navigation",
+      component: "localWorkflow"
+    });
     return current.Xrm?.Navigation?.openUrl ? current.Xrm : null;
   }
 }
@@ -211,17 +218,50 @@ export function openExternalUrl(url: string) {
 
   const xrm = getXrmNavigation();
   if (xrm?.Navigation?.openUrl) {
-    xrm.Navigation.openUrl(targetUrl, { openInNewWindow: true });
+    try {
+      xrm.Navigation.openUrl(targetUrl, { openInNewWindow: true });
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "local-workflow",
+        action: "open-external-url-xrm",
+        component: "localWorkflow",
+        payload: { targetUrl }
+      });
+      throw error;
+    }
     return;
   }
 
-  const opened = window.open(targetUrl, "_blank", "noopener,noreferrer");
+  let opened: Window | null = null;
+  try {
+    opened = window.open(targetUrl, "_blank", "noopener,noreferrer");
+  } catch (error) {
+    reportAppError(error, {
+      severity: "error",
+      source: "local-workflow",
+      action: "open-external-url-window-open",
+      component: "localWorkflow",
+      payload: { targetUrl }
+    });
+  }
   if (opened) {
     opened.opener = null;
     return;
   }
 
-  window.location.assign(targetUrl);
+  try {
+    window.location.assign(targetUrl);
+  } catch (error) {
+    reportAppError(error, {
+      severity: "critical",
+      source: "local-workflow",
+      action: "open-external-url-location-assign",
+      component: "localWorkflow",
+      payload: { targetUrl }
+    });
+    throw error;
+  }
 }
 
 

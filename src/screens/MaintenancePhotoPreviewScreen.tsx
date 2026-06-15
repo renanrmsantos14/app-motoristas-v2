@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { ActionBar, ActionButton } from "../components/common/ActionButton";
 import { SystemIcon } from "../components/icons/SystemIcon";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
+import { reportAppError } from "../lib/appErrorLogger";
 import { dataUrlToObjectUrl } from "../lib/photoOrientation";
 import type { MaintenancePhotoKind } from "../types";
 
@@ -60,7 +62,14 @@ export function MaintenancePhotoPreviewScreen({
     let objectUrl = "";
     try {
       objectUrl = dataUrlToObjectUrl(photoDataUrl);
-    } catch {
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "maintenance-photo-preview",
+        action: "build-video-preview",
+        component: "MaintenancePhotoPreviewScreen",
+        screen: "TelaPreviewFotoManutencao"
+      });
       setVideoPreviewError(true);
       setVideoPreviewUrl("");
       return;
@@ -92,7 +101,17 @@ export function MaintenancePhotoPreviewScreen({
               {isVideo && photoDataUrl ? (
                 <>
                   {videoPreviewUrl ? (
-                    <video key={videoPreviewUrl} className="maintenance-preview-real-image" src={videoPreviewUrl} controls playsInline preload="auto" muted onCanPlay={() => setVideoPreviewError(false)} onLoadedMetadata={() => setVideoPreviewError(false)} onError={() => setVideoPreviewError(true)} />
+                    <video key={videoPreviewUrl} className="maintenance-preview-real-image" src={videoPreviewUrl} controls playsInline preload="auto" muted onCanPlay={() => setVideoPreviewError(false)} onLoadedMetadata={() => setVideoPreviewError(false)} onError={() => {
+                      reportAppError(new Error("Falha ao carregar preview de video."), {
+                        severity: "warning",
+                        source: "maintenance-photo-preview",
+                        action: "video-element-error",
+                        component: "MaintenancePhotoPreviewScreen",
+                        screen: "TelaPreviewFotoManutencao",
+                        payload: { videoPreviewUrl }
+                      });
+                      setVideoPreviewError(true);
+                    }} />
                   ) : (
                     <div className="camera-loading">Preparando previa...</div>
                   )}
@@ -120,20 +139,17 @@ export function MaintenancePhotoPreviewScreen({
                 </div>
               )}
             </div>
-            <div className={`maintenance-preview-actions ${deleteOnly ? "is-delete-only" : ""}`}>
+            <ActionBar className={`maintenance-preview-actions ${deleteOnly ? "is-delete-only" : ""}`}>
               {deleteOnly && onDelete ? (
-                <button className="maintenance-preview-delete" onClick={requestDelete} type="button">
-                  <SystemIcon name="trash" />
-                  <span>Apagar foto</span>
-                </button>
+                <ActionButton className="maintenance-preview-delete" variant="danger" label="Apagar foto" icon={<SystemIcon name="trash" />} onClick={requestDelete} />
               ) : (
                 <>
-                  {onDelete ? <button className="maintenance-preview-secondary" onClick={requestDelete} type="button">Apagar foto</button> : null}
-                  <button className="maintenance-preview-secondary" onClick={onRetake} type="button">Não, refazer</button>
-                  <button className="maintenance-preview-primary" onClick={onConfirm} type="button">{confirmLabel}</button>
+                  {onDelete ? <ActionButton className="maintenance-preview-secondary" variant="danger" label="Apagar foto" onClick={requestDelete} /> : null}
+                  <ActionButton className="maintenance-preview-secondary" label="Não, refazer" onClick={onRetake} />
+                  <ActionButton className="maintenance-preview-primary" variant="primary" label={confirmLabel} onClick={onConfirm} />
                 </>
               )}
-            </div>
+            </ActionBar>
           </div>
         </article>
       </section>
@@ -146,11 +162,8 @@ export function MaintenancePhotoPreviewScreen({
             <div id="maintenance-delete-title" className="maintenance-delete-title">Apagar foto?</div>
             <p>Esta foto será removida da solicitação.</p>
             <div className="maintenance-delete-actions">
-              <button className="maintenance-delete-cancel" onClick={() => setConfirmDelete(false)} type="button">Cancelar</button>
-              <button className="maintenance-delete-confirm" onClick={confirmDeletePhoto} type="button">
-                <SystemIcon name="trash" />
-                <span>Apagar</span>
-              </button>
+              <ActionButton className="maintenance-delete-cancel" label="Cancelar" onClick={() => setConfirmDelete(false)} />
+              <ActionButton className="maintenance-delete-confirm" variant="danger" label="Apagar" icon={<SystemIcon name="trash" />} onClick={confirmDeletePhoto} />
             </div>
           </div>
         </div>

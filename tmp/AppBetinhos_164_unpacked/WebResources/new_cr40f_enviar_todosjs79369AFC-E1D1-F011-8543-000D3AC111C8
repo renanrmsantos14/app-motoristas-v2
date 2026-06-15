@@ -1,0 +1,39 @@
+// Código para adicionar à Command Bar via editor de comandos
+// Ou você pode adicionar via personalizações do formulário
+
+function addCustomSaveButton() {
+    // Adicionar um botão personalizado na Command Bar
+    var button = {
+        id: "custom_save_with_return",
+        label: "Salvar com Retorno",
+        icon: "Save",
+        tooltip: "Salva o serviço principal e cria serviço de retorno se configurado",
+        enabled: true,
+        visible: true,
+        requiresSelection: false,
+        action: function() {
+            // Chamar a função do Web Resource
+            if (typeof window.salvarComRetorno === 'function') {
+                window.salvarComRetorno().then(function(success) {
+                    if (success) {
+                        // Recarregar o formulário ou fechar
+                        Xrm.Page.data.refresh(false);
+                    }
+                });
+            } else {
+                Xrm.Navigation.openAlertDialog({
+                    text: "Função de retorno não disponível. Verifique se o Web Resource está carregado.",
+                    title: "Aviso"
+                });
+            }
+        }
+    };
+    
+    // Adicionar à Command Bar
+    Xrm.Page.getControl("header").addButton(button, 0);
+}
+
+// Executar quando o formulário carregar
+if (typeof Xrm !== 'undefined') {
+    Xrm.Page.data.addOnLoad(addCustomSaveButton);
+}

@@ -13,6 +13,7 @@ import {
   readBlobAsDataUrl,
   readPhotoFileAsDataUrl
 } from "../lib/photoOrientation";
+import { reportAppError } from "../lib/appErrorLogger";
 import type { MaintenancePhotoKind } from "../types";
 
 type MaintenancePhotoScreenProps = {
@@ -198,6 +199,14 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
       setStartedByUser(true);
       setReady(true);
     } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "maintenance-photo",
+        action: "start-camera",
+        component: "MaintenancePhotoScreen",
+        screen: "TelaCameraMidia",
+        payload: { mode }
+      });
       setCameraError(error instanceof Error ? error.message : "Não foi possível abrir a câmera.");
     } finally {
       setStarting(false);
@@ -244,6 +253,13 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
       setFlashOn(nextFlashOn);
       setCameraError("");
     } catch (error) {
+      reportAppError(error, {
+        severity: "warning",
+        source: "maintenance-photo",
+        action: "toggle-flash",
+        component: "MaintenancePhotoScreen",
+        screen: "TelaCameraMidia"
+      });
       setFlashOn(false);
       setCameraError(error instanceof Error ? error.message : "Não foi possível controlar o flash.");
     }
@@ -271,6 +287,14 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
         ]);
         onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel);
       } catch (error) {
+        reportAppError(error, {
+          severity: "error",
+          source: "maintenance-photo",
+          action: "prepare-native-video",
+          component: "MaintenancePhotoScreen",
+          screen: "TelaCameraMidia",
+          payload: { fileName: file.name, fileType: file.type }
+        });
         setCameraError(error instanceof Error ? error.message : "Não foi possível preparar o vídeo.");
       } finally {
         revokeObjectPreviewUrl(previewUrl);
@@ -278,9 +302,22 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
       }
       return;
     }
-    const dataUrl = await readPhotoFileAsDataUrl(file, normalizeAngle(orientationAngleRef.current));
-    onCapture(dataUrl);
-    event.target.value = "";
+    try {
+      const dataUrl = await readPhotoFileAsDataUrl(file, normalizeAngle(orientationAngleRef.current));
+      onCapture(dataUrl);
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "maintenance-photo",
+        action: "prepare-native-photo",
+        component: "MaintenancePhotoScreen",
+        screen: "TelaCameraMidia",
+        payload: { fileName: file.name, fileType: file.type }
+      });
+      setCameraError(error instanceof Error ? error.message : "NÃ£o foi possÃ­vel preparar a foto.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const startRecording = () => {
@@ -307,6 +344,13 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
         if (event.data.size > 0) recordedChunksRef.current.push(event.data);
       };
       recorder.onerror = () => {
+        reportAppError(new Error("Falha durante a gravaÃ§Ã£o do vÃ­deo."), {
+          severity: "error",
+          source: "maintenance-photo",
+          action: "record-video",
+          component: "MaintenancePhotoScreen",
+          screen: "TelaCameraMidia"
+        });
         setRecording(false);
         setProcessing(false);
         setCameraError("Falha durante a gravação do vídeo.");
@@ -329,6 +373,13 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
           ]);
           onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel || fallbackDuration);
         } catch (error) {
+          reportAppError(error, {
+            severity: "error",
+            source: "maintenance-photo",
+            action: "finalize-video",
+            component: "MaintenancePhotoScreen",
+            screen: "TelaCameraMidia"
+          });
           setCameraError(error instanceof Error ? error.message : "Não foi possível preparar o vídeo.");
         } finally {
           if (previewUrl) revokeObjectPreviewUrl(previewUrl);
@@ -342,6 +393,13 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
       setRecording(true);
       setCameraError("");
     } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "maintenance-photo",
+        action: "start-recording",
+        component: "MaintenancePhotoScreen",
+        screen: "TelaCameraMidia"
+      });
       setRecording(false);
       setProcessing(false);
       setCameraError(error instanceof Error ? error.message : "Não foi possível iniciar a gravação.");

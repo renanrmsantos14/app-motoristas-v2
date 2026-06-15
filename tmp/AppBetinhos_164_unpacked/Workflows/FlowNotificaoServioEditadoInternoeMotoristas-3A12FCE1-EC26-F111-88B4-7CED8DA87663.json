@@ -1,0 +1,440 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_powerappsnotificationv2-1": {
+        "api": {
+          "name": "shared_powerappsnotificationv2"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedpowerappsnotificationv2_e540f"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps-1": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365-1": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "ID App Betinhos Interno (new_IDAppBetinhosInterno)": {
+          "defaultValue": "7c7c8fda-53d0-f011-8543-6045bd3a51ea",
+          "type": "String",
+          "metadata": {
+            "schemaName": "new_IDAppBetinhosInterno",
+            "description": "ID App Betinhos Interno"
+          }
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "description": "\ncr40f_Cliente, cr40f_dataehorriodesada, cr40f_destino, cr40f_endereodesada, cr40f_obsdeoperao, cr40f_passageirosetelefonedecontato, cr40f_horrioprevistoderetorno,  cr40f_receber, cr40f_trajeto\n",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "cr40f_reservadeveculos",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr40f_dataehorriodesada, cr40f_destino, cr40f_endereodesada, cr40f_obsdeoperao, cr40f_passageirosetelefonedecontato, cr40f_horrioprevistoderetorno,  cr40f_receber, cr40f_trajeto\n",
+              "subscriptionRequest/filterexpression": "(cr40f_status eq 202410001 or cr40f_status eq 202410005)"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Condition_é_pra_rodar": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@and(\r\n  greaterOrEquals(triggerOutputs()?['body/cr40f_dataehorriodesada'], formatDateTime(addHours(utcNow(), -2), 'yyyy-MM-ddTHH:mm:ssZ')),\r\n  lessOrEquals(triggerOutputs()?['body/cr40f_dataehorriodesada'], formatDateTime(addHours(utcNow(), 10), 'yyyy-MM-ddTHH:mm:ssZ'))\r\n)",
+                      true
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "",
+                      ""
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "List_rows_funcionários_Notifcação_Operacional": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_funcionarioses",
+                      "$select": "cr40f_emailmicrosoft",
+                      "$filter": "new_notificacoesoperacionais eq true"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  },
+                  "runAfter": {
+                    "Compose_valor_novo": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "For_each_Notificação_Operacional": {
+                  "type": "Foreach",
+                  "foreach": "@outputs('List_rows_funcionários_Notifcação_Operacional')?['body/value']",
+                  "actions": {
+                    "List_rows_systemusers": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "systemusers",
+                          "$filter": "internalemailaddress eq '@{items('For_each_Notificação_Operacional')?['cr40f_emailmicrosoft']}'"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "ListRecords",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      }
+                    },
+                    "Send_push_notification_V2": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "payload/playerType": "PowerApps",
+                          "payload/app": "{\"appIdentifier\":\"cr40f_ModelDrivenBetinhos\",\"displayName\":\"App Betinhos Interno\",\"type\":\"AppModule\"}",
+                          "payload/recipients": [
+                            "@items('For_each_Notificação_Operacional')?['cr40f_emailmicrosoft']"
+                          ],
+                          "payload/message": "O serviço de @{concat(\n  if(\n    equals(\n      formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\n      formatDateTime(convertFromUtc(utcNow(), 'E. South America Standard Time'), 'yyyy-MM-dd')\n    ),\n    'HOJE',\n    if(\n      equals(\n        formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\n        formatDateTime(addDays(convertFromUtc(utcNow(), 'E. South America Standard Time'), 1), 'yyyy-MM-dd')\n      ),\n      'AMANHÃ',\n      if(\n        equals(\n          formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\n          formatDateTime(addDays(convertFromUtc(utcNow(), 'E. South America Standard Time'), -1), 'yyyy-MM-dd')\n        ),\n        'ONTEM',\n        formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'dd/MM/yyyy')\n      )\n    )\n  ),\n  ' ',\n  formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')\n)} foi editado.\nCampo: @{outputs('Compose_campo')}\nID: @{triggerOutputs()?['body/cr40f_id']}",
+                          "payload/openApp": true,
+                          "payload/dynamicParams/entityLogicalName": "cr40f_reservadeveculos"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsnotificationv2",
+                          "operationId": "SendPushNotificationV2",
+                          "connectionName": "shared_powerappsnotificationv2-1"
+                        }
+                      },
+                      "runAfter": {
+                        "Add_a_new_row_Notificações_1": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Add_a_new_row_Notificações_1": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "appnotifications",
+                          "item/title": "Serviço Editado",
+                          "item/AppModuleId@odata.bind": "/appmodules(@{parameters('ID App Betinhos Interno (new_IDAppBetinhosInterno)')})",
+                          "item/body": "O serviço de @{concat(\r\n  if(\r\n    equals(\r\n      formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\r\n      formatDateTime(convertFromUtc(utcNow(), 'E. South America Standard Time'), 'yyyy-MM-dd')\r\n    ),\r\n    'HOJE',\r\n    if(\r\n      equals(\r\n        formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\r\n        formatDateTime(addDays(convertFromUtc(utcNow(), 'E. South America Standard Time'), 1), 'yyyy-MM-dd')\r\n      ),\r\n      'AMANHÃ',\r\n      if(\r\n        equals(\r\n          formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\r\n          formatDateTime(addDays(convertFromUtc(utcNow(), 'E. South America Standard Time'), -1), 'yyyy-MM-dd')\r\n        ),\r\n        'ONTEM',\r\n        formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'dd/MM/yyyy')\r\n      )\r\n    )\r\n  ),\r\n  ' ',\r\n  formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')\r\n)} foi editado. | Campo: @{outputs('Compose_campo')} | ID: @{triggerOutputs()?['body/cr40f_id']}",
+                          "item/ttlinseconds": 86400,
+                          "item/icontype": 100000000,
+                          "item/priority": 200000000,
+                          "item/ownerid@odata.bind": "/systemusers(@{first(outputs('List_rows_systemusers')?['body/value'])?['systemuserid']})"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "List_rows_systemusers": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "List_rows_funcionários_Notifcação_Operacional": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "List_rows_auditoria": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "audits",
+                      "$filter": "objecttypecode eq 'cr40f_reservadeveculos' and _objectid_value eq @{triggerOutputs()?['body/cr40f_reservadeveculosid']} and action eq 2",
+                      "$orderby": "createdon desc",
+                      "$top": 1
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  },
+                  "runAfter": {
+                    "Compose_App_ID": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_campo": {
+                  "type": "Compose",
+                  "inputs": "@first(json(first(outputs('List_rows_auditoria')?['body/value'])?['changedata'])?['changedAttributes'])?['logicalName']",
+                  "runAfter": {
+                    "List_rows_auditoria": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_valor_antigo": {
+                  "type": "Compose",
+                  "inputs": "@first(json(first(outputs('List_rows_auditoria')?['body/value'])?['changedata'])?['changedAttributes'])?['oldValue']",
+                  "runAfter": {
+                    "Compose_campo": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_valor_novo": {
+                  "type": "Compose",
+                  "inputs": "@first(json(first(outputs('List_rows_auditoria')?['body/value'])?['changedata'])?['changedAttributes'])?['newValue']",
+                  "runAfter": {
+                    "Compose_valor_antigo": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_App_ID": {
+                  "type": "Compose",
+                  "inputs": "@first(outputs('List_rows_values')?['body/value'])?['value']",
+                  "runAfter": {
+                    "List_rows_values": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "List_rows_definition": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "environmentvariabledefinitions",
+                      "$select": "environmentvariabledefinitionid",
+                      "$filter": "schemaname eq 'new_IDAppBetinhosMotoristas'"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps-1"
+                    }
+                  }
+                },
+                "List_rows_values": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "environmentvariablevalues",
+                      "$select": "value",
+                      "$filter": "_environmentvariabledefinitionid_value eq @{first(outputs('List_rows_definition')?['body/value'])?['environmentvariabledefinitionid']}"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps-1"
+                    }
+                  },
+                  "runAfter": {
+                    "List_rows_definition": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Condition_Tem_motorista": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@empty(triggerOutputs()?['body/_cr40f_motorista_value'])",
+                          false
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Get_a_row_by_ID_MOT": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_funcionarioses",
+                          "recordId": "@triggerOutputs()?['body/_cr40f_motorista_value']"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "GetItem",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      }
+                    },
+                    "Condition_Programado_e_tem_email": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@triggerOutputs()?['body/cr40f_status']",
+                              202410005
+                            ]
+                          },
+                          {
+                            "equals": [
+                              "@empty(outputs('Get_a_row_by_ID_MOT')?['body/cr40f_emailmicrosoft'])",
+                              false
+                            ]
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "Send_push_notification_V2_1": {
+                          "type": "OpenApiConnection",
+                          "description": "{\n  \"servicoId\": \"@{triggerOutputs()?['body/cr40f_reservadeveculosid']}\",\n  \"tipo\": \"SERVICO\"\n}",
+                          "inputs": {
+                            "parameters": {
+                              "payload/playerType": "PowerApps",
+                              "payload/app": "{\"appIdentifier\":\"@{outputs('Compose_App_ID')}\",\"displayName\":\"App Betinhos Motoristas\",\"type\":\"CanvasApp\"}",
+                              "payload/recipients": [
+                                "@outputs('Get_a_row_by_ID_MOT')?['body/cr40f_emailmicrosoft']"
+                              ],
+                              "payload/message": "O seu serviço de @{if(equals(formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'), formatDateTime(utcNow(), 'yyyy-MM-dd')), concat('HOJE às ', formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')), if(equals(formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'), formatDateTime(addDays(utcNow(), 1), 'yyyy-MM-dd')), concat('AMANHÃ às ', formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')), if(equals(formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'), formatDateTime(addDays(utcNow(), -1), 'yyyy-MM-dd')), concat('ONTEM às ', formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')), formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'dd/MM/yyyy HH:mm'))))} foi EDITADO pelo gestor!\nCampo: @{outputs('Compose_campo')}\nID: @{triggerOutputs()?['body/cr40f_id']}\nConfira a sua agenda atualizada!",
+                              "payload/openApp": true,
+                              "payload/dynamicParams": true
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsnotificationv2",
+                              "operationId": "SendPushNotificationV2",
+                              "connectionName": "shared_powerappsnotificationv2-1"
+                            }
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Get_a_row_by_ID_MOT": [
+                          "SUCCEEDED"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
+                  "runAfter": {
+                    "For_each_Notificação_Operacional": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Terminate_1": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Scope_1_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "renan.mendonca@betinhos.com.br;junior@betinhos.com.br;noreply@betinhos.onmicrosoft.com",
+                  "emailMessage/Subject": "ERRO NO FLOW - Flow Notificação Serviço Editado",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Flow Notificação Serviço Editado</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365-1"
+                }
+              }
+            },
+            "Terminate": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              },
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Skipped",
+              "Failed"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

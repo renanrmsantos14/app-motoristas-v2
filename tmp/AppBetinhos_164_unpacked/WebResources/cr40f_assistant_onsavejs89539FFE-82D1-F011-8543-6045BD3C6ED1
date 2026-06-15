@@ -1,0 +1,282 @@
+// ============================================
+// ASSISTENTE DE RETORNO - ONSAVE HANDLER CORRIGIDO
+// Versão: 2.0 - Corrigido o problema de getFormContext
+// ============================================
+
+console.log("[ASSISTENTE] 🔧 Inicializando versão corrigida...");
+
+// Função principal para criar retorno (SEM depender de getFormContext)
+async function criarRetornoAssistente() {
+    try {
+        console.log("[ASSISTENTE] 📦 Preparando dados do retorno...");
+        
+        // 1. Obter dados do campo oculto
+        const optionsField = Xrm.Page.getAttribute("cr40f_new_assistant_options");
+        if (!optionsField) {
+            throw new Error("Campo 'cr40f_new_assistant_options' não encontrado");
+        }
+        
+        const optionsValue = optionsField.getValue();
+        if (!optionsValue) {
+            throw new Error("Nenhum dado encontrado no campo de opções");
+        }
+        
+        const options = JSON.parse(optionsValue);
+        
+        // 2. Validar estrutura dos dados
+        if (!options.retorno || typeof options.retorno !== 'object') {
+            throw new Error("Estrutura de dados inválida. Campo 'retorno' não encontrado");
+        }
+        
+        // 3. Preparar payload
+        const userId = Xrm.Utility.getGlobalContext().userSettings.userId;
+        const dataHora = options.retorno.dataHora || new Date().toISOString();
+        const destino = options.retorno.destino || "Destino não informado";
+        
+        const payload = {
+            "cr40f_destino": destino,
+            "cr40f_endereodesada": options.retorno.endereco || "",
+            "cr40f_observaointerna": options.retorno.observacao || "",
+            "cr40f_dataehorriodesada": dataHora,
+            "cr40f_status": 202410001, // Status: Agendado
+            "cr40f_receber": false,
+            "cr40f_name": `Retorno: ${destino}`,
+            "ownerid@odata.bind": `/systemusers(${userId})`
+        };
+        
+        console.log("[ASSISTENTE] 🚀 Criando registro com payload:", payload);
+        
+        // 4. Criar registro
+        const result = await Xrm.WebApi.createRecord("cr40f_reservadeveculos", payload);
+        
+        console.log("[ASSISTENTE] ✅ Registro criado com sucesso!");
+        console.log("[ASSISTENTE] ID:", result.id);
+        
+        return result;
+        
+    } catch (error) {
+        console.error("[ASSISTENTE] ❌ Erro crítico:", error);
+        console.error("[ASSISTENTE] Detalhes:", {
+            message: error.message,
+            stack: error.stack
+        });
+        throw error;
+    }
+}
+
+// Handler para o evento OnSave
+async function handleAssistantOnSave(eventContext) {
+    try {
+        console.log("[ASSISTENTE] 💾 Evento OnSave detectado");
+        
+        // 1. Verificar campos do assistente
+        const pendingField = Xrm.Page.getAttribute("cr40f_new_assistant_pending");
+        const optionsField = Xrm.Page.getAttribute("cr40f_new_assistant_options");
+        
+        if (!pendingField || !optionsField) {
+            console.log("[ASSISTENTE] ℹ️ Campos do assistente não configurados");
+            return;
+        }
+        
+        const isPending = pendingField.getValue();
+        const optionsValue = optionsField.getValue();
+        
+        console.log(`[ASSISTENTE] 📊 Status: pendente=${isPending}, opções=${!!optionsValue}`);
+        
+        // 2. Se não há pendência, permitir save normal
+        if (!isPending || !optionsValue) {
+            console.log("[ASSISTENTE] ℹ️ Nada a processar - permitindo save normal");
+            return;
+        }
+        
+        console.log("[ASSISTENTE] 🎯 Processando retorno pendente...");
+        
+        // 3. Prevenir o save normal
+        if (eventContext && eventContext.getEventArgs) {
+            const eventArgs = eventContext.getEventArgs();
+            if (eventArgs && eventArgs.preventDefault) {
+                eventArgs.preventDefault();
+                console.log("[ASSISTENTE] ⏸️ Save normal prevenido");
+            }
+        }
+        
+        // 4. Criar o registro de retorno
+        console.log("[ASSISTENTE] 🚀 Criando serviço de retorno...");
+        const result = await criarRetornoAssistente();
+        
+        if (result && result.id) {
+            console.log(`[ASSISTENTE] ✅ Retorno criado: ${result.id}`);
+            
+            // 5. Limpar campos após sucesso
+            pendingField.setValue(false);
+            optionsField.setValue(null);
+            
+            console.log("[ASSISTENTE] 🧹 Campos limpos");
+            
+            // 6. Aguardar um pouco para garantir sincronização
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // 7. Salvar formulário principal
+            console.log("[ASSISTENTE] 💾 Salvando formulário principal...");
+            Xrm.Page.data.entity.save();
+        }
+        
+    } catch (error) {
+        console.error("[ASSISTENTE] ❌ Erro no handler:", error.message);
+        
+        // Em caso de erro, limpar campos e permitir save
+        try {
+            const pendingField = Xrm.Page.getAttribute("cr40f_new_assistant_pending");
+            const optionsField = Xrm.Page.getAttribute("cr40f_new_assistant_options");
+            
+            if (pendingField) {
+                pendingField.setValue(false);
+                console.log("[ASSISTENTE] 🧹 Campo pendente limpo (erro)");
+            }
+            
+            if (optionsField) {
+                optionsField.setValue(null);
+                console.log("[ASSISTENTE] 🧹 Campo opções limpo (erro)");
+            }
+        } catch (cleanError) {
+            console.error("[ASSISTENTE] Erro ao limpar campos:", cleanError);
+        }
+        
+        // Salvar formulário mesmo com erro
+        console.log("[ASSISTENTE] 💾 Salvando formulário (após erro)...");
+        Xrm.Page.data.entity.save();
+    }
+}
+
+// Função para registrar o evento OnSave
+function registerAssistantHandler() {
+    try {
+        console.log("[ASSISTENTE] 🔧 Registrando handler OnSave...");
+        
+        // Verificar se já está registrado
+        const currentHandlers = Xrm.Page.data.entity._eventHandlers;
+        const existingSaveHandlers = currentHandlers && currentHandlers.save ? currentHandlers.save : [];
+        
+        // Remover nosso handler se já existir (evitar duplicação)
+        if (existingSaveHandlers.length > 0) {
+            Xrm.Page.data.entity.removeOnSave(handleAssistantOnSave);
+        }
+        
+        // Adicionar nosso handler
+        Xrm.Page.data.entity.addOnSave(handleAssistantOnSave);
+        
+        console.log("[ASSISTENTE] ✅ Handler OnSave registrado com sucesso!");
+        console.log("[ASSISTENTE] 📋 Total de handlers:", (Xrm.Page.data.entity._eventHandlers?.save?.length || 0));
+        
+        return true;
+        
+    } catch (error) {
+        console.error("[ASSISTENTE] ❌ Erro ao registrar handler:", error);
+        return false;
+    }
+}
+
+// Inicialização automática quando formulário carrega
+function initializeAssistant() {
+    console.log("[ASSISTENTE] 🚀 Inicializando...");
+    
+    // Aguardar Xrm estar disponível
+    if (typeof Xrm === 'undefined' || !Xrm.Page || !Xrm.Page.data) {
+        console.log("[ASSISTENTE] ⏳ Aguardando Xrm carregar...");
+        setTimeout(initializeAssistant, 1000);
+        return;
+    }
+    
+    // Aguardar formulário carregar completamente
+    Xrm.Page.data.addOnLoad(function() {
+        console.log("[ASSISTENTE] 📄 Formulário carregado, registrando handler...");
+        
+        // Registrar handler após pequeno delay
+        setTimeout(() => {
+            const success = registerAssistantHandler();
+            if (success) {
+                console.log("[ASSISTENTE] 🎉 Assistente inicializado com sucesso!");
+                console.log("[ASSISTENTE] =======================================");
+                console.log("[ASSISTENTE] PARA TESTAR:");
+                console.log("[ASSISTENTE] 1. Preencha cr40f_new_assistant_options com JSON");
+                console.log("[ASSISTENTE] 2. Sete cr40f_new_assistant_pending = true");
+                console.log("[ASSISTENTE] 3. Clique em SAVE no formulário");
+                console.log("[ASSISTENTE] =======================================");
+            }
+        }, 1500);
+    });
+}
+
+// Iniciar quando a página estiver pronta
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initializeAssistant, 2000);
+    });
+} else {
+    setTimeout(initializeAssistant, 2000);
+}
+
+// Expor funções para debug
+window._assistantDebug = {
+    testarCriacao: async function() {
+        console.log("[DEBUG] Testando criação de retorno...");
+        try {
+            const result = await criarRetornoAssistente();
+            console.log("[DEBUG] ✅ Sucesso:", result);
+            return result;
+        } catch (error) {
+            console.error("[DEBUG] ❌ Erro:", error);
+            return null;
+        }
+    },
+    
+    verificarConfig: function() {
+        console.log("[DEBUG] === CONFIGURAÇÃO ATUAL ===");
+        console.log("[DEBUG] Campos:", {
+            pending: Xrm.Page.getAttribute("cr40f_new_assistant_pending")?.getValue(),
+            options: Xrm.Page.getAttribute("cr40f_new_assistant_options")?.getValue()
+        });
+        console.log("[DEBUG] Handlers OnSave:", Xrm.Page.data.entity._eventHandlers?.save?.length || 0);
+        console.log("[DEBUG] ===========================");
+    },
+    
+    simularDados: function() {
+        const dados = {
+            retorno: {
+                destino: "Teste Debug " + new Date().toLocaleTimeString(),
+                endereco: "Rua Teste, 123",
+                observacao: "Teste via console",
+                dataHora: new Date().toISOString()
+            }
+        };
+        
+        Xrm.Page.getAttribute("cr40f_new_assistant_options").setValue(JSON.stringify(dados));
+        Xrm.Page.getAttribute("cr40f_new_assistant_pending").setValue(true);
+        
+        console.log("[DEBUG] ✅ Dados simulados:");
+        console.log("[DEBUG]", dados);
+        console.log("[DEBUG] 💾 Clique em SAVE para testar");
+    }
+};
+
+console.log("[ASSISTENTE] 📜 Script carregado. Inicialização em andamento...");
+
+
+// NO FINAL do arquivo cr40f_assistant_onsave.js, adicione:
+
+// Função que será chamada pelo OnLoad do formulário
+function assistantOnSaveOnLoad() {
+    console.log("✅ cr40f_assistant_onsave.js - OnLoad executado");
+    
+    // Esta função não faz nada além de log,
+    // porque a inicialização já é feita automaticamente
+    // pela função initializeAssistant() que já existe no código
+    
+    // Você pode adicionar aqui qualquer inicialização adicional se necessário
+    if (typeof initializeAssistant === 'function') {
+        initializeAssistant();
+    }
+}
+
+// Expor a função globalmente
+window.assistantOnSaveOnLoad = assistantOnSaveOnLoad;

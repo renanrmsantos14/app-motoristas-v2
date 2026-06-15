@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FlowSubmitButton, type FlowSubmitState } from "../components/common/FlowSubmitButton";
+import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { MaintenanceRequestVehicleOption } from "../lib/dataverse";
@@ -37,7 +37,7 @@ type MaintenanceRequestScreenProps = {
   onPreviewPhoto: (photoId: string) => void;
   onBack: () => void;
   onSubmit: (fields: MaintenanceRequestFields) => void;
-  submitState: FlowSubmitState;
+  submitState: ActionButtonState;
   vehicles: MaintenanceRequestVehicleOption[];
   initialVehicleId?: string;
   vehiclesLoading?: boolean;
@@ -239,9 +239,9 @@ export function MaintenanceRequestScreen({
               </div>
             </div>
           </div>
-          <div className="finalize-actions maintenance-actions">
-            <FlowSubmitButton className="finalize-primary" idleLabel="ENVIAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={submit} />
-          </div>
+          <ActionBar className="finalize-actions maintenance-actions">
+            <ActionButton className="finalize-primary" variant="primary" idleLabel="ENVIAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={submit} />
+          </ActionBar>
         </article>
       </section>
     </AppShell>

@@ -1,0 +1,37 @@
+<appaction uniquename="new__NotificarCondutor!bc2ea7c6ae93427aa65d6c4c846dcc9a!cr40f_ModelDrivenBetinhos!cr40f_multas!1">
+  <appmoduleid>
+    <uniquename>cr40f_ModelDrivenBetinhos</uniquename>
+  </appmoduleid>
+  <buttonlabeltext default="Notificar Condutor">
+    <label description="Notificar Condutor" languagecode="1046" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cr40f_multas</logicalname>
+  </contextentity>
+  <contextvalue>cr40f_multas</contextvalue>
+  <fonticon>MembersIcon</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>1</location>
+  <name>NotificarCondutor!bc2ea7c6ae93427aa65d6c4c846dcc9a</name>
+  <onclickeventjavascriptfunctionname>NotificarMotorista_Multas</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[{"type":24}]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>40423640-8bf2-f011-8406-6045bd3ab1b0</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>1000100026.2500000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilityformulacomponentlibraryid>
+    <name>cr40f_modeldrivenbetinhosdefaultcommandlibrary_1739f</name>
+  </visibilityformulacomponentlibraryid>
+  <visibilityformulacomponentname>4302eac0da9746378b92e1c617f2e31d</visibilityformulacomponentname>
+  <visibilityformulafunctionname>Visible</visibilityformulafunctionname>
+  <visibilitytype>1</visibilitytype>
+</appaction>

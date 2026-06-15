@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import betinhosLogo from "../../Logo Betinhos B.png";
 import carCrashIcon from "../assets/icons/car-crash-svgrepo-com.svg";
 import historyIcon from "../assets/icons/clock.svg";
+import { ActionButton } from "../components/common/ActionButton";
 import { PullToRefresh } from "../components/common/PullToRefresh";
+import { reportAppError } from "../lib/appErrorLogger";
 import type { AgendaItem } from "../types";
 
 const modules = [
@@ -120,13 +122,27 @@ function clearKnownLocalData() {
   localStorageKeysToReset.forEach((key) => {
     try {
       window.localStorage.removeItem(key);
-    } catch {
-      // Storage can be blocked by browser policy.
+    } catch (error) {
+      reportAppError(error, {
+        severity: "warning",
+        source: "initial-screen",
+        action: "reset-localstorage",
+        component: "InitialScreen",
+        screen: "TelaInicial",
+        payload: { key }
+      });
     }
     try {
       window.sessionStorage.removeItem(key);
-    } catch {
-      // Storage can be blocked by browser policy.
+    } catch (error) {
+      reportAppError(error, {
+        severity: "warning",
+        source: "initial-screen",
+        action: "reset-sessionstorage",
+        component: "InitialScreen",
+        screen: "TelaInicial",
+        payload: { key }
+      });
     }
   });
 }
@@ -456,8 +472,8 @@ export function InitialScreen(props: InitialScreenProps) {
             <div id="reset-local-title" className="maintenance-delete-title">Resetar dados locais?</div>
             <p>Rascunhos, fotos locais e sessão offline deste app serão removidos deste navegador.</p>
             <div className="maintenance-delete-actions">
-              <button className="maintenance-delete-cancel" onClick={() => setResetConfirmOpen(false)} type="button">Cancelar</button>
-              <button className="maintenance-delete-confirm" onClick={confirmResetLocalData} type="button">Resetar</button>
+              <ActionButton className="maintenance-delete-cancel" label="Cancelar" onClick={() => setResetConfirmOpen(false)} />
+              <ActionButton className="maintenance-delete-confirm" variant="danger" label="Resetar" onClick={confirmResetLocalData} />
             </div>
           </div>
         </div>

@@ -1,0 +1,4030 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0078D4" />
+  <title>Operacional · Betinhos</title>
+  <style>
+    :root {
+      --primary: #0078D4;
+      --primary-dark: #005A9E;
+      --primary-light: #E6F2FB;
+      --navy: #000E23;
+      --navy-2: #0A1B36;
+      --bg: #F8FAFB;
+      --bg-elev: #FFFFFF;
+      --card: #FFFFFF;
+      --card-hover: #F9FAFB;
+      --text: #1A202C;
+      --text-2: #4A5568;
+      --text-3: #A0AEC0;
+      --border: #E2E8F0;
+      --border-soft: #F0F4F8;
+      --success: #10B981;
+      --success-bg: #ECFDF5;
+      --warning: #F59E0B;
+      --warning-bg: #FFFBEB;
+      --danger: #EF4444;
+      --danger-bg: #FEF2F2;
+      --info: #3B82F6;
+      --info-bg: #EFF6FF;
+      --purple: #8B5CF6;
+      --purple-bg: #F5F3FF;
+      --orange: #F97316;
+      --orange-bg: #FFF7ED;
+      --teal: #14B8A6;
+      --teal-bg: #F0FDFA;
+      --shadow-xs: 0 1px 2px rgba(0,0,0,.04);
+      --shadow-sm: 0 2px 4px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+      --radius-sm: 8px;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 22px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --vvh: 100dvh;
+      --vvw: 100vw;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior-y: none;
+    }
+    body { min-height: 100vh; min-height: 100dvh; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; color: inherit; }
+    input, select { font-family: inherit; }
+
+    /* HEADER */
+    .app-header {
+      position: sticky; top: 0; z-index: 50;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: #fff;
+      padding-top: var(--safe-top);
+      box-shadow: var(--shadow-md);
+      transition: transform .2s ease, box-shadow .15s ease;
+    }
+    .app-header.compact {
+      transform: translateY(calc(-1 * (44px + var(--safe-top))));
+      box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    }
+    .header-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px 6px;
+    }
+    .header-actions {
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    .header-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0px; }
+    .header-title h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+    .header-title .sub { font-size: 11px; color: rgba(255,255,255,.7); font-weight: 500; }
+    .header-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(255,255,255,.12); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .header-btn:active { background: rgba(255,255,255,.25); transform: scale(0.95); }
+    .header-btn svg { width: 18px; height: 18px; }
+    .header-filter-btn { display: none; }
+
+    .filter-row {
+      display: flex; gap: 8px;
+      padding: 10px;
+      align-items: stretch;
+      flex-wrap: wrap;
+      background: rgba(0,0,0,.05);
+    }
+    .filter-summary-row {
+      display: none;
+      align-items: center; gap: 6px;
+      padding: 0 10px 8px;
+      overflow-x: auto;
+    }
+    @media (min-width: 1200px) {
+      .filter-row {
+        gap: 10px;
+        padding: 12px;
+      }
+    }
+    .filter-summary-btn {
+      height: 32px; min-width: auto;
+      padding: 0 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      color: #fff;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .filter-summary-btn:active { background: rgba(255,255,255,.2); }
+    .filter-summary-btn svg { width: 14px; height: 14px; opacity: .9; }
+    .filter-summary-text {
+      min-width: 0; flex: 1;
+      font-size: 11px; font-weight: 500; color: rgba(255,255,255,.7);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .filter-drawer {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: all .28s ease;
+      padding: 0 10px;
+    }
+    .filter-drawer.open {
+      max-height: 150px;
+      opacity: 1;
+      padding: 0 10px 8px;
+    }
+    .pill {
+      flex: 1; min-width: 0;
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      color: #fff; padding: 0 8px; height: 32px;
+      border-radius: 8px; font-weight: 500; font-size: 12px;
+      transition: background .15s;
+    }
+    .pill:active { background: rgba(255,255,255,.2); }
+    .pill svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .85; }
+    .pill .pill-label { font-size: 9px; font-weight: 600; opacity: .6; text-transform: uppercase; letter-spacing: .03em; }
+    .pill .pill-value { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill > .pill-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.2; }
+    .pill .chev { margin-left: auto; opacity: .6; }
+    .hidden-date { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+    .sort-pill { width: 100%; justify-content: flex-start; }
+    .sort-pill .sort-value { margin-left: auto; font-size: 11px; font-weight: 600; opacity: .85; }
+
+    /* VIEW TOGGLE */
+    .view-toggle {
+      display: none;
+    }
+    .header-view-toggle {
+      display: flex; gap: 2px; margin-left: auto;
+    }
+    .view-btn {
+      height: 28px; width: 60px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.08); color: rgba(255,255,255,.7);
+      font-weight: 600; font-size: 11px; letter-spacing: 0;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .view-btn:active { background: rgba(255,255,255,.15); }
+    .view-btn.active { background: rgba(255,255,255,.25); color: #fff; border-color: rgba(255,255,255,.4); }
+    @media (min-width: 720px) { .header-view-toggle { display: none; } }
+    body.landscape-compact .header-view-toggle { display: none; }
+
+    /* SECTION BAR */
+    .section-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 10px 6px;
+    }
+    .section-bar h2 { margin: 0; font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+    .section-bar .section-meta { font-size: 11px; color: var(--text-3); font-weight: 500; }
+    body.landscape-compact .section-bar { padding: 0 10px 4px; display: none; }
+    body.landscape-compact .section-bar h2 { font-size: 10px; }
+    body.landscape-compact .filter-summary-row { display: none; }
+    body.landscape-compact .header-filter-btn { display: inline-flex; }
+    body.landscape-compact .header-row { gap: 6px; padding: 6px 8px 4px; }
+    body.landscape-compact .app-header.compact { transform: translateY(0); }
+    body.landscape-compact .header-title h1 { font-size: 14px; }
+    body.landscape-compact .header-title .sub { font-size: 10px; }
+
+    /* ALERT STRIP */
+    .alert-strip {
+      background: var(--danger-bg); border: 1px solid rgba(239,68,68,.25);
+      color: #7f1d1d; border-radius: var(--radius);
+      padding: 8px 10px; font-size: 12px; font-weight: 600;
+      margin: 0 0 8px;
+    }
+    .alert-strip ul { margin: 4px 0 0; padding-left: 16px; font-weight: 500; }
+    .alert-strip li { margin: 2px 0; }
+
+    /* SUBSECTION */
+    .subsection { margin-bottom: 8px; }
+    .subsection.empty { display: none; }
+    .subsection-header {
+      font-size: 10px; font-weight: 700; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .05em;
+      margin: 0 4px 6px;
+      display: flex; align-items: center; gap: 4px;
+      position: sticky; top: 0; background: var(--bg); padding: 4px 4px 2px; z-index: 10;
+    }
+    @media (min-width: 720px) {
+      .subsection-header { position: relative; top: auto; background: transparent; padding: 0 4px 6px; }
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+      width: 100%;
+      padding: 10px;
+      align-items: start;
+    }
+    .app-sidebar {
+      display: none;
+    }
+    .app-main-shell {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    main {
+      padding: 0 0 calc(34px + var(--safe-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+      min-width: 0;
+    }
+    .section-bar {
+      padding: 12px 14px;
+      border: 1px solid rgba(226,232,240,.9);
+      border-radius: 18px;
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-xs);
+      gap: 10px;
+    }
+    .section-bar h2 {
+      font-size: 12px;
+      letter-spacing: .08em;
+      color: #526071;
+    }
+    .section-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .section-view-toggle {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 12px;
+      background: #EEF3F8;
+      border: 1px solid #D7E1EC;
+      flex-shrink: 0;
+    }
+    .section-meta {
+      white-space: nowrap;
+    }
+    .app-rail-surface {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #FDFEFF 0%, #F3F7FA 100%);
+      border: 1px solid #E1EAF2;
+      box-shadow: var(--shadow-sm);
+    }
+    .rail-hero {
+      padding: 14px 14px 12px;
+      border-radius: 18px;
+      color: #fff;
+      background: linear-gradient(160deg, #071529 0%, #13325A 68%, #1E5C9C 100%);
+      box-shadow: 0 14px 30px rgba(7,21,41,.18);
+    }
+    .rail-hero h3 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+    .rail-hero p {
+      margin: 0;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.45;
+    }
+    .rail-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .rail-stat {
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid #E5ECF3;
+      box-shadow: var(--shadow-xs);
+      min-width: 0;
+    }
+    .rail-stat-label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #7B8899;
+    }
+    .rail-stat-value {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+    }
+    .rail-stat-meta {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .rail-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rail-block-title {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #7B8899;
+    }
+    .rail-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .rail-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid #DCE6F0;
+      background: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-2);
+      white-space: nowrap;
+    }
+    .rail-chip strong {
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rail-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .rail-action {
+      height: 42px;
+      border-radius: 14px;
+      padding: 0 12px;
+      background: #fff;
+      border: 1px solid #DCE6F0;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: var(--shadow-xs);
+    }
+    .rail-action:active {
+      transform: scale(.98);
+      background: #F7FAFD;
+    }
+    .rail-alerts {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .rail-alert {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: #FFF7ED;
+      border: 1px solid rgba(249,115,22,.16);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #9A4B16;
+      line-height: 1.4;
+    }
+    .rail-alert.danger {
+      background: #FEF2F2;
+      border-color: rgba(239,68,68,.16);
+      color: #A12E2E;
+    }
+    .rail-empty {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px dashed #D5E0EA;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+    @media (min-width: 860px) {
+      .app-container {
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 14px;
+        padding: 12px;
+      }
+      .section-view-toggle {
+        display: inline-flex;
+      }
+      main {
+        padding-bottom: 18px;
+      }
+    }
+    @media (min-width: 1240px) {
+      .app-container {
+        grid-template-columns: 280px minmax(0, 1fr) 360px;
+        gap: 16px;
+        padding: 14px;
+      }
+      .app-sidebar {
+        display: block;
+        position: sticky;
+        top: calc(var(--safe-top) + 76px);
+      }
+    }
+    body.landscape-compact .app-container {
+      display: block;
+      padding: 0;
+    }
+    body.landscape-compact .app-sidebar,
+    body.landscape-compact .section-view-toggle {
+      display: none !important;
+    }
+    body.landscape-compact main {
+      padding: 1px 8px 1px;
+      gap: 0;
+      height: calc(var(--vvh) - 44px - var(--safe-top) - var(--safe-bottom));
+      overflow: hidden;
+    }
+
+    /* DRIVER CARD */
+    .driver-card {
+      background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%);
+      border: 1px solid #E2EAF2;
+      border-radius: 22px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: box-shadow .15s, border-color .15s, transform .15s;
+    }
+    .driver-card.has-conflict {
+      border-color: rgba(239,68,68,.32);
+      box-shadow: 0 0 0 1px rgba(239,68,68,.08), var(--shadow-sm);
+    }
+    .driver-card.unassigned {
+      border-color: rgba(245,158,11,.35);
+      box-shadow: 0 0 0 1px rgba(245,158,11,.08), var(--shadow-sm);
+    }
+    /* cards colapsáveis: services-list oculta por padrão, visível quando expanded */
+    .driver-card.collapsible .services-list { display: none; }
+    .driver-card.collapsible.expanded .services-list { display: flex; }
+    .driver-header {
+      display: flex;
+      gap: 12px;
+      padding: 14px;
+      align-items: center;
+      width: 100%;
+      text-align: left;
+    }
+    .driver-header:active { background: rgba(246,249,252,.8); }
+    .avatar {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      background: linear-gradient(150deg, #0A2345 0%, #1E6AB0 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: .02em;
+      box-shadow: 0 10px 22px rgba(10,35,69,.18);
+    }
+    .avatar.unassigned { background: linear-gradient(150deg, #F59E0B 0%, #D97706 100%); }
+    .driver-info { flex: 1; min-width: 0; }
+    .driver-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .driver-meta {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--text-2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .driver-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      flex-shrink: 0;
+      gap: 2px;
+    }
+    .driver-stats .count {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+    .driver-stats .count-label {
+      font-size: 10px;
+      color: var(--text-3);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .driver-chev {
+      margin-left: 2px;
+      color: var(--text-3);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+
+    /* SERVICE LIST */
+    .services-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 14px 14px;
+      border-top: none;
+    }
+    .service-item {
+      position: relative;
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      width: 100%;
+      text-align: left;
+      border: 1px solid #E3EAF1;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #F9FBFD 100%);
+      align-items: stretch;
+      transition: background .15s, border-color .15s, box-shadow .15s, transform .12s;
+      box-shadow: var(--shadow-xs);
+      overflow: hidden;
+    }
+    .service-item::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: #D6DFE8;
+    }
+    .service-item:last-child { border-bottom: 1px solid #E3EAF1; }
+    .service-item:active {
+      background: #F6FAFD;
+      transform: scale(.997);
+    }
+    .service-item.is-selected {
+      border-color: rgba(0,120,212,.5);
+      box-shadow: 0 0 0 3px rgba(0,120,212,.12), 0 10px 26px rgba(15,23,42,.08);
+    }
+    .service-item[data-urgency="attention"]::before { background: var(--danger); }
+    .service-item[data-urgency="in-progress"]::before { background: var(--warning); }
+    .service-item[data-urgency="next"]::before { background: var(--info); }
+    .service-item[data-urgency="future"]::before { background: #CBD5E1; }
+    .service-item[data-urgency="concluded"]::before { background: var(--success); }
+
+    .service-time {
+      flex-shrink: 0;
+      width: 84px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 6px;
+      background: #F3F7FB;
+      border-radius: 16px;
+      border: 1px solid #E4EDF5;
+    }
+    .service-time .t-from {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.04em;
+      line-height: 1;
+    }
+    .service-time .t-arrow {
+      color: #7C8A9B;
+      font-size: 8px;
+      margin: 5px 0 4px;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 800;
+    }
+    .service-time .t-to {
+      font-size: 11px;
+      color: var(--text-2);
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .service-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .service-topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .service-type-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .service-code {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 800;
+      color: #7C8A9B;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .type-tag {
+      display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px;
+      border-radius: 6px; font-size: 10.5px; font-weight: 700;
+      white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+    }
+    .status-tag {
+      display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px;
+      border-radius: 6px; font-size: 10px; font-weight: 700;
+      background: var(--bg); color: var(--text-2);
+      text-transform: uppercase; letter-spacing: .03em;
+    }
+    .status-tag .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .conflict-badge {
+      display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px;
+      border-radius: 6px; font-size: 10px; font-weight: 700;
+      background: var(--danger-bg); color: var(--danger); letter-spacing: .02em;
+    }
+    .state-chip {
+      display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px;
+      border-radius: 6px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .03em;
+      background: var(--bg); color: var(--text-2);
+    }
+    .state-chip.warning { background: var(--warning-bg); color: #a16207; }
+    .state-chip.danger  { background: var(--danger-bg);  color: #b91c1c; }
+    .state-chip.success { background: var(--success-bg); color: #047857; }
+    .state-chip.info    { background: var(--info-bg);    color: #1d4ed8; }
+
+    .driver-status-badge {
+      display: inline-flex; align-items: center; padding: 2px 6px;
+      border-radius: 6px; font-size: 9.5px; font-weight: 800;
+      letter-spacing: .03em; text-transform: uppercase; margin-left: 2px; white-space: nowrap;
+    }
+    .driver-status-badge.success { background: var(--success-bg); color: #047857; }
+    .driver-status-badge.warning { background: var(--warning-bg); color: #a16207; }
+    .driver-status-badge.info    { background: var(--info-bg);    color: #1d4ed8; }
+
+    .collapsed-block {
+      background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%);
+      border: 1px solid #E2EAF2;
+      border-radius: 20px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .collapse-btn {
+      width: 100%; padding: 12px 14px;
+      font-size: 12px; font-weight: 800; color: var(--text-2);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .collapse-btn:active { background: var(--card-hover); }
+    .service-route {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .service-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .service-meta-item {
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: #F6FAFD;
+      border: 1px solid #E8EFF6;
+    }
+    .service-meta-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 3px;
+      font-size: 9px;
+      color: #7C8A9B;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .service-meta-label svg {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+    }
+    .service-meta-value {
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .service-meta-item.wide {
+      grid-column: 1 / -1;
+    }
+    @media (max-width: 540px) {
+      .service-meta-grid {
+        grid-template-columns: 1fr;
+      }
+      .service-item {
+        gap: 10px;
+      }
+      .service-time {
+        width: 74px;
+      }
+      .service-time .t-from {
+        font-size: 16px;
+      }
+    }
+
+    .landscape-shell {
+      display: flex; flex-direction: column; gap: 8px;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      width: 100%;
+    }
+    body.landscape-compact .landscape-shell {
+      gap: 4px;
+    }
+    .landscape-head {
+      display: none;
+    }
+    .landscape-table-wrap {
+      background: var(--bg-elev);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      box-shadow: var(--shadow-xs);
+      overflow: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      width: 100%;
+    }
+    .landscape-table-scroll {
+      overflow: auto;
+      flex: 1;
+      -webkit-overflow-scrolling: touch;
+    }
+    .landscape-table {
+      width: 100%;
+      min-width: 580px;
+      border-collapse: collapse;
+    }
+    .landscape-table th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--text-2);
+      font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .landscape-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-soft);
+      font-size: 13px;
+      color: var(--text);
+      vertical-align: top;
+    }
+    @media (min-width: 1200px) {
+      .landscape-table th {
+        padding: 12px 14px;
+        font-size: 13px;
+      }
+      .landscape-table td {
+        padding: 14px;
+        font-size: 14px;
+      }
+    }
+    .landscape-table tr:last-child td { border-bottom: none; }
+    .landscape-table tr[data-clickable="1"] { cursor: pointer; }
+    .landscape-table tr[data-clickable="1"]:active { background: var(--card-hover); }
+    .landscape-table tr.is-selected td {
+      background: #EFF6FF;
+    }
+    .landscape-table .when strong { display: block; font-size: 14px; font-weight: 600; line-height: 1.2; }
+    .landscape-table .when span { display: block; margin-top: 2px; color: var(--text-2); font-size: 11px; line-height: 1.2; }
+    .landscape-table .route-cell {
+      color: var(--text); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      word-break: break-word;
+      white-space: normal;
+      min-width: 220px;
+    }
+    .landscape-table .pax-cell {
+      color: var(--text); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      word-break: break-word;
+      white-space: normal;
+      min-width: 180px;
+    }
+    .landscape-table .muted-cell { color: var(--text-2); }
+    .landscape-table .status-bar-cell {
+      width: 4px;
+      padding: 0 !important;
+      border-right: none;
+    }
+    @media (min-width: 1200px) {
+      .landscape-table .when strong { font-size: 16px; }
+      .landscape-table .when span { font-size: 12px; }
+      .landscape-table .route-cell { min-width: 280px; }
+      .landscape-table .pax-cell { min-width: 220px; }
+    }
+    .landscape-gallery {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+      padding: 2px;
+    }
+    @media (orientation: landscape) and (min-width: 500px) {
+      .landscape-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (orientation: landscape) and (min-width: 800px) {
+      .landscape-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .landscape-card {
+      width: 100%;
+      text-align: left;
+      background: var(--bg-elev);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      box-shadow: var(--shadow-xs);
+      padding: 8px;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .landscape-card:active { background: var(--card-hover); }
+    .landscape-card.is-selected {
+      border-color: rgba(0,120,212,.45);
+      box-shadow: 0 0 0 3px rgba(0,120,212,.12);
+    }
+    .landscape-card-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .landscape-card-time strong { display: block; font-size: 12px; color: var(--text); line-height: 1.05; }
+    .landscape-card-time span { display: block; margin-top: 0px; font-size: 9.5px; color: var(--text-2); }
+    .landscape-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px 6px;
+    }
+    .landscape-card-field span {
+      display: block;
+      font-size: 8.5px; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em;
+      margin-bottom: 1px;
+    }
+    .landscape-card-field strong {
+      display: block;
+      font-size: 11px; color: var(--text); font-weight: 600; line-height: 1.25;
+      overflow: hidden;
+    }
+    .landscape-card-field.full { grid-column: 1 / -1; }
+
+    /* EMPTY / LOADER */
+    .empty { text-align: center; padding: 48px 16px; color: var(--text-2); }
+    .empty svg { width: 52px; height: 52px; opacity: .35; }
+    .empty h3 { margin: 12px 0 4px; font-size: 15px; color: var(--text); font-weight: 700; }
+    .empty p { margin: 0; font-size: 13px; color: var(--text-2); }
+
+    .loader-overlay {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,.65); backdrop-filter: blur(2px);
+      z-index: 100; display: flex; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0; transition: opacity .2s;
+    }
+    .loader-overlay.active { opacity: 1; pointer-events: auto; }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* DETAIL PANEL (Desktop) */
+    .app-detail-panel {
+      display: none;
+      flex-direction: column;
+      min-width: 0;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #F9FBFD 100%);
+      border: 1px solid #E1EAF2;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      position: sticky;
+      top: calc(var(--safe-top) + 76px);
+      min-height: calc(100dvh - 98px - var(--safe-bottom));
+    }
+    @media (min-width: 860px) {
+      .app-detail-panel { display: flex; }
+    }
+    .app-detail-panel.hidden .detail-panel-body {
+      display: flex;
+    }
+    .detail-panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E7EEF5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(10px);
+    }
+    .detail-panel-kicker {
+      font-size: 10px;
+      font-weight: 800;
+      color: #7B8899;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .detail-panel-title {
+      margin-top: 2px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--text);
+    }
+    .detail-panel-close {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #F3F7FB;
+      color: var(--text-2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid #E2EAF2;
+    }
+    .detail-panel-close:active { background: #E7EEF5; color: var(--text); }
+    .detail-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px 18px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      min-height: 0;
+      overscroll-behavior: contain;
+    }
+    .app-detail-panel .field-block {
+      padding: 12px;
+      border: 1px solid #E6EDF4;
+      border-radius: 16px;
+      background: #F7FAFD;
+    }
+    .app-detail-panel .field-block.full {
+      grid-column: 1 / -1;
+    }
+    .app-detail-panel .field-value {
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .app-detail-panel .pax-list {
+      gap: 8px;
+    }
+    .app-detail-panel .pax-item {
+      background: #fff;
+      border: 1px solid #E5EDF4;
+      padding: 8px 10px;
+    }
+    .app-detail-panel .sheet-col {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      min-width: 0;
+    }
+    .detail-panel-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+      color: var(--text-3);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px;
+      border: 1px dashed #D5E0EA;
+      border-radius: 18px;
+      background: #FCFDFE;
+    }
+
+    /* BOTTOM SHEET */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.56);
+      backdrop-filter: blur(1.5px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+      touch-action: none;
+    }
+    .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      max-height: calc(100vh - 20px);
+      background: var(--card); z-index: 201;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -10px 40px rgba(0,0,0,.18);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.32,.72,0,1);
+      display: flex; flex-direction: column; overflow: hidden;
+      padding-bottom: var(--safe-bottom);
+    }
+    .sheet.open { transform: translateY(0); }
+    .sheet-handle { flex-shrink: 0; padding: 6px 0 4px; display: flex; justify-content: center; cursor: grab; }
+    .sheet-handle::before { content: ""; width: 40px; height: 4px; border-radius: 99px; background: var(--border); }
+    .sheet-header { padding: 10px 14px; border-bottom: 1px solid var(--border-soft); }
+    .sheet-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .sheet-header-top .sheet-time { flex: 1; }
+    .sheet-close-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--bg); color: var(--text-2); display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s, transform .1s; flex-shrink: 0; cursor: pointer; border: 1px solid var(--border); }
+    .sheet-close-btn:hover { background: var(--border); color: var(--text); }
+    .sheet-close-btn:active { background: var(--primary); color: #fff; transform: scale(0.95); }
+    .sheet-header .sheet-time { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .sheet-header .sheet-time .t { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.02em; line-height: 1; }
+    .sheet-header .sheet-time .duration { margin-left: auto; font-size: 10.5px; font-weight: 700; color: var(--text-2); background: var(--bg); padding: 3px 8px; border-radius: 6px; }
+    .sheet-header .sheet-tags { display: flex; gap: 3px; flex-wrap: wrap; }
+    .sheet-body { overflow-y: auto; padding: 8px 14px 16px; flex: 1; -webkit-overflow-scrolling: touch; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 8px; }
+    .sheet-col { display: contents; }
+    .field-block { padding: 0; border-bottom: none; }
+    .field-block:last-child { border-bottom: none; }
+    .field-block.full { grid-column: 1 / -1; }
+    .field-label { font-size: 9.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; display: flex; align-items: center; gap: 4px; }
+    .field-label svg { width: 11px; height: 11px; opacity: .75; }
+    .field-value { font-size: 12.5px; color: var(--text); word-break: break-word; white-space: pre-wrap; line-height: 1.35; }
+    .field-value.muted { color: var(--text-3); font-style: italic; font-size: 11.5px; }
+    .pax-list { display: flex; flex-direction: column; gap: 5px; grid-column: 1 / -1; }
+    .pax-item { display: flex; align-items: center; gap: 7px; padding: 7px 9px; background: var(--bg); border-radius: 9px; }
+    .pax-item .pax-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10.5px; flex-shrink: 0; }
+    .pax-item .pax-info { flex: 1; min-width: 0; }
+    .pax-item .pax-name { font-size: 12.5px; font-weight: 600; }
+    .pax-item .pax-phone { font-size: 10.5px; color: var(--text-2); }
+    .pax-item .pax-address { display: flex; align-items: flex-start; gap: 3px; font-size: 10px; color: var(--text-3); margin-top: 2px; line-height: 1.3; }
+    .pax-item .pax-address svg { width: 9px; height: 9px; flex-shrink: 0; margin-top: 1px; }
+    .pax-source-tag { margin-left: 6px; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 700; background: var(--info-bg); color: var(--info); text-transform: uppercase; letter-spacing: .04em; vertical-align: middle; }
+
+    /* Alturas pequenas */
+    @media (max-height: 400px) {
+      .sheet {
+        max-height: calc(100vh - 20px);
+      }
+      .sheet-handle { padding: 6px 0 4px; }
+      .sheet-handle::before { width: 36px; height: 3px; }
+      .sheet-header { padding: 6px 14px 10px; }
+      .sheet-header .sheet-time { margin-bottom: 6px; }
+      .sheet-header .sheet-time .t { font-size: 20px; }
+      .sheet-header .sheet-time .duration { font-size: 11px; padding: 4px 8px; }
+      .sheet-body { padding: 8px 14px 16px; }
+      .field-block { padding: 10px 0; }
+      .field-label { font-size: 11px; margin-bottom: 4px; }
+      .field-label svg { width: 12px; height: 12px; }
+      .field-value { font-size: 13px; line-height: 1.4; }
+      .pax-list { gap: 6px; }
+      .pax-item { padding: 8px 10px; gap: 10px; }
+      .pax-item .pax-avatar { width: 28px; height: 28px; font-size: 11px; }
+      .pax-item .pax-name { font-size: 12px; }
+      .pax-item .pax-phone { font-size: 11px; }
+    }
+
+      @media (orientation: landscape) {
+      body.landscape-compact .sheet {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        bottom: auto;
+        transform: translate(-50%, calc(-50% + 150vh));
+        max-height: calc(100dvh - 16px);
+        width: calc(100% - 32px);
+        max-width: calc(100vw - 32px);
+        border-radius: 16px;
+        z-index: 201;
+      }
+      body.landscape-compact .sheet.open {
+        transform: translate(-50%, -50%);
+      }
+      body.landscape-compact .sheet-handle {
+        padding: 4px 0 2px;
+      }
+      body.landscape-compact .sheet-handle::before {
+        width: 32px;
+        height: 3px;
+      }
+      body.landscape-compact .sheet-header {
+        padding: 6px 14px 7px;
+        flex-shrink: 0;
+      }
+      body.landscape-compact .sheet-header .sheet-time {
+        margin-bottom: 4px;
+      }
+      body.landscape-compact .sheet-header .sheet-time .t {
+        font-size: 16px;
+      }
+      body.landscape-compact .sheet-header .sheet-time .duration {
+        font-size: 9px;
+        padding: 2px 5px;
+      }
+      body.landscape-compact .sheet-header .sheet-tags {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
+      body.landscape-compact .sheet-close-btn {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+      }
+      body.landscape-compact .sheet-close-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+      body.landscape-compact .sheet-body {
+        display: flex;
+        flex-direction: row;
+        padding: 0;
+        gap: 0;
+        overflow: hidden;
+      }
+      body.landscape-compact .sheet-col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 14px 12px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        flex: 1;
+        min-width: 0;
+      }
+      body.landscape-compact .sheet-col-info {
+        border-right: 1px solid var(--border-soft);
+      }
+      body.landscape-compact .sheet-col .field-block {
+        grid-column: unset;
+      }
+      body.landscape-compact .sheet-col .field-block.full {
+        grid-column: unset;
+      }
+      body.landscape-compact .sheet-col .pax-list {
+        grid-column: unset;
+      }
+      body.landscape-compact .field-value {
+        font-size: 12px;
+      }
+      body.landscape-compact .field-label {
+        font-size: 9px;
+      }
+      body.landscape-compact .pax-item {
+        padding: 5px 7px;
+        gap: 5px;
+      }
+      body.landscape-compact .pax-item .pax-avatar {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 420px) {
+      body.landscape-compact .sheet {
+        max-height: 80vh;
+        top: 50%;
+        transform: translate(-50%, calc(-50% + 150vh));
+      }
+      body.landscape-compact .sheet.open {
+        transform: translate(-50%, -50%);
+      }
+      body.landscape-compact .sheet-header {
+        padding: 8px 14px 10px;
+      }
+      body.landscape-compact .sheet-col {
+        padding: 7px 10px 10px;
+        gap: 6px;
+      }
+      body.landscape-compact .field-label {
+        font-size: 9px;
+        margin-bottom: 2px;
+      }
+      body.landscape-compact .field-value {
+        font-size: 11px;
+        line-height: 1.25;
+      }
+      body.landscape-compact .pax-item {
+        padding: 4px 6px;
+        gap: 5px;
+      }
+      body.landscape-compact .pax-item .pax-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 9px;
+      }
+      body.landscape-compact .pax-item .pax-name {
+        font-size: 10.5px;
+      }
+      body.landscape-compact .pax-item .pax-phone {
+        font-size: 9px;
+      }
+    }
+
+    @media (orientation: landscape) {
+      body.landscape-compact .sheet.open {
+        transform: translate(-50%, -50%);
+      }
+      .sheet-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    /* MOTORISTA PICKER */
+    .picker {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      max-height: 80vh; max-height: 80dvh;
+      background: var(--card); z-index: 201;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -10px 40px rgba(0,0,0,.18);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.32,.72,0,1);
+      display: flex; flex-direction: column; overflow: hidden;
+      padding-bottom: var(--safe-bottom);
+    }
+    .picker.open { transform: translateY(0); }
+    .picker-search { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); }
+    .picker-search input { width: 100%; height: 38px; border: 1px solid var(--border); background: var(--bg); border-radius: 9px; padding: 0 12px; font-size: 14px; outline: none; }
+    .picker-search input:focus { border-color: var(--primary); background: #fff; }
+    .picker-list { overflow-y: auto; padding: 2px 0 10px; -webkit-overflow-scrolling: touch; }
+    .picker-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; text-align: left; transition: background .15s; }
+    .picker-item:active { background: var(--card-hover); }
+    .picker-item.selected { background: var(--primary-light); }
+    .picker-item .picker-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+    .picker-item .picker-name { flex: 1; font-size: 14px; font-weight: 600; }
+    .picker-item .picker-meta { font-size: 11px; color: var(--text-3); }
+    .picker-item.selected .picker-name { color: var(--primary-dark); }
+    .picker-item .check { color: var(--primary); display: none; }
+    .picker-item.selected .check { display: block; }
+
+    /* RESPONSIVE */
+    @media (min-width: 720px) {
+      body.landscape-compact main { max-width: 100%; padding: 1px 10px 1px; }
+      .header-row, .filter-row, .filter-summary-row, .filter-drawer { max-width: 1180px; margin-left: auto; margin-right: auto; }
+      .filter-row, .filter-summary-row { padding-left: 16px; padding-right: 16px; }
+      .filter-drawer.open { padding: 0 16px 10px; }
+      .header-row { padding: 10px 16px 6px; }
+      .header-title h1 { font-size: 16.5px; }
+      .sheet, .picker { left: 50%; right: auto; bottom: 20px; transform: translate(-50%, calc(100% + 20px)); width: 540px; max-width: calc(100vw - 24px); border-radius: 18px; }
+      .sheet.open, .picker.open { transform: translate(-50%, 0); }
+    }
+    @media (min-width: 1240px) {
+      .header-row, .filter-row, .filter-summary-row, .filter-drawer { max-width: 1360px; }
+    }
+    @media (orientation: landscape) and (max-height: 560px) {
+      .view-toggle { padding-bottom: 4px; }
+      .landscape-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+    }
+    @media (orientation: landscape) and (max-height: 420px) {
+      body.landscape-compact .header-title .sub,
+      body.landscape-compact .section-bar {
+        display: none;
+      }
+      body.landscape-compact .header-row {
+        padding-bottom: 4px;
+      }
+      .landscape-card {
+        padding: 7px;
+      }
+      .landscape-card-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px 5px;
+      }
+      .landscape-card-field.full {
+        grid-column: 1 / -1;
+      }
+      .landscape-card-field span {
+        font-size: 8px;
+      }
+      .landscape-card-field strong {
+        font-size: 10px;
+      }
+    }
+    @media (max-height: 400px) {
+      .sheet {
+        max-height: calc(100vh - 20px);
+      }
+      .sheet-handle { padding: 4px 0 2px; }
+      .sheet-handle::before { width: 36px; height: 3px; }
+      .sheet-header { padding: 6px 12px 8px; }
+      .sheet-close-btn {
+        width: 30px;
+        height: 30px;
+      }
+      .sheet-close-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .sheet-header .sheet-time { margin-bottom: 4px; }
+      .sheet-header .sheet-time .t { font-size: 18px; }
+      .sheet-header .sheet-time .duration { font-size: 10px; padding: 2px 6px; }
+      .sheet-body { padding: 6px 12px 12px; gap: 8px 6px; }
+      .field-block { padding: 0px 0; }
+      .field-label { font-size: 10px; margin-bottom: 2px; }
+      .field-label svg { width: 10px; height: 10px; }
+      .field-value { font-size: 12px; line-height: 1.3; }
+      .pax-list { gap: 4px; }
+      .pax-item { padding: 6px 8px; gap: 6px; }
+      .pax-item .pax-avatar { width: 24px; height: 24px; font-size: 10px; }
+      .pax-item .pax-name { font-size: 11px; }
+      .pax-item .pax-phone { font-size: 10px; }
+      .landscape-gallery {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        gap: 4px;
+        padding: 0;
+      }
+      .landscape-card {
+        padding: 5px;
+      }
+      .landscape-card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 3px 4px;
+      }
+      .landscape-card-field span {
+        font-size: 7.5px;
+        margin-bottom: 0px;
+      }
+      .landscape-card-field strong {
+        font-size: 9.5px;
+        line-height: 1.15;
+      }
+      .landscape-card-time strong {
+        font-size: 10.5px;
+      }
+      .landscape-card-time span {
+        font-size: 8.5px;
+      }
+    }
+    /* Professional app shell: operational density outside compact landscape. */
+    :root {
+      --app-bg: #EEF2F6;
+      --app-surface: #FFFFFF;
+      --app-surface-2: #F7F9FC;
+      --app-line: #D8E0EA;
+      --app-line-strong: #C5D0DD;
+      --app-ink: #17202B;
+      --app-muted: #627083;
+      --app-faint: #8B98A9;
+      --app-accent: #0067B8;
+      --app-accent-soft: #E7F1FB;
+      --app-radius: 8px;
+      --app-shadow: 0 10px 28px rgba(20, 33, 48, .08);
+    }
+
+    html, body {
+      background:
+        linear-gradient(180deg, #F7FAFD 0%, var(--app-bg) 42%, #E8EEF5 100%);
+      color: var(--app-ink);
+      font-family: "Segoe UI Variable", "Segoe UI", Tahoma, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .app-header {
+      background: #071321;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 8px 22px rgba(7,19,33,.18);
+    }
+    .header-row {
+      min-height: 52px;
+      padding: 8px 12px;
+    }
+    .header-title h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .header-title .sub {
+      color: rgba(255,255,255,.62);
+      font-size: 11px;
+      letter-spacing: 0;
+    }
+    .header-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .header-btn:active {
+      background: rgba(255,255,255,.18);
+    }
+    .view-btn {
+      width: auto;
+      min-width: 72px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .filter-drawer.open {
+      max-height: 190px;
+      padding-bottom: 10px;
+    }
+    .filter-row {
+      background: transparent;
+      padding: 8px 12px 0;
+    }
+    .pill {
+      height: 38px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.14);
+    }
+
+    .app-container {
+      padding: 10px;
+      gap: 10px;
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+    .app-main-shell {
+      gap: 8px;
+      min-width: 0;
+    }
+    .section-bar {
+      border-radius: var(--app-radius);
+      border: 1px solid var(--app-line);
+      background: rgba(255,255,255,.94);
+      box-shadow: none;
+      padding: 10px 12px;
+    }
+    .section-bar h2 {
+      color: var(--app-muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+    .section-meta {
+      color: var(--app-faint);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .section-view-toggle {
+      border-radius: 8px;
+      background: #E9EEF4;
+      border: 1px solid var(--app-line);
+      padding: 3px;
+    }
+    .section-view-toggle .view-btn {
+      color: var(--app-muted);
+      background: transparent;
+      border-color: transparent;
+    }
+    .section-view-toggle .view-btn.active {
+      color: var(--app-ink);
+      background: #fff;
+      border-color: var(--app-line);
+      box-shadow: 0 1px 4px rgba(20,33,48,.08);
+    }
+
+    .app-sidebar {
+      top: calc(var(--safe-top) + 72px);
+    }
+    .app-rail-surface {
+      border-radius: var(--app-radius);
+      border-color: var(--app-line);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow);
+      padding: 10px;
+      gap: 10px;
+    }
+    .rail-hero {
+      border-radius: var(--app-radius);
+      background: #101B29;
+      box-shadow: none;
+      padding: 12px;
+    }
+    .rail-hero h3 {
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+    .rail-hero p {
+      font-size: 11px;
+      color: rgba(255,255,255,.68);
+    }
+    .rail-stats {
+      gap: 6px;
+    }
+    .rail-stat {
+      border-radius: var(--app-radius);
+      padding: 9px;
+      background: var(--app-surface-2);
+      border-color: var(--app-line);
+      box-shadow: none;
+    }
+    .rail-stat-label,
+    .rail-block-title {
+      font-size: 9px;
+      letter-spacing: .06em;
+    }
+    .rail-stat-value {
+      font-size: 18px;
+    }
+    .rail-chip {
+      border-radius: 7px;
+      padding: 7px 8px;
+      background: var(--app-surface-2);
+      border-color: var(--app-line);
+      font-size: 11px;
+    }
+    .rail-actions {
+      gap: 6px;
+    }
+    .rail-action {
+      height: 36px;
+      border-radius: 7px;
+      box-shadow: none;
+      font-size: 11px;
+    }
+    .rail-alert,
+    .rail-empty {
+      border-radius: 7px;
+      font-size: 11px;
+    }
+
+    .subsection {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+    .subsection-header {
+      position: relative;
+      top: auto;
+      margin: 0;
+      padding: 0 2px;
+      background: transparent;
+      color: var(--app-muted);
+      font-size: 10px;
+      letter-spacing: .06em;
+    }
+    .driver-card,
+    .collapsed-block {
+      border-radius: var(--app-radius);
+      border-color: var(--app-line);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow);
+    }
+    .driver-header {
+      padding: 10px 12px;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      box-shadow: none;
+    }
+    .driver-name {
+      font-size: 13px;
+      letter-spacing: 0;
+    }
+    .driver-meta {
+      font-size: 11px;
+    }
+    .driver-stats .count {
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+    .services-list {
+      gap: 6px;
+      padding: 0 10px 10px;
+    }
+    .service-item {
+      border-radius: var(--app-radius);
+      border-color: var(--app-line);
+      background: #fff;
+      box-shadow: none;
+      padding: 9px 10px;
+      gap: 10px;
+      min-height: 96px;
+    }
+    .service-item::before {
+      width: 4px;
+    }
+    .service-item:hover {
+      border-color: var(--app-line-strong);
+      background: #FBFCFE;
+    }
+    .service-item.is-selected {
+      border-color: var(--app-accent);
+      box-shadow: inset 0 0 0 1px var(--app-accent), 0 8px 20px rgba(0,103,184,.12);
+    }
+    .service-time {
+      width: 72px;
+      border-radius: 7px;
+      background: var(--app-surface-2);
+      border-color: var(--app-line);
+      padding: 6px 4px;
+    }
+    .service-time .t-from {
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+    .service-time .t-arrow {
+      margin: 4px 0 3px;
+      letter-spacing: .08em;
+    }
+    .service-time .t-to {
+      font-size: 10px;
+    }
+    .service-body {
+      gap: 6px;
+    }
+    .service-topline {
+      gap: 6px;
+    }
+    .type-tag,
+    .status-tag,
+    .state-chip,
+    .driver-status-badge,
+    .conflict-badge {
+      border-radius: 6px;
+      letter-spacing: 0;
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+    .service-code {
+      letter-spacing: .04em;
+      font-size: 9px;
+    }
+    .service-route {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .service-meta-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .service-meta-item {
+      border-radius: 7px;
+      padding: 6px 8px;
+      background: var(--app-surface-2);
+      border-color: #E6EDF5;
+    }
+    .service-meta-label {
+      font-size: 8px;
+      letter-spacing: .06em;
+      margin-bottom: 2px;
+    }
+    .service-meta-value {
+      font-size: 11px;
+    }
+
+    .app-detail-panel {
+      top: calc(var(--safe-top) + 72px);
+      min-height: calc(100dvh - 92px - var(--safe-bottom));
+      border-radius: var(--app-radius);
+      border-color: var(--app-line);
+      background: var(--app-surface);
+      box-shadow: var(--app-shadow);
+    }
+    .detail-panel-header {
+      padding: 11px 12px;
+      border-bottom-color: var(--app-line);
+      background: #fff;
+    }
+    .detail-panel-kicker {
+      font-size: 9px;
+      letter-spacing: .06em;
+    }
+    .detail-panel-title {
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+    .detail-panel-close {
+      border-radius: 7px;
+      width: 32px;
+      height: 32px;
+    }
+    .detail-panel-body {
+      padding: 10px;
+      gap: 8px;
+    }
+    .app-detail-panel .field-block {
+      border-radius: 7px;
+      padding: 9px;
+      background: var(--app-surface-2);
+    }
+    .app-detail-panel .field-label {
+      font-size: 9px;
+      letter-spacing: .06em;
+    }
+    .app-detail-panel .field-value {
+      font-size: 12px;
+    }
+
+    .sheet {
+      border-radius: 12px 12px 0 0;
+    }
+    .sheet-header {
+      padding: 10px 12px;
+    }
+    .sheet-body {
+      padding: 10px 12px 16px;
+    }
+    .field-label {
+      letter-spacing: .06em;
+    }
+    .pax-item {
+      border-radius: 7px;
+    }
+
+    @media (max-width: 859px) {
+      .app-container {
+        padding: 8px;
+      }
+      .section-bar {
+        position: sticky;
+        top: calc(var(--safe-top) + 52px);
+        z-index: 20;
+      }
+      main {
+        gap: 9px;
+      }
+      .service-meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .service-item {
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .header-view-toggle {
+        display: none;
+      }
+      .filter-summary-row {
+        display: flex;
+      }
+      .service-item {
+        align-items: flex-start;
+        padding: 9px;
+      }
+      .service-time {
+        width: 64px;
+      }
+      .service-meta-grid {
+        grid-template-columns: 1fr;
+      }
+      .service-meta-item {
+        padding: 5px 7px;
+      }
+      .service-topline {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .service-code {
+        align-self: flex-start;
+      }
+    }
+
+    @media (min-width: 860px) {
+      .app-container {
+        grid-template-columns: minmax(0, 1fr) 320px;
+      }
+    }
+
+    @media (min-width: 1180px) {
+      html,
+      body {
+        overflow: hidden;
+      }
+      .app-header {
+        position: relative;
+        height: 58px;
+      }
+      .app-header.compact {
+        transform: none;
+      }
+      .header-row {
+        max-width: none;
+        min-height: 58px;
+        padding: 9px 16px;
+      }
+      .header-title {
+        flex: 0 0 260px;
+      }
+      .header-title h1 {
+        font-size: 16px;
+      }
+      .header-title .sub {
+        font-size: 11px;
+      }
+      .header-view-toggle {
+        display: none;
+      }
+      .header-actions {
+        margin-left: auto;
+      }
+      .filter-summary-row {
+        display: none;
+      }
+      .filter-drawer.open {
+        border-top: 1px solid rgba(255,255,255,.08);
+      }
+      .filter-row {
+        max-width: none;
+      }
+      .app-container {
+        max-width: none;
+        height: calc(100dvh - 58px - var(--safe-bottom));
+        grid-template-columns: clamp(240px, 19vw, 300px) minmax(0, 1fr) clamp(330px, 28vw, 460px);
+        gap: 0;
+        padding: 0;
+        border-top: 1px solid var(--app-line);
+        overflow: hidden;
+      }
+      .app-sidebar {
+        display: block;
+        position: relative;
+        top: auto;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+        border-right: 1px solid var(--app-line);
+        background: #FFFFFF;
+      }
+      .app-main-shell {
+        min-height: 0;
+        height: 100%;
+        gap: 0;
+        background: #EEF3F8;
+      }
+      .section-bar {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+        border-radius: 0;
+        border-width: 0 0 1px;
+        padding: 11px 14px;
+        background: rgba(255,255,255,.96);
+      }
+      .section-view-toggle {
+        display: none;
+      }
+      main {
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 12px 14px 18px;
+        gap: 10px;
+      }
+      .app-detail-panel {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        top: auto;
+        height: 100%;
+        min-height: 0;
+        max-height: 100%;
+        min-width: 0;
+        border-width: 0 0 0 1px;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: hidden;
+      }
+      .app-detail-panel.hidden {
+        display: flex;
+      }
+      .detail-panel-header {
+        min-height: 58px;
+      }
+      .detail-panel-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 12px 14px;
+        scrollbar-gutter: stable;
+      }
+      .app-detail-panel .sheet-col {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 0;
+        min-height: 0;
+      }
+      .app-detail-panel .sheet-col-info,
+      .app-detail-panel .sheet-col-pax {
+        border: 1px solid var(--app-line);
+        border-radius: 8px;
+        background: #FFFFFF;
+        padding: 8px;
+      }
+      .app-detail-panel .sheet-col-info::before,
+      .app-detail-panel .sheet-col-pax::before {
+        display: block;
+        margin: 0 0 2px;
+        color: var(--app-muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+      }
+      .app-detail-panel .sheet-col-info::before {
+        content: "Operação";
+      }
+      .app-detail-panel .sheet-col-pax::before {
+        content: "Passageiros e observações";
+      }
+      .app-detail-panel .field-block {
+        padding: 8px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .app-detail-panel .field-value {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .app-rail-surface {
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: #FFFFFF;
+        padding: 12px;
+        overflow-y: auto;
+      }
+      .desktop-menu {
+        display: grid;
+        gap: 6px;
+      }
+      .desktop-menu-btn {
+        height: 40px;
+        border-radius: 8px;
+        padding: 0 10px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--app-muted);
+        background: transparent;
+        border: 1px solid transparent;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: left;
+      }
+      .desktop-menu-btn svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .desktop-menu-btn.active {
+        color: var(--app-ink);
+        background: var(--app-accent-soft);
+        border-color: #BFD8F1;
+      }
+      .desktop-filter-stack {
+        display: grid;
+        gap: 7px;
+      }
+      .desktop-filter-field {
+        display: grid;
+        gap: 4px;
+      }
+      .desktop-filter-label {
+        color: var(--app-faint);
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+      }
+      .desktop-filter-input {
+        width: 100%;
+        min-height: 38px;
+        border: 1px solid var(--app-line);
+        border-radius: 8px;
+        padding: 0 10px;
+        background: var(--app-surface-2);
+        color: var(--app-ink);
+        font-size: 12px;
+        font-weight: 650;
+        outline: none;
+      }
+      .desktop-filter-input:focus {
+        border-color: var(--app-accent);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(0,103,184,.10);
+      }
+      .rail-hero {
+        background: #0B1522;
+      }
+      .rail-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .rail-actions {
+        grid-template-columns: 1fr;
+      }
+      .rail-action {
+        justify-content: flex-start;
+      }
+      .subsection-header {
+        padding: 0 2px 1px;
+      }
+      .driver-card,
+      .collapsed-block {
+        border-radius: 8px;
+        box-shadow: none;
+      }
+      .services-list {
+        padding: 0;
+        gap: 0;
+      }
+      .driver-card .services-list {
+        border-top: 1px solid var(--app-line);
+      }
+      .service-item {
+        min-height: 74px;
+        border-width: 0 0 1px;
+        border-radius: 0;
+        padding: 9px 12px 9px 10px;
+        background: #fff;
+      }
+      .service-item:last-child {
+        border-bottom: 0;
+      }
+      .service-item::before {
+        width: 3px;
+      }
+      .service-item.is-selected {
+        background: #F2F8FE;
+        box-shadow: inset 0 0 0 1px rgba(0,103,184,.35);
+      }
+      .service-time {
+        width: 66px;
+        border: 0;
+        background: #F1F5F9;
+      }
+      .service-body {
+        display: grid;
+        grid-template-columns: minmax(150px, .64fr) minmax(260px, 1.4fr) minmax(190px, .78fr);
+        gap: 6px 12px;
+        align-items: start;
+        min-width: 0;
+      }
+      .service-topline {
+        grid-column: 1;
+      }
+      .service-route {
+        grid-column: 2;
+        grid-row: 1;
+        padding-top: 1px;
+      }
+      .service-meta-grid {
+        grid-column: 3;
+        grid-row: 1;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 3px;
+      }
+      .service-meta-item {
+        background: transparent;
+        border: 0;
+        padding: 0;
+      }
+      .service-meta-item.requester,
+      .service-meta-item.pax {
+        display: none;
+      }
+      .service-meta-label svg {
+        display: none;
+      }
+      .service-meta-label {
+        display: none;
+      }
+      .service-meta-value {
+        font-size: 11px;
+        color: var(--app-muted);
+      }
+      .service-meta-item.driver .service-meta-value::before {
+        content: "Motorista: ";
+        color: var(--app-faint);
+        font-weight: 800;
+      }
+      .service-meta-item.vehicle .service-meta-value::before {
+        content: "Veículo: ";
+        color: var(--app-faint);
+        font-weight: 800;
+      }
+      .type-tag,
+      .status-tag,
+      .state-chip {
+        font-size: 9px;
+      }
+      .state-chip {
+        display: none;
+      }
+    }
+
+    @media (min-width: 1180px) and (max-width: 1360px) {
+      .app-container {
+        grid-template-columns: 236px minmax(0, 1fr) 340px;
+      }
+      .rail-hero h3 {
+        font-size: 13px;
+      }
+      .service-body {
+        grid-template-columns: 1fr;
+      }
+      .service-route {
+        grid-column: 1;
+        grid-row: auto;
+      }
+      .service-meta-grid {
+        grid-column: 1;
+        grid-row: auto;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    body.landscape-compact {
+      background: var(--bg);
+    }
+    body.landscape-compact,
+    body.landscape-compact .app-header,
+    body.landscape-compact .app-container {
+      width: var(--vvw);
+      max-width: var(--vvw);
+    }
+    body.landscape-compact .app-container {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+    }
+    body.landscape-compact .service-item {
+      min-height: unset;
+    }
+
+    /* Landscape service popup: keep the sheet fully inside the phone viewport. */
+    .sheet,
+    .sheet-backdrop {
+      transition: none !important;
+    }
+    body.landscape-compact .sheet {
+      position: fixed !important;
+      inset: max(8px, var(--safe-top)) 8px max(8px, var(--safe-bottom)) 8px !important;
+      width: auto !important;
+      max-width: none !important;
+      max-height: none !important;
+      height: auto !important;
+      transform: none !important;
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 12px !important;
+      padding-bottom: 0 !important;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    body.landscape-compact .sheet.open {
+      transform: none !important;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    body.landscape-compact .sheet-header {
+      flex: 0 0 auto;
+      padding: 6px 10px !important;
+    }
+    body.landscape-compact .sheet-header .sheet-time {
+      min-width: 0;
+    }
+    body.landscape-compact .sheet-header .sheet-time .t {
+      font-size: 15px !important;
+    }
+    body.landscape-compact .sheet-header .sheet-time .duration {
+      max-width: 48vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    body.landscape-compact .sheet-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      overflow: hidden !important;
+    }
+    body.landscape-compact .sheet-col {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 8px 10px !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    body.landscape-compact .sheet-col-pax {
+      border-left: 1px solid var(--border-soft);
+    }
+    @media (orientation: landscape) {
+      body.landscape-compact .sheet {
+        position: fixed !important;
+        inset: max(8px, var(--safe-top)) 8px max(8px, var(--safe-bottom)) 8px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        height: auto !important;
+        transform: none !important;
+        opacity: 0;
+        pointer-events: none;
+        border-radius: 12px !important;
+        padding-bottom: 0 !important;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      body.landscape-compact .sheet.open {
+        transform: none !important;
+        opacity: 1;
+        pointer-events: auto;
+      }
+      body.landscape-compact .sheet-header {
+        flex: 0 0 auto;
+        padding: 6px 10px !important;
+      }
+      body.landscape-compact .sheet-header .sheet-time {
+        min-width: 0;
+      }
+      body.landscape-compact .sheet-header .sheet-time .t {
+        font-size: 15px !important;
+      }
+      body.landscape-compact .sheet-header .sheet-time .duration {
+        max-width: 48vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      body.landscape-compact .sheet-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        overflow: hidden !important;
+      }
+      body.landscape-compact .sheet-col {
+        min-height: 0;
+        overflow-y: auto;
+        padding: 8px 10px !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      body.landscape-compact .sheet-col-pax {
+        border-left: 1px solid var(--border-soft);
+      }
+    }
+
+    /* Melhorias visuais adicionais */
+    .detail-panel-body .pax-item {
+      background: #fff;
+      border: 1px solid #E5EDF4;
+      border-radius: 9px;
+      padding: 8px 10px;
+      gap: 8px;
+    }
+    .detail-panel-body .pax-item .pax-avatar {
+      width: 30px;
+      height: 30px;
+      font-size: 11px;
+      border-radius: 8px;
+    }
+    .detail-panel-body .pax-item .pax-name {
+      font-size: 13px;
+    }
+
+    /* Badge de status de urgência mais proeminente */
+    .service-item[data-urgency="attention"] .service-time {
+      background: rgba(239,68,68,.06);
+      border-color: rgba(239,68,68,.2);
+    }
+    .service-item[data-urgency="in-progress"] .service-time {
+      background: rgba(245,158,11,.06);
+      border-color: rgba(245,158,11,.2);
+    }
+
+    /* Indicador de contagem de passageiros no item de serviço */
+    .pax-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-3);
+      padding: 1px 6px;
+      border-radius: 99px;
+      background: var(--app-surface-2);
+      border: 1px solid var(--app-line);
+      white-space: nowrap;
+    }
+    .pax-count-badge svg { width: 10px; height: 10px; }
+
+    /* Secão de passageiros no painel de detalhe com cabeçalho de secão */
+    .app-detail-panel .sheet-col-pax::before {
+      content: "Passageiros e observações";
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-row">
+      <div class="header-title">
+        <h1>Operacional</h1>
+        <span class="sub" id="hdr-subtitle">Carregando...</span>
+      </div>
+      <div class="header-view-toggle">
+        <button class="view-btn active" data-view="timeline">Agenda</button>
+        <button class="view-btn" data-view="motorista">Motoristas</button>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" id="btn-prev-day" aria-label="Dia anterior" title="Dia anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="header-btn" id="btn-next-day" aria-label="Próximo dia" title="Próximo dia">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <button class="header-btn header-filter-btn" id="btn-filters-header" aria-label="Abrir filtros" title="Filtros">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/></svg>
+        </button>
+        <button class="header-btn" id="btn-refresh" aria-label="Atualizar" title="Atualizar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="filter-summary-row">
+      <button class="filter-summary-btn" id="btn-filters" aria-label="Abrir filtros" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/></svg>
+        Filtros
+      </button>
+      <div class="filter-summary-text" id="filter-summary-text">Hoje · Todos os motoristas · Saída crescente</div>
+    </div>
+    <div class="filter-drawer" id="filter-drawer">
+      <div class="filter-row">
+        <button class="pill" id="btn-date" aria-label="Selecionar data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <div class="pill-meta">
+            <span class="pill-label">Data</span>
+            <span class="pill-value" id="pill-date">—</span>
+          </div>
+          <input type="date" class="hidden-date" id="input-date" />
+        </button>
+        <button class="pill" id="btn-motorista" aria-label="Selecionar motorista">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+          <div class="pill-meta">
+            <span class="pill-label">Motorista</span>
+            <span class="pill-value" id="pill-motorista">TODOS</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="filter-row" style="padding-top:0">
+        <button class="pill sort-pill" id="btn-sort" aria-label="Alterar ordenação">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6h10"/><path d="M7 12h7"/><path d="M7 18h4"/></svg>
+          <div class="pill-meta">
+            <span class="pill-label">Ordenação</span>
+            <span class="pill-value" id="pill-sort">Saída crescente</span>
+          </div>
+          <span class="sort-value" id="sort-hint">A-Z</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="app-sidebar">
+      <div id="sidebar-content"></div>
+    </aside>
+
+    <section class="app-main-shell">
+      <div class="section-bar">
+        <h2 id="section-title">Agenda do dia</h2>
+        <div class="section-bar-right">
+          <div class="section-view-toggle">
+            <button class="view-btn active" data-view="timeline">Agenda</button>
+            <button class="view-btn" data-view="motorista">Motoristas</button>
+          </div>
+          <span class="section-meta" id="section-meta"></span>
+        </div>
+      </div>
+      <main id="main-content"></main>
+    </section>
+
+    <aside class="app-detail-panel hidden" id="app-detail-panel">
+      <div class="detail-panel-header">
+        <div>
+          <div class="detail-panel-kicker">Contexto do serviço</div>
+          <div class="detail-panel-title" id="detail-panel-title">Nenhum serviço selecionado</div>
+        </div>
+        <button class="detail-panel-close" id="detail-panel-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6l-12 12M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="detail-panel-body" id="detail-panel-body">
+        <div class="detail-panel-empty">Selecione um serviço para ver detalhes</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="loader-overlay" id="loader"><div class="spinner"></div></div>
+
+  <div class="sheet-backdrop" id="sheet-backdrop"></div>
+  <aside class="sheet" id="sheet" aria-hidden="true">
+    <div class="sheet-handle" id="sheet-handle"></div>
+    <div class="sheet-header" id="sheet-header"></div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </aside>
+
+  <aside class="picker" id="picker" aria-hidden="true">
+    <div class="sheet-handle" id="picker-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-time"><div class="t" style="font-size:18px"><span>Selecionar motorista</span></div></div>
+    </div>
+    <div class="picker-search">
+      <input type="search" id="picker-search-input" placeholder="Buscar motorista…" autocomplete="off" />
+    </div>
+    <div class="picker-list" id="picker-list"></div>
+  </aside>
+
+  <script>
+  (function () {
+    "use strict";
+
+    const ENTITY_RESERVA     = "cr40f_reservadeveculos";
+    const ENTITY_FUNCIONARIO = "cr40f_funcionarios";
+
+    const TIPO_COLORS = {
+      "Transfer In":     { bg: "var(--info-bg)",    fg: "var(--info)"    },
+      "Transfer Out":    { bg: "var(--info-bg)",    fg: "var(--info)"    },
+      "Transfer":        { bg: "var(--info-bg)",    fg: "var(--info)"    },
+      "Disposição":      { bg: "var(--purple-bg)",  fg: "var(--purple)"  },
+      "Disposicao":      { bg: "var(--purple-bg)",  fg: "var(--purple)"  },
+      "Longa Distância": { bg: "var(--orange-bg)",  fg: "var(--orange)"  },
+      "Longa Distancia": { bg: "var(--orange-bg)",  fg: "var(--orange)"  },
+      "City Tour":       { bg: "var(--teal-bg)",    fg: "var(--teal)"    },
+      "Aeroporto":       { bg: "var(--info-bg)",    fg: "var(--info)"    },
+      "Hospital":        { bg: "var(--success-bg)", fg: "var(--success)" },
+      "Outros":          { bg: "var(--bg)",         fg: "var(--text-2)"  }
+    };
+
+    const STATUS_COLORS = {
+      "Em Aberto":               { bg: "#EFF6FF", fg: "#2563EB" },
+      "Aberta":                  { bg: "#EFF6FF", fg: "#2563EB" },
+      "Confirmada":              { bg: "#ECFDF5", fg: "#059669" },
+      "Confirmado":              { bg: "#ECFDF5", fg: "#059669" },
+      "Programado":              { bg: "#F5F3FF", fg: "#7C3AED" },
+      "Pré-reserva":             { bg: "#EFF6FF", fg: "#1D4ED8" },
+      "Solicitado":              { bg: "#F1F5F9", fg: "#475569" },
+      "Requer Análise":          { bg: "#FEF3C7", fg: "#92400E" },
+      "Em Andamento":            { bg: "#FFFBEB", fg: "#D97706" },
+      "Em Operação":             { bg: "#FFFBEB", fg: "#D97706" },
+      "Em Execução":             { bg: "#FFFBEB", fg: "#D97706" },
+      "Concluída":               { bg: "#ECFDF5", fg: "#059669" },
+      "Concluído":               { bg: "#ECFDF5", fg: "#059669" },
+      "Concluida":               { bg: "#ECFDF5", fg: "#059669" },
+      "Finalizada":              { bg: "#ECFDF5", fg: "#059669" },
+      "Cancelada":               { bg: "#FEF2F2", fg: "#DC2626" },
+      "Cancelado":               { bg: "#FEF2F2", fg: "#DC2626" },
+      "Cancelado com Ressalvas": { bg: "#FEE2E2", fg: "#B91C1C" },
+      "Reagendada":              { bg: "#F5F3FF", fg: "#7C3AED" }
+    };
+
+    const state = {
+      date: todayLocal(),
+      motoristaId: "ALL",
+      motoristaName: "TODOS",
+      viewMode: "timeline",
+      sortOrder: "saida_asc",
+      filtersOpen: false,
+      showConcluded: false,
+      reservas: [],
+      motoristas: [],
+      grouped: [],
+      orphan: [],
+      loading: false,
+      isXrm: false,
+      driverLoadError: null,
+      reservaLoadError: null,
+      reservaQueryMode: "default",
+      headerCompact: false,
+      selectedServiceId: null,
+      suppressNextPopupClick: false,
+      servicosPassageiros: {}
+    };
+
+    document.addEventListener("DOMContentLoaded", init);
+
+    async function init() {
+      bindUi();
+      detectEnvironment();
+      renderHeader();
+      await loadAll();
+    }
+
+    function detectEnvironment() {
+      const candidates = [window, window.parent, window.top];
+      state.isXrm = false;
+      state._xrm = null;
+      for (const ctx of candidates) {
+        try {
+          const xrm = ctx && ctx.Xrm ? ctx.Xrm : null;
+          if (xrm && xrm.WebApi) {
+            state.isXrm = true;
+            state._xrm = xrm;
+            return;
+          }
+        } catch (_) {}
+      }
+    }
+
+    function bindUi() {
+      updateViewportMetrics();
+      $("#btn-prev-day").addEventListener("click", () => shiftDay(-1));
+      $("#btn-next-day").addEventListener("click", () => shiftDay(1));
+      $("#btn-refresh").addEventListener("click", () => loadAll(true));
+      $("#btn-filters").addEventListener("click", toggleFilters);
+      $("#btn-filters-header").addEventListener("click", toggleFilters);
+      $("#btn-sort").addEventListener("click", cycleSortOrder);
+
+      const dateInput = $("#input-date");
+      $("#btn-date").addEventListener("click", (e) => {
+        if (e.target === dateInput) return;
+        if (typeof dateInput.showPicker === "function") {
+          try { dateInput.showPicker(); return; } catch (_) {}
+        }
+        dateInput.focus(); dateInput.click();
+      });
+      dateInput.addEventListener("change", () => {
+        if (!dateInput.value) return;
+        const [y,m,d] = dateInput.value.split("-").map(Number);
+        state.date = new Date(y, m-1, d);
+        renderHeader(); loadReservas();
+      });
+
+      $("#btn-motorista").addEventListener("click", openPicker);
+      $$(".view-btn[data-view]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const next = btn.dataset.view;
+          if (!next || state.viewMode === next) return;
+          state.viewMode = next; renderAll();
+        });
+      });
+      $$(".header-view-toggle .view-btn[data-view]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const next = btn.dataset.view;
+          if (!next || state.viewMode === next) return;
+          state.viewMode = next; renderAll();
+        });
+      });
+      $("#sheet-backdrop").addEventListener("pointerdown", consumeBackdropDismiss);
+      $("#sheet-backdrop").addEventListener("click", consumeBackdropDismiss);
+      document.addEventListener("pointerdown", captureOutsidePopupDismiss, true);
+      document.addEventListener("click", captureOutsidePopupDismiss, true);
+      $("#sheet").addEventListener("pointerdown", (e) => e.stopPropagation());
+      $("#sheet").addEventListener("click", (e) => e.stopPropagation());
+      $("#sheet-handle").addEventListener("click", closeSheet);
+      $("#picker-handle").addEventListener("click", closePicker);
+      $("#picker-search-input").addEventListener("input", filterPicker);
+      $("#detail-panel-close").addEventListener("click", clearSelectedService);
+      window.addEventListener("scroll", syncHeaderCompact, { passive: true });
+
+      let orientationTimeout;
+      const handleOrientationChange = () => {
+        clearTimeout(orientationTimeout);
+        orientationTimeout = setTimeout(() => {
+          updateViewportMetrics();
+          renderAll();
+          syncHeaderCompact();
+        }, 100);
+      };
+      window.addEventListener("orientationchange", handleOrientationChange, { passive: true });
+      window.addEventListener("resize", handleOrientationChange, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", handleOrientationChange, { passive: true });
+        window.visualViewport.addEventListener("scroll", updateViewportMetrics, { passive: true });
+      }
+
+      let touchStartX = null, touchStartY = null;
+      $(".app-header").addEventListener("touchstart", (e) => {
+        touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+      $(".app-header").addEventListener("touchend", (e) => {
+        if (touchStartX == null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+        if (Math.abs(dx) > 60 && dy < 40) { dx > 0 ? shiftDay(-1) : shiftDay(1); }
+        touchStartX = null;
+      }, { passive: true });
+
+      window.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT") return;
+        if (e.key === "Escape") closeAllOverlays();
+        else if (e.key === "ArrowLeft") shiftDay(-1);
+        else if (e.key === "ArrowRight") shiftDay(1);
+      });
+    }
+
+    function getViewportSize() {
+      const vv = window.visualViewport;
+      const width = Math.floor(vv && vv.width ? vv.width : document.documentElement.clientWidth || window.innerWidth || 0);
+      const height = Math.floor(vv && vv.height ? vv.height : document.documentElement.clientHeight || window.innerHeight || 0);
+      return { width, height };
+    }
+
+    function updateViewportMetrics() {
+      const vp = getViewportSize();
+      document.documentElement.style.setProperty("--vvh", `${vp.height}px`);
+      document.documentElement.style.setProperty("--vvw", `${vp.width}px`);
+    }
+
+    function shiftDay(delta) {
+      const d = new Date(state.date);
+      d.setDate(d.getDate() + delta);
+      state.date = d;
+      $("#input-date").value = toIsoDate(d);
+      renderHeader(); loadReservas();
+    }
+
+    function syncHeaderCompact() {
+      const shouldCompact = isLandscapeCompactMode() || window.scrollY > 48;
+      if (state.headerCompact === shouldCompact) return;
+      state.headerCompact = shouldCompact;
+      $(".app-header").classList.toggle("compact", shouldCompact);
+    }
+
+    function toggleFilters(force) {
+      state.filtersOpen = typeof force === "boolean" ? force : !state.filtersOpen;
+      $("#filter-drawer").classList.toggle("open", state.filtersOpen);
+      $("#btn-filters").setAttribute("aria-expanded", state.filtersOpen ? "true" : "false");
+    }
+
+    function cycleSortOrder() {
+      state.sortOrder = state.sortOrder === "saida_asc" ? "saida_desc" : "saida_asc";
+      applySort();
+      renderAll();
+    }
+
+    async function loadAll() {
+      setLoading(true);
+      try {
+        await loadReservas(true);
+        await loadMotoristas();
+        applySort();
+        renderAll();
+      } finally { setLoading(false); }
+    }
+
+    async function loadMotoristas() {
+      try {
+        if (state.isXrm) {
+          const select  = "$select=cr40f_funcionariosid,cr40f_nomecompleto,new_apelido,cr40f_funcao,cr40f_status,cr40f_celular";
+          const orderby = "$orderby=cr40f_nomecompleto asc";
+          const filter  = "$filter=statecode eq 0";
+          const result  = await state._xrm.WebApi.retrieveMultipleRecords(ENTITY_FUNCIONARIO, `?${select}&${filter}&${orderby}`);
+          const fromQuery = result.entities
+            .filter(f => /motorista/i.test(f["cr40f_funcao@OData.Community.Display.V1.FormattedValue"] || ""))
+            .map(f => ({ id: f.cr40f_funcionariosid, name: f.cr40f_nomecompleto || "(sem nome)", apelido: f.new_apelido || "", celular: f.cr40f_celular || "" }));
+          state.motoristas = fromQuery;
+          if (state.motoristas.length === 0) {
+            state.motoristas = deriveMotoristasFromReservas();
+          }
+        } else {
+          state.motoristas = MOCK.motoristas;
+        }
+      } catch (err) {
+        console.error("Erro carregando motoristas reais:", err);
+        state.driverLoadError = err.message || String(err);
+        state.motoristas = state.isXrm ? deriveMotoristasFromReservas() : MOCK.motoristas;
+      }
+    }
+
+    async function loadServicosPassageiros() {
+      if (!state.reservas.length) { state.servicosPassageiros = {}; return; }
+      if (!state.isXrm) { state.servicosPassageiros = MOCK.servicosPassageiros(state.reservas); return; }
+      try {
+        const ids = state.reservas.map(r => r.id);
+        const CHUNK = 10;
+        const all = [];
+        for (let i = 0; i < ids.length; i += CHUNK) {
+          const chunk = ids.slice(i, i + CHUNK);
+          const filter = chunk.map(id => `_cr40f_geral_value eq ${id}`).join(" or ");
+          const res = await state._xrm.WebApi.retrieveMultipleRecords(
+            "cr40f_servicosporpassageiro",
+            `?$select=cr40f_servicosporpassageiroid,cr40f_ordemdeselecao,new_enderecodesaidacolunaservicosporpassageiro,_cr40f_geral_value,_cr40f_bancodedados_value&$filter=${filter}&$orderby=cr40f_ordemdeselecao asc`
+          );
+          all.push(...res.entities);
+        }
+        const rfv = (e, k) => e[`${k}@OData.Community.Display.V1.FormattedValue`] || null;
+        const map = {};
+        for (const e of all) {
+          const rid = e._cr40f_geral_value;
+          if (!rid) continue;
+          if (!map[rid]) map[rid] = [];
+          map[rid].push({
+            id: e.cr40f_servicosporpassageiroid,
+            ordem: e.cr40f_ordemdeselecao || 0,
+            nome: rfv(e, "_cr40f_bancodedados_value") || "(passageiro)",
+            phone: "",
+            enderecoSaida: e.new_enderecodesaidacolunaservicosporpassageiro || ""
+          });
+        }
+        state.servicosPassageiros = map;
+      } catch (err) {
+        console.warn("Serviços por passageiro não carregados:", err.message || err);
+        state.servicosPassageiros = {};
+      }
+    }
+
+    async function loadReservas(showLoader) {
+      if (showLoader) setLoading(true);
+      try {
+        const start = startOfDay(state.date);
+        const end   = endOfDay(state.date);
+        if (state.isXrm) {
+          const result = await retrieveReservasFromDataverse(start, end);
+          state.reservas = result.entities.map(mapReservaFromXrm);
+          state.reservaLoadError = null;
+        } else {
+          let list = MOCK.reservas(state.date);
+          if (state.motoristaId !== "ALL") list = list.filter(r => r.motoristaId === state.motoristaId);
+          state.reservas = list;
+          state.reservaLoadError = null;
+        }
+        await loadServicosPassageiros();
+        applySort();
+      } catch (err) {
+        console.error("Erro carregando reservas:", err);
+        state.reservaLoadError = err.message || String(err);
+        notifyError(state.reservaLoadError);
+        state.reservas = [];
+      } finally {
+        groupReservas(); renderAll();
+        if (showLoader) setLoading(false);
+      }
+    }
+
+    async function retrieveReservasFromDataverse(start, end) {
+      const baseFields = [
+        "cr40f_reservadeveculosid","cr40f_id","cr40f_idnovo",
+        "cr40f_status","cr40f_statusdefaturamento","cr40f_tipodoservico","cr40f_tipodeveiculo",
+        "cr40f_dataehorriodesada","cr40f_horrioprevistoderetorno",
+        "cr40f_destino","cr40f_endereodesada","cr40f_passageirosetelefonedecontato","cr40f_trajeto",
+        "cr40f_obsdeoperao","cr40f_observaointerna","_cr40f_solicitante_value"
+      ];
+      const lookupFields = [
+        "_cr40f_motorista_value","_cr40f_veiculo_value","_cr40f_cliente_value","_cr40f_solicitante_value",
+        "_cr40f_passageiro1_value","_cr40f_passageiro2_value","_cr40f_passageiro3_value","_cr40f_passageiro4_value"
+      ];
+      const baseFilter = [
+        `cr40f_dataehorriodesada ge ${start.toISOString()}`,
+        `cr40f_dataehorriodesada lt ${end.toISOString()}`,
+        "statecode eq 0"
+      ].join(" and ");
+      const driverFilter = state.motoristaId !== "ALL"
+        ? `${baseFilter} and _cr40f_motorista_value eq ${state.motoristaId}`
+        : baseFilter;
+
+      try {
+        state.reservaQueryMode = "default";
+        return await state._xrm.WebApi.retrieveMultipleRecords(
+          ENTITY_RESERVA,
+          `?$select=${baseFields.concat(lookupFields).join(",")}&$filter=${driverFilter}&$orderby=cr40f_dataehorriodesada asc`
+        );
+      } catch (err) {
+        const msg = String(err && (err.message || err));
+        const shouldFallback =
+          /column metadata is not available/i.test(msg) ||
+          /could not find a property named/i.test(msg) ||
+          /does not contain a definition/i.test(msg);
+        if (!shouldFallback) throw err;
+
+        console.warn("Consulta padrão falhou. Repetindo em modo seguro.", msg);
+        state.reservaQueryMode = "safe";
+        return await state._xrm.WebApi.retrieveMultipleRecords(
+          ENTITY_RESERVA,
+          `?$select=${baseFields.join(",")}&$filter=${baseFilter}&$orderby=cr40f_dataehorriodesada asc`
+        );
+      }
+    }
+
+    function mapReservaFromXrm(e) {
+      const fv = (k) => e[`${k}@OData.Community.Display.V1.FormattedValue`] || null;
+      const motoristaId = e._cr40f_motorista_value || null;
+      const motoristaName = fv("_cr40f_motorista_value") || null;
+      return {
+        id: e.cr40f_reservadeveculosid,
+        codigo: e.cr40f_idnovo || e.cr40f_id || "—",
+        status: fv("cr40f_status") || "—",
+        statusFat: fv("cr40f_statusdefaturamento") || null,
+        tipoServico: fv("cr40f_tipodoservico") || "Outros",
+        tipoVeiculo: fv("cr40f_tipodeveiculo") || null,
+        saida: e.cr40f_dataehorriodesada ? new Date(e.cr40f_dataehorriodesada) : null,
+        retorno: e.cr40f_horrioprevistoderetorno ? new Date(e.cr40f_horrioprevistoderetorno) : null,
+        destino: e.cr40f_destino || "",
+        enderecoSaida: e.cr40f_endereodesada || "",
+        passageiros: e.cr40f_passageirosetelefonedecontato || "",
+        trajeto: e.cr40f_trajeto || "",
+        obsOperacao: e.cr40f_obsdeoperao || "",
+        obsInterna: e.cr40f_observaointerna || "",
+        motoristaId,
+        motoristaName,
+        veiculoId: e._cr40f_veiculo_value || null,
+        veiculoName: fv("_cr40f_veiculo_value") || null,
+        clienteName: fv("_cr40f_cliente_value") || null,
+        solicitanteName: fv("_cr40f_solicitante_value") || null,
+        passageiro1Id: e._cr40f_passageiro1_value || null,
+        passageiro1Name: fv("_cr40f_passageiro1_value") || null,
+        passageiro2Id: e._cr40f_passageiro2_value || null,
+        passageiro2Name: fv("_cr40f_passageiro2_value") || null,
+        passageiro3Id: e._cr40f_passageiro3_value || null,
+        passageiro3Name: fv("_cr40f_passageiro3_value") || null,
+        passageiro4Id: e._cr40f_passageiro4_value || null,
+        passageiro4Name: fv("_cr40f_passageiro4_value") || null
+      };
+    }
+
+    function applySort() {
+      const factor = state.sortOrder === "saida_desc" ? -1 : 1;
+      state.reservas.sort((a, b) => {
+        const av = a.saida ? a.saida.getTime() : 0;
+        const bv = b.saida ? b.saida.getTime() : 0;
+        return (av - bv) * factor;
+      });
+    }
+
+    function groupReservas() {
+      const byMotorista = new Map();
+      const orphan = [];
+      for (const r of state.reservas) {
+        if (!r.motoristaId) { orphan.push(r); continue; }
+        if (!byMotorista.has(r.motoristaId)) {
+          byMotorista.set(r.motoristaId, { id: r.motoristaId, name: r.motoristaName || "(motorista)", services: [] });
+        }
+        byMotorista.get(r.motoristaId).services.push(r);
+      }
+      const groups = [];
+      for (const g of byMotorista.values()) {
+        g.services.sort((a, b) => (a.saida.getTime() || 0) - (b.saida.getTime() || 0));
+        g.closeIntervals = [];
+        for (let i = 1; i < g.services.length; i++) {
+          const prev = g.services[i-1], curr = g.services[i];
+          if (!prev.saida || !curr.saida) continue;
+          const diff = Math.round((curr.saida - prev.saida) / 60000);
+          if (diff >= 0 && diff < 30) g.closeIntervals.push({ a: prev, b: curr, diff });
+        }
+        g.firstAt = g.services[0].saida || null;
+        groups.push(g);
+      }
+      groups.sort((a, b) => {
+        if ((a.closeIntervals.length > 0) !== (b.closeIntervals.length > 0)) return a.closeIntervals.length > 0 ? -1 : 1;
+        return (a.firstAt.getTime() || 0) - (b.firstAt.getTime() || 0);
+      });
+      state.grouped = groups;
+      state.orphan = orphan.sort((a, b) => (a.saida.getTime() || 0) - (b.saida.getTime() || 0));
+    }
+
+    function deriveMotoristasFromReservas() {
+      const seen = new Map();
+      for (const r of state.reservas) {
+        if (!r.motoristaId) continue;
+        if (seen.has(r.motoristaId)) continue;
+        seen.set(r.motoristaId, {
+          id: r.motoristaId,
+          name: r.motoristaName || "(motorista)",
+          apelido: "",
+          celular: ""
+        });
+      }
+      return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    }
+
+    function renderHeader() {
+      const d = state.date;
+      $("#hdr-subtitle").textContent = formatDateLong(d);
+      $("#pill-date").textContent = formatDateShort(d);
+      $("#pill-motorista").textContent = state.motoristaName;
+      $("#pill-sort").textContent = state.sortOrder === "saida_desc" ? "Saída decrescente" : "Saída crescente";
+      $("#sort-hint").textContent = state.sortOrder === "saida_desc" ? "Z-A" : "A-Z";
+      $("#filter-summary-text").textContent = `${formatDateShort(d)} · ${state.motoristaName} · ${state.sortOrder === "saida_desc" ? "Saída decrescente" : "Saída crescente"}`;
+      $("#input-date").value = toIsoDate(d);
+      toggleFilters(state.filtersOpen);
+      $("#btn-filters-header").setAttribute("aria-expanded", state.filtersOpen ? "true" : "false");
+    }
+
+    function renderAll() {
+      updateViewportMetrics();
+      document.body.classList.toggle("landscape-compact", isLandscapeCompactMode());
+      renderHeader();
+      $$(".view-btn[data-view]").forEach(btn => btn.classList.toggle("active", btn.dataset.view === state.viewMode));
+      $$(".header-view-toggle .view-btn[data-view]").forEach(btn => btn.classList.toggle("active", btn.dataset.view === state.viewMode));
+      renderMain();
+      syncHeaderCompact();
+    }
+
+    function renderMain() {
+      const main = $("#main-content");
+      const snap = buildSnapshot(new Date());
+      const warnings = [];
+      renderSidebar(snap);
+      if (state.reservaLoadError) warnings.push(`Falha Dataverse: ${state.reservaLoadError}`);
+      else if (state.isXrm && state.reservaQueryMode === "safe") warnings.push("Consulta em modo seguro: sem agrupamento confiável por motorista até corrigir o schema dos lookups.");
+      if (state.driverLoadError) warnings.push(`Motoristas: ${state.driverLoadError}`);
+
+      if (state.reservas.length === 0) {
+        $("#section-title").textContent = state.viewMode === "motorista" ? "Por motorista" : "Agenda do dia";
+        $("#section-meta").textContent = "";
+        main.innerHTML = `
+          ${warnings.length ? renderAlertStrip(warnings.map(message => ({ message, priority: 0 }))) : ""}
+          <div class="empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <h3>Sem serviços nesta data</h3>
+            <p>${state.motoristaId === "ALL" ? "Não há reservas no dia selecionado." : `Nenhum serviço para ${escapeHtml(state.motoristaName)} no dia.`}</p>
+          </div>`;
+        attachSidebarHandlers();
+        clearSelectedService();
+        return;
+      }
+
+      if (isLandscapeCompactMode()) {
+        renderLandscapeMode(main);
+        if (warnings.length) {
+          main.insertAdjacentHTML("afterbegin", renderAlertStrip(warnings.map(message => ({ message, priority: 0 }))));
+        }
+        attachServiceHandlers();
+        syncSelectionUi();
+        return;
+      }
+
+      if (state.viewMode === "motorista") {
+        renderDriverMode(main, snap);
+      } else {
+        renderTimelineMode(main, snap);
+      }
+      if (warnings.length) {
+        main.insertAdjacentHTML("afterbegin", renderAlertStrip(warnings.map(message => ({ message, priority: 0 }))));
+      }
+      attachServiceHandlers();
+      attachLocalToggles();
+      attachSidebarHandlers();
+      syncSelectionUi();
+    }
+
+    function renderSidebar(snap) {
+      const alerts = [];
+      if (state.reservaLoadError) alerts.push({ tone: "danger", text: `Dataverse: ${state.reservaLoadError}` });
+      if (state.driverLoadError) alerts.push({ tone: "warning", text: `Motoristas: ${state.driverLoadError}` });
+      if (!alerts.length && snap.alerts.length) {
+        for (const alert of snap.alerts.slice(0, 3)) {
+          alerts.push({ tone: alert.priority === 1 ? "danger" : "warning", text: alert.message });
+        }
+      }
+      const inProgress = snap.inProgress.length;
+      const next = snap.nextHour.length;
+      const semMotorista = state.orphan.length;
+      const sectionName = state.viewMode === "motorista" ? "Motoristas" : "Agenda";
+      const motoristaOptions = [{ id: "ALL", name: "Todos os motoristas" }, ...state.motoristas]
+        .map(m => `<option value="${escapeAttr(m.id)}" ${m.id === state.motoristaId ? "selected" : ""}>${escapeHtml(m.name)}</option>`)
+        .join("");
+      $("#sidebar-content").innerHTML = `
+        <div class="app-rail-surface">
+          <section class="rail-hero">
+            <h3>${escapeHtml(sectionName)} operacional</h3>
+            <p>${escapeHtml(formatDateLong(state.date))} · ${escapeHtml(state.motoristaName)}</p>
+          </section>
+          <section class="rail-block">
+            <div class="rail-block-title">Menu</div>
+            <nav class="desktop-menu" aria-label="Navegação operacional">
+              <button class="desktop-menu-btn ${state.viewMode === "timeline" ? "active" : ""}" data-rail-view="timeline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+                Agenda do dia
+              </button>
+              <button class="desktop-menu-btn ${state.viewMode === "motorista" ? "active" : ""}" data-rail-view="motorista">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 12 0v2"/><path d="M17 11l2 2 4-4"/><path d="M17 19h5"/></svg>
+                Por motorista
+              </button>
+            </nav>
+          </section>
+          <section class="rail-block">
+            <div class="rail-block-title">Filtros</div>
+            <div class="desktop-filter-stack">
+              <label class="desktop-filter-field">
+                <span class="desktop-filter-label">Data</span>
+                <input class="desktop-filter-input" type="date" data-desktop-filter="date" value="${escapeAttr(toIsoDate(state.date))}" />
+              </label>
+              <label class="desktop-filter-field">
+                <span class="desktop-filter-label">Motorista</span>
+                <select class="desktop-filter-input" data-desktop-filter="driver">
+                  ${motoristaOptions}
+                </select>
+              </label>
+              <label class="desktop-filter-field">
+                <span class="desktop-filter-label">Ordenação</span>
+                <select class="desktop-filter-input" data-desktop-filter="sort">
+                  <option value="saida_asc" ${state.sortOrder === "saida_asc" ? "selected" : ""}>Saída crescente</option>
+                  <option value="saida_desc" ${state.sortOrder === "saida_desc" ? "selected" : ""}>Saída decrescente</option>
+                </select>
+              </label>
+            </div>
+          </section>
+          <section class="rail-stats">
+            <article class="rail-stat">
+              <span class="rail-stat-label">Serviços</span>
+              <span class="rail-stat-value">${state.reservas.length}</span>
+              <span class="rail-stat-meta">${state.sortOrder === "saida_desc" ? "Saída decrescente" : "Saída crescente"}</span>
+            </article>
+            <article class="rail-stat">
+              <span class="rail-stat-label">Em curso</span>
+              <span class="rail-stat-value">${inProgress}</span>
+              <span class="rail-stat-meta">${next} na próxima hora</span>
+            </article>
+            <article class="rail-stat">
+              <span class="rail-stat-label">Motoristas</span>
+              <span class="rail-stat-value">${state.grouped.length}</span>
+              <span class="rail-stat-meta">${semMotorista} sem alocação</span>
+            </article>
+            <article class="rail-stat">
+              <span class="rail-stat-label">Críticos</span>
+              <span class="rail-stat-value">${snap.alerts.length}</span>
+              <span class="rail-stat-meta">${snap.concluded.length} concluídos</span>
+            </article>
+          </section>
+          <section class="rail-block">
+            <div class="rail-block-title">Ações rápidas</div>
+            <div class="rail-actions">
+              <button class="rail-action" data-rail-action="refresh">Atualizar</button>
+              <button class="rail-action" data-rail-action="filters">Abrir filtros avançados</button>
+            </div>
+          </section>
+          <section class="rail-block">
+            <div class="rail-block-title">Sinais operacionais</div>
+            <div class="rail-alerts">
+              ${alerts.length ? alerts.map(alert => `<div class="rail-alert ${alert.tone}">${escapeHtml(alert.text)}</div>`).join("") : `<div class="rail-empty">Sem alertas operacionais agora.</div>`}
+            </div>
+          </section>
+        </div>`;
+    }
+
+    function renderLandscapeMode(main) {
+      const useTable = getViewportSize().width >= 820;
+      const items = state.reservas.slice();
+      $("#section-title").textContent = "Visão compacta";
+      $("#section-meta").textContent = `${items.length} serviço(s)`;
+      main.innerHTML = `
+        <section class="landscape-shell">
+          <div class="landscape-head">
+            <div>
+              <strong>${escapeHtml(formatDateLong(state.date))}</strong>
+              <span>${escapeHtml(state.motoristaName)} · ${escapeHtml(state.sortOrder === "saida_desc" ? "Saída decrescente" : "Saída crescente")}</span>
+            </div>
+          </div>
+          ${useTable ? renderLandscapeTable(items) : renderLandscapeGallery(items)}
+        </section>`;
+    }
+
+    function renderLandscapeTable(items) {
+      return `<div class="landscape-table-wrap">
+        <div class="landscape-table-scroll">
+          <table class="landscape-table">
+            <thead>
+              <tr>
+                <th style="width:4px;padding:0"></th>
+                <th style="width:88px">Saída</th>
+                <th>Motorista</th>
+                <th>Veículo</th>
+                <th>Trajeto</th>
+                <th>Solicitante</th>
+                <th>Passageiros</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(s => renderLandscapeTableRow(s)).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    function renderLandscapeTableRow(s) {
+      const statusC = STATUS_COLORS[s.status] || { bg: "var(--bg)", fg: "var(--text-2)" };
+      return `<tr data-clickable="1" class="service-item-landscape" data-service-id="${s.id}">
+        <td class="status-bar-cell" style="background:${statusC.fg}"></td>
+        <td class="when">
+          <strong>${escapeHtml(formatHour(s.saida) || "—")}</strong>
+          <span>${escapeHtml(formatDateShort(s.saida || state.date))}</span>
+        </td>
+        <td class="muted-cell">${escapeHtml(s.motoristaName || "Sem motorista")}</td>
+        <td class="muted-cell">${escapeHtml(s.tipoVeiculo || "—")}</td>
+        <td><div class="route-cell">${escapeHtml(composeTrajetoResumo(s))}</div></td>
+        <td class="muted-cell">${escapeHtml(s.solicitanteName || s.clienteName || "—")}</td>
+        <td><div class="pax-cell muted-cell">${escapeHtml(composePassageirosResumo(s))}</div></td>
+      </tr>`;
+    }
+
+    function renderLandscapeGallery(items) {
+      return `<div class="landscape-gallery">
+        ${items.map(s => renderLandscapeCard(s)).join("")}
+      </div>`;
+    }
+
+    function renderLandscapeCard(s) {
+      const statusC = STATUS_COLORS[s.status] || { bg: "var(--bg)", fg: "var(--text-2)" };
+      return `<button class="landscape-card service-item-landscape" data-service-id="${s.id}">
+        <div class="landscape-card-top">
+          <div class="landscape-card-time">
+            <strong>${escapeHtml(formatHour(s.saida) || "—")}</strong>
+            <span>${escapeHtml(formatDateShort(s.saida || state.date))}</span>
+          </div>
+          <span class="status-tag" style="background:${statusC.bg};color:${statusC.fg}"><span class="dot"></span>${escapeHtml(s.status)}</span>
+        </div>
+        <div class="landscape-card-grid">
+          <div class="landscape-card-field"><span>Motorista</span><strong>${escapeHtml(s.motoristaName || "Sem motorista")}</strong></div>
+          <div class="landscape-card-field"><span>Veículo</span><strong>${escapeHtml(s.tipoVeiculo || "—")}</strong></div>
+          <div class="landscape-card-field full"><span>Trajeto</span><strong>${escapeHtml(composeTrajetoResumo(s))}</strong></div>
+          <div class="landscape-card-field"><span>Solicitante</span><strong>${escapeHtml(s.solicitanteName || s.clienteName || "—")}</strong></div>
+          <div class="landscape-card-field"><span>Passageiros</span><strong>${escapeHtml(composePassageirosResumo(s))}</strong></div>
+        </div>
+      </button>`;
+    }
+
+    function renderTimelineMode(main, snap) {
+      $("#section-title").textContent = "Agenda do dia";
+      $("#section-meta").textContent = `${state.reservas.length} serviço(s)`;
+      const html = [];
+      if (snap.alerts.length > 0) html.push(renderAlertStrip(snap.alerts));
+      html.push(renderSubsection("Atenção", snap.attention, "Sem pendências críticas."));
+      html.push(renderSubsection("Em curso agora", snap.inProgress, "Nenhum serviço em operação agora."));
+      html.push(renderSubsection("A seguir — Próxima hora", snap.nextHour, "Sem saídas na próxima hora."));
+      html.push(renderSubsection("A seguir — Tarde", snap.afternoon, "Sem saídas para a tarde."));
+      html.push(renderSubsection("A seguir — Noite", snap.night, "Sem saídas para a noite."));
+      html.push(renderConcluded(snap.concluded));
+      main.innerHTML = html.join("");
+    }
+
+    function renderDriverMode(main, snap) {
+      const groups = state.motoristaId === "ALL" ? state.grouped : state.grouped.filter(g => g.id === state.motoristaId);
+      $("#section-title").textContent = state.motoristaId === "ALL" ? "Por motorista" : escapeHtml(state.motoristaName);
+      $("#section-meta").textContent = `${groups.length} motorista(s)`;
+      const html = [];
+      if (snap.alerts.length > 0) html.push(renderAlertStrip(snap.alerts));
+      if (state.motoristaId === "ALL" && state.orphan.length > 0) html.push(renderOrphanCard(state.orphan));
+      for (const g of groups) html.push(renderDriverCard(g));
+      main.innerHTML = html.join("");
+    }
+
+    function renderAlertStrip(alerts) {
+      const top = alerts.slice(0, 4);
+      return `<div class="alert-strip">Pendências críticas
+        <ul>${top.map(a => `<li>${escapeHtml(a.message)}</li>`).join("")}</ul>
+      </div>`;
+    }
+
+    function renderSubsection(title, list, emptyText) {
+      const isEmpty = list.length === 0;
+      const urgency =
+        /^Atenção/i.test(title) ? "attention" :
+        /^Em curso/i.test(title) ? "in-progress" :
+        /^A seguir/i.test(title) ? "next" :
+        "future";
+      const content = !isEmpty
+        ? `<article class="driver-card"><div class="services-list">${list.map(s => renderServiceItem(s, urgency)).join("")}</div></article>`
+        : "";
+      return `<section class="subsection${isEmpty ? " empty" : ""}">
+        <div class="subsection-header">${escapeHtml(title)} · ${list.length}</div>
+        ${content}
+      </section>`;
+    }
+
+    function renderConcluded(list) {
+      if (!list.length) return "";
+      const body = state.showConcluded
+        ? `<div class="services-list">${list.map(s => renderServiceItem(s, "concluded")).join("")}</div>` : "";
+      return `<section class="subsection collapsed-block">
+        <button class="collapse-btn" data-toggle-concluded="1">
+          <span>Concluídos · ${list.length}</span>
+          <span>${state.showConcluded ? "Ocultar" : "Mostrar"}</span>
+        </button>
+        ${body}
+      </section>`;
+    }
+
+    function renderDriverCard(g) {
+      const badge = getDriverBadge(g);
+      const closeGap = g.closeIntervals.length;
+      return `<article class="driver-card collapsible" data-driver-id="${g.id}">
+        <button class="driver-header" data-toggle="${g.id}">
+          <div class="avatar">${initials(g.name)}</div>
+          <div class="driver-info">
+            <div class="driver-name">${escapeHtml(g.name)}
+              <span class="driver-status-badge ${badge.tone}">${escapeHtml(badge.label)}</span>
+              ${closeGap > 0 ? `<span class="conflict-badge">Saídas < 30min</span>` : ""}
+            </div>
+            <div class="driver-meta">${escapeHtml(badge.meta)}</div>
+          </div>
+          <div class="driver-stats">
+            <span class="count">${g.services.length}</span>
+            <span class="count-label">${g.services.length === 1 ? "serviço" : "serviços"}</span>
+          </div>
+          <svg class="driver-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="services-list">${g.services.map(s => renderServiceItem(s)).join("")}</div>
+      </article>`;
+    }
+
+
+    function renderOrphanCard(list) {
+      return `<article class="driver-card collapsible unassigned">
+        <button class="driver-header" data-toggle="orphan">
+          <div class="avatar unassigned">!</div>
+          <div class="driver-info">
+            <div class="driver-name">Sem motorista designado</div>
+            <div class="driver-meta">${list.length} serviço(s) aguardando atribuição</div>
+          </div>
+          <div class="driver-stats">
+            <span class="count" style="color:var(--warning)">${list.length}</span>
+            <span class="count-label">pendentes</span>
+          </div>
+          <svg class="driver-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(90deg)"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="services-list">${list.map(s => renderServiceItem(s)).join("")}</div>
+      </article>`;
+    }
+
+    function renderServiceItem(s, urgencyHint) {
+      const tipoC   = TIPO_COLORS[s.tipoServico] || TIPO_COLORS["Outros"];
+      const statusC = STATUS_COLORS[s.status] || { bg: "var(--bg)", fg: "var(--text-2)" };
+      const info    = getServiceState(s, new Date());
+      const paxLine = paxSummary(s);
+      const driverLabel = s.motoristaName || "Sem motorista";
+      const solicitanteLabel = s.solicitanteName || s.clienteName || "";
+      const urgency = urgencyHint || "future";
+      const isSelected = state.selectedServiceId === s.id;
+      const vehicleLabel = [s.veiculoName, s.tipoVeiculo].filter(Boolean).join(" · ") || "Veículo não informado";
+      return `<button class="service-item ${isSelected ? "is-selected" : ""}" data-service-id="${s.id}" data-urgency="${urgency}">
+        <div class="service-time">
+          <span class="t-from">${formatHour(s.saida) || "—"}</span>
+          <span class="t-arrow">saída</span>
+          <span class="t-to">${escapeHtml(info.short)}</span>
+        </div>
+        <div class="service-body">
+          <div class="service-topline">
+            <div class="service-type-row">
+              <span class="type-tag" style="background:${tipoC.bg};color:${tipoC.fg}">${escapeHtml(s.tipoServico || "Serviço")}</span>
+              <span class="status-tag" style="background:${statusC.bg};color:${statusC.fg}"><span class="dot"></span>${escapeHtml(s.status)}</span>
+              <span class="state-chip ${info.tone}">${escapeHtml(info.text)}</span>
+            </div>
+            ${s.codigo && s.codigo !== "—" ? `<span class="service-code">#${escapeHtml(s.codigo)}</span>` : ""}
+          </div>
+          <div class="service-route">
+            ${escapeHtml(composeTrajetoCompleto(s))}
+          </div>
+          <div class="service-meta-grid">
+            <div class="service-meta-item driver">
+              <div class="service-meta-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+                Motorista
+              </div>
+              <div class="service-meta-value">${escapeHtml(driverLabel)}</div>
+            </div>
+            <div class="service-meta-item vehicle">
+              <div class="service-meta-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l1.5-4a2 2 0 0 1 1.9-1.4h7.2a2 2 0 0 1 1.9 1.4L19 13"/><path d="M3 13h18v5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="16.5" r="1"/><circle cx="16.5" cy="16.5" r="1"/></svg>
+                Veículo
+              </div>
+              <div class="service-meta-value">${escapeHtml(vehicleLabel)}</div>
+            </div>
+            ${solicitanteLabel ? `<div class="service-meta-item requester">
+              <div class="service-meta-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 12h.01M9 15h.01M15 9h.01M15 12h.01M15 15h.01"/></svg>
+                Solicitante
+              </div>
+              <div class="service-meta-value">${escapeHtml(solicitanteLabel)}</div>
+            </div>` : ""}
+            ${paxLine ? `<div class="service-meta-item pax ${solicitanteLabel ? "" : "wide"}">
+              <div class="service-meta-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+                Passageiros
+              </div>
+              <div class="service-meta-value">${escapeHtml(paxLine)}</div>
+            </div>` : ""}
+          </div>
+        </div>
+      </button>`;
+    }
+
+    function attachLocalToggles() {
+      const btn = document.querySelector("[data-toggle-concluded]");
+      if (btn) btn.addEventListener("click", () => { state.showConcluded = !state.showConcluded; renderMain(); });
+      const firstCard = document.querySelector(".driver-card.collapsible");
+      if (firstCard && !isLandscapeCompactMode() && getViewportSize().width <= 720) {
+        firstCard.classList.add("expanded");
+      }
+    }
+
+    function attachSidebarHandlers() {
+      $$(".desktop-menu-btn[data-rail-view]").forEach(el => {
+        el.addEventListener("click", () => {
+          const next = el.dataset.railView;
+          if (!next || state.viewMode === next) return;
+          state.viewMode = next;
+          state.selectedServiceId = null;
+          renderAll();
+        });
+      });
+      const desktopDate = $('[data-desktop-filter="date"]');
+      if (desktopDate) {
+        desktopDate.addEventListener("change", () => {
+          if (!desktopDate.value) return;
+          const [y, m, d] = desktopDate.value.split("-").map(Number);
+          state.date = new Date(y, m - 1, d);
+          state.selectedServiceId = null;
+          renderHeader();
+          loadReservas(true);
+        });
+      }
+      const desktopDriver = $('[data-desktop-filter="driver"]');
+      if (desktopDriver) {
+        desktopDriver.addEventListener("change", () => {
+          const selectedId = desktopDriver.value || "ALL";
+          state.motoristaId = selectedId;
+          if (selectedId === "ALL") {
+            state.motoristaName = "TODOS";
+          } else {
+            const driver = state.motoristas.find(m => m.id === selectedId);
+            state.motoristaName = driver ? driver.name : desktopDriver.options[desktopDriver.selectedIndex].text;
+          }
+          state.selectedServiceId = null;
+          renderHeader();
+          loadReservas(true);
+        });
+      }
+      const desktopSort = $('[data-desktop-filter="sort"]');
+      if (desktopSort) {
+        desktopSort.addEventListener("change", () => {
+          state.sortOrder = desktopSort.value === "saida_desc" ? "saida_desc" : "saida_asc";
+          state.selectedServiceId = null;
+          applySort();
+          renderAll();
+        });
+      }
+      $$(".rail-action[data-rail-action]").forEach(el => {
+        el.addEventListener("click", () => {
+          const action = el.dataset.railAction;
+          if (action === "filters") toggleFilters(true);
+          else if (action === "refresh") loadAll(true);
+          else if (action === "driver") openPicker();
+          else if (action === "sort") cycleSortOrder();
+        });
+      });
+    }
+
+    function attachServiceHandlers() {
+      $$(".service-item").forEach(el => {
+        el.addEventListener("click", () => {
+          setSelectedService(el.dataset.serviceId);
+        });
+      });
+      $$(".service-item-landscape").forEach(el => {
+        el.addEventListener("click", () => {
+          setSelectedService(el.dataset.serviceId);
+        });
+      });
+      $$(".driver-header[data-toggle]").forEach(el => {
+        el.addEventListener("click", () => {
+          const card = el.closest(".driver-card");
+          if (!card) return;
+          const list = card.querySelector(".services-list");
+          if (!list) return;
+          const expanded = card.classList.toggle("expanded");
+          const chev = el.querySelector(".driver-chev");
+          if (chev) chev.style.transform = expanded ? "rotate(90deg)" : "rotate(0deg)";
+        });
+      });
+    }
+
+    function consumeBackdropDismiss(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      if (e.type === "pointerdown") state.suppressNextPopupClick = true;
+      if (e.type === "click" && state.suppressNextPopupClick) state.suppressNextPopupClick = false;
+      closeAllOverlays();
+    }
+
+    function captureOutsidePopupDismiss(e) {
+      if (e.type === "click" && state.suppressNextPopupClick) {
+        state.suppressNextPopupClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+        return;
+      }
+
+      const sheetOpen = $("#sheet").classList.contains("open");
+      const pickerOpen = $("#picker").classList.contains("open");
+      if (!sheetOpen && !pickerOpen) return;
+
+      const sheet = $("#sheet");
+      const picker = $("#picker");
+      const clickedInsideSheet = sheetOpen && sheet.contains(e.target);
+      const clickedInsidePicker = pickerOpen && picker.contains(e.target);
+
+      if (clickedInsideSheet || clickedInsidePicker) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      if (e.type === "pointerdown") state.suppressNextPopupClick = true;
+      closeAllOverlays();
+    }
+
+    function isSplitDetailMode() {
+      return !isLandscapeCompactMode() && getViewportSize().width >= 860;
+    }
+
+    function getSelectedService() {
+      return state.reservas.find(r => r.id === state.selectedServiceId) || null;
+    }
+
+    function setSelectedService(serviceId, options) {
+      const cfg = options || {};
+      const svc = state.reservas.find(r => r.id === serviceId);
+      if (!svc) return;
+      state.selectedServiceId = serviceId;
+      if (isSplitDetailMode()) {
+        renderDetailPanel(svc);
+      } else if (cfg.open !== false) {
+        openSheet(svc);
+      }
+      highlightSelectedServices();
+    }
+
+    function clearSelectedService() {
+      state.selectedServiceId = null;
+      $("#app-detail-panel").classList.add("hidden");
+      $("#detail-panel-title").textContent = "Nenhum serviço selecionado";
+      $("#detail-panel-body").innerHTML = `<div class="detail-panel-empty">Selecione um serviço para ver detalhes</div>`;
+      highlightSelectedServices();
+    }
+
+    function syncSelectionUi() {
+      if (isLandscapeCompactMode()) {
+        $("#app-detail-panel").classList.add("hidden");
+        return;
+      }
+      if (isSplitDetailMode()) {
+        if (!getSelectedService() && state.reservas.length) {
+          state.selectedServiceId = state.reservas[0].id;
+        }
+        const svc = getSelectedService();
+        if (svc) renderDetailPanel(svc);
+        else clearSelectedService();
+      } else {
+        $("#app-detail-panel").classList.add("hidden");
+      }
+      highlightSelectedServices();
+    }
+
+    function highlightSelectedServices() {
+      const selectedId = state.selectedServiceId;
+      $$(".service-item, .service-item-landscape").forEach(el => {
+        el.classList.toggle("is-selected", !!selectedId && el.dataset.serviceId === selectedId);
+      });
+    }
+
+    function buildSnapshot(now) {
+      const services = state.reservas.slice().sort((a,b) => (a.saida.getTime()||0) - (b.saida.getTime()||0));
+      const inProgress=[], upcoming=[], delayed=[], concluded=[], noDriver=[], next2h=[], alerts=[];
+      const attentionById = new Map();
+
+      for (const s of services) {
+        const info = getServiceState(s, now);
+        if (info.kind === "in_progress") inProgress.push(s);
+        if (info.kind === "upcoming")    upcoming.push(s);
+        if (info.kind === "delayed")     delayed.push(s);
+        if (info.kind === "concluded")   concluded.push(s);
+        if (!s.motoristaId && info.kind !== "concluded") noDriver.push(s);
+        if (info.kind === "upcoming" && info.minutes <= 120) next2h.push(s);
+
+        if (!s.motoristaId && info.kind === "upcoming" && info.minutes <= 30) {
+          alerts.push({ priority: 1, message: `${formatHour(s.saida)} — sem motorista designado` });
+          attentionById.set(s.id, s);
+        }
+        if (isStatusOpen(normalizeStatus(s.status)) && info.kind === "upcoming" && info.minutes <= 30) {
+          alerts.push({ priority: 2, message: `${formatHour(s.saida)} — em aberto com saída em <30min` });
+          attentionById.set(s.id, s);
+        }
+        if (info.kind === "delayed") {
+          alerts.push({ priority: 2, message: `${formatHour(s.saida)} — saída atrasada` });
+          attentionById.set(s.id, s);
+        }
+      }
+
+      for (const g of state.grouped) {
+        for (const gap of g.closeIntervals) {
+          alerts.push({ priority: 3, message: `${escapeHtml(g.name)}: duas saídas em ${gap.diff}min` });
+          attentionById.set(gap.a.id, gap.a);
+          attentionById.set(gap.b.id, gap.b);
+        }
+      }
+
+      alerts.sort((a,b) => a.priority - b.priority);
+      const attention = Array.from(attentionById.values()).sort((a,b) => (a.saida.getTime()||0) - (b.saida.getTime()||0));
+
+      return {
+        inProgress, upcoming, delayed, concluded, noDriver, next2h, alerts, attention,
+        nextHour:  upcoming.filter(s => { const m = getServiceState(s,now).minutes; return m >= 0 && m <= 60; }),
+        afternoon: upcoming.filter(s => { const m = getServiceState(s,now).minutes; const h = s.saida.getHours()||0; return m > 60 && h < 18; }),
+        night:     upcoming.filter(s => { const m = getServiceState(s,now).minutes; const h = s.saida.getHours()||0; return m > 60 && h >= 18; })
+      };
+    }
+
+    function getDriverBadge(group) {
+      const now = new Date();
+      const inProgress = group.services.filter(s => getServiceState(s,now).kind === "in_progress")
+        .sort((a,b) => (a.saida.getTime()||0) - (b.saida.getTime()||0));
+      if (inProgress.length > 0) {
+        const since = formatHour(inProgress[0].saida) || "--:--";
+        return { tone: "warning", label: "Em serviço", meta: `Desde ${since}` };
+      }
+      const upcoming = group.services.filter(s => getServiceState(s,now).kind === "upcoming")
+        .sort((a,b) => (a.saida.getTime()||0) - (b.saida.getTime()||0));
+      if (upcoming.length > 0) {
+        const next = formatHour(upcoming[0].saida) || "--:--";
+        return { tone: "info", label: `Próximo ${next}`, meta: `Próxima saída às ${next}` };
+      }
+      const done = group.services.filter(s => getServiceState(s,now).kind === "concluded")
+        .sort((a,b) => (b.saida.getTime()||0) - (a.saida.getTime()||0));
+      if (done.length > 0) {
+        const last = formatHour(done[0].saida) || "--:--";
+        return { tone: "success", label: "Livre", meta: `Último concluído ${last}` };
+      }
+      return { tone: "success", label: "Livre", meta: "Sem serviços ativos" };
+    }
+
+    function getServiceState(svc, now) {
+      if (!svc.saida) return { kind: "unknown", text: "sem horário", short: "—  ", tone: "info", minutes: Number.MAX_SAFE_INTEGER };
+      const status   = normalizeStatus(svc.status);
+      const deltaMin = Math.round((svc.saida - now) / 60000);
+
+      if (isStatusConcluded(status))   return { kind: "concluded",  text: "concluí­do",  short: "",  tone: "success", minutes: Number.MAX_SAFE_INTEGER };
+      if (isStatusInProgress(status)) {
+        const elapsed = Math.max(0, Math.round((now - svc.saida) / 60000));
+        return { kind: "in_progress", text: `em serviço há ${fmt(elapsed)}`, short: `+${fmt(elapsed)}`, tone: "warning", minutes: -elapsed };
+      }
+      if (deltaMin >= 0) {
+        return { kind: "upcoming", text: `sai em ${fmt(deltaMin)}`, short: `-${fmt(deltaMin)}`, tone: deltaMin <= 30 ? "warning" : "info", minutes: deltaMin };
+      }
+      if (isStatusScheduled(status)) {
+        const elapsed = Math.abs(deltaMin);
+        return { kind: "in_progress", text: `saiu há ${fmt(elapsed)} — sem conclusão`, short: `+${fmt(elapsed)}`, tone: "warning", minutes: -elapsed };
+      }
+      const late = Math.abs(deltaMin);
+      return { kind: "delayed", text: `atrasado ${fmt(late)}`, short: `+${fmt(late)}`, tone: "danger", minutes: -late };
+    }
+
+    function normalizeStatus(v) {
+      return String(v||"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim().toLowerCase();
+    }
+    function isStatusInProgress(s) { return s==="em operacao"||s==="em andamento"||s==="em execucao"; }
+    function isStatusScheduled(s)  { return ["programado","confirmada","confirmado","pre-reserva","solicitado","requer analise","em aberto","aberta"].includes(s); }
+    function isStatusConcluded(s)  { return ["concluida","concluido","finalizada","cancelada","cancelado","cancelado com ressalvas"].includes(s); }
+    function isStatusOpen(s)       { return ["em aberto","aberta","solicitado","requer analise","pre-reserva"].includes(s); }
+
+    function fmt(totalMin) {
+      const m = Math.max(0, Math.round(totalMin));
+      if (m < 60) return `${m}min`;
+      const h = Math.floor(m/60), r = m%60;
+      return r === 0 ? `${h}h` : `${h}h${String(r).padStart(2,"0")}`;
+    }
+
+    function renderDetailContent(svc) {
+      const paxItems = getPassageirosList(svc);
+      const hasChild = !!(state.servicosPassageiros[svc.id] && state.servicosPassageiros[svc.id].length > 0);
+      const paxSourceLabel = hasChild ? "Serviços por Passageiro" : (paxItems.length > 0 && !svc.passageiro1Name ? "Texto livre" : "");
+      const paxBlock = paxItems.length > 0 ? `
+        <div class="field-block full">
+          <div class="field-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+            Passageiros (${paxItems.length})${paxSourceLabel ? `<span class="pax-source-tag">${escapeHtml(paxSourceLabel)}</span>` : ""}
+          </div>
+          <div class="pax-list">
+            ${paxItems.map(p => `
+              <div class="pax-item">
+                <div class="pax-avatar">${initials(p.name)}</div>
+                <div class="pax-info">
+                  <div class="pax-name">${escapeHtml(p.name)}</div>
+                  ${p.phone ? `<div class="pax-phone">${escapeHtml(p.phone)}</div>` : ""}
+                  ${p.address ? `<div class="pax-address"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>${escapeHtml(p.address)}</div>` : ""}
+                </div>
+              </div>`).join("")}
+          </div>
+        </div>` : "";
+      return `
+        <div class="sheet-col sheet-col-info">
+          ${field("Motorista", svc.motoristaName, "person")}
+          ${field("Veículo", [svc.veiculoName, svc.tipoVeiculo].filter(Boolean).join(" · "), "car")}
+          ${field("Cliente", svc.clienteName, "building", true)}
+          ${field("Solicitante", svc.solicitanteName, "building", true)}
+          ${svc.trajeto ? field("Trajeto", svc.trajeto, "route", true) : ""}
+          ${field("Endereço de saída", svc.enderecoSaida, "pin", true)}
+          ${field("Destino", svc.destino, "flag", true)}
+          ${field("Retorno (previsto)", formatHour(svc.retorno) || "", "info")}
+        </div>
+        <div class="sheet-col sheet-col-pax">
+          ${paxBlock}
+          ${svc.obsOperacao ? field("Obs. de Operação", svc.obsOperacao, "info", true) : ""}
+          ${svc.obsInterna ? field("Observação interna", svc.obsInterna, "info", true) : ""}
+        </div>`;
+    }
+
+    function renderDetailPanel(svc) {
+      $("#detail-panel-title").textContent = `${formatHour(svc.saida) || "—"} · ${svc.motoristaName || "Sem motorista"}`;
+      $("#detail-panel-body").innerHTML = renderDetailContent(svc);
+      $("#app-detail-panel").classList.remove("hidden");
+    }
+
+    function openSheet(svc) {
+      const tipoC   = TIPO_COLORS[svc.tipoServico] || TIPO_COLORS["Outros"];
+      const statusC = STATUS_COLORS[svc.status] || { bg: "var(--bg)", fg: "var(--text-2)" };
+      const info    = getServiceState(svc, new Date());
+      const retornoLabel = svc.retorno ? `Retorno previsto: ${formatHour(svc.retorno)}` : "Sem retorno previsto";
+      const isDesktop = isSplitDetailMode();
+
+      if (isDesktop) {
+        renderDetailPanel(svc);
+        return;
+      }
+
+      $("#sheet-header").innerHTML = `
+        <div class="sheet-header-top">
+          <div class="sheet-time">
+            <div class="t">${formatHour(svc.saida) || "—"}</div>
+            <div class="duration">${escapeHtml(retornoLabel)}</div>
+          </div>
+          <button class="sheet-close-btn" id="sheet-close-btn" aria-label="Fechar" title="Fechar (clique para fechar)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="sheet-tags">
+          <span class="type-tag" style="background:${tipoC.bg};color:${tipoC.fg}">${escapeHtml(svc.tipoServico || "Serviço")}</span>
+          <span class="status-tag" style="background:${statusC.bg};color:${statusC.fg}"><span class="dot"></span>${escapeHtml(svc.status)}</span>
+          <span class="state-chip ${info.tone}">${escapeHtml(info.text)}</span>
+          ${svc.statusFat ? `<span class="status-tag">${escapeHtml(svc.statusFat)}</span>` : ""}
+          ${svc.codigo && svc.codigo !== "-" ? `<span class="status-tag">#${escapeHtml(svc.codigo)}</span>` : ""}
+        </div>`;
+
+      $("#sheet-close-btn").addEventListener("click", (e) => { e.stopPropagation(); closeSheet(); });
+      $("#sheet-body").innerHTML = renderDetailContent(svc);
+
+      $("#sheet").classList.add("open");
+      $("#sheet-backdrop").classList.add("open");
+      $("#sheet").setAttribute("aria-hidden","false");
+    }
+
+    function closeSheet() {
+      $("#sheet").classList.remove("open");
+      $("#sheet").setAttribute("aria-hidden","true");
+      $("#sheet-backdrop").classList.remove("open");
+    }
+
+    function openPicker() {
+      renderPicker();
+      $("#picker").classList.add("open");
+      $("#sheet-backdrop").classList.add("open");
+    }
+    function closePicker() {
+      $("#picker").classList.remove("open");
+      if (!$("#sheet").classList.contains("open")) $("#sheet-backdrop").classList.remove("open");
+      $("#picker-search-input").value = "";
+    }
+    function renderPicker(filter) {
+      const term = (filter || "").trim().toLowerCase();
+      const list = [{ id: "ALL", name: "TODOS os motoristas", apelido: "Visão geral" }, ...state.motoristas];
+      const filtered = term ? list.filter(m => (m.name||"").toLowerCase().includes(term) || (m.apelido||"").toLowerCase().includes(term)) : list;
+      $("#picker-list").innerHTML = filtered.map(m => `
+        <button class="picker-item ${m.id === state.motoristaId ? "selected":""}" data-mid="${escapeAttr(m.id)}" data-mname="${escapeAttr(m.name)}">
+          <div class="picker-avatar">${m.id==="ALL" ? "" : initials(m.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="picker-name">${escapeHtml(m.name)}</div>
+            ${m.apelido ? `<div class="picker-meta">${escapeHtml(m.apelido)}</div>` : ""}
+          </div>
+          <svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>`).join("");
+      $$(".picker-item").forEach(el => {
+        el.addEventListener("click", () => {
+          state.motoristaId = el.dataset.mid;
+          state.motoristaName = el.dataset.mname;
+          closePicker(); renderHeader(); loadReservas(true);
+        });
+      });
+    }
+    function filterPicker(e) { renderPicker(e.target.value); }
+    function closeAllOverlays() { closeSheet(); closePicker(); }
+    function isLandscapeCompactMode() {
+      const vp = getViewportSize();
+      const isLandscape = vp.width > vp.height || window.matchMedia("(orientation: landscape)").matches;
+      const isMobileWidth = vp.width <= 980;
+      const isShortViewport = vp.height <= 560;
+      return isLandscape && isMobileWidth && isShortViewport;
+    }
+    function composeTrajetoResumo(s) {
+      return composeTrajetoCompleto(s);
+    }
+    function composeTrajetoCompleto(s) {
+      return s.trajeto || "—";
+    }
+    function composePassageirosResumo(s) {
+      const list = getPassageirosList(s);
+      if (!list.length) return "—";
+      return list.slice(0, 2).map(p => p.name).join(" · ") + (list.length > 2 ? ` +${list.length - 2}` : "");
+    }
+
+    function field(label, value, icon, full=false) {
+      const empty = !value || (typeof value === "string" && value.trim() === "");
+      const v = empty ? `<span class="muted">não informado</span>` : escapeHtmlMultiline(value);
+      return `<div class="field-block ${full ? "full" : ""}">
+        <div class="field-label">${ICONS[icon]||""}${label}</div>
+        <div class="field-value ${empty ? "muted" : ""}">${v}</div>
+      </div>`;
+    }
+    const ICONS = {
+      person:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>`,
+      car:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l1.5-4a2 2 0 0 1 1.9-1.4h7.2a2 2 0 0 1 1.9 1.4L19 13"/><path d="M3 13h18v5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="16.5" r="1"/><circle cx="16.5" cy="16.5" r="1"/></svg>`,
+      building: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>`,
+      pin:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
+      flag:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"/><path d="M4 4h13l-2 4 2 4H4"/></svg>`,
+      route:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h8"/></svg>`,
+      info:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`
+    };
+
+    function setLoading(on) { state.loading = !!on; $("#loader").classList.toggle("active", state.loading); }
+    function notifyError(msg) { console.warn(msg); }
+    function $(s)  { return document.querySelector(s); }
+    function $$(s) { return Array.from(document.querySelectorAll(s)); }
+
+    function todayLocal() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+    function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+    function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+    function toIsoDate(d)  { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+
+    function formatDateLong(d) {
+      const dias  = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+      const meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+      const diff  = Math.round((startOfDay(d) - todayLocal()) / 86400000);
+      const pre   = diff === 0 ? "Hoje - " : diff === 1 ? "Amanhã - " : diff === -1 ? "Ontem - " : "";
+      return `${pre}${dias[d.getDay()]}, ${d.getDate()} ${meses[d.getMonth()]}`;
+    }
+    function formatDateShort(d) {
+      const diff = Math.round((startOfDay(d) - todayLocal()) / 86400000);
+      if (diff === 0) return "Hoje";
+      if (diff === 1) return "Amanhã";
+      if (diff === -1) return "Ontem";
+      return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
+    }
+    function formatHour(d) {
+      if (!d) return "";
+      return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    }
+    function initials(name) {
+      if (!name) return "";
+      const p = String(name).trim().split(/\s+/);
+      return p.length === 1 ? p[0].slice(0,2).toUpperCase() : (p[0][0] + p[p.length-1][0]).toUpperCase();
+    }
+    function firstLine(s) { return s ? String(s).split(/\r\n/)[0].trim() : ""; }
+    function paxFirstName(s) {
+      if (!s) return "";
+      const lines = String(s).split(/\r?\n|;/).map(x=>x.trim()).filter(Boolean);
+      if (!lines.length) return "";
+      const first = lines[0].split(/\s+-\s+|\s+\(/)[0].trim();
+      return lines.length === 1 ? first : `${first} +${lines.length-1}`;
+    }
+    function parsePaxList(s) {
+      if (!s) return [];
+      return String(s).split(/\r?\n|;/).map(x=>x.trim()).filter(Boolean).map(ln => {
+        const m = ln.match(/^(.+)[\s\-–]+\((\+?\d[\d\s\-\(\)]+)\)$/);
+        return m ? { name: m[1].trim(), phone: m[2].trim() } : { name: ln, phone: "" };
+      });
+    }
+    function getPassageirosList(svc) {
+      // Priority 1: cr40f_servicosporpassageiro (tabela de relacionamento — mais precisa)
+      const fromChild = state.servicosPassageiros[svc.id];
+      if (fromChild && fromChild.length > 0) {
+        return fromChild.map(p => ({ name: p.nome || "(passageiro)", phone: p.phone || "", address: p.enderecoSaida || "" }));
+      }
+      // Priority 2: lookups cr40f_passageiro1..4 diretamente na reserva
+      const fromLookup = [svc.passageiro1Name, svc.passageiro2Name, svc.passageiro3Name, svc.passageiro4Name]
+        .filter(Boolean).map(n => ({ name: n, phone: "", address: "" }));
+      if (fromLookup.length > 0) return fromLookup;
+      // Priority 3: campo VIEW de texto livre (fallback)
+      return parsePaxList(svc.passageiros).map(p => ({ ...p, address: "" }));
+    }
+    function paxSummary(svc) {
+      const list = getPassageirosList(svc);
+      if (!list.length) return "";
+      const first = list[0].name;
+      const firstName = first.split(/\s+/)[0];
+      return list.length === 1 ? first : `${firstName} +${list.length - 1}`;
+    }
+    function escapeHtml(s) {
+      if (s==null) return "";
+      return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+    function escapeHtmlMultiline(s) { return escapeHtml(s).replace(/\n/g,"<br>"); }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    // MOCK DATA – usado apenas fora do Dynamics
+    const MOCK = {
+      motoristas: [
+        { id:"m1", name:"João Silva",      apelido:"Joãozinho",  celular:"11 98888-1111" },
+        { id:"m2", name:"Carlos Mendonça", apelido:"Carlão",     celular:"11 98888-2222" },
+        { id:"m3", name:"Pedro Oliveira",  apelido:"Pedrinho",   celular:"11 98888-3333" },
+        { id:"m4", name:"Marcos Almeida",  apelido:"Marquinho",  celular:"11 98888-4444" },
+        { id:"m5", name:"Ricardo Souza",   apelido:"Ricky",      celular:"11 98888-5555" }
+      ],
+      reservas(date) {
+        const Y=date.getFullYear(), M=date.getMonth(), D=date.getDate();
+        const at=(h,mn)=>new Date(Y,M,D,h,mn);
+        return [
+          // João — 3 serviços
+          { id:"r01", codigo:"R-1001", status:"Confirmada", tipoServico:"Transfer In", tipoVeiculo:"Sedan",
+            saida:at(7,30), retorno:at(9,0),
+            destino:"Hotel Maksoud Plaza — São Paulo", enderecoSaida:"Aeroporto de Guarulhos - Terminal 3",
+            passageiros:"Marcelo Tenaris - (11) 99876-5432\nAna Tenaris - (11) 99876-1111",
+            trajeto:"GRU → Hotel", obsOperacao:"Cliente prefere chegar 10min antes.",
+            motoristaId:"m1", motoristaName:"João Silva", veiculoName:"Toyota Corolla ABC-1234", clienteName:"Tenaris", solicitanteName:"Marcelo Tenaris" },
+          { id:"r02", codigo:"R-1002", status:"Em Andamento", tipoServico:"Disposição", tipoVeiculo:"SUV",
+            saida:at(10,0), retorno:at(14,0),
+            destino:"Reuniões diversas Berrini", enderecoSaida:"Hotel Maksoud Plaza",
+            passageiros:"Marcelo Tenaris - (11) 99876-5432",
+            trajeto:"Disposição 4h — Berrini", obsOperacao:"",
+            motoristaId:"m1", motoristaName:"João Silva", veiculoName:"Toyota Corolla ABC-1234", clienteName:"Tenaris", solicitanteName:"Marcelo Tenaris" },
+          { id:"r03", codigo:"R-1003", status:"Em Aberto", tipoServico:"Transfer Out", tipoVeiculo:"Sedan",
+            saida:at(18,0), retorno:at(20,0),
+            destino:"Aeroporto de Guarulhos", enderecoSaida:"Hotel Maksoud Plaza",
+            passageiros:"Marcelo Tenaris - (11) 99876-5432",
+            trajeto:"Hotel → GRU", obsOperacao:"Voo 21h45 — LATAM",
+            motoristaId:"m1", motoristaName:"João Silva", veiculoName:"Toyota Corolla ABC-1234", clienteName:"Tenaris", solicitanteName:"Marcelo Tenaris" },
+          // Carlos — 2 saídas próximas
+          { id:"r04", codigo:"R-1004", status:"Confirmada", tipoServico:"Aeroporto", tipoVeiculo:"Van",
+            saida:at(8,0), retorno:at(11,30),
+            destino:"Aeroporto de Congonhas", enderecoSaida:"Av. Paulista, 1500 — Bela Vista",
+            passageiros:"Roberto Costa - (11) 95555-1234\nLuísa Costa\nAna Costa\nFelipe Costa",
+            trajeto:"Paulista → CGH",
+            motoristaId:"m2", motoristaName:"Carlos Mendonça", veiculoName:"Mercedes Sprinter XYZ-9999", clienteName:"Família Costa", solicitanteName:"Roberto Costa" },
+          { id:"r05", codigo:"R-1005", status:"Confirmada", tipoServico:"Longa Distância", tipoVeiculo:"SUV",
+            saida:at(8,25), retorno:at(18,0),
+            destino:"Campos do Jordão", enderecoSaida:"Av. Brigadeiro Faria Lima, 4500",
+            passageiros:"Diretoria Petrobras - (21) 97777-8888",
+            trajeto:"Faria Lima → Campos do Jordão (ida e volta)",
+            motoristaId:"m2", motoristaName:"Carlos Mendonça", veiculoName:"Toyota SW4 KKK-3333", clienteName:"Petrobras", solicitanteName:"Diretoria Petrobras" },
+          // Pedro — 1 serviço longo
+          { id:"r06", codigo:"R-1006", status:"Em Aberto", tipoServico:"City Tour", tipoVeiculo:"Sedan Executivo",
+            saida:at(9,0), retorno:at(17,0),
+            destino:"Tour São Paulo", enderecoSaida:"Hotel Renaissance",
+            passageiros:"Sr. Yamamoto - (11) 94444-1111\nSra. Yamamoto",
+            trajeto:"City tour — Av. Paulista, MASP, Mercadão, Liberdade, Ibirapuera",
+            obsOperacao:"Clientes japoneses, motorista deve falar inglês.",
+            motoristaId:"m3", motoristaName:"Pedro Oliveira", veiculoName:"Audi A6 PPP-7777", clienteName:"Mitsubishi Heavy Ind.", solicitanteName:"Sr. Yamamoto" },
+          // Marcos — 4 serviços curtos
+          { id:"r07", codigo:"R-1007", status:"Concluída", tipoServico:"Transfer In", tipoVeiculo:"Sedan",
+            saida:at(6,0), retorno:at(7,30),
+            destino:"Hotel Pullman Vila Olímpia", enderecoSaida:"Aeroporto de Guarulhos T2",
+            passageiros:"Helena Silva - (11) 93333-1111",
+            motoristaId:"m4", motoristaName:"Marcos Almeida", veiculoName:"Honda Civic FFF-1212", clienteName:"Roche", solicitanteName:"Helena Silva" },
+          { id:"r08", codigo:"R-1008", status:"Concluída", tipoServico:"Transfer", tipoVeiculo:"Sedan",
+            saida:at(9,0), retorno:at(10,0),
+            destino:"Sede Roche — Jaguaré", enderecoSaida:"Hotel Pullman Vila Olímpia",
+            passageiros:"Helena Silva - (11) 93333-1111",
+            motoristaId:"m4", motoristaName:"Marcos Almeida", veiculoName:"Honda Civic FFF-1212", clienteName:"Roche", solicitanteName:"Helena Silva" },
+          { id:"r09", codigo:"R-1009", status:"Confirmada", tipoServico:"Transfer", tipoVeiculo:"Sedan",
+            saida:at(12,30), retorno:at(13,30),
+            destino:"Restaurante Fasano", enderecoSaida:"Sede Roche — Jaguaré",
+            passageiros:"Helena Silva - (11) 93333-1111\nDirector Roche",
+            motoristaId:"m4", motoristaName:"Marcos Almeida", veiculoName:"Honda Civic FFF-1212", clienteName:"Roche", solicitanteName:"Helena Silva" },
+          { id:"r10", codigo:"R-1010", status:"Em Aberto", tipoServico:"Transfer Out", tipoVeiculo:"Sedan",
+            saida:at(19,0), retorno:at(20,30),
+            destino:"Aeroporto de Guarulhos T3", enderecoSaida:"Hotel Pullman Vila Olímpia",
+            passageiros:"Helena Silva - (11) 93333-1111",
+            obsOperacao:"Voo internacional — LH507 22h35",
+            motoristaId:"m4", motoristaName:"Marcos Almeida", veiculoName:"Honda Civic FFF-1212", clienteName:"Roche", solicitanteName:"Helena Silva" },
+          // Ricardo — 1 serviço
+          { id:"r11", codigo:"R-1011", status:"Confirmada", tipoServico:"Hospital", tipoVeiculo:"Sedan",
+            saida:at(14,0), retorno:at(16,0),
+            destino:"Hospital Albert Einstein — Morumbi", enderecoSaida:"Rua Augusta, 2000",
+            passageiros:"Sra. Beatriz Andrade - (11) 91111-2222",
+            obsOperacao:"Paciente com mobilidade reduzida, ajudar a entrar/sair.",
+            motoristaId:"m5", motoristaName:"Ricardo Souza", veiculoName:"Toyota Camry MMM-8888", clienteName:"Particular", solicitanteName:"Beatriz Andrade" },
+          // Órfãos — sem motorista
+          { id:"r12", codigo:"R-1012", status:"Em Aberto", tipoServico:"Aeroporto", tipoVeiculo:"Van",
+            saida:at(15,0), retorno:at(17,30),
+            destino:"Aeroporto de Viracopos — Campinas", enderecoSaida:"Av. Faria Lima, 3500",
+            passageiros:"Equipe Comercial XYZ (5 pax) - (11) 90000-1234",
+            trajeto:"Faria Lima → VCP",
+            motoristaId:null, motoristaName:null, veiculoName:null, clienteName:"XYZ Corp", solicitanteName:"Equipe Comercial XYZ" },
+          { id:"r13", codigo:"R-1013", status:"Em Aberto", tipoServico:"Disposição", tipoVeiculo:"SUV",
+            saida:at(11,0), retorno:at(15,0),
+            destino:"Reuniões — Av. Berrini", enderecoSaida:"Hotel Tivoli",
+            passageiros:"Sr. Mendes - (11) 92222-3333",
+            motoristaId:null, motoristaName:null, veiculoName:null, clienteName:"Vale", solicitanteName:"Sr. Mendes" }
+        ];
+      },
+      servicosPassageiros(reservas) {
+        const map = {};
+        for (const r of reservas) {
+          if (!r.passageiros) continue;
+          const lines = String(r.passageiros).split(/\r?\n|;/).map(x => x.trim()).filter(Boolean);
+          if (!lines.length) continue;
+          map[r.id] = lines.map((ln, i) => {
+            const m = ln.match(/^(.+?)\s+-\s+\((.+?)\)$/);
+            return {
+              id: `spp-${r.id}-${i}`,
+              ordem: i + 1,
+              nome: m ? m[1].trim() : ln,
+              phone: m ? m[2].trim() : "",
+              enderecoSaida: r.enderecoSaida || ""
+            };
+          });
+        }
+        return map;
+      }
+    };
+
+  })();
+  </script>
+</body>
+</html>
+

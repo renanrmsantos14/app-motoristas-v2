@@ -25,7 +25,7 @@ async function run() {
   fs.rmSync(distDir, { recursive: true, force: true });
   fs.mkdirSync(distDir, { recursive: true });
 
-  const result = await esbuild.build({
+  const jsResult = await esbuild.build({
     entryPoints: [path.join(root, "src", "main.tsx")],
     bundle: true,
     format: "iife",
@@ -37,11 +37,31 @@ async function run() {
       ".jpg": "dataurl",
       ".jpeg": "dataurl",
       ".svg": "dataurl",
+      ".ttf": "dataurl",
+      ".otf": "dataurl",
+      ".woff": "dataurl",
+      ".woff2": "dataurl",
     },
   });
 
-  const js = result.outputFiles[0].text;
-  const css = fs.readFileSync(path.join(root, "src", "styles.css"), "utf8");
+  const cssResult = await esbuild.build({
+    entryPoints: [path.join(root, "src", "styles.css")],
+    bundle: true,
+    write: false,
+    loader: {
+      ".png": "dataurl",
+      ".jpg": "dataurl",
+      ".jpeg": "dataurl",
+      ".svg": "dataurl",
+      ".ttf": "dataurl",
+      ".otf": "dataurl",
+      ".woff": "dataurl",
+      ".woff2": "dataurl",
+    },
+  });
+
+  const js = jsResult.outputFiles[0].text;
+  const css = cssResult.outputFiles[0].text;
   if (shouldBumpVersion) {
     packageJson.version = buildVersion;
     fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");

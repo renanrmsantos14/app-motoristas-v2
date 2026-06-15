@@ -1,0 +1,75 @@
+function abrirPainelRateio(selectedItemIds) {
+    console.log("=== INÍCIO DA FUNÇÃO abrirPainelRateio ===");
+    
+    // Validação dos registros selecionados
+    if (!selectedItemIds || (Array.isArray(selectedItemIds) && selectedItemIds.length === 0)) {
+        Xrm.Navigation.openAlertDialog({
+            text: "Por favor, selecione um registro na lista antes de clicar no botão.",
+            title: "Nenhum Registro Selecionado"
+        });
+        return;
+    }
+    
+    // Validar que apenas 1 registro foi selecionado
+    if (Array.isArray(selectedItemIds) && selectedItemIds.length > 1) {
+        Xrm.Navigation.openAlertDialog({
+            text: "Por favor, selecione apenas 1 registro. Você selecionou " + selectedItemIds.length + " registros.",
+            title: "Seleção Múltipla Não Permitida"
+        });
+        return;
+    }
+    
+    // Extrair o GUID do único registro selecionado
+    var recordId;
+    if (Array.isArray(selectedItemIds)) {
+        var firstItem = selectedItemIds[0];
+        recordId = (typeof firstItem === "string") ? firstItem : firstItem.Id;
+    } else {
+        recordId = selectedItemIds;
+    }
+    
+    if (!recordId) {
+        Xrm.Navigation.openAlertDialog({
+            text: "Erro ao identificar o registro selecionado.",
+            title: "Erro"
+        });
+        return;
+    }
+    
+    var cleanId = recordId.replace(/[{}]/g, "");
+    console.log("recordId LIMPO:", cleanId);
+    
+    // Largura fixa de 600px
+    var finalWidth = 600;
+    var finalHeight = 850;
+    console.log("📏 Width final:", finalWidth, "px");
+    console.log("📏 Height final:", finalHeight, "px");
+    
+    // Abrir como POPUP CENTRAL (não aba lateral)
+    var pageInput = {
+        pageType: "custom",
+        name: "new_pgina2_f0001",
+        entityName: "cr40f_financeiro",
+        recordId: cleanId
+    };
+    
+    var navigationOptions = {
+        target: 2, // 2 = Dialog/Popup
+        width: { value: 600, unit: "px" },
+        height: { value: finalHeight, unit: "px" },
+        position: 1 // 1 = Center
+    };
+    
+    Xrm.Navigation.navigateTo(pageInput, navigationOptions).then(
+        function() {
+            console.log("✅ Popup aberto com sucesso!");
+        },
+        function(error) {
+            console.error("❌ Erro ao abrir popup:", error);
+            Xrm.Navigation.openAlertDialog({
+                text: "Erro ao abrir a página: " + error.message,
+                title: "Erro"
+            });
+        }
+    );
+}

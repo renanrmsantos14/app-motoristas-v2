@@ -1,0 +1,373 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps-1": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_powerappsnotificationv2-1": {
+        "api": {
+          "name": "shared_powerappsnotificationv2"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedpowerappsnotificationv2_c8336"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_de4c0"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "cr40f_reservadeveculos",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr40f_motorista, cr40f_status",
+              "subscriptionRequest/filterexpression": "cr40f_status eq 202410005",
+              "subscriptionRequest/name": "4fb94870-aed9-f011-8543-000d3a886267:MTA"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "c0cb6521-9372-4374-964a-af35b82dd4ae"
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_a_row_by_ID_MOT": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_funcionarioses",
+                  "recordId": "@triggerOutputs()?['body/_cr40f_motorista_value']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "runAfter": {
+                "Compose_App_ID": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "1d07a161-449c-4924-b167-f82dca07eb4b"
+              }
+            },
+            "Compose_App_ID": {
+              "type": "Compose",
+              "inputs": "@first(outputs('List_rows_values')?['body/value'])?['value']",
+              "runAfter": {
+                "List_rows_values": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "2a97694a-43df-4f87-bdc2-61a8a6ae431d"
+              }
+            },
+            "List_rows_definition": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "environmentvariabledefinitions",
+                  "$select": "environmentvariabledefinitionid",
+                  "$filter": "schemaname eq 'new_IDAppBetinhosMotoristas'"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "runAfter": {
+                "Condition_é_pra_rodar": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "4f1285a9-8e1e-4ab0-80f2-fde057a2dd08"
+              }
+            },
+            "List_rows_values": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "environmentvariablevalues",
+                  "$select": "value",
+                  "$filter": "_environmentvariabledefinitionid_value eq @{first(outputs('List_rows_definition')?['body/value'])?['environmentvariabledefinitionid']}"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "runAfter": {
+                "List_rows_definition": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "e55cf275-e1ab-4000-a621-27f3513549cc"
+              }
+            },
+            "List_rows_auditoria": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "audits",
+                  "$filter": "objecttypecode eq 'cr40f_reservadeveculos' and _objectid_value eq '@{triggerOutputs()?['body/cr40f_reservadeveculosid']}' and (action eq 1 or action eq 2) and createdon ge @{outputs('Audit_Janela_Inicio')} and createdon le @{outputs('Audit_Janela_Fim')}",
+                  "$orderby": "createdon asc",
+                  "$top": 10
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps-1"
+                }
+              },
+              "runAfter": {
+                "Delay": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Filter_array": {
+              "type": "Query",
+              "inputs": {
+                "from": "@outputs('List_rows_auditoria')?['body/value']",
+                "where": "@or(\r\n  equals(item()?['action'], 1),\r\n  contains(item()?['changedata'], 'cr40f_motorista'),\r\n  contains(item()?['changedata'], 'cr40f_status')\r\n)"
+              },
+              "runAfter": {
+                "List_rows_auditoria": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_é_pra_rodar": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "greater": [
+                      "@length(body('Filter_array'))",
+                      0
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@empty(triggerOutputs()?['body/_cr40f_motorista_value'])",
+                      false
+                    ]
+                  }
+                ]
+              },
+              "actions": {},
+              "else": {
+                "actions": {
+                  "Terminate_1": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Filter_array": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_mot_tem_email": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@empty(outputs('Get_a_row_by_ID_MOT')?['body/cr40f_emailmicrosoft'])",
+                      false
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Send_push_notification_V2": {
+                  "type": "OpenApiConnection",
+                  "description": "{\n  \"servicoId\": \"@{triggerOutputs()?['body/cr40f_reservadeveculosid']}\",\n  \"tipo\": \"SERVICO\"\n}",
+                  "inputs": {
+                    "parameters": {
+                      "payload/playerType": "PowerApps",
+                      "payload/app": "{\"appIdentifier\":\"@{outputs('Compose_App_ID')}\",\"displayName\":\"App Betinhos Motoristas\",\"type\":\"CanvasApp\"}",
+                      "payload/recipients": [
+                        "@outputs('Get_a_row_by_ID_MOT')?['body/cr40f_emailmicrosoft']"
+                      ],
+                      "payload/message": "NOVO SERVIÇO para @{if(\r\n  equals(\r\n    formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\r\n    formatDateTime(convertFromUtc(utcNow(), 'E. South America Standard Time'), 'yyyy-MM-dd')\r\n  ),\r\n  concat(\r\n    'HOJE às ',\r\n    formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')\r\n  ),\r\n  if(\r\n    equals(\r\n      formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\r\n      formatDateTime(addDays(convertFromUtc(utcNow(), 'E. South America Standard Time'), 1), 'yyyy-MM-dd')\r\n    ),\r\n    concat(\r\n      'AMANHÃ às ',\r\n      formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')\r\n    ),\r\n    if(\r\n      equals(\r\n        formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'yyyy-MM-dd'),\r\n        formatDateTime(addDays(convertFromUtc(utcNow(), 'E. South America Standard Time'), -1), 'yyyy-MM-dd')\r\n      ),\r\n      concat(\r\n        'ONTEM às ',\r\n        formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'HH:mm')\r\n      ),\r\n      formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'dd/MM/yyyy HH:mm')\r\n    )\r\n  )\r\n)} foi adicionado na sua agenda pelo gestor!\nID: @{triggerOutputs()?['body/cr40f_id']}\nConfira a sua agenda atualizada!",
+                      "payload/openApp": true,
+                      "payload/dynamicParams": true
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsnotificationv2",
+                      "operationId": "SendPushNotificationV2",
+                      "connectionName": "shared_powerappsnotificationv2-1"
+                    }
+                  },
+                  "metadata": {
+                    "operationMetadataId": "bf660c70-1df1-4aa2-a7c5-7fe9eb312fb5"
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Get_a_row_by_ID_MOT": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Delay": {
+              "type": "Wait",
+              "inputs": {
+                "interval": {
+                  "count": 20,
+                  "unit": "Second"
+                }
+              },
+              "runAfter": {
+                "Audit_Janela_Fim": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Audit_Hora_Base": {
+              "type": "Compose",
+              "inputs": "@coalesce(triggerOutputs()?['body/modifiedon'], utcNow())"
+            },
+            "Audit_Janela_Inicio": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(addSeconds(outputs('Audit_Hora_Base'), -2), 'yyyy-MM-ddTHH:mm:ssZ')",
+              "runAfter": {
+                "Audit_Hora_Base": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Audit_Janela_Fim": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(addSeconds(outputs('Audit_Hora_Base'), 60), 'yyyy-MM-ddTHH:mm:ssZ')",
+              "runAfter": {
+                "Audit_Janela_Inicio": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "b880088d-1a9d-4385-a331-440162a5fb5f"
+          }
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "renan.mendonca@betinhos.com.br;junior@betinhos.com.br;noreply@betinhos.onmicrosoft.com",
+                  "emailMessage/Subject": "ERRO NO FLOW - Flow Notificação Novo Serviço",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Flow Notificação Novo Serviço</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365"
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "517fab20-c9b3-4fad-90b5-8cd67183acb5"
+              }
+            },
+            "Terminate": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              },
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "7bd7f540-74e7-47a6-a900-41875fdec644"
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Skipped",
+              "Failed"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "51726365-dc05-4103-b07a-214d2937f576"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

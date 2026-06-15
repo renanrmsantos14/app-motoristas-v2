@@ -9,6 +9,7 @@ const SCREEN_DEPTH: Record<Screen, number> = {
   detalhes: 2,
   detalhesHistorico: 2,
   receber: 3,
+  reciboPersonalizado: 4,
   voucher: 3,
   finalizar: 3,
   gastos: 1,

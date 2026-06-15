@@ -1,0 +1,12 @@
+function refreshGridView(primaryControl) {
+    try {
+        if (primaryControl?.refresh) {
+            primaryControl.refresh();
+        } else if (Xrm.Page?.data?.refresh) {
+            Xrm.Page.data.refresh();
+        }
+    } catch (error) {
+        // Silenciosamente loga o erro sem interromper o usuário
+        console.log("Erro ao atualizar:", error);
+    }
+}

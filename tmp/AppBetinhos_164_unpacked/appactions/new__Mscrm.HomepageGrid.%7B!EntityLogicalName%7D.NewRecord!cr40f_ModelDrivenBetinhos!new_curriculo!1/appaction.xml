@@ -1,0 +1,41 @@
+<appaction uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1">
+  <appmoduleid>
+    <uniquename>cr40f_ModelDrivenBetinhos</uniquename>
+  </appmoduleid>
+  <buttonaccessibilitytext default="Criar">
+    <label description="Criar" languagecode="1046" />
+  </buttonaccessibilitytext>
+  <buttonlabeltext default="Criar">
+    <label description="Criar" languagecode="1046" />
+  </buttonlabeltext>
+  <buttontooltipdescription default="Crie um registro {EntityLogicalNameMarker}.">
+    <label description="Crie um registro {EntityLogicalNameMarker}." languagecode="1046" />
+  </buttontooltipdescription>
+  <buttontooltiptitle default="Criar">
+    <label description="Criar" languagecode="1046" />
+  </buttontooltiptitle>
+  <context>1</context>
+  <contextentity>
+    <logicalname>new_curriculo</logicalname>
+  </contextentity>
+  <contextvalue>new_curriculo</contextvalue>
+  <fonticon>$clientsvg:Add</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>1</location>
+  <name>Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord</name>
+  <onclickeventjavascriptfunctionname>BetinhosCurriculoRedirect.openFromCreateCommand</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>de27ada7-7353-f111-bec6-6045bd3a7757</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>2</origin>
+  <sequence>1000100010.0000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilitytype>2</visibilitytype>
+</appaction>

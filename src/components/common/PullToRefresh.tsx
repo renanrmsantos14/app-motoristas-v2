@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { reportAppError } from "../../lib/appErrorLogger";
 
 type PullState = "idle" | "ready" | "refreshing" | "done";
 
@@ -54,7 +55,13 @@ export function PullToRefresh({ children, className = "", scrollRef, disabled = 
       setState("done");
       setPull(46);
       window.setTimeout(reset, 620);
-    } catch {
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "pull-to-refresh",
+        action: "onRefresh",
+        component: "PullToRefresh"
+      });
       reset();
     } finally {
       refreshingRef.current = false;

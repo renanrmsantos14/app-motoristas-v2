@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FlowSubmitButton, type FlowSubmitState } from "../components/common/FlowSubmitButton";
+import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { DetailData } from "../types";
@@ -9,7 +9,7 @@ type LocalCancelScreenProps = {
   onBack: () => void;
   onWrongClick: () => void;
   onSubmit: (reason: string) => void;
-  submitState?: FlowSubmitState;
+  submitState?: ActionButtonState;
 };
 
 export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState = "idle" }: LocalCancelScreenProps) {
@@ -35,10 +35,10 @@ export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState 
               </div>
             </div>
           </div>
-          <div className="cancel-actions">
-            <button className="cancel-wrong" disabled={isSubmitting} onClick={onWrongClick}>Cliquei errado</button>
-            <FlowSubmitButton className="cancel-submit" idleLabel="Enviar" state={submitState} onClick={() => onSubmit(text)} />
-          </div>
+          <ActionBar className="cancel-actions">
+            <ActionButton className="cancel-wrong" label="Cliquei errado" disabled={isSubmitting} onClick={onWrongClick} />
+            <ActionButton className="cancel-submit" variant="danger" idleLabel="Enviar" state={submitState} onClick={() => onSubmit(text)} />
+          </ActionBar>
         </article>
       </section>
     </AppShell>

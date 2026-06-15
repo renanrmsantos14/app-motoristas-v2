@@ -107,7 +107,7 @@ export function DetailsScreen({
     const timer = window.setTimeout(() => {
       setShouldRenderScrollHint(false);
       setIsScrollHintExiting(false);
-    }, 340);
+    }, 320);
     return () => window.clearTimeout(timer);
   }, [hasMoreContent, shouldRenderScrollHint]);
 
@@ -123,7 +123,7 @@ export function DetailsScreen({
     <AppShell screenLabel="TelaDetalhes">
       <DetailsMenu title={detail.title} onBack={onBack} onCopy={onCopy} />
       <section className="main-panel details-main details-main-v1">
-        <article className={`details-card details-card-v1 ${detail.type.toLowerCase()} ${hasMoreContent ? "is-scrollable" : ""}`}>
+        <article className={`details-card details-card-v1 ${detail.type.toLowerCase()} ${hasMoreContent || shouldRenderScrollHint ? "is-scrollable" : ""}`}>
           <div className="details-header-v1">
             <div className="details-date-v1">{dateField?.value ?? "Sem data"}</div>
             <div className="details-code-v1">#{detail.id}</div>

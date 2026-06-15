@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlowSubmitButton, type FlowSubmitState } from "../components/common/FlowSubmitButton";
+import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
@@ -27,7 +27,7 @@ type ExpenseScreenProps = {
   onPreviewPhoto: (photoId: string) => void;
   onBack: () => void;
   onSubmit: (draft: ExpenseDraft) => void;
-  submitState: FlowSubmitState;
+  submitState: ActionButtonState;
   vehicles: MaintenanceRequestVehicleOption[];
   vehiclesLoading: boolean;
   currentVehicleId: string;
@@ -395,16 +395,17 @@ export function ExpenseScreen({
               </div>
             </div>
           </div>
-          <div className="finalize-actions maintenance-actions">
-            <FlowSubmitButton
+          <ActionBar className="finalize-actions maintenance-actions">
+            <ActionButton
               className="finalize-primary"
+              variant="primary"
               idleLabel="REGISTRAR"
               loadingLabel="REGISTRANDO"
               successLabel="REGISTRADO"
               state={submitState}
               onClick={submit}
             />
-          </div>
+          </ActionBar>
         </article>
       </section>
     </AppShell>

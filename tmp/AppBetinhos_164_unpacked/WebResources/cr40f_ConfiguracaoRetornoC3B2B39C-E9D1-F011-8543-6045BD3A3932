@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração de Retorno - Reserva de Veículos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 8px;
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            color: var(--gray-900);
+            background-color: var(--gray-50);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .header-icon {
+            background-color: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            color: var(--gray-700);
+            margin-top: 2px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            color: var(--gray-900);
+        }
+
+        .card-title i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: var(--error-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 15px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            background-color: white;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .checkbox-input {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gray-900);
+            cursor: pointer;
+        }
+
+        .fields-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .fields-container.active {
+            max-height: 1000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .datetime-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .datetime-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .status-message {
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            display: none;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .status-message.active {
+            display: flex;
+        }
+
+        .status-message.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-color);
+            color: #065f46;
+        }
+
+        .status-message.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            color: #991b1b;
+        }
+
+        .status-message.warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning-color);
+            color: #92400e;
+        }
+
+        .status-message.info {
+            background-color: rgba(37, 99, 235, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-dark);
+        }
+
+        .status-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .status-content {
+            flex: 1;
+        }
+
+        .status-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .validation-error {
+            color: var(--error-color);
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .validation-error.active {
+            display: block;
+        }
+
+        .form-control.error {
+            border-color: var(--error-color);
+        }
+
+        @media (max-width: 767px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .card {
+                padding: 16px;
+            }
+            
+            .header-title {
+                font-size: 18px;
+            }
+        }
+
+        .retorno-info {
+            background-color: rgba(37, 99, 235, 0.05);
+            border-left: 4px solid var(--primary-color);
+            padding: 16px;
+            margin-top: 20px;
+            border-radius: 0 var(--radius) var(--radius) 0;
+        }
+
+        .retorno-info p {
+            font-size: 14px;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .retorno-info p:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">
+                <i class="fas fa-car"></i>
+            </div>
+            <div>
+                <div class="header-title">Configuração de Retorno</div>
+                <div class="header-subtitle">Preencha os dados para o serviço de retorno do veículo</div>
+            </div>
+        </div>
+
+        <div class="status-message" id="statusMessage">
+            <i class="status-icon fas fa-info-circle"></i>
+            <div class="status-content">
+                <div class="status-title" id="statusTitle">Informação</div>
+                <div id="statusText">Mensagem de status aparecerá aqui.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-toggle-on"></i> Ativação do Retorno
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="ativarRetorno" class="checkbox-input">
+                    <label for="ativarRetorno" class="checkbox-label">Criar serviço de retorno</label>
+                </div>
+                <div class="validation-error" id="ativarRetornoError">Este campo é obrigatório</div>
+            </div>
+
+            <div class="retorno-info">
+                <p><i class="fas fa-info-circle"></i> Ao ativar o retorno, será criado um segundo serviço com os mesmos dados do principal, exceto pelos campos configurados abaixo.</p>
+                <p><i class="fas fa-exchange-alt"></i> O trajeto será automaticamente invertido (ex: "A / B" se torna "B / A").</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-cogs"></i> Configuração do Retorno
+            </div>
+            
+            <div class="fields-container" id="fieldsContainer">
+                <div class="form-group">
+                    <label for="dataHoraRetorno" class="form-label required">Data e Hora de Retorno</label>
+                    <div class="datetime-container">
+                        <input type="datetime-local" id="dataHoraRetorno" class="form-control">
+                    </div>
+                    <div class="validation-error" id="dataHoraRetornoError">A data e hora de retorno são obrigatórias e devem ser posteriores à data de saída</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="enderecoRetorno" class="form-label required">Endereço de Saída do Retorno</label>
+                    <input type="text" id="enderecoRetorno" class="form-control" placeholder="Digite o endereço de saída para o retorno">
+                    <div class="validation-error" id="enderecoRetornoError">O endereço de saída do retorno é obrigatório</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="destinoRetorno" class="form-label required">Destino do Retorno</label>
+                    <input type="text" id="destinoRetorno" class="form-control" placeholder="Digite o destino do retorno">
+                    <div class="validation-error" id="destinoRetornoError">O destino do retorno é obrigatório</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="observacaoInternaRetorno" class="form-label">Observação Interna do Retorno</label>
+                    <textarea id="observacaoInternaRetorno" class="form-control" placeholder="Digite observações internas para o retorno"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="observacaoOperacaoRetorno" class="form-label">Observação de Operação do Retorno</label>
+                    <textarea id="observacaoOperacaoRetorno" class="form-control" placeholder="Digite observações de operação para o retorno"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Processando sua solicitação...</div>
+    </div>
+
+    <script>
+        // ============================================
+        // VARIÁVEIS GLOBAIS
+        // ============================================
+        let formContext = null;
+        let isRetornoAtivo = false;
+        let dadosFormularioNativo = {};
+        let isDebugMode = false;
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Web Resource carregado. Inicializando...');
+            
+            // Tentar obter o formContext
+            obterFormContext();
+            
+            // Configurar eventos
+            configurarEventos();
+            
+            // Mostrar mensagem inicial
+            mostrarStatus('info', 'Configuração de Retorno', 'Preencha os campos para configurar o serviço de retorno. Lembre-se que o trajeto será automaticamente invertido.');
+        });
+
+        // ============================================
+        // FUNÇÕES DE CONFIGURAÇÃO
+        // ============================================
+        function obterFormContext() {
+            try {
+                // Método para Unified Interface
+                if (typeof GetGlobalContext !== 'undefined') {
+                    var globalContext = GetGlobalContext();
+                    formContext = globalContext;
+                    console.log('FormContext obtido via GetGlobalContext');
+                }
+                // Método alternativo
+                else if (typeof Xrm !== 'undefined') {
+                    formContext = Xrm.Page || Xrm.FormContext;
+                    console.log('FormContext obtido via Xrm');
+                }
+                // Método para janela pai
+                else if (window.parent && window.parent.Xrm && window.parent.Xrm.Page) {
+                    formContext = window.parent.Xrm.Page;
+                    console.log('FormContext obtido via window.parent.Xrm.Page');
+                }
+                
+                if (formContext) {
+                    console.log('FormContext obtido com sucesso');
+                } else {
+                    console.warn('FormContext não encontrado. Ativando modo debug.');
+                    isDebugMode = true;
+                }
+            } catch (error) {
+                console.error('Erro ao obter FormContext:', error);
+                isDebugMode = true;
+            }
+        }
+
+        function configurarEventos() {
+            // Checkbox "Ativar Retorno"
+            const ativarRetornoCheckbox = document.getElementById('ativarRetorno');
+            if (ativarRetornoCheckbox) {
+                ativarRetornoCheckbox.addEventListener('change', function() {
+                    isRetornoAtivo = this.checked;
+                    const fieldsContainer = document.getElementById('fieldsContainer');
+                    
+                    if (this.checked) {
+                        fieldsContainer.classList.add('active');
+                        mostrarStatus('info', 'Retorno Ativado', 'O serviço de retorno será criado ao salvar. Preencha os campos abaixo.');
+                    } else {
+                        fieldsContainer.classList.remove('active');
+                        mostrarStatus('info', 'Retorno Desativado', 'Apenas o serviço principal será criado ao salvar.');
+                    }
+                });
+            }
+
+            // Validação em tempo real
+            const camposObrigatorios = ['dataHoraRetorno', 'enderecoRetorno', 'destinoRetorno'];
+            camposObrigatorios.forEach(id => {
+                const campo = document.getElementById(id);
+                if (campo) {
+                    campo.addEventListener('blur', validarCampo);
+                }
+            });
+        }
+
+        // ============================================
+        // FUNÇÃO PRINCIPAL - Chamada pelo botão da Command Bar
+        // ============================================
+        async function salvarComRetorno() {
+            console.log('Função salvarComRetorno chamada da Command Bar');
+            
+            // 1. Coletar dados do formulário nativo
+            if (!coletarDadosFormularioNativo()) {
+                mostrarStatus('error', 'Erro', 'Não foi possível coletar os dados do formulário nativo.');
+                return false;
+            }
+            
+            // 2. Validar dados do formulário personalizado
+            if (!validarFormularioRetorno()) {
+                return false;
+            }
+            
+            // 3. Mostrar loading
+            mostrarLoading(true, 'Processando salvamento...');
+            
+            try {
+                let idPrincipal = null;
+                
+                // 4. Se não estamos em debug, salvar via API
+                if (!isDebugMode) {
+                    // Criar ambos os registros via Web API
+                    idPrincipal = await criarRegistroPrincipalAPI();
+                    
+                    // Se retorno ativo, criar registro de retorno
+                    if (isRetornoAtivo) {
+                        await criarRegistroRetornoAPI(idPrincipal);
+                        mostrarStatus('success', 'Sucesso!', 'Serviço principal e serviço de retorno criados com sucesso!');
+                    } else {
+                        mostrarStatus('success', 'Sucesso!', 'Serviço principal criado com sucesso!');
+                    }
+                } else {
+                    // Modo debug - apenas simular
+                    console.log('Modo debug: Simulando criação de registros');
+                    mostrarStatus('success', 'Debug Mode', 'Em modo de debug - simulação concluída com sucesso!');
+                }
+                
+                return true;
+                
+            } catch (error) {
+                console.error('Erro no fluxo de save:', error);
+                mostrarStatus('error', 'Erro no Processamento', error.message || 'Ocorreu um erro ao processar sua solicitação.');
+                return false;
+            } finally {
+                // Esconder loading
+                mostrarLoading(false);
+            }
+        }
+
+        // ============================================
+        // FUNÇÕES DE COLETA DE DADOS
+        // ============================================
+        function coletarDadosFormularioNativo() {
+            try {
+                if (isDebugMode) {
+                    console.log('Modo debug: Criando dados mockados');
+                    criarDadosMockados();
+                    return true;
+                }
+                
+                // Obter os dados do formulário atual
+                const formContextAtual = Xrm.Page || Xrm.FormContext;
+                
+                if (!formContextAtual) {
+                    console.error('Não foi possível acessar o contexto do formulário');
+                    return false;
+                }
+                
+                // Obter todos os atributos do formulário
+                const atributos = formContextAtual.data.entity.attributes.get();
+                dadosFormularioNativo = {};
+                
+                atributos.forEach(function(atributo) {
+                    try {
+                        const nomeAtributo = atributo.getName();
+                        const valor = atributo.getValue();
+                        
+                        if (valor !== null && valor !== undefined) {
+                            // Lookups
+                            if (Array.isArray(valor) && valor.length > 0 && valor[0].id) {
+                                dadosFormularioNativo[nomeAtributo] = {
+                                    id: valor[0].id,
+                                    entityType: valor[0].entityType || valor[0].logicalName,
+                                    name: valor[0].name
+                                };
+                            }
+                            // OptionSet (Choice)
+                            else if (typeof valor === 'object' && valor.text !== undefined) {
+                                dadosFormularioNativo[nomeAtributo] = {
+                                    value: valor.value,
+                                    text: valor.text
+                                };
+                            }
+                            // Date
+                            else if (valor instanceof Date) {
+                                dadosFormularioNativo[nomeAtributo] = valor.toISOString();
+                            }
+                            // Outros
+                            else {
+                                dadosFormularioNativo[nomeAtributo] = valor;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Erro ao processar atributo:`, e);
+                    }
+                });
+                
+                console.log('Dados coletados do formulário nativo:', dadosFormularioNativo);
+                return true;
+                
+            } catch (error) {
+                console.error('Erro ao coletar dados do formulário nativo:', error);
+                return false;
+            }
+        }
+
+        // ============================================
+        // FUNÇÕES DE VALIDAÇÃO
+        // ============================================
+        function validarFormularioRetorno() {
+            // Se retorno não está ativo, não precisa validar
+            if (!isRetornoAtivo) {
+                return true;
+            }
+            
+            let valido = true;
+            limparErrosValidacao();
+            
+            // Validar data e hora de retorno
+            const dataHoraRetorno = document.getElementById('dataHoraRetorno');
+            if (!dataHoraRetorno.value) {
+                mostrarErroValidacao('dataHoraRetorno', 'A data e hora de retorno são obrigatórias');
+                valido = false;
+            } else {
+                const dataRetorno = new Date(dataHoraRetorno.value);
+                const dataSaida = dadosFormularioNativo.cr40f_dataehorriodesada ? 
+                    new Date(dadosFormularioNativo.cr40f_dataehorriodesada) : new Date();
+                
+                if (dataRetorno <= dataSaida) {
+                    mostrarErroValidacao('dataHoraRetorno', 'A data de retorno deve ser posterior à data de saída');
+                    valido = false;
+                }
+            }
+            
+            // Validar endereço de retorno
+            const enderecoRetorno = document.getElementById('enderecoRetorno');
+            if (!enderecoRetorno.value || enderecoRetorno.value.trim() === '') {
+                mostrarErroValidacao('enderecoRetorno', 'O endereço de saída do retorno é obrigatório');
+                valido = false;
+            }
+            
+            // Validar destino do retorno
+            const destinoRetorno = document.getElementById('destinoRetorno');
+            if (!destinoRetorno.value || destinoRetorno.value.trim() === '') {
+                mostrarErroValidacao('destinoRetorno', 'O destino do retorno é obrigatório');
+                valido = false;
+            }
+            
+            return valido;
+        }
+
+        // ============================================
+        // FUNÇÕES DE CRIAÇÃO VIA WEB API
+        // ============================================
+        async function criarRegistroPrincipalAPI() {
+            console.log('Criando registro principal via Web API...');
+            
+            try {
+                // Preparar payload
+                const payloadPrincipal = prepararPayloadPrincipal();
+                
+                // Criar registro via Web API
+                const result = await Xrm.WebApi.createRecord("cr40f_reservadeveculos", payloadPrincipal);
+                
+                console.log('Registro principal criado com ID:', result.id);
+                return result.id;
+                
+            } catch (error) {
+                console.error('Erro ao criar registro principal:', error);
+                throw new Error(`Falha ao criar serviço principal: ${error.message}`);
+            }
+        }
+
+        async function criarRegistroRetornoAPI(idPrincipal) {
+            console.log('Criando registro de retorno via Web API...');
+            
+            try {
+                // Preparar payload
+                const payloadRetorno = prepararPayloadRetorno();
+                
+                // Criar registro via Web API
+                const result = await Xrm.WebApi.createRecord("cr40f_reservadeveculos", payloadRetorno);
+                
+                console.log('Registro de retorno criado com ID:', result.id);
+                return result.id;
+                
+            } catch (error) {
+                console.error('Erro ao criar registro de retorno:', error);
+                throw new Error(`Falha ao criar serviço de retorno: ${error.message}`);
+            }
+        }
+
+        // ============================================
+        // FUNÇÕES DE PREPARAÇÃO DE PAYLOAD
+        // ============================================
+        function prepararPayloadPrincipal() {
+            // Usar os dados coletados do formulário
+            const payload = {};
+            
+            // Mapear todos os campos
+            for (const [campo, valor] of Object.entries(dadosFormularioNativo)) {
+                if (valor !== null && valor !== undefined) {
+                    // Lookups - formato correto para Web API
+                    if (typeof valor === 'object' && valor.id) {
+                        // Determinar o nome da entidade no plural
+                        let entidadePlural = '';
+                        if (valor.entityType) {
+                            entidadePlural = valor.entityType.toLowerCase().endsWith('s') ? 
+                                valor.entityType.toLowerCase() : 
+                                valor.entityType.toLowerCase() + 's';
+                        } else {
+                            // Fallback baseado no nome do campo
+                            if (campo.includes('cliente')) entidadePlural = 'cr40f_clientes1s';
+                            else if (campo.includes('passageiro') || campo.includes('solicitante')) 
+                                entidadePlural = 'cr40f_bancodedadoss';
+                        }
+                        
+                        if (entidadePlural) {
+                            payload[`${campo}@odata.bind`] = `/${entidadePlural}(${valor.id})`;
+                        }
+                    }
+                    // OptionSet - usar apenas o valor numérico
+                    else if (typeof valor === 'object' && valor.value !== undefined) {
+                        payload[campo] = valor.value;
+                    }
+                    // Outros tipos
+                    else {
+                        payload[campo] = valor;
+                    }
+                }
+            }
+            
+            console.log('Payload principal:', payload);
+            return payload;
+        }
+
+        function prepararPayloadRetorno() {
+            // Copiar dados do principal
+            const payload = { ...dadosFormularioNativo };
+            
+            // Coletar valores do formulário de retorno
+            const dataHoraRetorno = document.getElementById('dataHoraRetorno').value;
+            const enderecoRetorno = document.getElementById('enderecoRetorno').value;
+            const destinoRetorno = document.getElementById('destinoRetorno').value;
+            const observacaoInternaRetorno = document.getElementById('observacaoInternaRetorno').value;
+            const observacaoOperacaoRetorno = document.getElementById('observacaoOperacaoRetorno').value;
+            
+            // Aplicar modificações específicas
+            payload.cr40f_dataehorriodesada = dataHoraRetorno + ':00Z';
+            payload.cr40f_endereodesada = enderecoRetorno;
+            payload.cr40f_destino = destinoRetorno;
+            payload.cr40f_observaointerna = observacaoInternaRetorno;
+            payload.cr40f_obsdeoperacao = observacaoOperacaoRetorno;
+            
+            // Inverter trajeto
+            if (payload.cr40f_trajeto && typeof payload.cr40f_trajeto === 'string' && payload.cr40f_trajeto.includes('/')) {
+                const partes = payload.cr40f_trajeto.split('/').map(parte => parte.trim());
+                if (partes.length >= 2) {
+                    payload.cr40f_trajeto = partes.reverse().join(' / ');
+                }
+            }
+            
+            // Remover horário previsto de retorno
+            payload.cr40f_horrioprevistoderetorno = null;
+            
+            // Converter para formato Web API
+            const payloadFinal = {};
+            
+            for (const [campo, valor] of Object.entries(payload)) {
+                if (valor !== null && valor !== undefined) {
+                    // Lookups
+                    if (typeof valor === 'object' && valor.id) {
+                        let entidadePlural = '';
+                        if (valor.entityType) {
+                            entidadePlural = valor.entityType.toLowerCase().endsWith('s') ? 
+                                valor.entityType.toLowerCase() : 
+                                valor.entityType.toLowerCase() + 's';
+                        } else {
+                            if (campo.includes('cliente')) entidadePlural = 'cr40f_clientes1s';
+                            else if (campo.includes('passageiro') || campo.includes('solicitante')) 
+                                entidadePlural = 'cr40f_bancodedadoss';
+                        }
+                        
+                        if (entidadePlural) {
+                            payloadFinal[`${campo}@odata.bind`] = `/${entidadePlural}(${valor.id})`;
+                        }
+                    }
+                    // OptionSet
+                    else if (typeof valor === 'object' && valor.value !== undefined) {
+                        payloadFinal[campo] = valor.value;
+                    }
+                    // Outros
+                    else {
+                        payloadFinal[campo] = valor;
+                    }
+                }
+            }
+            
+            console.log('Payload retorno:', payloadFinal);
+            return payloadFinal;
+        }
+
+        // ============================================
+        // FUNÇÕES AUXILIARES DE UI
+        // ============================================
+        function mostrarStatus(tipo, titulo, mensagem) {
+            const statusMessage = document.getElementById('statusMessage');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusText = document.getElementById('statusText');
+            const statusIcon = statusMessage.querySelector('.status-icon');
+            
+            statusMessage.className = 'status-message';
+            statusMessage.classList.add(tipo);
+            statusMessage.classList.add('active');
+            
+            statusTitle.textContent = titulo;
+            statusText.textContent = mensagem;
+            
+            const icones = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            };
+            
+            statusIcon.className = `status-icon fas ${icones[tipo] || 'fa-info-circle'}`;
+            
+            if (tipo !== 'error') {
+                setTimeout(() => {
+                    statusMessage.classList.remove('active');
+                }, 5000);
+            }
+        }
+
+        function mostrarLoading(mostrar, mensagem = 'Processando sua solicitação...') {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingText = document.getElementById('loadingText');
+            
+            if (mostrar) {
+                loadingText.textContent = mensagem;
+                loadingOverlay.classList.add('active');
+            } else {
+                loadingOverlay.classList.remove('active');
+            }
+        }
+
+        function mostrarErroValidacao(campoId, mensagem) {
+            const campo = document.getElementById(campoId);
+            const erroElement = document.getElementById(`${campoId}Error`);
+            
+            if (campo) campo.classList.add('error');
+            if (erroElement) {
+                erroElement.textContent = mensagem;
+                erroElement.classList.add('active');
+            }
+        }
+
+        function limparErrosValidacao() {
+            document.querySelectorAll('.form-control.error').forEach(campo => {
+                campo.classList.remove('error');
+            });
+            
+            document.querySelectorAll('.validation-error.active').forEach(erro => {
+                erro.classList.remove('active');
+            });
+        }
+
+        function validarCampo(event) {
+            const campo = event.target;
+            const campoId = campo.id;
+            
+            campo.classList.remove('error');
+            const erroElement = document.getElementById(`${campoId}Error`);
+            if (erroElement) erroElement.classList.remove('active');
+            
+            return true;
+        }
+
+        function criarDadosMockados() {
+            dadosFormularioNativo = {
+                cr40f_cliente: { id: '7d4f2e8a-3b21-4c53-9a8f-1e2d3c4b5a6d', entityType: 'cr40f_clientes1', name: 'Cliente Teste' },
+                cr40f_cotao: 'COT001',
+                cr40f_cr: 'CR001',
+                cr40f_dataehorriodesada: new Date().toISOString(),
+                cr40f_destino: 'Aeroporto',
+                cr40f_endereodesada: 'Rua A, 123',
+                cr40f_formadepagamento: { value: 1, text: 'Cartão' },
+                cr40f_horrioprevistoderetorno: null,
+                cr40f_motoristalookupvalue: 'João',
+                cr40f_obsdeoperacao: 'Obs teste',
+                cr40f_observaointerna: 'Interna teste',
+                cr40f_passageiro1: { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', entityType: 'cr40f_bancodedados', name: 'Maria' },
+                cr40f_passageiro2: null,
+                cr40f_passageiro3: null,
+                cr40f_passageiro4: null,
+                cr40f_solicitante: { id: 'b2c3d4e5-f6a7-8901-bcde-f23456789012', entityType: 'cr40f_bancodedados', name: 'Carlos' },
+                cr40f_status: { value: 1, text: 'Confirmado' },
+                cr40f_tipodeveiculo: { value: 2, text: 'SUV' },
+                cr40f_tipodoservico: { value: 1, text: 'Executivo' },
+                cr40f_trajeto: 'Hotel / Aeroporto'
+            };
+        }
+
+        // ============================================
+        // EXPOSIÇÃO DE FUNÇÕES PARA COMAND BAR
+        // ============================================
+        window.salvarComRetorno = salvarComRetorno;
+        window.debugFormulario = function() {
+            console.log('=== DEBUG ===');
+            console.log('Dados formulário nativo:', dadosFormularioNativo);
+            console.log('Retorno ativo:', isRetornoAtorno);
+            console.log('Formulário retorno:', {
+                dataHora: document.getElementById('dataHoraRetorno').value,
+                endereco: document.getElementById('enderecoRetorno').value,
+                destino: document.getElementById('destinoRetorno').value
+            });
+        };
+    </script>
+</body>
+</html>

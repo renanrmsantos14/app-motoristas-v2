@@ -1,0 +1,138 @@
+function openCustomPage(param1, param2) {
+    console.log("═══════════════════════════════════════════════");
+    console.log("🚀 FUNÇÃO openCustomPage CHAMADA!");
+    console.log("═══════════════════════════════════════════════");
+    
+    // Debug completo dos parâmetros recebidos
+    console.log("📦 PARÂMETRO 1:");
+    console.log("   Tipo:", typeof param1);
+    console.log("   É Array?", Array.isArray(param1));
+    console.log("   Valor completo:", param1);
+    
+    console.log("📦 PARÂMETRO 2:");
+    console.log("   Tipo:", typeof param2);
+    console.log("   Valor completo:", param2);
+    
+    var recordId = "";
+    var entityName = "cr40f_reservadeveculos";
+    
+    // MÉTODO 1: Tentar capturar do param1 (array)
+    if (Array.isArray(param1) && param1.length > 0) {
+        console.log("✅ Método 1: param1 é um array com itens");
+        var item = param1[0];
+        console.log("   Item[0]:", item);
+        
+        // Tenta todas as variações possíveis de ID
+        if (item.Id) {
+            recordId = item.Id.replace(/[{}]/g, "");
+            console.log("   ✅ Capturou ID de item.Id:", recordId);
+        } else if (item.id) {
+            recordId = item.id.replace(/[{}]/g, "");
+            console.log("   ✅ Capturou ID de item.id:", recordId);
+        } else if (item.recordId) {
+            recordId = item.recordId.replace(/[{}]/g, "");
+            console.log("   ✅ Capturou ID de item.recordId:", recordId);
+        }
+        
+        if (item.TypeName) entityName = item.TypeName;
+        if (item.typeName) entityName = item.typeName;
+    }
+    
+    // MÉTODO 2: Tentar capturar do param2 (primaryControl)
+    if (!recordId && param2) {
+        console.log("⚠️ Método 2: Tentando capturar do param2");
+        
+        try {
+            if (param2.getEntityReference) {
+                var entityRef = param2.getEntityReference();
+                console.log("   EntityReference:", entityRef);
+                if (entityRef && entityRef.id) {
+                    recordId = entityRef.id.replace(/[{}]/g, "");
+                    entityName = entityRef.entityType || entityName;
+                    console.log("   ✅ Capturou do entityReference:", recordId);
+                }
+            }
+        } catch (e) {
+            console.log("   ❌ Erro ao tentar getEntityReference:", e);
+        }
+        
+        try {
+            if (param2.data && param2.data.entity) {
+                var entity = param2.data.entity;
+                if (entity.getId) {
+                    recordId = entity.getId().replace(/[{}]/g, "");
+                    console.log("   ✅ Capturou de entity.getId():", recordId);
+                }
+                if (entity.getEntityName) {
+                    entityName = entity.getEntityName();
+                }
+            }
+        } catch (e) {
+            console.log("   ❌ Erro ao tentar data.entity:", e);
+        }
+    }
+    
+    console.log("═══════════════════════════════════════════════");
+    console.log("📊 RESULTADO FINAL:");
+    console.log("   Record ID:", recordId);
+    console.log("   Entity Name:", entityName);
+    console.log("═══════════════════════════════════════════════");
+    
+    // Se ainda não tem recordId, tenta abrir como novo
+    if (!recordId) {
+        console.log("⚠️ AVISO: Nenhum ID capturado, abrindo como novo registro");
+    }
+    
+    // TENTATIVA 1: Abrir como Dialog (Modal)
+    console.log("🔧 TENTATIVA 1: Abrindo como Dialog (Modal)");
+    var pageInput1 = {
+        pageType: "custom",
+        name: "cr40f_reservarveculos_9ec70",
+        entityName: entityName,
+        recordId: recordId
+    };
+    
+    var navOptions1 = {
+        target: 1,
+        width: { value: 95, unit: "%" },
+        height: { value: 95, unit: "%" }
+    };
+    
+    Xrm.Navigation.navigateTo(pageInput1, navOptions1).then(
+        function(result) {
+            console.log("✅ TENTATIVA 1 - SUCCESS!");
+            console.log("   Resultado:", result);
+        },
+        function(error) {
+            console.error("❌ TENTATIVA 1 - FALHOU!");
+            console.error("   Error Code:", error.errorCode);
+            console.error("   Message:", error.message);
+            console.error("   Detalhes:", error);
+            
+            // TENTATIVA 2: Abrir Inline
+            console.log("🔧 TENTATIVA 2: Abrindo Inline");
+            var navOptions2 = {
+                target: 2,
+                position: 1,
+                width: { value: 100, unit: "%" }
+            };
+            
+            Xrm.Navigation.navigateTo(pageInput1, navOptions2).then(
+                function(result) {
+                    console.log("✅ TENTATIVA 2 - SUCCESS!");
+                    console.log("   Resultado:", result);
+                },
+                function(error2) {
+                    console.error("❌ TENTATIVA 2 - FALHOU!");
+                    console.error("   Message:", error2.message);
+                    
+                    // Mostra alerta
+                    Xrm.Navigation.openAlertDialog({
+                        text: "Erro ao abrir Custom Page: " + error2.message,
+                        title: "Erro"
+                    });
+                }
+            );
+        }
+    );
+}

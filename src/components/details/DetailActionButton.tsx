@@ -1,3 +1,4 @@
+import { ActionButton } from "../common/ActionButton";
 import type { DetailAction } from "../../types";
 
 type DetailActionButtonProps = {
@@ -7,16 +8,16 @@ type DetailActionButtonProps = {
 
 export function DetailActionButton({ action, onClick }: DetailActionButtonProps) {
   if (action === "cancel") {
-    return <button className="detail-action cancel" onClick={onClick}>Cancelar no local</button>;
+    return <ActionButton className="detail-action cancel" variant="danger" label="Cancelar no local" onClick={onClick ?? (() => undefined)} />;
   }
 
   if (action === "receber") {
-    return <button className="detail-action finish" onClick={onClick}>Receber</button>;
+    return <ActionButton className="detail-action finish" variant="primary" label="Receber" onClick={onClick ?? (() => undefined)} />;
   }
 
   if (action === "voucher") {
-    return <button className="detail-action voucher" onClick={onClick}>Voucher</button>;
+    return <ActionButton className="detail-action voucher" label="Voucher" onClick={onClick ?? (() => undefined)} />;
   }
 
-  return <button className="detail-action finish" onClick={onClick}>Finalizar</button>;
+  return <ActionButton className="detail-action finish" variant="primary" label="Finalizar" onClick={onClick ?? (() => undefined)} />;
 }

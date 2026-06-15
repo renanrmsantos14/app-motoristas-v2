@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { SystemIcon } from "../icons/SystemIcon";
+import { reportAppError } from "../../lib/appErrorLogger";
 
 type ServicesMenuProps = {
   onHome: () => void;
@@ -17,6 +18,14 @@ export function ServicesMenu({ onHome, onRefresh, title = "Seus Serviços" }: Se
     window.dispatchEvent(new CustomEvent("betinhos:refresh-visual", { detail: { phase: "start" } }));
     try {
       await onRefresh();
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "services-menu",
+        action: "refresh",
+        component: "ServicesMenu"
+      });
+      throw error;
     } finally {
       window.dispatchEvent(new CustomEvent("betinhos:refresh-visual", { detail: { phase: "done" } }));
       window.setTimeout(() => setIsRefreshing(false), 360);

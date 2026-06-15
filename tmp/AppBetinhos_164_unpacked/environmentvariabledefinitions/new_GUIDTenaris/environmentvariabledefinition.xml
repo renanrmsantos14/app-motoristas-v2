@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="new_GUIDTenaris">
+  <description default="GUID Tenaris">
+    <label description="GUID Tenaris" languagecode="1046" />
+  </description>
+  <displayname default="GUID Tenaris">
+    <label description="GUID Tenaris" languagecode="1046" />
+  </displayname>
+  <introducedversion>1.0.0.34</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

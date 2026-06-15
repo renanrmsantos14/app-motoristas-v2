@@ -1,0 +1,136 @@
+// Web Resource: cr40f_CommandBarFunctions
+// Esta é a BIBLIOTECA que será referenciada pelo botão
+
+// Função que será chamada diretamente pelo botão
+function salvarComRetorno() {
+    console.log('🎯 Função salvarComRetorno executada da Command Bar');
+    
+    // Mostrar loading
+    Xrm.Page.ui.setFormNotification("Processando salvamento com retorno...", "INFO", "saveReturn");
+    
+    try {
+        // 1. Verificar se é criação
+        var formType = Xrm.Page.ui.getFormType();
+        if (formType !== 1) { // 1 = Create
+            Xrm.Page.ui.clearFormNotification("saveReturn");
+            Xrm.Navigation.openAlertDialog({
+                text: "Esta função só funciona ao criar um NOVO registro.",
+                title: "Modo Incorreto"
+            });
+            return Promise.resolve(false);
+        }
+        
+        // 2. Encontrar o Web Resource HTML na página
+        var webResourceFrame = null;
+        
+        // Tentar várias formas de encontrar
+        var selectors = [
+            'iframe[data-webresource-name="cr40f_ConfiguracaoRetorno_v2"]',
+            'iframe[src*="cr40f_ConfiguracaoRetorno_v2"]',
+            'iframe#WebResource_cr40f_ConfiguracaoRetorno_v2',
+            'iframe[title*="Retorno"]',
+            'iframe[aria-label*="Retorno"]'
+        ];
+        
+        for (var i = 0; i < selectors.length; i++) {
+            webResourceFrame = document.querySelector(selectors[i]);
+            if (webResourceFrame) break;
+        }
+        
+        // 3. Se não encontrar o Web Resource
+        if (!webResourceFrame) {
+            Xrm.Page.ui.clearFormNotification("saveReturn");
+            return Xrm.Navigation.openAlertDialog({
+                text: "Por favor:\n1. Vá para a aba 'Retorno'\n2. Preencha os campos\n3. Clique novamente em 'Salvar Todos 2'",
+                title: "Ação Necessária"
+            }).then(function() {
+                // Tentar focar na aba correta
+                try {
+                    var tab = Xrm.Page.ui.tabs.get("tab_retorno");
+                    if (tab) {
+                        tab.setFocus();
+                        tab.setDisplayState("expanded");
+                    }
+                } catch(e) {}
+                return false;
+            });
+        }
+        
+        console.log('✅ Web Resource HTML encontrado:', webResourceFrame);
+        
+        // 4. Verificar se pode acessar o conteúdo
+        if (!webResourceFrame.contentWindow) {
+            Xrm.Page.ui.clearFormNotification("saveReturn");
+            Xrm.Navigation.openAlertDialog({
+                text: "Erro de segurança. Recarregue a página.",
+                title: "Erro"
+            });
+            return Promise.resolve(false);
+        }
+        
+        // 5. Verificar se a função existe dentro do Web Resource
+        if (typeof webResourceFrame.contentWindow.executarFluxoSave !== 'function') {
+            // Tentar nomes alternativos
+            var functionNames = [
+                'executarFluxoSave',
+                'salvarComRetorno', 
+                'salvarRetorno',
+                'saveWithReturn',
+                'executeSave'
+            ];
+            
+            var foundFunction = null;
+            for (var j = 0; j < functionNames.length; j++) {
+                if (typeof webResourceFrame.contentWindow[functionNames[j]] === 'function') {
+                    foundFunction = functionNames[j];
+                    break;
+                }
+            }
+            
+            if (!foundFunction) {
+                Xrm.Page.ui.clearFormNotification("saveReturn");
+                Xrm.Navigation.openAlertDialog({
+                    text: "Função de salvamento não encontrada. Recarregue a página.",
+                    title: "Erro"
+                });
+                return Promise.resolve(false);
+            }
+            
+            // Chamar a função encontrada
+            console.log('Chamando função:', foundFunction);
+            return webResourceFrame.contentWindow[foundFunction]();
+        } else {
+            // Chamar a função padrão
+            console.log('Chamando executarFluxoSave...');
+            return webResourceFrame.contentWindow.executarFluxoSave();
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro na execução:', error);
+        Xrm.Page.ui.clearFormNotification("saveReturn");
+        Xrm.Navigation.openAlertDialog({
+            text: "Erro: " + (error.message || "Desconhecido"),
+            title: "Erro no Sistema"
+        });
+        return Promise.resolve(false);
+    }
+}
+
+// Função auxiliar para debug (opcional)
+function debugRetorno() {
+    console.log('🔧 Debug do Sistema de Retorno');
+    console.log('Form type:', Xrm.Page.ui.getFormType());
+    
+    // Procurar Web Resource
+    var frame = document.querySelector('iframe[data-webresource-name="cr40f_ConfiguracaoRetorno_v2"]');
+    if (frame && frame.contentWindow) {
+        console.log('Web Resource encontrado');
+        
+        // Tentar chamar função de debug se existir
+        if (typeof frame.contentWindow.debugFormulario === 'function') {
+            frame.contentWindow.debugFormulario();
+        }
+    } else {
+        console.log('Web Resource não encontrado');
+    }
+}

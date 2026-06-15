@@ -1,0 +1,163 @@
+/* new_assistente_autosave.js
+   Debounced auto-save das opções do assistente no formulário pai.
+   - Grava cr40f_new_assistant_options (JSON string) e cr40f_new_assistant_pending (true)
+   - Tenta usar parent.Xrm.Page (direto). Se bloqueado, envia postMessage para o parent.
+   - Expõe window.__assistant_forceSave() para forçar gravação via console do iframe.
+*/
+
+(function(){
+  const DEBOUNCE_MS = 800;
+
+  // IDs dos elementos no assistente — ajuste se forem diferentes
+  const IDS = {
+    ar_enabled: 'ar_enabled',
+    ar_dataret: 'ar_dataret',
+    ar_endsaida: 'ar_endsaida',
+    ar_destino: 'ar_destino',
+    ar_obsint: 'ar_obsint',
+    ar_obsop: 'ar_obsop',
+    fq_enabled: 'fq_enabled',
+    fq_inicio: 'fq_inicio',
+    fq_fim: 'fq_fim',
+    fq_tipo: 'fq_tipo',
+    fq_fds: 'fq_fds'
+  };
+
+  // debounce
+  function debounce(fn, wait){
+    let t;
+    return function(...a){ clearTimeout(t); t = setTimeout(()=> fn.apply(this,a), wait); };
+  }
+
+  // read UI
+  function readOptionsFromUI(){
+    try{
+      const arEnabled = !!(document.getElementById(IDS.ar_enabled)?.checked);
+      const arData = document.getElementById(IDS.ar_dataret)?.value || null;
+      const arEnd = document.getElementById(IDS.ar_endsaida)?.value || null;
+      const arDest = document.getElementById(IDS.ar_destino)?.value || null;
+      const arObsInt = document.getElementById(IDS.ar_obsint)?.value || null;
+      const arObsOp = document.getElementById(IDS.ar_obsop)?.value || null;
+
+      const fqEnabled = !!(document.getElementById(IDS.fq_enabled)?.checked);
+      const fqStart = document.getElementById(IDS.fq_inicio)?.value || null;
+      const fqEnd = document.getElementById(IDS.fq_fim)?.value || null;
+      const fqType = document.getElementById(IDS.fq_tipo)?.value || null;
+      const fqFds = !!(document.getElementById(IDS.fq_fds)?.checked);
+
+      const retorno = arEnabled ? {
+        enabled: true,
+        date: arData && String(arData).indexOf('T')!==-1 ? arData : arData || null,
+        time: arData && String(arData).indexOf('T')!==-1 ? String(arData).split('T')[1].slice(0,5) : null,
+        datetime: arData || null,
+        endereco_saida: arEnd || null,
+        destino: arDest || null,
+        obs_interna: arObsInt || null,
+        obs_operacao: arObsOp || null
+      } : { enabled:false };
+
+      const frequencia = { enabled: fqEnabled, startDate: fqStart, endDate: fqEnd, tripType: fqType, countWeekend: fqFds };
+
+      return { retorno, frequencia, ts: new Date().toISOString() };
+    }catch(e){
+      console.error('readOptionsFromUI error', e);
+      return null;
+    }
+  }
+
+  // Try direct parent.Xrm write (most robust when same-origin)
+  function tryWriteToParentDirect(jsonStr){
+    try{
+      if(!parent || !parent.Xrm || !parent.Xrm.Page) throw new Error('parent.Xrm unavailable');
+      const optAttr = parent.Xrm.Page.getAttribute('cr40f_new_assistant_options') || parent.Xrm.Page.getAttribute('new_assistant_options');
+      const pendAttr = parent.Xrm.Page.getAttribute('cr40f_new_assistant_pending') || parent.Xrm.Page.getAttribute('new_assistant_pending');
+      if(!optAttr || !pendAttr) throw new Error('atributos ocultos não encontrados no parent');
+      optAttr.setValue(jsonStr);
+      pendAttr.setValue(true);
+      // não forçar save do formulário
+      console.debug('assistant -> parent direct write OK', JSON.parse(jsonStr));
+      return true;
+    }catch(err){
+      // console.debug('assistant direct write failed', err);
+      return false;
+    }
+  }
+
+  // Fallback: postMessage to parent; parent must listen (we will add parent listener in new_open_dialog.js if needed)
+  function postMessageToParent(payload){
+    try{
+      const msg = { type: 'ASSISTANT_SAVE_OPTIONS', payload };
+      parent.postMessage(msg, '*');
+      console.debug('assistant -> postMessage sent', msg);
+      return true;
+    }catch(e){
+      console.error('postMessageToParent failed', e);
+      return false;
+    }
+  }
+
+  // unified save: try direct then postMessage
+  function saveOptionsToParentObj(obj){
+    if(!obj) return false;
+    const str = JSON.stringify(obj);
+    if(tryWriteToParentDirect(str)) return true;
+    return postMessageToParent(obj);
+  }
+
+  // debounced handler
+  const debouncedSave = debounce(function(){
+    const opts = readOptionsFromUI();
+    if(!opts) return;
+    const ok = saveOptionsToParentObj(opts);
+    if(!ok) console.warn('Assistente: não conseguiu gravar opções no parent (verifique cross-origin / atributos ocultos)');
+  }, DEBOUNCE_MS);
+
+  // attach listeners to fields
+  function attachListeners(){
+    Object.values(IDS).forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('input', debouncedSave);
+      el.addEventListener('change', debouncedSave);
+    });
+    // also save on load once
+    setTimeout(()=>{ const opts = readOptionsFromUI(); if(opts) saveOptionsToParentObj(opts); }, 600);
+    console.debug('assistant listeners attached');
+  }
+
+  // expose force save for console testing (iframe console)
+  window.__assistant_forceSave = function(){
+    try{
+      const opts = readOptionsFromUI();
+      if(!opts) return console.warn('no opts');
+      const ok = saveOptionsToParentObj(opts);
+      console.log('forceSave ok=', ok, 'opts=', opts);
+      return ok;
+    }catch(e){ console.error(e); return false; }
+  };
+
+  // initial hook
+  function init(){
+    try{
+      if(document.readyState === 'complete' || document.readyState === 'interactive'){
+        attachListeners();
+      } else document.addEventListener('DOMContentLoaded', attachListeners);
+    }catch(e){
+      console.error('init error', e);
+    }
+  }
+
+  init();
+
+  // listen to parent requests (optional): parent may request a snapshot via postMessage
+  window.addEventListener('message', function(ev){
+    try{
+      if(!ev.data) return;
+      if(ev.data && ev.data.type === 'ASSISTANT_REQUEST_SNAPSHOT'){
+        const snapshot = readOptionsFromUI();
+        parent.postMessage({ type: 'ASSISTANT_SNAPSHOT', payload: snapshot }, '*');
+      }
+    }catch(e){}
+  }, false);
+
+})();

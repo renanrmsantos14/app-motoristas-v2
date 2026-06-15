@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { FlowSubmitButton, type FlowSubmitState } from "../components/common/FlowSubmitButton";
+import { useEffect, useRef, useState } from "react";
+import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { buildWhatsAppUrl, openExternalUrl } from "../lib/localWorkflow";
@@ -15,7 +15,7 @@ type FinalizeScreenProps = {
   onMaintenanceDraftChange?: (draft: MaintenanceFinalizeDraft) => void;
   onPreviewMaintenancePhoto: (kind: MaintenancePhotoKind) => void;
   onClearPhotos?: () => void;
-  submitState?: FlowSubmitState;
+  submitState?: ActionButtonState;
 };
 
 export type MaintenanceFinalizeDraft = {
@@ -40,12 +40,37 @@ function focusInvalidField(element: HTMLElement | null) {
   }, 40);
 }
 
-function FinalizeActions({ onNone, onConfirm, submitState }: { onNone: () => void; onConfirm: () => void; submitState: FlowSubmitState }) {
+function FinalizeActions({ onNone, onConfirm, submitState }: { onNone: () => void; onConfirm: () => void; submitState: ActionButtonState }) {
+  const [activeAction, setActiveAction] = useState<"none" | "confirm" | "">("");
+  useEffect(() => {
+    if (submitState === "idle") setActiveAction("");
+  }, [submitState]);
+
   return (
-    <div className="finalize-actions">
-      <FlowSubmitButton className="finalize-secondary" idleLabel="Não tenho" state={submitState} onClick={onNone} />
-      <FlowSubmitButton className="finalize-primary" idleLabel="Confirmar" state={submitState} onClick={onConfirm} />
-    </div>
+    <ActionBar className="finalize-actions">
+      <ActionButton
+        className="finalize-secondary"
+        idleLabel="Não tenho"
+        state={submitState}
+        active={activeAction === "none"}
+        variant="secondary"
+        onClick={() => {
+          setActiveAction("none");
+          onNone();
+        }}
+      />
+      <ActionButton
+        className="finalize-primary"
+        idleLabel="Confirmar"
+        state={submitState}
+        active={activeAction === "confirm"}
+        variant="primary"
+        onClick={() => {
+          setActiveAction("confirm");
+          onConfirm();
+        }}
+      />
+    </ActionBar>
   );
 }
 
@@ -66,7 +91,7 @@ function TextAreaBlock({
   );
 }
 
-function ServiceFinalize({ onDone, submitState }: { detail: DetailData; onDone: (fields: Record<string, string>) => void; submitState: FlowSubmitState }) {
+function ServiceFinalize({ onDone, submitState }: { detail: DetailData; onDone: (fields: Record<string, string>) => void; submitState: ActionButtonState }) {
   const [obs, setObs] = useState("");
 
   return (
@@ -86,7 +111,7 @@ function ServiceFinalize({ onDone, submitState }: { detail: DetailData; onDone: 
   );
 }
 
-function ExchangeFinalize({ detail, onDone, submitState }: { detail: DetailData; onDone: (fields: Record<string, string>) => void; submitState: FlowSubmitState }) {
+function ExchangeFinalize({ detail, onDone, submitState }: { detail: DetailData; onDone: (fields: Record<string, string>) => void; submitState: ActionButtonState }) {
   const [obs, setObs] = useState("");
 
   return (
@@ -189,7 +214,7 @@ function MaintenanceFinalize({
   draft?: MaintenanceFinalizeDraft;
   onDraftChange?: (draft: MaintenanceFinalizeDraft) => void;
   onPreviewMaintenancePhoto: (kind: MaintenancePhotoKind) => void;
-  submitState: FlowSubmitState;
+  submitState: ActionButtonState;
 }) {
   const isSubmitting = submitState !== "idle";
   const serviceDoneRef = useRef<HTMLTextAreaElement | null>(null);
@@ -316,9 +341,9 @@ function MaintenanceFinalize({
           </div>
         </div>
       </div>
-      <div className="finalize-actions maintenance-actions">
-        <FlowSubmitButton className="finalize-primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
-      </div>
+      <ActionBar className="finalize-actions maintenance-actions">
+        <ActionButton className="finalize-primary" variant="primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />
+      </ActionBar>
     </article>
   );
 }
