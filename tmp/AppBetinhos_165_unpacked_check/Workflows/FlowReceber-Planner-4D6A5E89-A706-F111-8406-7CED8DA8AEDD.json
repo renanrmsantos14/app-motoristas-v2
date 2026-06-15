@@ -1,0 +1,320 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_planner": {
+        "api": {
+          "name": "shared_planner"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_PlannerJuliana"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps-1": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_de4c0"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "cr40f_reservadeveculos",
+              "subscriptionRequest/scope": 4
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "runtimeConfiguration": {
+            "concurrency": {
+              "runs": 1
+            }
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Condition_receber_true_e_tem_cliente": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@triggerOutputs()?['body/cr40f_receber']",
+                      true
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@empty(triggerOutputs()?['body/_cr40f_cliente_value'])",
+                      false
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Condição_ID_planner_nao_vazio": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@empty(triggerOutputs()?['body/cr40f_idplanner'])",
+                          false
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Update_a_task_1": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "id": "@triggerOutputs()?['body/cr40f_idplanner']",
+                          "body/title": "@concat(\r\n  'ID: ', triggerOutputs()?['body/cr40f_id'],\r\n  ' | ', outputs('Compose_horario'),\r\n  ' | ', triggerOutputs()?['body/cr40f_passageirosetelefonedecontato'],\r\n  ' | ', outputs('Get_a_row_by_ID')?['body/cr40f_nomedocliente']\r\n)\r\n",
+                          "body/dueDateTime": " @{outputs('Compose_horario_bizarro')}",
+                          "body/startDateTime": "@outputs('Compose_horario_bizarro')"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_planner",
+                          "operationId": "UpdateTask_V2",
+                          "connectionName": "shared_planner"
+                        }
+                      }
+                    },
+                    "Update_task_details": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "id": "@outputs('Update_a_task_1')?['body/id']",
+                          "body/description": "@concat(\r\n  'Veja maiores detalhes:', decodeUriComponent('%0A'),\r\n\r\n  'Data e horário: ',\r\n    coalesce(outputs('Compose_horario'), '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Cliente: ',\r\n    coalesce(\r\n      outputs('Get_a_row_by_ID')?['body/cr40f_nomedocliente'],\r\n      '—'\r\n    ),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Passageiro: ',\r\n    coalesce(triggerOutputs()?['body/cr40f_passageirosetelefonedecontato'], '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Local de saída: ',\r\n    coalesce(triggerOutputs()?['body/cr40f_endereodesada'], '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Destino: ',\r\n    coalesce(triggerOutputs()?['body/cr40f_destino'], '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Cotação: ',\r\n    if(\r\n      empty(string(triggerOutputs()?['body/cr40f_cotao'])),\r\n      '—',\r\n      formatNumber(\r\n        float(triggerOutputs()?['body/cr40f_cotao']),\r\n        'C',\r\n        'pt-BR'\r\n      )\r\n    )\r\n)"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_planner",
+                          "operationId": "UpdateTaskDetails_V2",
+                          "connectionName": "shared_planner"
+                        }
+                      },
+                      "runAfter": {
+                        "Update_a_task_1": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Criar_uma_tarefa": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "body/groupId": "d98dd7f2-6a05-4e8b-a79d-1b954bf6d21c",
+                            "body/planId": "vq1Kq2_m5keagjLNgnTEGWUAG1-a",
+                            "body/title": "@concat(\r\n  'ID: ', triggerOutputs()?['body/cr40f_id'],\r\n  ' | ', outputs('Compose_horario'),\r\n  ' | ', triggerOutputs()?['body/cr40f_passageirosetelefonedecontato'],\r\n  ' | ', outputs('Get_a_row_by_ID')?['body/cr40f_nomedocliente']\r\n)\r\n",
+                            "body/bucketId": "WeYrK4-xnkGxP3eqnZNzO2UAG0Xd",
+                            "body/startDateTime": " @{outputs('Compose_horario_bizarro')}",
+                            "body/dueDateTime": " @{outputs('Compose_horario_bizarro')}"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_planner",
+                            "operationId": "CreateTask_V3",
+                            "connectionName": "shared_planner"
+                          }
+                        },
+                        "metadata": {
+                          "operationMetadataId": "e2390963-6d2c-4769-b51d-f02681eaef26"
+                        }
+                      },
+                      "Atualizar_detalhes_da_tarefa": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "id": "@outputs('Criar_uma_tarefa')?['body/id']",
+                            "body/description": "@concat(\r\n  'Veja maiores detalhes:', decodeUriComponent('%0A'),\r\n\r\n  'Data e horário: ',\r\n    coalesce(outputs('Compose_horario'), '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Cliente: ',\r\n    coalesce(\r\n      outputs('Get_a_row_by_ID')?['body/cr40f_nomedocliente'],\r\n      '—'\r\n    ),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Passageiro: ',\r\n    coalesce(triggerOutputs()?['body/cr40f_passageirosetelefonedecontato'], '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Local de saída: ',\r\n    coalesce(triggerOutputs()?['body/cr40f_endereodesada'], '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Destino: ',\r\n    coalesce(triggerOutputs()?['body/cr40f_destino'], '—'),\r\n  decodeUriComponent('%0A'),\r\n\r\n  'Cotação: ',\r\n    if(\r\n      empty(string(triggerOutputs()?['body/cr40f_cotao'])),\r\n      '—',\r\n      formatNumber(\r\n        float(triggerOutputs()?['body/cr40f_cotao']),\r\n        'C',\r\n        'pt-BR'\r\n      )\r\n    )\r\n)"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_planner",
+                            "operationId": "UpdateTaskDetails_V2",
+                            "connectionName": "shared_planner"
+                          }
+                        },
+                        "runAfter": {
+                          "Criar_uma_tarefa": [
+                            "Succeeded"
+                          ]
+                        },
+                        "metadata": {
+                          "operationMetadataId": "a52bf7b2-b5c6-4c4f-bbb3-0cbd35017727"
+                        }
+                      },
+                      "Update_a_row": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_reservadeveculoses",
+                            "recordId": "@triggerOutputs()?['body/cr40f_reservadeveculosid']",
+                            "item/cr40f_idplanner": "@outputs('Atualizar_detalhes_da_tarefa')?['body/id']"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "UpdateOnlyRecord",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        },
+                        "runAfter": {
+                          "Atualizar_detalhes_da_tarefa": [
+                            "Succeeded"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Compose_horario_bizarro": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "e57c2017-3edb-42aa-a04d-bfe44246b6f8"
+                  }
+                },
+                "Compose_horario": {
+                  "type": "Compose",
+                  "inputs": "@formatDateTime(\r\n  convertTimeZone(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'UTC', 'E. South America Standard Time'),\r\n  'dd/MM/yyyy HH:mm'\r\n)\r\n",
+                  "runAfter": {
+                    "Get_a_row_by_ID": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_horario_bizarro": {
+                  "type": "Compose",
+                  "inputs": "@formatDateTime(\r\n  convertTimeZone(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time', 'UTC'),\r\n  'yyyy-MM-ddTHH:mm:ssZ'\r\n)\r\n",
+                  "runAfter": {
+                    "Compose_horario": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Get_a_row_by_ID": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_clientes1s",
+                      "recordId": "@triggerOutputs()?['body/_cr40f_cliente_value']"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "connectionName": "shared_commondataserviceforapps-1"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Terminate": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)_1": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; financeiro@betinhos.com..br; junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLUXO - Aviso \"Receber\" no Planner",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">Ocorreu um erro ao Aviso \"Receber\" no Planner.</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365"
+                }
+              }
+            },
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "400"
+                }
+              },
+              "runAfter": {
+                "Send_an_email_(V2)_1": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Skipped",
+              "Failed"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

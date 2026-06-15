@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Assistente de Agendamento — Betinhos</title>
+<style>
+  :root{ --muted:#6b7280; --text:#0f1724; --accent:#0b5ed7; --radius-lg:14px; --radius-sm:10px; font-family:"Segoe UI",system-ui,Arial;}
+  html,body{margin:0;padding:0;background:transparent;color:var(--text);}
+  .wrap{max-width:980px;margin:0 auto;padding:12px}
+  .card{background:transparent;padding:12px;border-radius:12px}
+  h1{font-size:16px;margin:0 0 6px 0}
+  .tabs{display:flex;gap:8px;margin:12px 0}
+  .tab{padding:8px 12px;border-radius:10px;background:transparent;border:1px solid transparent;font-weight:600;color:var(--muted);cursor:pointer}
+  .tab.active{background:linear-gradient(90deg,var(--accent),#074bb0);color:#fff}
+  .grid{display:grid;gap:10px}
+  .grid.cols-2{grid-template-columns:1fr 1fr}
+  @media(max-width:640px){ .grid.cols-2{grid-template-columns:1fr} }
+  .field{display:flex;flex-direction:column;gap:6px}
+  label{font-size:12px;color:var(--muted)}
+  input, textarea, select{padding:10px;border-radius:10px;border:1px solid #e6eefb;background:#fff;font-size:14px}
+  textarea{min-height:64px;resize:vertical}
+  .muted{color:var(--muted);font-size:13px}
+  .footer-note{margin-top:10px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="region" aria-label="Assistente de Agendamento">
+      <h1>Assistente de Agendamento — Betinhos</h1>
+      <p class="muted">Preencha as opções. Ao <strong>Salvar</strong> o formulário, o assistente será processado automaticamente.</p>
+
+      <div class="tabs" role="tablist">
+        <button id="tabBtnRet" class="tab active" role="tab" aria-controls="tabRetorno">Agendar Retorno</button>
+        <button id="tabBtnFreq" class="tab" role="tab" aria-controls="tabFreq">Serviços Frequentes</button>
+      </div>
+
+      <section id="tabRetorno" class="grid">
+        <div class="row" style="align-items:center;">
+          <label class="inline"><input id="ar_enabled" type="checkbox"/> <span class="muted">Ativar retorno</span></label>
+          <div style="flex:1"></div>
+          <div class="muted">Campos sincronizam com o formulário nativo até edição manual.</div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top:8px;">
+          <div class="field"><label for="ar_dataret">Data e hora de retorno</label><input id="ar_dataret" type="datetime-local"/></div>
+          <div class="field"><label for="ar_endsaida">Endereço de saída (retorno)</label><input id="ar_endsaida" type="text" placeholder="Ex.: Aeroporto GRU"/></div>
+          <div class="field"><label for="ar_destino">Destino (retorno)</label><input id="ar_destino" type="text" placeholder="Ex.: Escritório"/></div>
+          <div class="field"><label for="ar_obsop">Observação de operação</label><textarea id="ar_obsop" placeholder="Instruções ao motorista..."></textarea></div>
+          <div class="field"><label for="ar_obsint">Observação interna</label><textarea id="ar_obsint" placeholder="Notas internas..."></textarea></div>
+        </div>
+      </section>
+
+      <section id="tabFreq" class="grid" style="display:none;margin-top:10px;">
+        <div class="row" style="align-items:center"><label class="inline"><input id="fq_enabled" type="checkbox"/> <span class="muted">Ativar serviços frequentes</span></label></div>
+        <div class="grid cols-2" style="margin-top:8px;">
+          <div class="field"><label for="fq_inicio">Data de início</label><input id="fq_inicio" type="date"/></div>
+          <div class="field"><label for="fq_fim">Data de fim</label><input id="fq_fim" type="date"/></div>
+          <div class="field"><label for="fq_tipo">Tipo</label><select id="fq_tipo"><option value="ida">Ida</option><option value="retorno">Retorno</option><option value="ida_retorno">Ida e Retorno</option></select></div>
+          <div class="field"><label class="inline"><input id="fq_fds" type="checkbox"/> <span class="muted">Contabilizar Sáb e Dom</span></label></div>
+        </div>
+      </section>
+
+      <p class="footer-note">Os campos sincronizam automaticamente; a persistência é feita ao salvar o formulário.</p>
+    </div>
+  </div>
+
+  <script src="../WebResources/new_assistente.js"></script>
+  <script>
+  (function(){
+    // tabs local
+    const tR = document.getElementById('tabBtnRet'), tF = document.getElementById('tabBtnFreq'), tabRet = document.getElementById('tabRetorno'), tabFreq = document.getElementById('tabFreq');
+    tR.addEventListener('click', ()=>{ tR.classList.add('active'); tF.classList.remove('active'); tabRet.style.display='block'; tabFreq.style.display='none'; });
+    tF.addEventListener('click', ()=>{ tF.classList.add('active'); tR.classList.remove('active'); tabRet.style.display='none'; tabFreq.style.display='block'; });
+
+    // auto-update visual helpers: listen UI input events to mark edited and trigger preview refresh (if preview exists)
+    const inputs = Array.from(document.querySelectorAll('input,textarea,select'));
+    inputs.forEach(i=>{
+      i.addEventListener('input', ()=>{ try{ window.editedFlags = window.editedFlags || {}; window.editedFlags[i.id] = true; }catch(e){}; // mark edited
+        // notify parent (postMessage) so preview can update if it is in different webresource (optional)
+        try{ parent.postMessage({ type:'assistedFieldChanged', id:i.id, value:i.value }, '*'); }catch(e){} 
+      });
+    });
+
+    // also attempt to attach parent.Xrm listeners to re-fill fields (existing new_assistente.js also does this)
+    function tryAttachParentOnChange(){
+      try{
+        if(!parent || !parent.Xrm || !parent.Xrm.Page) return;
+        const map = { ar_dataret:['cr40f_horrioprevistoderetorno','cr40f_dataehorriodesada'], ar_destino:['cr40f_destino'], ar_endsaida:['cr40f_endereodesada'], ar_obsint:['cr40f_observaointerna'], ar_obsop:['cr40f_obsdeoperao'] };
+        Object.keys(map).forEach(field=>{
+          map[field].forEach(attrName=>{
+            try{
+              const attr = parent.Xrm.Page.getAttribute(attrName);
+              if(attr){
+                attr.addOnChange(function(){ try{ if(!(window.editedFlags && window.editedFlags[field])){ const el = document.getElementById(field); if(el){ const v = attr.getValue(); if(v instanceof Date){ const d=v; const pad=n=>String(n).padStart(2,'0'); el.value = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); } else el.value = v||''; } } }catch(e){} });
+              }
+            }catch(e){}
+          });
+        });
+      }catch(e){}
+    }
+    tryAttachParentOnChange();
+
+    // polling fallback to keep UI in sync visually (2s)
+    let lastSnapshot = {};
+    setInterval(()=>{
+      try{
+        const snap = {};
+        ['ar_dataret','ar_destino','ar_endsaida','ar_obsint','ar_obsop','fq_inicio','fq_fim','fq_tipo','fq_enabled','ar_enabled','fq_fds'].forEach(id=>{
+          const el = document.getElementById(id);
+          snap[id] = el ? el.value || (el.checked===true?'1':'0') || '' : '';
+        });
+        const changed = JSON.stringify(snap) !== JSON.stringify(lastSnapshot);
+        if(changed){
+          lastSnapshot = snap;
+          // notify parent (optional) so preview webresource (if separate) can refresh
+          try{ parent.postMessage({ type:'assistantSnapshot', snapshot: snap }, '*'); }catch(e){}
+        }
+      }catch(e){}
+    },2000);
+  })();
+  </script>
+/* new_assistente_autosave.js — cole dentro do HTML do Assistente (antes de </body>) */
+(function(){
+  const DEBOUNCE_MS = 800;
+  const IDS = {
+    ar_enabled: 'ar_enabled',
+    ar_dataret: 'ar_dataret',
+    ar_endsaida: 'ar_endsaida',
+    ar_destino: 'ar_destino',
+    ar_obsint: 'ar_obsint',
+    ar_obsop: 'ar_obsop',
+    fq_enabled: 'fq_enabled',
+    fq_inicio: 'fq_inicio',
+    fq_fim: 'fq_fim',
+    fq_tipo: 'fq_tipo',
+    fq_fds: 'fq_fds'
+  };
+  function debounce(fn, wait){ let t; return function(...a){ clearTimeout(t); t = setTimeout(()=> fn.apply(this,a), wait); }; }
+  function readOptionsFromUI(){
+    try{
+      const arEnabled = !!(document.getElementById(IDS.ar_enabled)?.checked);
+      const arData = document.getElementById(IDS.ar_dataret)?.value || null;
+      const arEnd = document.getElementById(IDS.ar_endsaida)?.value || null;
+      const arDest = document.getElementById(IDS.ar_destino)?.value || null;
+      const arObsInt = document.getElementById(IDS.ar_obsint)?.value || null;
+      const arObsOp = document.getElementById(IDS.ar_obsop)?.value || null;
+      const fqEnabled = !!(document.getElementById(IDS.fq_enabled)?.checked);
+      const fqStart = document.getElementById(IDS.fq_inicio)?.value || null;
+      const fqEnd = document.getElementById(IDS.fq_fim)?.value || null;
+      const fqType = document.getElementById(IDS.fq_tipo)?.value || null;
+      const fqFds = !!(document.getElementById(IDS.fq_fds)?.checked);
+      const retorno = arEnabled ? {
+        enabled: true,
+        date: arData && String(arData).indexOf('T')!==-1 ? arData : (arData||null),
+        time: arData && String(arData).indexOf('T')!==-1 ? String(arData).split('T')[1].slice(0,5) : null,
+        datetime: arData || null,
+        endereco_saida: arEnd || null,
+        destino: arDest || null,
+        obs_interna: arObsInt || null,
+        obs_operacao: arObsOp || null
+      } : { enabled:false };
+      const frequencia = { enabled: fqEnabled, startDate: fqStart, endDate: fqEnd, tripType: fqType, countWeekend: fqFds };
+      return { retorno, frequencia, ts: new Date().toISOString() };
+    }catch(e){ console.error('readOptionsFromUI', e); return null; }
+  }
+  function tryWriteToParentDirect(obj){
+    try{
+      if(!parent || !parent.Xrm || !parent.Xrm.Page) throw 0;
+      const jsonStr = JSON.stringify(obj);
+      const optAttr = parent.Xrm.Page.getAttribute('cr40f_new_assistant_options') || parent.Xrm.Page.getAttribute('new_assistant_options');
+      const pendAttr = parent.Xrm.Page.getAttribute('cr40f_new_assistant_pending') || parent.Xrm.Page.getAttribute('new_assistant_pending');
+      if(!optAttr || !pendAttr) throw 1;
+      optAttr.setValue(jsonStr);
+      pendAttr.setValue(true);
+      return true;
+    }catch(e){ return false; }
+  }
+  function postMessageToParent(obj){
+    try{ parent.postMessage({ type:'ASSISTANT_SAVE_OPTIONS', payload: obj }, '*'); return true; }catch(e){ return false; }
+  }
+  function saveOptionsToParent(obj){
+    if(!obj) return false;
+    if(tryWriteToParentDirect(obj)) return true;
+    return postMessageToParent(obj);
+  }
+  const debouncedSave = debounce(function(){
+    const opts = readOptionsFromUI();
+    if(!opts) return;
+    const ok = saveOptionsToParent(opts);
+    if(!ok) console.warn('Assistente: não conseguiu gravar opções no parent.');
+  }, DEBOUNCE_MS);
+  function attachListeners(){
+    Object.values(IDS).forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('input', debouncedSave);
+      el.addEventListener('change', debouncedSave);
+    });
+    setTimeout(()=>{ const o = readOptionsFromUI(); if(o) saveOptionsToParent(o); }, 600);
+  }
+  window.__assistant_forceSave = function(){ const opts = readOptionsFromUI(); if(!opts) return console.warn('no opts'); const ok = saveOptionsToParent(opts); console.log('forceSave ok=', ok, 'opts=', opts); return ok; };
+  function init(){ if(document.readyState==='complete' || document.readyState==='interactive') attachListeners(); else document.addEventListener('DOMContentLoaded', attachListeners); }
+  init();
+  window.addEventListener('message', function(ev){
+    try{ if(!ev.data) return; if(ev.data.type==='ASSISTANT_REQUEST_SNAPSHOT'){ const snapshot = readOptionsFromUI(); ev.source.postMessage({ type:'ASSISTANT_SNAPSHOT', token: ev.data.token, payload: snapshot }, '*'); } }catch(e){} }, false);
+})();
+
+</body>
+</html>

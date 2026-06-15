@@ -1,0 +1,86 @@
+
+// new_assistente.js
+(function(){
+  // Guardamos aqui o formContext injetado pelo pai
+  let _fc = null;
+
+  // Utilitários
+  const getAttr = (n) => { try{ const a=_fc.getAttribute(n); return a||null; }catch(e){ return null; } };
+  const getVal  = (n) => { const a=getAttr(n); return a ? a.getValue() : null; };
+  const setText = (id, v) => { const el=document.getElementById(id); if(el) el.value = (v||""); };
+  const setDateTimeLocal = (id, dt) => {
+    const el=document.getElementById(id); if(!el) return;
+    if(!dt) { el.value=""; return; }
+    // converte Date/ISO para input datetime-local (yyyy-MM-ddTHH:mm)
+    const d = (dt instanceof Date) ? dt : new Date(dt);
+    const pad = n => String(n).padStart(2,"0");
+    const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    el.value = val;
+  };
+  const invertTrajeto = (t) => {
+    if(!t) return t; const p = String(t).split(" / ");
+    return (p.length>=2) ? (p[1]+" / "+p[0]) : t;
+  };
+
+  // Pré-preenchimentos baseados nos campos NATIVOS
+  function fillFromNative_All(){
+    const origem  = getVal("cr40f_endereodesada");
+    const destino = getVal("cr40f_destino");
+    const trajeto = getVal("cr40f_trajeto");
+    const prevRet = getVal("cr40f_horrioprevistoderetorno"); // DateTime
+
+    // Aba Retorno: origem do retorno = destino; destino do retorno = origem
+    setText("ar_endsaida", destino || "");
+    setText("ar_destino",  origem  || "");
+    setDateTimeLocal("ar_dataret", prevRet || null);
+
+    // Opcional: preview do trajeto invertido na área de preview
+    const preview = document.getElementById("preview");
+    if(preview && trajeto){ preview.textContent = `Trajeto (retorno): ${invertTrajeto(trajeto)}`; }
+  }
+
+  // Handlers de OnChange: registrados nos atributos NATIVOS
+  function hookOnChange(){
+    const destinoAttr = getAttr("cr40f_destino");
+    const origemAttr  = getAttr("cr40f_endereodesada");
+    const trajetoAttr = getAttr("cr40f_trajeto");
+
+    if(destinoAttr) destinoAttr.addOnChange(fillFromNative_All); // dispara ao mudar destino [1](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/web-api-samples-client-side-javascript)
+    if(origemAttr)  origemAttr.addOnChange(fillFromNative_All);
+    if(trajetoAttr) trajetoAttr.addOnChange(fillFromNative_All);
+  }
+
+  // Coleta as opções escolhidas no HTML (chamada pelo pai no OnSave)
+  function collectOptions(){
+    const ar_enabled = !!document.getElementById("ar_enabled")?.checked;
+    const fq_enabled = !!document.getElementById("fq_enabled")?.checked;
+
+    const opt = {
+      retorno: {
+        enabled: ar_enabled,
+        data: document.getElementById("ar_dataret")?.value || null,          // yyyy-MM-ddTHH:mm
+        endSaida: document.getElementById("ar_endsaida")?.value || null,
+        destino:  document.getElementById("ar_destino")?.value || null,
+        obsInt:   document.getElementById("ar_obsint")?.value || null,
+        obsOp:    document.getElementById("ar_obsop")?.value || null
+      },
+      frequente: {
+        enabled: fq_enabled,
+        inicio:  document.getElementById("fq_inicio")?.value || null,        // yyyy-MM-dd
+        fim:     document.getElementById("fq_fim")?.value || null,           // yyyy-MM-dd
+        tipo:    document.getElementById("fq_tipo")?.value || "Ida",
+        incluirFDS: !!document.getElementById("fq_fds")?.checked
+      }
+    };
+    return opt;
+  }
+
+  // API que o pai (formulário) chama
+  window.assistenteInit = function(formContext){
+    _fc = formContext;
+    fillFromNative_All();   // preenche na carga
+    hookOnChange();         // registra OnChange p/ preencher a cada mudança
+  };
+  window.assistenteGetOptions = function(){ return collectOptions(); };
+
+})();

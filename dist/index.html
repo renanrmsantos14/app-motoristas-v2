@@ -841,6 +841,57 @@ svg {
   font-weight: 700;
   line-height: 1.35;
 }
+.receipt-editor-link-panel {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid rgba(0, 14, 35, 0.10);
+  border-radius: 12px;
+  background: rgb(255, 255, 255);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  color: rgb(0, 14, 35);
+  box-shadow: inset 4px 0 0 rgb(0, 14, 35);
+}
+.receipt-editor-link-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.receipt-editor-link-copy span {
+  color: rgb(0, 14, 35);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.receipt-editor-link-copy strong {
+  color: rgb(106, 116, 130);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.receipt-editor-link-panel a {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: rgb(0, 14, 35);
+  color: rgb(255, 255, 255);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
 .receipt-editor-actions {
   width: 100%;
   max-width: none;
@@ -10311,7 +10362,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.236","builtAt":"2026-06-15T19:20:48.215Z","builtAtLabel":"15/06/2026, 16:20"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.242","builtAt":"2026-06-15T20:06:15.321Z","builtAtLabel":"15/06/2026, 17:06"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -34153,6 +34204,11 @@ select,
     requerAnalise: 100000001,
     concluido: 202410008
   };
+  var RECEIPT_STATUS = {
+    gerado: 1e8,
+    salvoNoOneDrive: 100000001,
+    falha: 100000002
+  };
   var DRIVER_LINK_TYPE = {
     colaborador: 0,
     terceiro: 1
@@ -34201,6 +34257,7 @@ select,
     cidades: "cr40f_cidades",
     colisoes: "cr40f_colisaos",
     anexosColisoes: "cr40f_anexocolisaos",
+    recibos: "cr40f_reciboses",
     trocas: "cr40f_trocasdecarros",
     servicosPorPassageiro: "cr40f_servicosporpassageiros",
     posseVeiculos: "new_possedeveiculos",
@@ -34226,6 +34283,7 @@ select,
     [DATAVERSE.cidades]: "cr40f_cidade",
     [DATAVERSE.colisoes]: "cr40f_colisao",
     [DATAVERSE.anexosColisoes]: "cr40f_anexocolisao",
+    [DATAVERSE.recibos]: "cr40f_recibos",
     [DATAVERSE.trocas]: "cr40f_trocasdecarro",
     [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
     [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
@@ -34794,6 +34852,14 @@ select,
     const match = /^data:([^;,]+)[;,]/i.exec(value);
     return match?.[1]?.trim().toLowerCase() || "application/octet-stream";
   }
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => reject(new Error("Falha ao preparar arquivo para envio ao Flow."));
+      reader.readAsDataURL(blob);
+    });
+  }
   function getFileExtensionFromMimeType(mimeType) {
     const normalized = mimeType.trim().toLowerCase();
     if (normalized === "image/jpeg" || normalized === "image/jpg") return "jpg";
@@ -34810,6 +34876,21 @@ select,
   function sanitizePathSegment(value, fallback) {
     const sanitized = String(value ?? "").trim().replace(/[<>:"/\\|?*\x00-\x1F]/g, "-").replace(/\s+/g, " ").replace(/\.+$/g, "");
     return sanitized || fallback;
+  }
+  function truncateDataverseText(value, maxLength) {
+    const text = String(value ?? "").trim();
+    return text.length > maxLength ? text.slice(0, maxLength) : text;
+  }
+  function parseReceiptDate(value) {
+    const trimmed = value.trim();
+    const brDate = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(trimmed);
+    if (brDate) {
+      const [, day, month, year] = brDate;
+      const date2 = new Date(Number(year), Number(month) - 1, Number(day), 12, 0, 0);
+      return Number.isNaN(date2.getTime()) ? "" : date2.toISOString();
+    }
+    const date = trimmed ? new Date(trimmed) : null;
+    return date && !Number.isNaN(date.getTime()) ? date.toISOString() : "";
   }
   function shouldUseDevFolderPrefix() {
     const clientUrl = getWindowXrm()?.Utility?.getGlobalContext?.().getClientUrl?.() ?? "";
@@ -34869,7 +34950,7 @@ select,
       expectedKeys: ["shareLink", "link", "webUrl", "url", "fileLink", "sharedLink"],
       flowResult: describeFlowResultForLog(result)
     });
-    throw new Error("Foto salva no OneDrive, mas o Flow nao retornou link compartilhavel. Envio interrompido.");
+    throw new Error("Arquivo salvo no OneDrive, mas o Flow nao retornou link compartilhavel. Envio interrompido.");
   }
   async function buildMaintenancePhotoFolder(record) {
     const geral = record.__geral ?? {};
@@ -34983,6 +35064,112 @@ select,
     if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
     await createOne(DATAVERSE.anexosRecebimento, record);
     return link;
+  }
+  function getReceiptMotoristaId(detail) {
+    const record = detail.dataverse?.record ?? {};
+    return cleanODataGuid(record._cr40f_motorista_value);
+  }
+  function buildReceiptRecordName(model) {
+    return truncateDataverseText([model.idPag, model.cliente].filter(Boolean).join(" - ") || "Recibo", 100);
+  }
+  async function uploadReceiptPdfRemote({
+    detail,
+    model,
+    pdfBlob,
+    fileName,
+    onProgress
+  }) {
+    const reservaId = cleanGuid2(detail.dataverse?.id ?? "");
+    if (!reservaId) throw new Error("Servi\xE7o sem refer\xEAncia Dataverse. Nao e possivel registrar o recibo.");
+    const motoristaId = getReceiptMotoristaId(detail);
+    const lookupNavigationNames = await loadReceiptLookupNavigationNamesRemote();
+    const fileNameBase = sanitizePathSegment(fileName.replace(/\.pdf$/i, ""), model.idPag || "recibo");
+    const storedFileName = `${fileNameBase}.pdf`;
+    const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+    const path = `Recibos/${devPrefix}${sanitizePathSegment(model.cliente, "Sem cliente")}/${sanitizePathSegment(model.idPag, "Sem identificacao")}`;
+    const emittedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const numericValue = parseCurrencyNumber(model.valorTotal);
+    const dataEmissao = parseReceiptDate(model.dataEmissao);
+    const baseRecord = {
+      cr40f_name: buildReceiptRecordName(model),
+      cr40f_id_pagamento: truncateDataverseText(model.idPag, 1e3),
+      cr40f_id_operacao: truncateDataverseText(model.idOp, 1e3),
+      cr40f_pagante: truncateDataverseText(model.nomePagante, 1e3),
+      cr40f_cliente: truncateDataverseText(model.cliente, 1e3),
+      cr40f_valor_total_texto: truncateDataverseText(model.valorTotal, 1e3),
+      cr40f_metodo_pagamento: truncateDataverseText(model.metodoPagamento, 1e3),
+      cr40f_periodo: truncateDataverseText(model.periodo, 1e3),
+      cr40f_trajetos: model.trajetos,
+      cr40f_observacoes: model.observacoes,
+      cr40f_nome_arquivo: storedFileName,
+      cr40f_caminho_onedrive: path,
+      cr40f_mime_type: "application/pdf",
+      cr40f_tamanho_bytes: Math.max(0, Math.trunc(pdfBlob.size)),
+      cr40f_status_geracao: RECEIPT_STATUS.gerado,
+      cr40f_modelo_json: JSON.stringify(model),
+      cr40f_gerado_em: emittedAt,
+      [`${lookupNavigationNames.reserva}@odata.bind`]: bind(DATAVERSE.geral, reservaId)
+    };
+    if (motoristaId) baseRecord[`${lookupNavigationNames.motorista}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+    if (Number.isFinite(numericValue) && numericValue > 0) baseRecord.cr40f_valor_total = numericValue;
+    if (dataEmissao) baseRecord.cr40f_data_emissao = dataEmissao;
+    onProgress?.("Registrando recibo no Dataverse.");
+    const created = await createOne(DATAVERSE.recibos, baseRecord);
+    const receiptId = cleanGuid2(created.id);
+    try {
+      onProgress?.("Enviando PDF para o Flow.");
+      const dataUrl = await blobToDataUrl(pdfBlob);
+      const link = await uploadMaintenancePhoto(path, dataUrl, fileNameBase, {
+        reciboGuid: receiptId,
+        reservaGuid: reservaId,
+        motoristaGuid: motoristaId,
+        idPagamento: model.idPag,
+        idOperacao: model.idOp,
+        tipo: "RECIBO",
+        mimeType: "application/pdf"
+      });
+      onProgress?.("Gravando link do PDF em Recibos.");
+      await updateOne(DATAVERSE.recibos, receiptId, {
+        cr40f_link_pdf: link,
+        cr40f_share_link: link,
+        cr40f_status_geracao: RECEIPT_STATUS.salvoNoOneDrive,
+        cr40f_erro: null
+      });
+      const verified = await retrieveOne(
+        DATAVERSE.recibos,
+        receiptId,
+        "$select=cr40f_link_pdf,cr40f_share_link,cr40f_status_geracao"
+      );
+      const verifiedLink = String(verified.cr40f_link_pdf ?? verified.cr40f_share_link ?? "").trim();
+      if (verifiedLink !== link || Number(verified.cr40f_status_geracao) !== RECEIPT_STATUS.salvoNoOneDrive) {
+        dataverseError("Recibo salvo no Flow, mas link/status nao foram confirmados no Dataverse.", {
+          receiptId,
+          expectedLink: link,
+          verifiedLink,
+          verifiedStatus: verified.cr40f_status_geracao
+        });
+        throw new Error("PDF salvo no OneDrive, mas o registro em Recibos nao confirmou link/status.");
+      }
+      return {
+        recordId: receiptId,
+        link,
+        fileName: storedFileName,
+        path
+      };
+    } catch (error2) {
+      const message = error2 instanceof Error ? error2.message : String(error2);
+      await updateOne(DATAVERSE.recibos, receiptId, {
+        cr40f_status_geracao: RECEIPT_STATUS.falha,
+        cr40f_erro: message
+      }).catch((updateError) => {
+        dataverseWarn("Falha ao marcar recibo como Falha.", {
+          receiptId,
+          originalError: message,
+          updateError: describeDataverseError(updateError)
+        });
+      });
+      throw error2;
+    }
   }
   async function uploadCollisionPhotoRemote({
     collisionId,
@@ -35471,6 +35658,39 @@ ${text}`);
       throw new Error(`Schema de Anexos de Recebimento incompleto. Falhas: ${failures.join(" | ")}`);
     }
     return { reserva: names.reserva, enviadoPor: names.enviadoPor };
+  }
+  async function loadReceiptLookupNavigationNamesRemote() {
+    const requests = [
+      {
+        key: "reserva",
+        referencingEntitySetName: DATAVERSE.recibos,
+        referencedEntitySetName: DATAVERSE.geral,
+        referencingAttribute: "cr40f_reserva",
+        label: "Recibos.Reserva"
+      },
+      {
+        key: "motorista",
+        referencingEntitySetName: DATAVERSE.recibos,
+        referencedEntitySetName: DATAVERSE.funcionarios,
+        referencingAttribute: "cr40f_motorista",
+        label: "Recibos.Motorista"
+      }
+    ];
+    const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+    const names = {};
+    const failures = [];
+    settled.forEach((result, index) => {
+      const request = requests[index];
+      if (result.status === "fulfilled") {
+        names[request.key] = result.value;
+        return;
+      }
+      failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+    });
+    if (failures.length || !names.reserva || !names.motorista) {
+      throw new Error(`Schema de Recibos incompleto. Falhas: ${failures.join(" | ")}`);
+    }
+    return { reserva: names.reserva, motorista: names.motorista };
   }
   async function loadCollisionAttachmentLookupNavigationNamesRemote() {
     const requests = [
@@ -37444,9 +37664,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function pushTextParts(parts, rawText) {
     const text = stripUnsupportedMarkup(rawText);
     if (!text) return;
-    text.split(/\r?\n/).forEach((line, index) => {
+    text.split(/\r?\n/).forEach((line2, index) => {
       if (index > 0) parts.push({ type: "break" });
-      if (line) parts.push({ type: "text", value: line });
+      if (line2) parts.push({ type: "text", value: line2 });
     });
   }
   function parseSafeDetailHtml(value) {
@@ -39557,7 +39777,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const normalized = (Math.round(angle / 90) * 90 % 360 + 360) % 360;
     return normalized;
   }
-  function drawRotated(image, sourceWidth, sourceHeight, angle) {
+  function drawRotated(image2, sourceWidth, sourceHeight, angle) {
     const canvas = document.createElement("canvas");
     canvas.width = angle === 90 || angle === 270 ? sourceHeight : sourceWidth;
     canvas.height = angle === 90 || angle === 270 ? sourceWidth : sourceHeight;
@@ -39565,7 +39785,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (!context) return null;
     context.translate(canvas.width / 2, canvas.height / 2);
     context.rotate(angle * Math.PI / 180);
-    context.drawImage(image, -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight);
+    context.drawImage(image2, -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight);
     return canvas.toDataURL("image/jpeg", 0.92);
   }
   function getRotationForOrientation(sourceWidth, sourceHeight, orientationAngle) {
@@ -39737,14 +39957,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const normalizedAngle = normalizeAngle(orientationAngle);
     if (normalizedAngle === 0) return fallbackDataUrl;
     try {
-      const image = await createImageBitmap(file);
-      const rotation = getRotationForOrientation(image.width, image.height, normalizedAngle);
+      const image2 = await createImageBitmap(file);
+      const rotation = getRotationForOrientation(image2.width, image2.height, normalizedAngle);
       if (!rotation) {
-        image.close();
+        image2.close();
         return fallbackDataUrl;
       }
-      const rotated = drawRotated(image, image.width, image.height, rotation);
-      image.close();
+      const rotated = drawRotated(image2, image2.width, image2.height, rotation);
+      image2.close();
       return rotated || fallbackDataUrl;
     } catch {
       return fallbackDataUrl;
@@ -40391,12 +40611,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // QrCode-Avaliação.png
   var QrCode_Avalia_o_default = "data:image/png;base64,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";
 
-  // src/assets/icons/save-receipt.svg
-  var save_receipt_default = 'data:image/svg+xml,<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->%0D%0A<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">%0D%0A<path fill-rule="evenodd" clip-rule="evenodd" d="M18.1716 1C18.702 1 19.2107 1.21071 19.5858 1.58579L22.4142 4.41421C22.7893 4.78929 23 5.29799 23 5.82843V20C23 21.6569 21.6569 23 20 23H4C2.34315 23 1 21.6569 1 20V4C1 2.34315 2.34315 1 4 1H18.1716ZM4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21L5 21L5 15C5 13.3431 6.34315 12 8 12L16 12C17.6569 12 19 13.3431 19 15V21H20C20.5523 21 21 20.5523 21 20V6.82843C21 6.29799 20.7893 5.78929 20.4142 5.41421L18.5858 3.58579C18.2107 3.21071 17.702 3 17.1716 3H17V5C17 6.65685 15.6569 8 14 8H10C8.34315 8 7 6.65685 7 5V3H4ZM17 21V15C17 14.4477 16.5523 14 16 14L8 14C7.44772 14 7 14.4477 7 15L7 21L17 21ZM9 3H15V5C15 5.55228 14.5523 6 14 6H10C9.44772 6 9 5.55228 9 5V3Z" fill="%230F0F0F"/>%0D%0A</svg>';
-
-  // src/assets/icons/share-receipt.svg
-  var share_receipt_default = 'data:image/svg+xml,<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->%0D%0A<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">%0D%0A<path fill-rule="evenodd" clip-rule="evenodd" d="M16.5 2.25C14.7051 2.25 13.25 3.70507 13.25 5.5C13.25 5.69591 13.2673 5.88776 13.3006 6.07412L8.56991 9.38558C8.54587 9.4024 8.52312 9.42038 8.50168 9.43939C7.94993 9.00747 7.25503 8.75 6.5 8.75C4.70507 8.75 3.25 10.2051 3.25 12C3.25 13.7949 4.70507 15.25 6.5 15.25C7.25503 15.25 7.94993 14.9925 8.50168 14.5606C8.52312 14.5796 8.54587 14.5976 8.56991 14.6144L13.3006 17.9259C13.2673 18.1122 13.25 18.3041 13.25 18.5C13.25 20.2949 14.7051 21.75 16.5 21.75C18.2949 21.75 19.75 20.2949 19.75 18.5C19.75 16.7051 18.2949 15.25 16.5 15.25C15.4472 15.25 14.5113 15.7506 13.9174 16.5267L9.43806 13.3911C9.63809 12.9694 9.75 12.4978 9.75 12C9.75 11.5022 9.63809 11.0306 9.43806 10.6089L13.9174 7.4733C14.5113 8.24942 15.4472 8.75 16.5 8.75C18.2949 8.75 19.75 7.29493 19.75 5.5C19.75 3.70507 18.2949 2.25 16.5 2.25ZM14.75 5.5C14.75 4.5335 15.5335 3.75 16.5 3.75C17.4665 3.75 18.25 4.5335 18.25 5.5C18.25 6.4665 17.4665 7.25 16.5 7.25C15.5335 7.25 14.75 6.4665 14.75 5.5ZM6.5 10.25C5.5335 10.25 4.75 11.0335 4.75 12C4.75 12.9665 5.5335 13.75 6.5 13.75C7.4665 13.75 8.25 12.9665 8.25 12C8.25 11.0335 7.4665 10.25 6.5 10.25ZM16.5 16.75C15.5335 16.75 14.75 17.5335 14.75 18.5C14.75 19.4665 15.5335 20.25 16.5 20.25C17.4665 20.25 18.25 19.4665 18.25 18.5C18.25 17.5335 17.4665 16.75 16.5 16.75Z" fill="%231C274C"/>%0D%0A</svg>';
-
   // src/lib/personalReceipt.ts
   function getField(detail, label) {
     return detail.fields.find((field) => field.label === label)?.value?.trim() ?? "";
@@ -40405,7 +40619,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return value.replace(/<br\s*\/?>/gi, "\n").replace(/<\/span>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&#039;/gi, "'").replace(/&quot;/gi, '"').replace(/\n{2,}/g, "\n").trim();
   }
   function firstPassengerName(rawValue) {
-    const firstLine = stripHtml(rawValue).split("\n").map((line) => line.trim()).find(Boolean) ?? "";
+    const firstLine = stripHtml(rawValue).split("\n").map((line2) => line2.trim()).find(Boolean) ?? "";
     return firstLine.split(" - ")[0]?.trim() ?? "";
   }
   function formatDate(value) {
@@ -40479,146 +40693,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       dataEmissao: model.dataEmissao,
       metodoPagamento: model.metodoPagamento
     };
-  }
-
-  // src/lib/receiptPdfActions.ts
-  function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const value = String(reader.result ?? "");
-        resolve(value.includes(",") ? value.split(",")[1] ?? "" : value);
-      };
-      reader.onerror = () => reject(new Error("Falha ao preparar o PDF do recibo."));
-      reader.readAsDataURL(blob);
-    });
-  }
-  function getWindowNavigation(target) {
-    try {
-      return target?.Xrm?.Navigation;
-    } catch {
-      return void 0;
-    }
-  }
-  function getXrmNavigation2() {
-    const candidates = [
-      window,
-      window.parent,
-      window.top,
-      window.opener
-    ];
-    for (const candidate of candidates) {
-      const navigation = getWindowNavigation(candidate);
-      if (navigation?.openFile || navigation?.openUrl) return navigation;
-    }
-    return void 0;
-  }
-  async function tryOpenFile(blob, fileName, openMode) {
-    const openFile = getXrmNavigation2()?.openFile;
-    if (!openFile) return false;
-    try {
-      await openFile(
-        {
-          fileContent: await blobToBase64(blob),
-          fileName,
-          fileSize: Math.ceil(blob.size / 1024),
-          mimeType: "application/pdf"
-        },
-        { openMode }
-      );
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  async function tryOpenDataUrl(blob) {
-    const openUrl = getXrmNavigation2()?.openUrl;
-    if (!openUrl) return false;
-    try {
-      await openUrl(`data:application/pdf;base64,${await blobToBase64(blob)}`);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  function requestBrowserDownload(blob, fileName) {
-    const url = URL.createObjectURL(blob);
-    try {
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-    } finally {
-      window.setTimeout(() => URL.revokeObjectURL(url), 1e3);
-    }
-  }
-  async function saveReceiptPdf(blob, fileName) {
-    if (await tryOpenFile(blob, fileName, 2)) {
-      return {
-        message: "Power Apps recebeu o PDF para salvar. Confirme no visualizador do sistema.",
-        tone: "info",
-        confirmed: false
-      };
-    }
-    if (await tryOpenFile(blob, fileName, 1)) {
-      return {
-        message: "PDF aberto pelo Power Apps. Salve pelo visualizador.",
-        tone: "info",
-        confirmed: false
-      };
-    }
-    if (await tryOpenDataUrl(blob)) {
-      return {
-        message: "PDF aberto fora do WebView. Salve pelo navegador.",
-        tone: "info",
-        confirmed: false
-      };
-    }
-    requestBrowserDownload(blob, fileName);
-    return {
-      message: "Download solicitado ao navegador. Nao foi possivel confirmar arquivo salvo.",
-      tone: "warning",
-      confirmed: false
-    };
-  }
-  async function shareReceiptPdf(blob, fileName) {
-    if (await tryOpenFile(blob, fileName, 1)) {
-      return {
-        message: "PDF aberto pelo Power Apps. Compartilhe pelo visualizador.",
-        tone: "info",
-        confirmed: false
-      };
-    }
-    const file = new File([blob], fileName, { type: "application/pdf" });
-    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-      await navigator.share({
-        files: [file],
-        title: "Recibo Betinhos",
-        text: "Recibo Betinhos em PDF"
-      });
-      return {
-        message: "Compartilhamento nativo concluido pelo navegador.",
-        tone: "success",
-        confirmed: true
-      };
-    }
-    if (await tryOpenFile(blob, fileName, 2)) {
-      return {
-        message: "Power Apps recebeu o PDF para salvar. Compartilhe pelo arquivo se ele aparecer no dispositivo.",
-        tone: "info",
-        confirmed: false
-      };
-    }
-    if (await tryOpenDataUrl(blob)) {
-      return {
-        message: "PDF aberto fora do WebView. Compartilhe pelo navegador.",
-        tone: "info",
-        confirmed: false
-      };
-    }
-    throw new Error("Nao consegui abrir o PDF para compartilhar neste WebView. O Power Apps nao expos Xrm.Navigation.openFile/openUrl e o navegador nao expos compartilhamento nativo.");
   }
 
   // node_modules/pdf-lib/node_modules/tslib/tslib.es6.js
@@ -48585,8 +48659,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         var Rect = this.Rect();
         return (_a = Rect === null || Rect === void 0 ? void 0 : Rect.asRectangle()) !== null && _a !== void 0 ? _a : { x: 0, y: 0, width: 0, height: 0 };
       };
-      PDFAnnotation2.prototype.setRectangle = function(rect) {
-        var x = rect.x, y = rect.y, width = rect.width, height = rect.height;
+      PDFAnnotation2.prototype.setRectangle = function(rect2) {
+        var x = rect2.x, y = rect2.y, width = rect2.width, height = rect2.height;
         var Rect = this.dict.context.obj([x, y, x + width, y + height]);
         this.dict.set(PDFName_default.of("Rect"), Rect);
       };
@@ -51864,12 +51938,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     });
     var highlights = [];
     for (var idx = 0, len = options.selectedLines.length; idx < len; idx++) {
-      var line = options.textLines[options.selectedLines[idx]];
+      var line2 = options.textLines[options.selectedLines[idx]];
       highlights.push.apply(highlights, drawRectangle({
-        x: line.x - padding,
-        y: line.y - (lineHeight - line.height) / 2,
+        x: line2.x - padding,
+        y: line2.y - (lineHeight - line2.height) / 2,
         width: width - borderWidth,
-        height: line.height + (lineHeight - line.height) / 2,
+        height: line2.height + (lineHeight - line2.height) / 2,
         borderWidth: 0,
         color: options.selectedColor,
         borderColor: void 0,
@@ -52107,8 +52181,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       var linesUsed = 0;
       for (var lineIdx = 0, lineLen = lines.length; lineIdx < lineLen; lineIdx++) {
         linesUsed += 1;
-        var line = lines[lineIdx];
-        var words = line.split(" ");
+        var line2 = lines[lineIdx];
+        var words = line2.split(" ");
         var spaceInLineRemaining = bounds.width;
         for (var idx = 0, len = words.length; idx < len; idx++) {
           var isLastWord = idx === len - 1;
@@ -52132,11 +52206,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     }
     return fontSize;
   };
-  var computeCombedFontSize = function(line, font, bounds, cellCount) {
+  var computeCombedFontSize = function(line2, font, bounds, cellCount) {
     var cellWidth = bounds.width / cellCount;
     var cellHeight = bounds.height;
     var fontSize = MIN_FONT_SIZE;
-    var chars3 = charSplit(line);
+    var chars3 = charSplit(line2);
     while (fontSize < MAX_FONT_SIZE) {
       for (var idx = 0, len = chars3.length; idx < len; idx++) {
         var c = chars3[idx];
@@ -52151,9 +52225,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     }
     return fontSize;
   };
-  var lastIndexOfWhitespace = function(line) {
-    for (var idx = line.length; idx > 0; idx--) {
-      if (/\s/.test(line[idx]))
+  var lastIndexOfWhitespace = function(line2) {
+    for (var idx = line2.length; idx > 0; idx--) {
+      if (/\s/.test(line2[idx]))
         return idx;
     }
     return void 0;
@@ -52162,14 +52236,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     var _a;
     var lastWhitespaceIdx = input.length;
     while (lastWhitespaceIdx > 0) {
-      var line = input.substring(0, lastWhitespaceIdx);
-      var encoded = font.encodeText(line);
-      var width = font.widthOfTextAtSize(line, fontSize);
+      var line2 = input.substring(0, lastWhitespaceIdx);
+      var encoded = font.encodeText(line2);
+      var width = font.widthOfTextAtSize(line2, fontSize);
       if (width < maxWidth) {
         var remainder = input.substring(lastWhitespaceIdx) || void 0;
-        return { line, encoded, width, remainder };
+        return { line: line2, encoded, width, remainder };
       }
-      lastWhitespaceIdx = (_a = lastIndexOfWhitespace(line)) !== null && _a !== void 0 ? _a : 0;
+      lastWhitespaceIdx = (_a = lastIndexOfWhitespace(line2)) !== null && _a !== void 0 ? _a : 0;
     }
     return {
       line: input,
@@ -52195,7 +52269,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     for (var idx = 0, len = lines.length; idx < len; idx++) {
       var prevRemainder = lines[idx];
       while (prevRemainder !== void 0) {
-        var _b = splitOutLines(prevRemainder, bounds.width, font, fontSize), line = _b.line, encoded = _b.encoded, width = _b.width, remainder = _b.remainder;
+        var _b = splitOutLines(prevRemainder, bounds.width, font, fontSize), line2 = _b.line, encoded = _b.encoded, width = _b.width, remainder = _b.remainder;
         var x = alignment === TextAlignment.Left ? bounds.x : alignment === TextAlignment.Center ? bounds.x + bounds.width / 2 - width / 2 : alignment === TextAlignment.Right ? bounds.x + bounds.width - width : bounds.x;
         y -= lineHeight;
         if (x < minX)
@@ -52206,7 +52280,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           maxX = x + width;
         if (y + height > maxY)
           maxY = y + height;
-        textLines.push({ text: line, encoded, width, height, x, y });
+        textLines.push({ text: line2, encoded, width, height, x, y });
         prevRemainder = remainder === null || remainder === void 0 ? void 0 : remainder.trim();
       }
     }
@@ -52224,12 +52298,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   };
   var layoutCombedText = function(text, _a) {
     var fontSize = _a.fontSize, font = _a.font, bounds = _a.bounds, cellCount = _a.cellCount;
-    var line = mergeLines(cleanText2(text));
-    if (line.length > cellCount) {
-      throw new CombedTextLayoutError(line.length, cellCount);
+    var line2 = mergeLines(cleanText2(text));
+    if (line2.length > cellCount) {
+      throw new CombedTextLayoutError(line2.length, cellCount);
     }
     if (fontSize === void 0 || fontSize === 0) {
-      fontSize = computeCombedFontSize(line, font, bounds, cellCount);
+      fontSize = computeCombedFontSize(line2, font, bounds, cellCount);
     }
     var cellWidth = bounds.width / cellCount;
     var height = font.heightAtSize(fontSize, { descender: false });
@@ -52242,7 +52316,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     var cellOffset = 0;
     var charOffset = 0;
     while (cellOffset < cellCount) {
-      var _b = charAtIndex(line, charOffset), char = _b[0], charLength = _b[1];
+      var _b = charAtIndex(line2, charOffset), char = _b[0], charLength = _b[1];
       var encoded = font.encodeText(char);
       var width = font.widthOfTextAtSize(char, fontSize);
       var cellCenter = bounds.x + (cellWidth * cellOffset + cellWidth / 2);
@@ -52255,7 +52329,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         maxX = x + width;
       if (y + height > maxY)
         maxY = y + height;
-      cells.push({ text: line, encoded, width, height, x, y });
+      cells.push({ text: line2, encoded, width, height, x, y });
       cellOffset += 1;
       charOffset += charLength;
     }
@@ -52272,18 +52346,18 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   };
   var layoutSinglelineText = function(text, _a) {
     var alignment = _a.alignment, fontSize = _a.fontSize, font = _a.font, bounds = _a.bounds;
-    var line = mergeLines(cleanText2(text));
+    var line2 = mergeLines(cleanText2(text));
     if (fontSize === void 0 || fontSize === 0) {
-      fontSize = computeFontSize([line], font, bounds);
+      fontSize = computeFontSize([line2], font, bounds);
     }
-    var encoded = font.encodeText(line);
-    var width = font.widthOfTextAtSize(line, fontSize);
+    var encoded = font.encodeText(line2);
+    var width = font.widthOfTextAtSize(line2, fontSize);
     var height = font.heightAtSize(fontSize, { descender: false });
     var x = alignment === TextAlignment.Left ? bounds.x : alignment === TextAlignment.Center ? bounds.x + bounds.width / 2 - width / 2 : alignment === TextAlignment.Right ? bounds.x + bounds.width - width : bounds.x;
     var y = bounds.y + (bounds.height / 2 - height / 2);
     return {
       fontSize,
-      line: { text: line, encoded, width, height, x, y },
+      line: { text: line2, encoded, width, height, x, y },
       bounds: { x, y, width, height }
     };
   };
@@ -52579,7 +52653,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       fontSize: widgetFontSize !== null && widgetFontSize !== void 0 ? widgetFontSize : fieldFontSize,
       font,
       bounds
-    }), line = _e.line, fontSize = _e.fontSize;
+    }), line2 = _e.line, fontSize = _e.fontSize;
     var textColor = (_c = widgetColor !== null && widgetColor !== void 0 ? widgetColor : fieldColor) !== null && _c !== void 0 ? _c : black;
     if (widgetColor || widgetFontSize !== void 0) {
       updateDefaultAppearance(widget, textColor, font, fontSize);
@@ -52597,7 +52671,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       font: font.name,
       fontSize,
       color: normalBackgroundColor,
-      textLines: [line],
+      textLines: [line2],
       padding
     };
     return __spreadArrays(rotate2, drawTextField(options));
@@ -52643,8 +52717,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     }), lines = _d.lines, fontSize = _d.fontSize, lineHeight = _d.lineHeight;
     var selectedLines = [];
     for (var idx = 0, len = lines.length; idx < len; idx++) {
-      var line = lines[idx];
-      if (selected.includes(line.text))
+      var line2 = lines[idx];
+      if (selected.includes(line2.text))
         selectedLines.push(idx);
     }
     var blue = rgb(153 / 255, 193 / 255, 218 / 255);
@@ -52963,8 +53037,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         var pageRef = options.page;
         assertMultiple(degreesAngle, "degreesAngle", 90);
         var widget = PDFWidgetAnnotation_default.create(this.doc.context, this.ref);
-        var rect = rotateRectangle({ x, y, width, height }, borderWidth, degreesAngle);
-        widget.setRectangle(rect);
+        var rect2 = rotateRectangle({ x, y, width, height }, borderWidth, degreesAngle);
+        widget.setRectangle(rect2);
         if (pageRef)
           widget.setP(pageRef);
         var ac = widget.getOrCreateAppearanceCharacteristics();
@@ -53032,7 +53106,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         var streamRef = context.register(stream2);
         return streamRef;
       };
-      PDFField2.prototype.createImageAppearanceStream = function(widget, image, alignment) {
+      PDFField2.prototype.createImageAppearanceStream = function(widget, image2, alignment) {
         var _a;
         var _b;
         var context = this.acroField.dict.context;
@@ -53043,7 +53117,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         var rotation = reduceRotation(ap === null || ap === void 0 ? void 0 : ap.getRotation());
         var rotate2 = rotateInPlace(__assign(__assign({}, rectangle), { rotation }));
         var adj = adjustDimsForRotation(rectangle, rotation);
-        var imageDims = image.scaleToFit(adj.width - borderWidth * 2, adj.height - borderWidth * 2);
+        var imageDims = image2.scaleToFit(adj.width - borderWidth * 2, adj.height - borderWidth * 2);
         var options = {
           x: borderWidth,
           y: borderWidth,
@@ -53063,7 +53137,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         }
         var imageName = this.doc.context.addRandomSuffix("Image", 10);
         var appearance = __spreadArrays(rotate2, drawImage(imageName, options));
-        var Resources = { XObject: (_a = {}, _a[imageName] = image.ref, _a) };
+        var Resources = { XObject: (_a = {}, _a[imageName] = image2.ref, _a) };
         var stream2 = context.formXObject(appearance, {
           Resources,
           BBox: context.obj([0, 0, rectangle.width, rectangle.height]),
@@ -53808,13 +53882,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         this.markAsDirty();
         this.acroField.removeMaxLength();
       };
-      PDFTextField2.prototype.setImage = function(image) {
+      PDFTextField2.prototype.setImage = function(image2) {
         var fieldAlignment = this.getAlignment();
         var alignment = fieldAlignment === TextAlignment.Center ? ImageAlignment.Center : fieldAlignment === TextAlignment.Right ? ImageAlignment.Right : ImageAlignment.Left;
         var widgets = this.acroField.getWidgets();
         for (var idx = 0, len = widgets.length; idx < len; idx++) {
           var widget = widgets[idx];
-          var streamRef = this.createImageAppearanceStream(widget, image, alignment);
+          var streamRef = this.createImageAppearanceStream(widget, image2, alignment);
           this.updateWidgetAppearances(widget, { normal: streamRef });
         }
         this.markAsClean();
@@ -55554,12 +55628,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             this.resetFont();
         }
       };
-      PDFPage2.prototype.drawImage = function(image, options) {
+      PDFPage2.prototype.drawImage = function(image2, options) {
         var _a, _b, _c, _d, _e, _f, _g;
         if (options === void 0) {
           options = {};
         }
-        assertIs(image, "image", [[PDFImage_default, "PDFImage"]]);
+        assertIs(image2, "image", [[PDFImage_default, "PDFImage"]]);
         assertOrUndefined(options.x, "options.x", ["number"]);
         assertOrUndefined(options.y, "options.y", ["number"]);
         assertOrUndefined(options.width, "options.width", ["number"]);
@@ -55569,7 +55643,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         assertOrUndefined(options.ySkew, "options.ySkew", [[Object, "Rotation"]]);
         assertRangeOrUndefined(options.opacity, "opacity.opacity", 0, 1);
         assertIsOneOfOrUndefined(options.blendMode, "options.blendMode", BlendMode);
-        var xObjectKey = this.node.newXObject("Image", image.ref);
+        var xObjectKey = this.node.newXObject("Image", image2.ref);
         var graphicsStateKey = this.maybeEmbedGraphicsState({
           opacity: options.opacity,
           blendMode: options.blendMode
@@ -55578,8 +55652,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         contentStream.push.apply(contentStream, drawImage(xObjectKey, {
           x: (_a = options.x) !== null && _a !== void 0 ? _a : this.x,
           y: (_b = options.y) !== null && _b !== void 0 ? _b : this.y,
-          width: (_c = options.width) !== null && _c !== void 0 ? _c : image.size().width,
-          height: (_d = options.height) !== null && _d !== void 0 ? _d : image.size().height,
+          width: (_c = options.width) !== null && _c !== void 0 ? _c : image2.size().width,
+          height: (_d = options.height) !== null && _d !== void 0 ? _d : image2.size().height,
           rotate: (_e = options.rotate) !== null && _e !== void 0 ? _e : degrees2(0),
           xSkew: (_f = options.xSkew) !== null && _f !== void 0 ? _f : degrees2(0),
           ySkew: (_g = options.ySkew) !== null && _g !== void 0 ? _g : degrees2(0),
@@ -55928,14 +56002,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         _this.acroField = acroPushButton;
         return _this;
       }
-      PDFButton2.prototype.setImage = function(image, alignment) {
+      PDFButton2.prototype.setImage = function(image2, alignment) {
         if (alignment === void 0) {
           alignment = ImageAlignment.Center;
         }
         var widgets = this.acroField.getWidgets();
         for (var idx = 0, len = widgets.length; idx < len; idx++) {
           var widget = widgets[idx];
-          var streamRef = this.createImageAppearanceStream(widget, image, alignment);
+          var streamRef = this.createImageAppearanceStream(widget, image2, alignment);
           this.updateWidgetAppearances(widget, { normal: streamRef });
         }
         this.markAsClean();
@@ -56012,293 +56086,223 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/lib/receiptPdf.ts
   var A4_WIDTH_PT = 595.28;
   var A4_HEIGHT_PT = 841.89;
-  var PAGE_MARGIN_PT = 36;
-  var COLORS = {
-    navy: rgb(0, 14 / 255, 35 / 255),
-    blue: rgb(0, 57 / 255, 142 / 255),
-    paleBlue: rgb(235 / 255, 243 / 255, 255 / 255),
-    tableBlue: rgb(205 / 255, 225 / 255, 255 / 255),
-    text: rgb(17 / 255, 29 / 255, 33 / 255),
-    muted: rgb(116 / 255, 116 / 255, 116 / 255),
-    grey: rgb(209 / 255, 209 / 255, 209 / 255),
-    white: rgb(1, 1, 1)
-  };
+  var SVG_WIDTH = 794;
+  var SVG_HEIGHT = 1123;
+  var SNAPSHOT_SCALE = 2;
+  var MARGIN = 48;
   var bytesCache = /* @__PURE__ */ new Map();
-  function sanitizePdfText(value) {
-    return (value || "").normalize("NFKC").replace(/[â€“â€”]/g, "-").replace(/[â€œâ€]/g, '"').replace(/[â€˜â€™]/g, "'").replace(/\u00a0/g, " ").replace(/[^\n\r\t\x20-\x7e\u00a1-\u00ff]/g, "?");
+  function escapeXml(value) {
+    return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
   }
-  async function fetchBytes(url) {
+  function normalizeText4(value) {
+    return String(value ?? "").normalize("NFKC").replace(/\u00a0/g, " ").trim();
+  }
+  function estimateTextWidth(text, size, weight = 500) {
+    const weightFactor = weight >= 700 ? 0.58 : 0.52;
+    return Array.from(text).reduce((width, char) => {
+      if (char === " ") return width + size * 0.28;
+      if (/[A-Z0-9]/.test(char)) return width + size * (weight >= 700 ? 0.61 : 0.56);
+      if (/[il.,:;]/.test(char)) return width + size * 0.27;
+      return width + size * weightFactor;
+    }, 0);
+  }
+  function wrapText(value, size, maxWidth, weight = 500) {
+    const paragraphs = normalizeText4(value).split(/\r?\n/);
+    const lines = [];
+    for (const paragraph of paragraphs) {
+      const words = paragraph.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+      let current = "";
+      for (const word of words) {
+        const next = current ? `${current} ${word}` : word;
+        if (!current || estimateTextWidth(next, size, weight) <= maxWidth) {
+          current = next;
+        } else {
+          lines.push(current);
+          current = word;
+        }
+      }
+      if (current) lines.push(current);
+    }
+    return lines;
+  }
+  function svgText(value, options) {
+    const fill2 = options.fill ?? "#111d21";
+    const family = options.family ?? "Montserrat, Open Sans, Arial, sans-serif";
+    const weight = options.weight ?? 500;
+    const lineHeight = options.lineHeight ?? Math.round(options.size * 1.35);
+    const maxWidth = options.maxWidth ?? SVG_WIDTH;
+    let lines = wrapText(value, options.size, maxWidth, weight);
+    if (options.maxLines && lines.length > options.maxLines) {
+      lines = lines.slice(0, options.maxLines);
+      const lastIndex = lines.length - 1;
+      while (lines[lastIndex] && estimateTextWidth(`${lines[lastIndex]}...`, options.size, weight) > maxWidth) {
+        lines[lastIndex] = lines[lastIndex].slice(0, -1).trimEnd();
+      }
+      lines[lastIndex] = `${lines[lastIndex]}...`;
+    }
+    return [
+      `<text x="${options.x}" y="${options.y}" fill="${fill2}" font-family="${escapeXml(family)}" font-size="${options.size}" font-weight="${weight}" text-anchor="${options.anchor ?? "start"}">`,
+      ...lines.map((line2, index) => `<tspan x="${options.x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line2)}</tspan>`),
+      "</text>"
+    ].join("");
+  }
+  async function urlToDataUrl(url) {
+    if (url.startsWith("data:")) return url;
     const cached = bytesCache.get(url);
     if (cached) return cached;
     const request = fetch(url).then(async (response) => {
-      if (!response.ok) throw new Error("Falha ao carregar recurso do PDF do recibo.");
-      return new Uint8Array(await response.arrayBuffer());
+      if (!response.ok) throw new Error("Falha ao carregar imagem do recibo.");
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(new Error("Falha ao preparar imagem do recibo."));
+        reader.readAsDataURL(blob);
+      });
     });
     bytesCache.set(url, request);
     return request;
   }
-  async function embedImage(pdfDoc, url) {
-    const bytes = await fetchBytes(url);
-    const lowerUrl = url.toLowerCase();
-    if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg") || lowerUrl.startsWith("data:image/jpeg")) {
-      return pdfDoc.embedJpg(bytes);
-    }
-    return pdfDoc.embedPng(bytes);
+  function rect(x, y, width, height, fill2) {
+    return `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${fill2}"/>`;
   }
-  async function loadAssets(pdfDoc) {
-    const [logoB, logoPreta, nlaLogo, qrCode, title, regular, bold] = await Promise.all([
-      embedImage(pdfDoc, Logo_Betinhos_B_default),
-      embedImage(pdfDoc, Logo_Betinhos_Preta_default),
-      embedImage(pdfDoc, NLA_default),
-      embedImage(pdfDoc, QrCode_Avalia_o_default),
-      pdfDoc.embedFont(StandardFonts.TimesRoman),
-      pdfDoc.embedFont(StandardFonts.Helvetica),
-      pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  function line(x1, y, x2, color2 = "#d1d1d1", width = 1) {
+    return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color2}" stroke-width="${width}"/>`;
+  }
+  function image(href, x, y, width, height) {
+    return `<image href="${href}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"/>`;
+  }
+  async function buildReceiptSvg(model) {
+    const [logoB, logoPreta, nlaLogo, qrCode] = await Promise.all([
+      urlToDataUrl(Logo_Betinhos_B_default),
+      urlToDataUrl(Logo_Betinhos_Preta_default),
+      urlToDataUrl(NLA_default),
+      urlToDataUrl(QrCode_Avalia_o_default)
     ]);
-    return { logoB, logoPreta, nlaLogo, qrCode, title, regular, bold };
-  }
-  function drawText(page, text, x, y, options) {
-    page.drawText(sanitizePdfText(text), {
-      x,
-      y,
-      size: options.size,
-      font: options.font,
-      color: options.color ?? COLORS.text
-    });
-  }
-  function fitImage(image, boxWidth, boxHeight) {
-    const scale3 = Math.min(boxWidth / image.width, boxHeight / image.height);
-    return { width: image.width * scale3, height: image.height * scale3 };
-  }
-  function drawImageFit(page, image, x, y, boxWidth, boxHeight) {
-    const fitted = fitImage(image, boxWidth, boxHeight);
-    page.drawImage(image, {
-      x: x + (boxWidth - fitted.width) / 2,
-      y: y + (boxHeight - fitted.height) / 2,
-      width: fitted.width,
-      height: fitted.height
-    });
-  }
-  function splitWords(text) {
-    return sanitizePdfText(text).replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
-  }
-  function wrapLine(text, font, size, maxWidth) {
-    const words = splitWords(text);
-    const lines = [];
-    let current = "";
-    for (const word of words) {
-      const next = current ? `${current} ${word}` : word;
-      if (font.widthOfTextAtSize(next, size) <= maxWidth || !current) {
-        current = next;
-      } else {
-        lines.push(current);
-        current = word;
-      }
-    }
-    if (current) lines.push(current);
-    return lines;
-  }
-  function wrapText(text, font, size, maxWidth) {
-    return sanitizePdfText(text).split(/\r?\n/).flatMap((line) => wrapLine(line, font, size, maxWidth)).filter(Boolean);
-  }
-  function drawWrappedText(page, text, x, y, options) {
-    const maxWidth = options.maxWidth ?? A4_WIDTH_PT - x - PAGE_MARGIN_PT;
-    const lineHeight = options.lineHeight ?? options.size * 1.35;
-    const rawLines = wrapText(text || "", options.font, options.size, maxWidth);
-    const lines = options.maxLines && rawLines.length > options.maxLines ? rawLines.slice(0, options.maxLines) : rawLines;
-    if (options.maxLines && rawLines.length > options.maxLines && lines.length) {
-      const lastIndex = lines.length - 1;
-      let lastLine = lines[lastIndex];
-      while (lastLine && options.font.widthOfTextAtSize(`${lastLine}...`, options.size) > maxWidth) {
-        lastLine = lastLine.slice(0, -1).trimEnd();
-      }
-      lines[lastIndex] = `${lastLine}...`;
-    }
-    lines.forEach((line, index) => {
-      drawText(page, line, x, y - index * lineHeight, options);
-    });
-    return y - lines.length * lineHeight;
-  }
-  function drawRightText(page, text, rightX, y, options) {
-    const safeText = sanitizePdfText(text);
-    const width = options.font.widthOfTextAtSize(safeText, options.size);
-    drawText(page, safeText, rightX - width, y, options);
-  }
-  function drawRect(page, x, y, width, height, color2) {
-    page.drawRectangle({ x, y, width, height, color: color2 });
-  }
-  function drawLine2(page, x1, y, x2, color2 = COLORS.grey, thickness = 1) {
-    page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, color: color2, thickness });
-  }
-  function drawHeader(page, assets, model) {
-    drawRect(page, 0, 716, A4_WIDTH_PT, 126, COLORS.navy);
-    drawText(page, "INVOICE", PAGE_MARGIN_PT, 747, {
-      font: assets.title,
-      size: 58,
-      color: COLORS.white
-    });
-    drawImageFit(page, assets.logoB, A4_WIDTH_PT - PAGE_MARGIN_PT - 58, 748, 58, 58);
-    drawRect(page, 0, 671, A4_WIDTH_PT, 45, COLORS.paleBlue);
-    drawWrappedText(page, "Obrigado por escolher seu recibo digital, voc\xC3\xAA faz parte da solu\xC3\xA7\xC3\xA3o!", PAGE_MARGIN_PT, 690, {
-      font: assets.regular,
-      size: 11,
-      color: COLORS.muted,
-      maxWidth: 380,
-      lineHeight: 13,
-      maxLines: 2
-    });
-    drawRightText(page, model.idOp, A4_WIDTH_PT - PAGE_MARGIN_PT, 689, {
-      font: assets.bold,
-      size: 12,
-      color: COLORS.navy
-    });
-  }
-  function drawSummary(page, assets, model) {
-    drawWrappedText(page, model.nomePagante, PAGE_MARGIN_PT, 636, {
-      font: assets.bold,
-      size: 16,
-      maxWidth: 235,
-      lineHeight: 18,
-      maxLines: 2
-    });
-    drawWrappedText(page, model.cliente, PAGE_MARGIN_PT, 596, {
-      font: assets.regular,
-      size: 11,
-      color: COLORS.muted,
-      maxWidth: 245,
-      lineHeight: 14,
-      maxLines: 2
-    });
-    const labelX = 350;
-    const valueRight = A4_WIDTH_PT - PAGE_MARGIN_PT;
-    const labels = ["Identifica\xC3\xA7\xC3\xA3o", "Data de Emiss\xC3\xA3o", "M\xC3\xA9todo de Pagamento"];
-    const values2 = [model.idPag, model.dataEmissao, model.metodoPagamento];
-    labels.forEach((label, index) => {
-      const y = 634 - index * 18;
-      drawRightText(page, label, labelX + 82, y, {
-        font: assets.regular,
-        size: 10,
-        color: COLORS.muted
-      });
-      drawRightText(page, values2[index] ?? "", valueRight, y, {
-        font: assets.bold,
-        size: 10,
-        color: COLORS.text
-      });
-    });
-  }
-  function drawBody(page, assets, model) {
-    const left = PAGE_MARGIN_PT;
-    const right = A4_WIDTH_PT - PAGE_MARGIN_PT;
-    const contentWidth = right - left;
-    drawLine2(page, left, 545, right);
-    drawLine2(page, left, 516, right);
-    drawText(page, "Descri\xC3\xA7\xC3\xA3o", left + 14, 525, { font: assets.bold, size: 14 });
-    drawLine2(page, left, 516, right);
-    drawLine2(page, left, 376, right);
-    drawWrappedText(page, `Servi\xC3\xA7o(s) de transporte terrestre executivo prestado(s) no per\xC3\xADodo de ${model.periodo}.`, left + 14, 492, {
-      font: assets.regular,
-      size: 11,
-      maxWidth: contentWidth - 28,
-      lineHeight: 16,
-      maxLines: 3
-    });
-    drawText(page, "Viagens percorridas nos seguintes trajetos:", left + 14, 434, {
-      font: assets.bold,
-      size: 11
-    });
-    drawWrappedText(page, model.trajetos, left + 14, 414, {
-      font: assets.regular,
-      size: 11,
-      maxWidth: contentWidth - 28,
-      lineHeight: 15,
-      maxLines: 5
-    });
-    drawRect(page, left, 346, contentWidth - 260, 30, COLORS.paleBlue);
-    drawRect(page, right - 260, 346, 110, 30, COLORS.tableBlue);
-    drawRect(page, right - 150, 346, 150, 30, COLORS.tableBlue);
-    drawLine2(page, left, 376, right);
-    drawText(page, "Obrigado por viajar com a Betinhos", left + 14, 355, {
-      font: assets.bold,
-      size: 12
-    });
-    drawText(page, "Total", right - 220, 355, {
-      font: assets.bold,
-      size: 12
-    });
-    drawRightText(page, model.valorTotal, right - 14, 355, {
-      font: assets.bold,
-      size: 12
-    });
-    drawText(page, "Observa\xC3\xA7\xC3\xB5es:", left, 304, {
-      font: assets.bold,
-      size: 10,
-      color: COLORS.muted
-    });
-    drawWrappedText(page, model.observacoes, left, 284, {
-      font: assets.regular,
-      size: 10,
-      color: COLORS.muted,
-      maxWidth: 275,
-      lineHeight: 14,
-      maxLines: 6
-    });
-    const companyRight = right;
-    const companyLines = [
-      "BETINHOS EXECUTIVE SERVICE LTDA EPP",
-      "CNPJ: 07.108.241/0001-06",
-      "CNPJ: 24.484.228/0001-62",
-      "Sede: S\xC3\xA3o Jos\xC3\xA9 dos Campos, S\xC3\xA3o Paulo - Brasil",
-      "Filial: Pindamonhangaba, S\xC3\xA3o Paulo - Brasil"
-    ];
-    companyLines.forEach((line, index) => {
-      drawRightText(page, line, companyRight, 304 - index * 13, {
-        font: index === 0 ? assets.bold : assets.regular,
-        size: index === 0 ? 8.5 : 8,
-        color: COLORS.muted
-      });
-    });
-  }
-  function drawFooter(page, assets) {
-    const left = PAGE_MARGIN_PT;
-    const right = A4_WIDTH_PT - PAGE_MARGIN_PT;
-    const contentWidth = right - left;
+    const right = SVG_WIDTH - MARGIN;
+    const contentWidth = SVG_WIDTH - MARGIN * 2;
     const colWidth = contentWidth / 3;
-    drawImageFit(page, assets.nlaLogo, left + 4, 118, colWidth - 18, 70);
-    drawImageFit(page, assets.logoPreta, left + colWidth + 4, 105, colWidth - 8, 92);
-    drawImageFit(page, assets.qrCode, left + colWidth * 2 + 48, 126, 58, 58);
-    drawWrappedText(page, "Avalie sua experi\xC3\xAAncia", left + colWidth * 2 + 20, 111, {
-      font: assets.bold,
-      size: 8,
-      color: COLORS.blue,
-      maxWidth: colWidth - 40,
-      lineHeight: 9,
-      maxLines: 2
+    return [
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}">`,
+      rect(0, 0, SVG_WIDTH, SVG_HEIGHT, "#ffffff"),
+      rect(0, 0, SVG_WIDTH, 125, "#000e23"),
+      svgText("INVOICE", {
+        x: MARGIN,
+        y: 86,
+        size: 70,
+        weight: 400,
+        fill: "#ffffff",
+        family: "Centabel Book, Cormorant Garamond, Times New Roman, serif"
+      }),
+      image(logoB, right - 74, 25, 74, 74),
+      rect(0, 125, SVG_WIDTH, 45, "#ebf3ff"),
+      svgText("Obrigado por escolher seu recibo digital, voc\xEA faz parte da solu\xE7\xE3o!", {
+        x: MARGIN,
+        y: 153,
+        size: 15,
+        fill: "#595959",
+        maxWidth: 520,
+        maxLines: 1
+      }),
+      svgText(model.idOp, { x: right, y: 153, size: 16, weight: 700, anchor: "end", fill: "#000e23", maxWidth: 180 }),
+      svgText(model.nomePagante, { x: MARGIN, y: 224, size: 22, weight: 700, maxWidth: 360, maxLines: 2, lineHeight: 26 }),
+      svgText(model.cliente, { x: MARGIN, y: 263, size: 15, fill: "#595959", maxWidth: 360, maxLines: 2, lineHeight: 20 }),
+      svgText("Identifica\xE7\xE3o", { x: 565, y: 222, size: 14, fill: "#747474", anchor: "end" }),
+      svgText("Data de Emiss\xE3o", { x: 565, y: 244, size: 14, fill: "#747474", anchor: "end" }),
+      svgText("M\xE9todo de Pagamento", { x: 565, y: 266, size: 14, fill: "#747474", anchor: "end" }),
+      svgText(model.idPag, { x: right, y: 222, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+      svgText(model.dataEmissao, { x: right, y: 244, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+      svgText(model.metodoPagamento, { x: right, y: 266, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+      line(MARGIN, 348, right),
+      line(MARGIN, 383, right),
+      svgText("Descri\xE7\xE3o", { x: MARGIN + 16, y: 371, size: 18, weight: 800 }),
+      line(MARGIN, 383, right),
+      line(MARGIN, 548, right),
+      svgText(`Servi\xE7o(s) de transporte terrestre executivo prestado(s) no per\xEDodo de ${model.periodo}.`, {
+        x: MARGIN + 16,
+        y: 423,
+        size: 15,
+        maxWidth: contentWidth - 32,
+        lineHeight: 23,
+        maxLines: 3
+      }),
+      svgText("Viagens percorridas nos seguintes trajetos:", { x: MARGIN + 16, y: 488, size: 15, weight: 700 }),
+      svgText(model.trajetos, { x: MARGIN + 16, y: 516, size: 15, maxWidth: contentWidth - 32, lineHeight: 22, maxLines: 5 }),
+      rect(MARGIN, 548, contentWidth - 260, 40, "#ebf3ff"),
+      rect(right - 260, 548, 110, 40, "#cde1ff"),
+      rect(right - 150, 548, 150, 40, "#cde1ff"),
+      line(MARGIN, 548, right),
+      svgText("Obrigado por viajar com a Betinhos", { x: MARGIN + 16, y: 574, size: 16, weight: 700, maxWidth: contentWidth - 290 }),
+      svgText("Total", { x: right - 205, y: 574, size: 16, weight: 700, anchor: "middle" }),
+      svgText(model.valorTotal, { x: right - 16, y: 574, size: 16, weight: 700, anchor: "end", maxWidth: 135 }),
+      svgText("Observa\xE7\xF5es:", { x: MARGIN, y: 645, size: 13, weight: 700, fill: "#747474" }),
+      svgText(model.observacoes, { x: MARGIN, y: 673, size: 13, fill: "#747474", maxWidth: 340, lineHeight: 18, maxLines: 6 }),
+      svgText("BETINHOS EXECUTIVE SERVICE LTDA EPP", { x: right, y: 645, size: 11, weight: 700, fill: "#747474", anchor: "end", maxWidth: 320 }),
+      svgText("CNPJ: 07.108.241/0001-06", { x: right, y: 663, size: 11, fill: "#747474", anchor: "end" }),
+      svgText("CNPJ: 24.484.228/0001-62", { x: right, y: 681, size: 11, fill: "#747474", anchor: "end" }),
+      svgText("Sede: S\xE3o Jos\xE9 dos Campos, S\xE3o Paulo - Brasil", { x: right, y: 699, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
+      svgText("Filial: Pindamonhangaba, S\xE3o Paulo - Brasil", { x: right, y: 717, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
+      image(nlaLogo, MARGIN + 4, 835, colWidth - 18, 78),
+      image(logoPreta, MARGIN + colWidth + 4, 820, colWidth - 8, 100),
+      image(qrCode, MARGIN + colWidth * 2 + 48, 842, 72, 72),
+      svgText("Avalie sua experi\xEAncia", { x: MARGIN + colWidth * 2 + 84, y: 933, size: 11, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: colWidth - 30 }),
+      line(MARGIN + 24, 963, right - 24, "#00398e", 2),
+      svgText("Junior de Paula", { x: 76, y: 1001, size: 11, weight: 700 }),
+      svgText("Concierge (Bilingual)", { x: 184, y: 1001, size: 11, fill: "#00398e" }),
+      svgText("+55 12 99723 6961", { x: 314, y: 1001, size: 11, fill: "#747474" }),
+      svgText("junior@betinhos.com.br", { x: 426, y: 1001, size: 11, fill: "#747474" }),
+      svgText("Deborah Keila", { x: 76, y: 1022, size: 11, weight: 700 }),
+      svgText("Operations Manager", { x: 184, y: 1022, size: 11, fill: "#00398e" }),
+      svgText("+55 12 99615 9093", { x: 314, y: 1022, size: 11, fill: "#747474" }),
+      svgText("deborah.keila@betinhos.com.br", { x: 426, y: 1022, size: 11, fill: "#747474" }),
+      svgText("Juliana Rodrigues", { x: 76, y: 1043, size: 11, weight: 700 }),
+      svgText("Finance Manager", { x: 184, y: 1043, size: 11, fill: "#00398e" }),
+      svgText("+55 12 99615 9085", { x: 314, y: 1043, size: 11, fill: "#747474" }),
+      svgText("financeiro@betinhos.com.br", { x: 426, y: 1043, size: 11, fill: "#747474" }),
+      "</svg>"
+    ].join("");
+  }
+  async function svgToPngBytes(svg) {
+    const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    const imageElement = await new Promise((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Falha ao renderizar recibo para PDF."));
+      nextImage.src = dataUrl;
     });
-    drawLine2(page, left + 24, 92, right - 24, COLORS.blue, 1.4);
-    const contactRows = [
-      ["Junior de Paula", "Concierge (Bilingual)", "+55 12 99723 6961", "junior@betinhos.com.br"],
-      ["Deborah Keila", "Operations Manager", "+55 12 99615 9093", "deborah.keila@betinhos.com.br"],
-      ["Juliana Rodrigues", "Finance Manager", "+55 12 99615 9085", "financeiro@betinhos.com.br"]
-    ];
-    const columns = [76, 184, 314, 426];
-    contactRows.forEach((row, rowIndex) => {
-      const y = 66 - rowIndex * 15;
-      drawText(page, row[0], columns[0], y, { font: assets.bold, size: 8.4 });
-      drawText(page, row[1], columns[1], y, { font: assets.regular, size: 8.4, color: COLORS.blue });
-      drawText(page, row[2], columns[2], y, { font: assets.regular, size: 8.4, color: COLORS.muted });
-      drawText(page, row[3], columns[3], y, { font: assets.regular, size: 8.4, color: COLORS.muted });
+    const canvas = document.createElement("canvas");
+    canvas.width = SVG_WIDTH * SNAPSHOT_SCALE;
+    canvas.height = SVG_HEIGHT * SNAPSHOT_SCALE;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas indisponivel para renderizar recibo.");
+    context.scale(SNAPSHOT_SCALE, SNAPSHOT_SCALE);
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, SVG_WIDTH, SVG_HEIGHT);
+    context.drawImage(imageElement, 0, 0, SVG_WIDTH, SVG_HEIGHT);
+    const blob = await new Promise((resolve, reject) => {
+      try {
+        canvas.toBlob((nextBlob) => {
+          if (nextBlob) resolve(nextBlob);
+          else reject(new Error("Falha ao converter recibo em imagem."));
+        }, "image/png", 1);
+      } catch (error2) {
+        reject(error2);
+      }
     });
+    return new Uint8Array(await blob.arrayBuffer());
   }
   async function generateReceiptPdfBlob(model) {
+    const svg = await buildReceiptSvg(model);
+    const pngBytes = await svgToPngBytes(svg);
     const pdfDoc = await PDFDocument_default.create();
-    const assets = await loadAssets(pdfDoc);
     const page = pdfDoc.addPage([A4_WIDTH_PT, A4_HEIGHT_PT]);
-    drawRect(page, 0, 0, A4_WIDTH_PT, A4_HEIGHT_PT, COLORS.white);
-    drawHeader(page, assets, model);
-    drawSummary(page, assets, model);
-    drawBody(page, assets, model);
-    drawFooter(page, assets);
+    const previewImage = await pdfDoc.embedPng(pngBytes);
+    page.drawImage(previewImage, {
+      x: 0,
+      y: 0,
+      width: A4_WIDTH_PT,
+      height: A4_HEIGHT_PT
+    });
     const bytes = await pdfDoc.save();
     const bytesCopy = new Uint8Array(bytes);
     return new Blob([bytesCopy.buffer], { type: "application/pdf" });
@@ -56325,21 +56329,27 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function ReceiptForm({
     draft,
     errors,
-    saveState,
-    shareState,
+    generateState,
+    receiptLink,
     onChange,
-    onSave,
-    onShare
+    onGenerate
   }) {
     const errorCount = Object.values(errors).filter(Boolean).length;
     return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("article", { className: "finalize-card receipt-editor-form-card", children: [
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "finalize-title", children: "Dados do recibo" }),
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "finalize-scroll", children: /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "finalize-form maintenance receipt-editor-form", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "receipt-editor-note", children: "Preencha todos os campos para salvar ou compartilhar em PDF." }),
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "receipt-editor-note", children: "Preencha os dados e gere o recibo. O PDF salvo no OneDrive aparece abaixo." }),
         errorCount ? /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "form-error-summary", children: [
           "Revise ",
           errorCount,
           " campo(s) obrigat\xF3rio(s)."
+        ] }) : null,
+        receiptLink ? /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "receipt-editor-link-panel", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "receipt-editor-link-copy", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { children: "Recibo gerado" }),
+            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("strong", { children: "Clique no link para abrir o PDF" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("a", { href: receiptLink, target: "_blank", rel: "noreferrer", children: "Abrir PDF" })
         ] }) : null,
         /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "receipt-editor-grid", children: [
           /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: `finalize-input-block receipt-editor-block receipt-editor-block-span-2 ${errors.nomePagante ? "is-invalid" : ""}`, children: [
@@ -56369,33 +56379,19 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           ] })
         ] })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(ActionBar, { className: "finalize-actions receipt-editor-actions", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
-          ActionButton,
-          {
-            className: "receipt-editor-action",
-            label: "Salvar",
-            loadingLabel: "Salvando",
-            successLabel: "Aberto",
-            state: saveState,
-            onClick: onSave,
-            icon: /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("img", { src: save_receipt_default, alt: "" })
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
-          ActionButton,
-          {
-            className: "receipt-editor-action",
-            variant: "primary",
-            label: "Compartilhar",
-            loadingLabel: "Compartilhando",
-            successLabel: "Aberto",
-            state: shareState,
-            onClick: onShare,
-            icon: /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("img", { src: share_receipt_default, alt: "" })
-          }
-        )
-      ] })
+      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(ActionBar, { className: "finalize-actions receipt-editor-actions", children: /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+        ActionButton,
+        {
+          className: "receipt-editor-action",
+          variant: "primary",
+          label: "Gerar",
+          loadingLabel: "Gerando",
+          successLabel: "Gerado",
+          state: generateState,
+          onClick: onGenerate,
+          icon: /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("img", { src: invoice_receipt_default, alt: "" })
+        }
+      ) })
     ] });
   }
   function ReceiptDocument({ model, documentRef }) {
@@ -56687,13 +56683,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     model,
     draft,
     errors,
-    saveState,
-    shareState,
+    generateState,
+    receiptLink,
     toast,
     documentRef,
     onDraftChange,
-    onSave,
-    onShare,
+    onGenerate,
     onDismissToast,
     onBack,
     title,
@@ -56707,16 +56702,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(AppShell, { screenLabel, children: [
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(FormMenu, { title, onBack }),
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("section", { className: "main-panel receipt-main receipt-editor-main", children: /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "receipt-editor-layout", children: [
-        detail && draft && onDraftChange && onSave && onShare ? /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+        detail && draft && onDraftChange && onGenerate ? /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
           ReceiptForm,
           {
             draft,
             errors: errors ?? {},
-            saveState: saveState ?? "idle",
-            shareState: shareState ?? "idle",
+            generateState: generateState ?? "idle",
+            receiptLink,
             onChange: onDraftChange,
-            onSave,
-            onShare
+            onGenerate
           }
         ) : null,
         /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(ReceiptPreview, { model, documentRef, onExpand: openExpandedPreview })
@@ -56729,18 +56723,20 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [draft, setDraft] = (0, import_react48.useState)(() => buildPersonalReceiptDraft(detail));
     const [errors, setErrors] = (0, import_react48.useState)({});
     const [toast, setToast] = (0, import_react48.useState)(null);
-    const [saveState, setSaveState] = (0, import_react48.useState)("idle");
-    const [shareState, setShareState] = (0, import_react48.useState)("idle");
+    const [receiptLink, setReceiptLink] = (0, import_react48.useState)(null);
+    const [generateState, setGenerateState] = (0, import_react48.useState)("idle");
     const receiptDocumentRef = (0, import_react48.useRef)(null);
     const receiptPdfCacheRef = (0, import_react48.useRef)(null);
+    const receiptUploadCacheRef = (0, import_react48.useRef)(null);
     const model = (0, import_react48.useMemo)(() => buildPersonalReceiptModel(detail, draft), [detail, draft]);
     (0, import_react48.useEffect)(() => {
       setDraft(buildPersonalReceiptDraft(detail));
       setErrors({});
       setToast(null);
-      setSaveState("idle");
-      setShareState("idle");
+      setReceiptLink(null);
+      setGenerateState("idle");
       receiptPdfCacheRef.current = null;
+      receiptUploadCacheRef.current = null;
     }, [detail]);
     (0, import_react48.useEffect)(() => {
       if (Object.keys(validateReceiptDraft(draft)).length > 0) {
@@ -56764,50 +56760,57 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const updateField = (field, value) => {
       setDraft((current) => ({ ...current, [field]: value }));
       setErrors((current) => ({ ...current, [field]: void 0 }));
+      setReceiptLink(null);
+      receiptUploadCacheRef.current = null;
     };
     const ensureValidDraft = () => {
       const nextErrors = validateReceiptDraft(draft);
       setErrors(nextErrors);
       return Object.keys(nextErrors).length === 0;
     };
-    const withActionFeedback = async (kind, action) => {
+    const handleGenerate = () => {
       if (!ensureValidDraft()) {
         setToast(nextToast("Preencha todos os campos antes de continuar.", "warning"));
         return;
       }
-      const setState = kind === "save" ? setSaveState : setShareState;
-      setState("loading");
-      try {
+      setGenerateState("loading");
+      void (async () => {
         const cacheKey = JSON.stringify(model);
         const cachedPdf = receiptPdfCacheRef.current;
         const blob = cachedPdf?.key === cacheKey ? cachedPdf.blob : await generateReceiptPdfBlob(model);
         receiptPdfCacheRef.current = { key: cacheKey, blob };
         const fileName = buildReceiptPdfFileName(model);
-        const outcome = await action(blob, fileName);
-        setState(outcome.confirmed ? "success" : "idle");
-        setToast(nextToast(outcome.message, outcome.tone));
-      } catch (error2) {
+        const result = await ensureReceiptUploaded(blob, fileName, cacheKey);
+        setReceiptLink(result.link);
+        setGenerateState("success");
+        setToast(nextToast("Recibo gerado. Abra o link do PDF.", "success"));
+        window.setTimeout(() => setGenerateState("idle"), 1400);
+      })().catch((error2) => {
         reportAppError(error2, {
           severity: "error",
           source: "receipt",
-          action: kind === "save" ? "save-pdf" : "share-pdf",
+          action: "generate-pdf-link",
           component: "ReceiptScreen",
           screen: "TelaReciboPersonalizado",
           detailId: detail.id
         });
-        const message = error2 instanceof Error ? error2.message : "Falha ao exportar o recibo em PDF.";
-        setState("idle");
+        const message = error2 instanceof Error ? error2.message : "Falha ao gerar o recibo em PDF.";
+        setGenerateState("idle");
         setToast(nextToast(message, "error"));
-        return;
-      }
-      window.setTimeout(() => setState("idle"), 1400);
+      });
     };
-    const handleSave = () => void withActionFeedback("save", async (blob, fileName) => {
-      return saveReceiptPdf(blob, fileName);
-    });
-    const handleShare = () => void withActionFeedback("share", async (blob, fileName) => {
-      return shareReceiptPdf(blob, fileName);
-    });
+    const ensureReceiptUploaded = async (blob, fileName, cacheKey) => {
+      const cachedUpload = receiptUploadCacheRef.current;
+      if (cachedUpload?.key === cacheKey) return cachedUpload.result;
+      const result = await uploadReceiptPdfRemote({
+        detail,
+        model,
+        pdfBlob: blob,
+        fileName
+      });
+      receiptUploadCacheRef.current = { key: cacheKey, result };
+      return result;
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
       ReceiptViewport,
       {
@@ -56815,13 +56818,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         model,
         draft,
         errors,
-        saveState,
-        shareState,
+        generateState,
+        receiptLink,
         toast,
         documentRef: receiptDocumentRef,
         onDraftChange: updateField,
-        onSave: handleSave,
-        onShare: handleShare,
+        onGenerate: handleGenerate,
         onDismissToast: () => setToast(null),
         onBack,
         title: "Recibo personalizado",
@@ -57106,10 +57108,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (signedRef.current) {
         imageSnapshotRef.current = canvas.toDataURL("image/png");
       }
-      const rect = canvas.getBoundingClientRect();
+      const rect2 = canvas.getBoundingClientRect();
       const ratio = window.devicePixelRatio || 1;
-      const width = Math.max(1, Math.round(rect.width * ratio));
-      const height = Math.max(1, Math.round(rect.height * ratio));
+      const width = Math.max(1, Math.round(rect2.width * ratio));
+      const height = Math.max(1, Math.round(rect2.height * ratio));
       if (canvas.width !== width) canvas.width = width;
       if (canvas.height !== height) canvas.height = height;
       const context = canvas.getContext("2d");
@@ -57122,9 +57124,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       context.fillStyle = "#000000";
       const snapshot = imageSnapshotRef.current;
       if (snapshot) {
-        const image = new Image();
-        image.onload = () => context.drawImage(image, 0, 0, rect.width, rect.height);
-        image.src = snapshot;
+        const image2 = new Image();
+        image2.onload = () => context.drawImage(image2, 0, 0, rect2.width, rect2.height);
+        image2.src = snapshot;
       }
     };
     (0, import_react52.useLayoutEffect)(() => {
@@ -57144,10 +57146,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const getPoint = (event) => {
       const canvas = canvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
-      const rect = canvas.getBoundingClientRect();
+      const rect2 = canvas.getBoundingClientRect();
       return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
+        x: event.clientX - rect2.left,
+        y: event.clientY - rect2.top
       };
     };
     const startDrawing = (event) => {

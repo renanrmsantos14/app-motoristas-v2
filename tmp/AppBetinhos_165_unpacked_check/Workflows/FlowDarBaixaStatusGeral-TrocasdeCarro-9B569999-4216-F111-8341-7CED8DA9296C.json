@@ -1,0 +1,303 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365-1": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "cr40f_reservadeveculos",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr40f_status",
+              "subscriptionRequest/filterexpression": "_cr40f_ot_value ne null"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Condition_Cancelado": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@contains(toLower(triggerOutputs()?['body/_cr40f_status_label']), 'cancel')",
+                      true
+                    ]
+                  },
+                  {
+                    "not": {
+                      "equals": [
+                        "@outputs('Get_a_row_by_ID')?['body/cr40f_statusdatroca']",
+                        202410002
+                      ]
+                    }
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_trocasdecarros",
+                      "recordId": "@triggerOutputs()?['body/_cr40f_ot_value']",
+                      "item/cr40f_statusdatroca": 202410002
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Condition_Concluído": {
+                    "type": "If",
+                    "expression": {
+                      "and": [
+                        {
+                          "equals": [
+                            "@triggerOutputs()?['body/cr40f_status']",
+                            202410008
+                          ]
+                        },
+                        {
+                          "not": {
+                            "equals": [
+                              "@outputs('Get_a_row_by_ID')?['body/cr40f_statusdatroca']",
+                              202410001
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "actions": {
+                      "Update_a_row_1": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_trocasdecarros",
+                            "recordId": "@triggerOutputs()?['body/_cr40f_ot_value']",
+                            "item/cr40f_statusdatroca": 202410001
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "UpdateOnlyRecord",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        }
+                      }
+                    },
+                    "else": {
+                      "actions": {
+                        "Condition_Programado": {
+                          "type": "If",
+                          "expression": {
+                            "and": [
+                              {
+                                "not": {
+                                  "equals": [
+                                    "@outputs('Get_a_row_by_ID')?['body/cr40f_statusdatroca']",
+                                    202410000
+                                  ]
+                                }
+                              },
+                              {
+                                "equals": [
+                                  "@contains(toLower(triggerOutputs()?['body/_cr40f_status_label']), 'cancel')",
+                                  false
+                                ]
+                              },
+                              {
+                                "not": {
+                                  "equals": [
+                                    "@triggerOutputs()?['body/cr40f_status']",
+                                    202410008
+                                  ]
+                                }
+                              }
+                            ]
+                          },
+                          "actions": {
+                            "Update_a_row_1_1": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "parameters": {
+                                  "entityName": "cr40f_trocasdecarros",
+                                  "recordId": "@triggerOutputs()?['body/_cr40f_ot_value']",
+                                  "item/cr40f_statusdatroca": 202410000
+                                },
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                  "operationId": "UpdateOnlyRecord",
+                                  "connectionName": "shared_commondataserviceforapps"
+                                }
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {
+                              "Condition_Confirmado": {
+                                "type": "If",
+                                "expression": {
+                                  "and": [
+                                    {
+                                      "not": {
+                                        "equals": [
+                                          "@outputs('Get_a_row_by_ID')?['body/cr40f_statusdatroca']",
+                                          100000001
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "equals": [
+                                        "@triggerOutputs()?['body/cr40f_status']",
+                                        202410001
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "actions": {
+                                  "Update_a_row_1_2": {
+                                    "type": "OpenApiConnection",
+                                    "inputs": {
+                                      "parameters": {
+                                        "entityName": "cr40f_trocasdecarros",
+                                        "recordId": "@triggerOutputs()?['body/_cr40f_ot_value']",
+                                        "item/cr40f_statusdatroca": 100000001
+                                      },
+                                      "host": {
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                        "operationId": "UpdateOnlyRecord",
+                                        "connectionName": "shared_commondataserviceforapps"
+                                      }
+                                    }
+                                  }
+                                },
+                                "else": {
+                                  "actions": {}
+                                },
+                                "runAfter": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Get_a_row_by_ID": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Get_a_row_by_ID": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_trocasdecarros",
+                  "recordId": "@triggerOutputs()?['body/_cr40f_ot_value']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "JUNIOR@betinhos.com.br;noreply@betinhos.onmicrosoft.com;renan.mendonca@betinhos.com.br",
+                  "emailMessage/Subject": "EERO NO FLUXO - Flow Dar Baixa Status Geral -> Trocas de Carro ",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">EERO NO FLUXO - Flow Dar Baixa Status Geral -&gt; Trocas de Carro</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365-1"
+                }
+              }
+            },
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              },
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Skipped",
+              "Failed"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

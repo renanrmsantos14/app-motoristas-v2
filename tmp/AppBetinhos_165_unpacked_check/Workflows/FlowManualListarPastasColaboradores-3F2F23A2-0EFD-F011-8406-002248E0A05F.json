@@ -1,0 +1,64 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_onedriveforbusiness-1": {
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_caa5a"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {},
+              "required": []
+            }
+          }
+        }
+      },
+      "actions": {
+        "List_files_in_folder": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "id": "b!W2Pu6XLmSkySLLl028lHOKLX_53M8pxFre3ZVypq9hBrVjO-OqeESbI2YmRrsub5.01RDHJEPG7LIJR3FBWUBBZCQQXYG5HJYHY"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+              "operationId": "ListFolderV2",
+              "connectionName": "shared_onedriveforbusiness-1"
+            }
+          },
+          "runAfter": {},
+          "metadata": {
+            "b!W2Pu6XLmSkySLLl028lHOKLX_53M8pxFre3ZVypq9hBrVjO-OqeESbI2YmRrsub5.01RDHJEPG7LIJR3FBWUBBZCQQXYG5HJYHY": "/Documentos de Betinhos Executive Service/Recursos Humanos/Colaboradores"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

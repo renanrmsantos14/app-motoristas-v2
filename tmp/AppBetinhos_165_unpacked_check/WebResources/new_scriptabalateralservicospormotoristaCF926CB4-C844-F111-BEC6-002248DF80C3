@@ -1,0 +1,759 @@
+/**
+ * @author Renan - Betinhos Executive Service
+ * @description Command bar: aba lateral com contagem e detalhes de servicos por motorista.
+ *              Polling de 60 s. Nao bloqueia o Model Driven App. Cores por desvio da media.
+ */
+function AbrirAbaDeFuncionarios(primaryControl) {
+    "use strict";
+
+    var PANEL_ID      = "bt-motoristas-panel";
+    var STYLE_ID      = "bt-motoristas-styles";
+    var ENTIDADE_FUNC = "cr40f_funcionarios";
+    var ENTIDADE_RES  = "cr40f_reservadeveculos";
+    var REFRESH_MS    = 60000;
+    var COR_BASE      = "#000e23";
+    var COR_BASE_DARK = "#000918";
+    var DBG           = "[AbaMotoristas]";
+
+    // Persistência por utilizador — usa window.top.localStorage (mesmo domínio, fora do iframe)
+    var _ls = (function () { try { return window.top.localStorage || window.localStorage; } catch(e) { return window.localStorage; } })();
+    var _userId = "";
+    try { _userId = (Xrm.Utility.getGlobalContext().getUserId() || "").replace(/[\{\}]/g, ""); } catch(e) {}
+    var STORAGE_KEY = "bt_motoristas_prefs_" + _userId;
+
+    function log()  { console.log.apply(console,  [DBG].concat(Array.prototype.slice.call(arguments))); }
+    function warn() { console.warn.apply(console, [DBG].concat(Array.prototype.slice.call(arguments))); }
+
+    function carregarPrefs() {
+        try { return JSON.parse(_ls.getItem(STORAGE_KEY) || "{}"); } catch(e) { return {}; }
+    }
+    function salvarPrefs() {
+        try {
+            var ids = Object.keys(estado.excluidos);
+            _ls.setItem(STORAGE_KEY, JSON.stringify({ excluidos: ids }));
+            log("prefs salvas:", ids.length, "ocultos, key:", STORAGE_KEY);
+        } catch(e) { warn("_ls.setItem falhou:", e); }
+    }
+
+    // Extrai data de uma string FetchXml (retorna "YYYY-MM-DD" ou null)
+    function extrairDataFetchXml(xml) {
+        if (!xml) return null;
+        // operator="on" value="2025-01-15"
+        var mOn = xml.match(/operator\s*=\s*["']on["'][^>]*?value\s*=\s*["'](\d{4}-\d{2}-\d{2})/i)
+               || xml.match(/attribute\s*=\s*["']cr40f_dataehorriodesada["'][\s\S]*?value\s*=\s*["'](\d{4}-\d{2}-\d{2})/i);
+        if (mOn) return mOn[1];
+        // between: coleta todos os valores de data e verifica se só há um dia distinto
+        var allDates = [], re = /value\s*=\s*["'](\d{4}-\d{2}-\d{2})/gi, m;
+        while ((m = re.exec(xml)) !== null) {
+            if (allDates.indexOf(m[1]) === -1) allDates.push(m[1]);
+        }
+        if (allDates.length === 1) return allDates[0];
+        return null;
+    }
+
+    // Tenta detectar a data do filtro ativo no grid do MDA
+    function tentarDataDoGrid() {
+        try {
+            var xml = null;
+            // Opção A: primaryControl é o próprio grid control (list view, CrmParameter=SelectedControl)
+            if (primaryControl) {
+                if (typeof primaryControl.getFetchXml === "function") {
+                    xml = primaryControl.getFetchXml();
+                    log("fetchXml via primaryControl.getFetchXml:", xml ? xml.substring(0, 80) : null);
+                } else if (typeof primaryControl.getGrid === "function") {
+                    var g = primaryControl.getGrid();
+                    if (g && typeof g.getFetchXml === "function") {
+                        xml = g.getFetchXml();
+                        log("fetchXml via getGrid().getFetchXml:", xml ? xml.substring(0, 80) : null);
+                    }
+                }
+            }
+            // Opção B: Xrm.Page (legacy, mas ainda disponível em muitos ambientes)
+            if (!xml) {
+                try {
+                    var topXrm = window.top.Xrm || Xrm;
+                    if (topXrm && topXrm.Page) {
+                        var ctrl = typeof topXrm.Page.getControl === "function" && topXrm.Page.getControl(0);
+                        if (ctrl && typeof ctrl.getFetchXml === "function") {
+                            xml = ctrl.getFetchXml();
+                            log("fetchXml via Xrm.Page.getControl(0):", xml ? xml.substring(0, 80) : null);
+                        }
+                    }
+                } catch(e2) {}
+            }
+            if (xml) {
+                var d = extrairDataFetchXml(xml);
+                if (d) { log("Data detectada no fetchXml:", d); return d; }
+            }
+            // Opção C: URL (extraqs / fetchXml em query string — raro mas possível)
+            var href = (window.top || window).location.href;
+            var mUrl = href.match(/[?&#](?:fetchXml|extraqs|filter)=([^&#]+)/i);
+            if (mUrl) {
+                var decoded = decodeURIComponent(decodeURIComponent(mUrl[1]));
+                var dUrl = extrairDataFetchXml(decoded);
+                if (dUrl) { log("Data detectada na URL:", dUrl); return dUrl; }
+            }
+        } catch(e) { warn("tentarDataDoGrid erro:", e); }
+        return null;
+    }
+
+    function targetDoc() { try { return window.top.document; } catch (e) { return document; } }
+    var _doc = targetDoc();
+
+    function el(tag, css) {
+        var e = _doc.createElement(tag);
+        if (css) e.style.cssText = css;
+        return e;
+    }
+
+    function hojeSP() {
+        return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    }
+
+    function formatarData(iso) {
+        if (!iso) return "";
+        var p = iso.split("-");
+        return p[2] + "/" + p[1] + "/" + p[0];
+    }
+
+    function formatarHora(isoStr) {
+        if (!isoStr) return "--:--";
+        var d = new Date(isoStr);
+        if (isNaN(d)) return "--:--";
+        return d.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function intervaloUTC(iso) {
+        var start = new Date(iso + "T03:00:00Z");
+        var end   = new Date(start.getTime() + 86400000);
+        return { gte: start.toISOString(), lt: end.toISOString() };
+    }
+
+    // Toggle: botao ja aberto fecha
+    if (_doc.getElementById(PANEL_ID)) {
+        var existente = _doc.getElementById(PANEL_ID);
+        existente.style.transform = "translateX(100%)";
+        setTimeout(function () {
+            if (existente.parentNode) existente.parentNode.removeChild(existente);
+            if (window.__btMotoristasTimer) { clearInterval(window.__btMotoristasTimer); delete window.__btMotoristasTimer; }
+        }, 300);
+        return;
+    }
+
+    // Carrega prefs e detecta data do grid antes de montar o estado
+    var _prefs      = carregarPrefs();
+    var _dataInicial = tentarDataDoGrid() || hojeSP();
+
+    // Estado
+    var estado = {
+        data:         _dataInicial,
+        excluidos:    {},  // populado após carregar funcionários (restaura de _prefs)
+        funcionarios: [],
+        contagens:    {},
+        detalhes:     {},   // { id: [{hora, trajeto}] }
+        expandido:    null, // id do motorista expandido
+        carregando:   false,
+        busca:        ""
+    };
+
+    // Estilos
+    if (!_doc.getElementById(STYLE_ID)) {
+        var styleEl = _doc.createElement("style");
+        styleEl.id = STYLE_ID;
+        styleEl.textContent = [
+            "#" + PANEL_ID + " * { box-sizing:border-box; }",
+            "#" + PANEL_ID + " input[type=date]::-webkit-calendar-picker-indicator { opacity:0.65; cursor:pointer; }",
+            "#" + PANEL_ID + " input[type=date] { color-scheme:dark; }",
+            "@keyframes bt-shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }",
+            ".bt-sk { background:linear-gradient(90deg,#e1dfdd 25%,#f3f2f1 50%,#e1dfdd 75%);",
+            "  background-size:400px 100%; animation:bt-shimmer 1.4s infinite; border-radius:6px; }",
+            ".bt-card { transition:background 0.12s,box-shadow 0.12s; cursor:pointer; }",
+            ".bt-card:hover { background:#f5f4f3 !important; box-shadow:0 2px 8px rgba(0,0,0,0.08) !important; }",
+            ".bt-det-row { animation:bt-fade 0.15s ease; }",
+            "@keyframes bt-fade { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }",
+            "@keyframes bt-spin { to{transform:rotate(360deg)} }",
+            ".bt-spinning { animation:bt-spin 0.7s linear infinite; display:inline-block; }",
+            "#" + PANEL_ID + " ::-webkit-scrollbar { width:4px; }",
+            "#" + PANEL_ID + " ::-webkit-scrollbar-thumb { background:#c8c6c4; border-radius:2px; }"
+        ].join("\n");
+        _doc.head.appendChild(styleEl);
+    }
+
+    // Painel (sem overlay bloqueante - o MDA fica interativo)
+    var painel = el("div", [
+        "position:fixed;top:0;right:0;height:100%;width:390px;max-width:100vw;",
+        "background:#faf9f8;",
+        "box-shadow:-6px 0 32px rgba(0,0,0,0.22);",
+        "display:flex;flex-direction:column;",
+        "transform:translateX(100%);",
+        "transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);",
+        "z-index:2147483647;",
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;"
+    ].join(""));
+    painel.id = PANEL_ID;
+
+    // CABECALHO
+    var header = el("div", [
+        "background:linear-gradient(160deg," + COR_BASE + " 0%," + COR_BASE_DARK + " 100%);",
+        "color:#fff;flex-shrink:0;",
+        "box-shadow:0 2px 10px rgba(0,0,0,0.35);"
+    ].join(""));
+
+    // Topo: titulo + fechar
+    var topBar = el("div", "display:flex;align-items:center;justify-content:space-between;padding:15px 14px 0;");
+
+    var tituloTxt = el("span", "font-size:14px;font-weight:700;letter-spacing:0.2px;opacity:0.95;");
+    tituloTxt.textContent = "Servicos por Motorista";
+
+    var btnFechar = el("button", [
+        "background:rgba(255,255,255,0.12);border:none;color:#fff;",
+        "width:30px;height:30px;border-radius:7px;cursor:pointer;",
+        "font-size:17px;display:flex;align-items:center;justify-content:center;",
+        "transition:background 0.15s;flex-shrink:0;"
+    ].join(""));
+    btnFechar.innerHTML = "&#x2715;";
+    btnFechar.title = "Fechar (ESC)";
+    btnFechar.onmouseover = function () { this.style.background = "rgba(255,255,255,0.22)"; };
+    btnFechar.onmouseout  = function () { this.style.background = "rgba(255,255,255,0.12)"; };
+    btnFechar.addEventListener("click", fecharPainel);
+    topBar.appendChild(tituloTxt);
+    topBar.appendChild(btnFechar);
+
+    // Faixa data
+    var dataBar = el("div", "display:flex;align-items:center;gap:5px;padding:10px 14px 0;");
+
+    var dataLabel = el("span", "font-size:10px;font-weight:700;opacity:0.6;white-space:nowrap;text-transform:uppercase;letter-spacing:0.6px;");
+    dataLabel.textContent = "Data";
+
+    function criarBtnNav(txt, ttl) {
+        var b = el("button", [
+            "background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);",
+            "border-radius:6px;color:#fff;padding:4px 8px;font-size:11px;",
+            "cursor:pointer;flex-shrink:0;transition:background 0.12s;"
+        ].join(""));
+        b.textContent = txt; b.title = ttl;
+        b.onmouseover = function () { this.style.background = "rgba(255,255,255,0.22)"; };
+        b.onmouseout  = function () { this.style.background = "rgba(255,255,255,0.1)"; };
+        return b;
+    }
+
+    var inputData = el("input", [
+        "flex:1;min-width:0;",
+        "background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);",
+        "border-radius:7px;color:#fff;padding:5px 8px;font-size:12px;font-weight:600;",
+        "cursor:pointer;outline:none;"
+    ].join(""));
+    inputData.type = "date";
+    inputData.value = estado.data;
+    inputData.addEventListener("change", function () {
+        if (!this.value) return;
+        estado.data = this.value;
+        estado.expandido = null;
+        estado.detalhes = {};
+        atualizarContagens();
+    });
+
+    var btnOntem = criarBtnNav("< 1d", "Dia anterior");
+    btnOntem.addEventListener("click", function () {
+        var d = new Date(estado.data + "T12:00:00"); d.setDate(d.getDate() - 1);
+        estado.data = d.toLocaleDateString("en-CA"); inputData.value = estado.data;
+        estado.expandido = null; estado.detalhes = {};
+        atualizarContagens();
+    });
+
+    var btnAmanha = criarBtnNav("1d >", "Proximo dia");
+    btnAmanha.addEventListener("click", function () {
+        var d = new Date(estado.data + "T12:00:00"); d.setDate(d.getDate() + 1);
+        estado.data = d.toLocaleDateString("en-CA"); inputData.value = estado.data;
+        estado.expandido = null; estado.detalhes = {};
+        atualizarContagens();
+    });
+
+    var btnHoje = criarBtnNav("Hoje", "Ir para hoje");
+    btnHoje.style.fontWeight = "700";
+    btnHoje.addEventListener("click", function () {
+        estado.data = hojeSP(); inputData.value = estado.data;
+        estado.expandido = null; estado.detalhes = {};
+        atualizarContagens();
+    });
+
+    dataBar.appendChild(dataLabel);
+    dataBar.appendChild(btnOntem);
+    dataBar.appendChild(inputData);
+    dataBar.appendChild(btnAmanha);
+    dataBar.appendChild(btnHoje);
+
+    // Status + botao atualizar
+    var statusBar = el("div", "display:flex;align-items:center;justify-content:space-between;padding:8px 14px 13px;");
+
+    var lblStatus = el("span", "font-size:11px;opacity:0.7;");
+    lblStatus.textContent = "Carregando...";
+
+    var btnRefresh = el("button", [
+        "background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);",
+        "border-radius:7px;color:#fff;padding:4px 10px;font-size:11px;font-weight:600;",
+        "cursor:pointer;display:flex;align-items:center;gap:5px;",
+        "transition:background 0.15s;"
+    ].join(""));
+    var iconRefresh = el("span", "font-size:13px;");
+    iconRefresh.innerHTML = "&#8635;";
+    var txtRefresh = el("span", "");
+    txtRefresh.textContent = "Atualizar";
+    btnRefresh.appendChild(iconRefresh);
+    btnRefresh.appendChild(txtRefresh);
+    btnRefresh.onmouseover = function () { this.style.background = "rgba(255,255,255,0.22)"; };
+    btnRefresh.onmouseout  = function () { this.style.background = "rgba(255,255,255,0.13)"; };
+    btnRefresh.addEventListener("click", function () {
+        iconRefresh.className = "bt-spinning";
+        setTimeout(function () { iconRefresh.className = ""; }, 700);
+        atualizarContagens();
+    });
+
+    statusBar.appendChild(lblStatus);
+    statusBar.appendChild(btnRefresh);
+
+    header.appendChild(topBar);
+    header.appendChild(dataBar);
+    header.appendChild(statusBar);
+
+    // BUSCA
+    var buscaWrap = el("div", "padding:9px 10px 4px;flex-shrink:0;position:relative;");
+    var buscaIco = el("span", "position:absolute;left:20px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;opacity:0.35;");
+    buscaIco.textContent = "🔍";
+    var inputBusca = el("input", [
+        "width:100%;background:#fff;border:1.5px solid #e1dfdd;",
+        "border-radius:7px;padding:7px 10px 7px 32px;font-size:12px;color:#201f1e;",
+        "outline:none;transition:border-color 0.15s;"
+    ].join(""));
+    inputBusca.type = "search";
+    inputBusca.placeholder = "Filtrar motorista...";
+    inputBusca.onfocus = function () { this.style.borderColor = COR_BASE; };
+    inputBusca.onblur  = function () { this.style.borderColor = "#e1dfdd"; };
+    inputBusca.addEventListener("input", function () {
+        estado.busca = this.value.toLowerCase().trim();
+        renderizarLista();
+    });
+    buscaWrap.appendChild(buscaIco);
+    buscaWrap.appendChild(inputBusca);
+
+    // CORPO
+    var corpo = el("div", "flex:1;overflow-y:auto;padding:4px 10px 8px;display:flex;flex-direction:column;gap:4px;");
+
+    // RODAPE
+    var rodape = el("div", "flex-shrink:0;border-top:1px solid #edebe9;");
+
+    var totalBar = el("div", "display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#f3f2f1;");
+    var totalLabel = el("span", "font-size:11px;font-weight:700;color:#605e5c;text-transform:uppercase;letter-spacing:0.5px;");
+    totalLabel.textContent = "Total";
+    var totalValor = el("span", "font-size:20px;font-weight:800;color:" + COR_BASE + ";");
+    totalValor.textContent = "0";
+    totalBar.appendChild(totalLabel);
+    totalBar.appendChild(totalValor);
+
+    var secExc = el("div", "display:none;");
+    var btnToggleExc = el("button", [
+        "width:100%;background:#edebe9;border:none;padding:8px 14px;",
+        "display:flex;align-items:center;justify-content:space-between;",
+        "cursor:pointer;font-size:11px;color:#605e5c;font-weight:700;transition:background 0.12s;"
+    ].join(""));
+    btnToggleExc.onmouseover = function () { this.style.background = "#e1dfdd"; };
+    btnToggleExc.onmouseout  = function () { this.style.background = "#edebe9"; };
+    var lblExc = el("span", ""); lblExc.textContent = "Ocultos (0)";
+    var chevronExc = el("span", "display:inline-block;transition:transform 0.2s;font-size:9px;"); chevronExc.textContent = "v";
+    btnToggleExc.appendChild(lblExc);
+    btnToggleExc.appendChild(chevronExc);
+
+    var listaExc = el("div", "padding:5px 10px 8px;display:none;flex-direction:column;gap:3px;");
+    var excAberto = false;
+    btnToggleExc.addEventListener("click", function () {
+        excAberto = !excAberto;
+        listaExc.style.display = excAberto ? "flex" : "none";
+        chevronExc.style.transform = excAberto ? "rotate(180deg)" : "";
+    });
+    secExc.appendChild(btnToggleExc);
+    secExc.appendChild(listaExc);
+
+    rodape.appendChild(totalBar);
+    rodape.appendChild(secExc);
+
+    painel.appendChild(header);
+    painel.appendChild(buscaWrap);
+    painel.appendChild(corpo);
+    painel.appendChild(rodape);
+    _doc.body.appendChild(painel);
+
+    // Anima entrada
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () { painel.style.transform = "translateX(0)"; });
+    });
+
+    // ESC fecha
+    function escListener(e) {
+        if (e.key === "Escape") { fecharPainel(); _doc.removeEventListener("keydown", escListener); }
+    }
+    _doc.addEventListener("keydown", escListener);
+
+    // CORES POR DESVIO DA MEDIA
+    function calcMedia(visiveis) {
+        if (!visiveis || visiveis.length === 0) return 0;
+        var comServico = visiveis.filter(function (f) { return (estado.contagens[f.id] || 0) > 0; });
+        if (comServico.length === 0) return 0;
+        var soma = comServico.reduce(function (acc, f) { return acc + (estado.contagens[f.id] || 0); }, 0);
+        return soma / comServico.length;
+    }
+
+    function corBadge(qtd, media) {
+        if (qtd === 0) return { bg: "#f3f2f1", txt: "#a19f9d", borda: "#e1dfdd", barra: "#e1dfdd" };
+        if (media === 0) return { bg: "#dce6f3", txt: COR_BASE, borda: "#b3c9e8", barra: COR_BASE };
+        var ratio = qtd / media;
+        if (ratio <= 0.6)  return { bg: "#dff6dd", txt: "#107c10", borda: "#92c353", barra: "#107c10" };  // bem abaixo: verde
+        if (ratio <= 1.2)  return { bg: "#fff4ce", txt: "#7d5e00", borda: "#f7c948", barra: "#f7c948" };  // medio: amarelo
+        if (ratio <= 1.8)  return { bg: "#f8ddc6", txt: "#8a4800", borda: "#e8915a", barra: "#e8915a" };  // acima: laranja
+        return                    { bg: "#fde7e9", txt: "#c50f1f", borda: "#e37d82", barra: "#c50f1f" };   // muito acima: vermelho
+    }
+
+    // RENDERIZACAO
+    function renderizarLista() {
+        corpo.innerHTML = "";
+
+        var busca    = estado.busca;
+        var visiveis = estado.funcionarios.filter(function (f) {
+            if (estado.excluidos[f.id]) return false;
+            if (busca && f.nome.toLowerCase().indexOf(busca) === -1) return false;
+            return true;
+        });
+
+        var media = calcMedia(estado.funcionarios.filter(function (f) { return !estado.excluidos[f.id]; }));
+
+        if (visiveis.length === 0 && !estado.carregando) {
+            var aviso = el("div", "text-align:center;padding:40px 16px;color:#a19f9d;font-size:12px;line-height:1.6;");
+            aviso.textContent = busca ? "Nenhum motorista encontrado para \"" + estado.busca + "\"." : "Todos os motoristas estao ocultos.";
+            corpo.appendChild(aviso);
+        }
+
+        visiveis.sort(function (a, b) {
+            var ca = estado.contagens[a.id] || 0;
+            var cb = estado.contagens[b.id] || 0;
+            if (cb !== ca) return cb - ca;
+            return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
+        });
+
+        var total = 0;
+        visiveis.forEach(function (f) {
+            var qtd = estado.contagens[f.id] || 0;
+            total += qtd;
+            corpo.appendChild(criarCard(f, qtd, media));
+            if (estado.expandido === f.id) {
+                corpo.appendChild(criarDetalheBloco(f.id));
+            }
+        });
+
+        totalValor.textContent = estado.carregando ? "..." : total;
+        totalLabel.textContent = "Total — " + formatarData(estado.data);
+
+        renderizarExcluidos();
+    }
+
+    function criarCard(f, qtd, media) {
+        var cores = corBadge(qtd, media);
+        var aberto = estado.expandido === f.id;
+
+        var card = el("div", [
+            "background:#fff;border-radius:9px;",
+            "padding:9px 11px;",
+            "display:flex;align-items:center;justify-content:space-between;gap:8px;",
+            "border:1.5px solid " + (aberto ? cores.borda : "#edebe9") + ";",
+            "border-bottom-left-radius:" + (aberto ? "0" : "9") + "px;",
+            "border-bottom-right-radius:" + (aberto ? "0" : "9") + "px;"
+        ].join(""));
+        card.className = "bt-card";
+
+        var esq = el("div", "display:flex;align-items:center;gap:9px;min-width:0;flex:1;");
+
+        var infoCol = el("div", "display:flex;flex-direction:column;min-width:0;");
+        var nomeEl = el("span", "font-size:13px;font-weight:600;color:#201f1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;");
+        nomeEl.textContent = f.nome || "-";
+        nomeEl.title = f.nome || "";
+
+        var dica = el("span", "font-size:10px;color:#a19f9d;margin-top:1px;");
+        dica.textContent = aberto ? "Clique para fechar" : (qtd > 0 ? "Clique para ver servicos" : "Sem servicos hoje");
+
+        infoCol.appendChild(nomeEl);
+        infoCol.appendChild(dica);
+        esq.appendChild(infoCol);
+
+        var dir = el("div", "display:flex;align-items:center;gap:7px;flex-shrink:0;");
+
+        var badge = el("div", [
+            "min-width:32px;height:26px;border-radius:13px;padding:0 9px;",
+            "display:flex;align-items:center;justify-content:center;",
+            "font-size:13px;font-weight:800;",
+            "background:" + cores.bg + ";color:" + cores.txt + ";",
+            "border:1.5px solid " + cores.borda + ";"
+        ].join(""));
+        badge.textContent = qtd;
+
+        var btnOcultar = el("button", [
+            "background:none;border:none;color:#c8c6c4;cursor:pointer;",
+            "font-size:15px;padding:2px 3px;line-height:1;",
+            "border-radius:4px;transition:color 0.12s,background 0.12s;flex-shrink:0;"
+        ].join(""));
+        btnOcultar.innerHTML = "&#x2715;";
+        btnOcultar.title = "Ocultar";
+        btnOcultar.onmouseover = function () { this.style.color = "#c50f1f"; this.style.background = "#fde7e9"; };
+        btnOcultar.onmouseout  = function () { this.style.color = "#c8c6c4"; this.style.background = "none"; };
+        btnOcultar.addEventListener("click", function (e) {
+            e.stopPropagation();
+            estado.excluidos[f.id] = f;
+            if (estado.expandido === f.id) estado.expandido = null;
+            salvarPrefs();
+            renderizarLista();
+        });
+
+        dir.appendChild(badge);
+        dir.appendChild(btnOcultar);
+        card.appendChild(esq);
+        card.appendChild(dir);
+
+        card.addEventListener("click", function () {
+            if (estado.expandido === f.id) {
+                estado.expandido = null;
+            } else {
+                estado.expandido = f.id;
+                if (!estado.detalhes[f.id]) {
+                    carregarDetalhes(f.id);
+                }
+            }
+            renderizarLista();
+        });
+
+        return card;
+    }
+
+    function criarDetalheBloco(fid) {
+        var detBloco = el("div", [
+            "background:#f8f7f6;border-radius:0 0 9px 9px;",
+            "border:1.5px solid #e1dfdd;border-top:none;",
+            "padding:6px 10px 8px;",
+            "display:flex;flex-direction:column;gap:3px;",
+            "margin-bottom:0;"
+        ].join(""));
+
+        var servicos = estado.detalhes[fid];
+
+        if (!servicos) {
+            var carregEl = el("div", "text-align:center;padding:10px;font-size:11px;color:#a19f9d;");
+            carregEl.textContent = "Carregando...";
+            detBloco.appendChild(carregEl);
+            return detBloco;
+        }
+
+        if (servicos.length === 0) {
+            var vazioEl = el("div", "padding:8px 2px;font-size:11px;color:#a19f9d;");
+            vazioEl.textContent = "Nenhum servico encontrado para esta data.";
+            detBloco.appendChild(vazioEl);
+            return detBloco;
+        }
+
+        servicos.forEach(function (s, i) {
+            var row = el("div", [
+                "display:flex;align-items:flex-start;gap:8px;",
+                "padding:5px 6px;border-radius:6px;",
+                "background:#fff;border:1px solid #edebe9;"
+            ].join(""));
+            row.className = "bt-det-row";
+
+            var num = el("span", [
+                "font-size:10px;font-weight:800;color:#fff;",
+                "background:" + COR_BASE + ";border-radius:4px;",
+                "padding:1px 5px;flex-shrink:0;margin-top:1px;"
+            ].join(""));
+            num.textContent = i + 1;
+
+            var info = el("div", "display:flex;flex-direction:column;gap:2px;min-width:0;");
+
+            var hora = el("span", "font-size:11px;font-weight:700;color:" + COR_BASE + ";");
+            hora.textContent = s.hora;
+
+            var traj = el("span", "font-size:11px;color:#3c3b3a;line-height:1.35;word-break:break-word;");
+            traj.textContent = s.trajeto || "(sem trajeto)";
+
+            info.appendChild(hora);
+            info.appendChild(traj);
+            row.appendChild(num);
+            row.appendChild(info);
+            detBloco.appendChild(row);
+        });
+
+        return detBloco;
+    }
+
+    function renderizarExcluidos() {
+        listaExc.innerHTML = "";
+        var ids = Object.keys(estado.excluidos);
+        lblExc.textContent = "Ocultos (" + ids.length + ")";
+        secExc.style.display = ids.length > 0 ? "" : "none";
+
+        ids.forEach(function (id) {
+            var f = estado.excluidos[id];
+            var row = el("div", "display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border-radius:7px;padding:6px 9px;border:1.5px solid #edebe9;");
+            var nomeEl = el("span", "font-size:11px;color:#605e5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;");
+            nomeEl.textContent = f.nome || "-";
+            var btnAdd = el("button", "background:" + COR_BASE + ";border:none;color:#fff;border-radius:5px;padding:3px 9px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity 0.12s;");
+            btnAdd.textContent = "+ Adicionar";
+            btnAdd.onmouseover = function () { this.style.opacity = "0.8"; };
+            btnAdd.onmouseout  = function () { this.style.opacity = "1"; };
+            btnAdd.addEventListener("click", function (e) {
+                e.stopPropagation();
+                delete estado.excluidos[f.id];
+                salvarPrefs();
+                renderizarLista();
+            });
+            row.appendChild(nomeEl);
+            row.appendChild(btnAdd);
+            listaExc.appendChild(row);
+        });
+    }
+
+    function mostrarSkeletons(n) {
+        corpo.innerHTML = "";
+        for (var i = 0; i < n; i++) {
+            var sk = el("div", "display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border-radius:9px;padding:9px 11px;border:1.5px solid #edebe9;");
+            var skL = el("div", "display:flex;align-items:center;gap:9px;flex:1;");
+            var skNm = el("div", "height:12px;flex:1;max-width:160px;"); skNm.className = "bt-sk";
+            var skBd = el("div", "width:38px;height:26px;border-radius:13px;"); skBd.className = "bt-sk";
+            skL.appendChild(skNm);
+            sk.appendChild(skL); sk.appendChild(skBd);
+            corpo.appendChild(sk);
+        }
+    }
+
+    // DADOS
+    function carregarFuncionarios() {
+        log("carregarFuncionarios()");
+        return Xrm.WebApi.retrieveMultipleRecords(
+            ENTIDADE_FUNC,
+            "?$select=cr40f_funcionariosid,cr40f_nomecompleto,new_apelido" +
+            "&$orderby=cr40f_nomecompleto asc&$top=300"
+        ).then(function (res) {
+            estado.funcionarios = (res.entities || []).map(function (r) {
+                return { id: r["cr40f_funcionariosid"], nome: r["new_apelido"] || r["cr40f_nomecompleto"] || "(sem nome)" };
+            });
+            log("funcionarios:", estado.funcionarios.length);
+
+            // Restaura motoristas ocultos salvos para este utilizador
+            var excIds = _prefs.excluidos || [];
+            excIds.forEach(function (id) {
+                for (var i = 0; i < estado.funcionarios.length; i++) {
+                    if (estado.funcionarios[i].id === id) {
+                        estado.excluidos[id] = estado.funcionarios[i];
+                        break;
+                    }
+                }
+            });
+            if (excIds.length) log("ocultos restaurados das prefs:", Object.keys(estado.excluidos).length);
+        });
+    }
+
+    function atualizarContagens() {
+        if (estado.carregando) return;
+        estado.carregando = true;
+        setStatus("Atualizando...", true);
+
+        var iv = intervaloUTC(estado.data);
+        var filtro = "_cr40f_motorista_value ne null" +
+            " and cr40f_dataehorriodesada ge " + iv.gte +
+            " and cr40f_dataehorriodesada lt " + iv.lt;
+
+        Xrm.WebApi.retrieveMultipleRecords(
+            ENTIDADE_RES,
+            "?$select=cr40f_reservadeveculosid,_cr40f_motorista_value&$filter=" +
+            encodeURIComponent(filtro) + "&$top=5000"
+        ).then(function (res) {
+            var novas = {};
+            (res.entities || []).forEach(function (r) {
+                var mid = r["_cr40f_motorista_value"];
+                if (mid) novas[mid] = (novas[mid] || 0) + 1;
+            });
+            estado.contagens  = novas;
+            estado.detalhes   = {};  // invalida cache de detalhes ao atualizar
+            if (estado.expandido && !novas[estado.expandido]) estado.expandido = null;
+            estado.carregando = false;
+            var agora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            setStatus("Atualizado as " + agora, false);
+            log("contagens:", novas);
+            renderizarLista();
+        }).catch(function (e) {
+            var msg = e && e.message ? e.message : JSON.stringify(e);
+            warn("erro contagens:", msg);
+            estado.carregando = false;
+            setStatus("Falha - veja console", false);
+            renderizarLista();
+        });
+    }
+
+    function carregarDetalhes(fid) {
+        var iv = intervaloUTC(estado.data);
+        var filtro = "_cr40f_motorista_value eq " + fid +
+            " and cr40f_dataehorriodesada ge " + iv.gte +
+            " and cr40f_dataehorriodesada lt " + iv.lt;
+
+        Xrm.WebApi.retrieveMultipleRecords(
+            ENTIDADE_RES,
+            "?$select=cr40f_dataehorriodesada,cr40f_trajeto&$filter=" +
+            encodeURIComponent(filtro) + "&$orderby=cr40f_dataehorriodesada asc&$top=200"
+        ).then(function (res) {
+            estado.detalhes[fid] = (res.entities || []).map(function (r) {
+                return {
+                    hora:   formatarHora(r["cr40f_dataehorriodesada"]),
+                    trajeto: r["cr40f_trajeto"] || ""
+                };
+            });
+            log("detalhes carregados para", fid, ":", estado.detalhes[fid].length);
+            if (estado.expandido === fid) renderizarLista();
+        }).catch(function (e) {
+            warn("erro detalhes:", e && e.message ? e.message : e);
+            estado.detalhes[fid] = [];
+            if (estado.expandido === fid) renderizarLista();
+        });
+    }
+
+    var _spinTimer = null;
+    function setStatus(txt, carregando) {
+        if (_spinTimer) { clearInterval(_spinTimer); _spinTimer = null; }
+        if (carregando) {
+            var frames = ["|", "/", "-", "\\"];
+            var fi = 0;
+            _spinTimer = setInterval(function () {
+                fi = (fi + 1) % frames.length;
+                lblStatus.textContent = frames[fi] + " " + txt;
+            }, 140);
+        } else {
+            lblStatus.textContent = txt;
+        }
+    }
+
+    // FECHAMENTO
+    function fecharPainel() {
+        if (window.__btMotoristasTimer) { clearInterval(window.__btMotoristasTimer); delete window.__btMotoristasTimer; }
+        if (_spinTimer) { clearInterval(_spinTimer); _spinTimer = null; }
+        painel.style.transform = "translateX(100%)";
+        setTimeout(function () {
+            if (painel.parentNode) painel.parentNode.removeChild(painel);
+            var s = _doc.getElementById(STYLE_ID);
+            if (s && s.parentNode) s.parentNode.removeChild(s);
+        }, 320);
+    }
+
+    // INICIALIZACAO
+    mostrarSkeletons(6);
+
+    carregarFuncionarios()
+        .then(function () { return atualizarContagens(); })
+        .catch(function (e) {
+            warn("erro inicializacao:", e);
+            setStatus("Erro ao carregar", false);
+        });
+
+    window.__btMotoristasTimer = setInterval(atualizarContagens, REFRESH_MS);
+}

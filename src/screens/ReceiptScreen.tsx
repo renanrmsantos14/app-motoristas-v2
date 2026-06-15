@@ -3,15 +3,14 @@ import logoBetinhosB from "../../Logo Betinhos B.png";
 import logoBetinhosPreta from "../../Logo Betinhos Preta.png";
 import nlaLogo from "../../NLA.jpg";
 import qrCodeAvaliacao from "../../QrCode-Avaliação.png";
-import saveReceiptIcon from "../assets/icons/save-receipt.svg";
-import shareReceiptIcon from "../assets/icons/share-receipt.svg";
+import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { LocalToast, type ToastState, type ToastTone } from "../components/common/LocalToast";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
+import { uploadReceiptPdfRemote, type ReceiptPdfUploadResult } from "../lib/dataverse";
 import { buildPersonalReceiptDraft, buildPersonalReceiptModel, type PersonalReceiptEditableDraft, type PersonalReceiptModel } from "../lib/personalReceipt";
-import { saveReceiptPdf, shareReceiptPdf, type ReceiptPdfActionOutcome } from "../lib/receiptPdfActions";
 import { generateReceiptPdfBlob } from "../lib/receiptPdf";
 import type { DetailData } from "../types";
 
@@ -45,19 +44,17 @@ function validateReceiptDraft(draft: PersonalReceiptEditableDraft) {
 function ReceiptForm({
   draft,
   errors,
-  saveState,
-  shareState,
+  generateState,
+  receiptLink,
   onChange,
-  onSave,
-  onShare
+  onGenerate
 }: {
   draft: PersonalReceiptEditableDraft;
   errors: ReceiptDraftErrors;
-  saveState: ActionButtonState;
-  shareState: ActionButtonState;
+  generateState: ActionButtonState;
+  receiptLink?: string | null;
   onChange: (field: ReceiptDraftKey, value: string) => void;
-  onSave: () => void;
-  onShare: () => void;
+  onGenerate: () => void;
 }) {
   const errorCount = Object.values(errors).filter(Boolean).length;
 
@@ -66,8 +63,17 @@ function ReceiptForm({
       <div className="finalize-title">Dados do recibo</div>
       <div className="finalize-scroll">
         <div className="finalize-form maintenance receipt-editor-form">
-          <div className="receipt-editor-note">Preencha todos os campos para salvar ou compartilhar em PDF.</div>
+          <div className="receipt-editor-note">Preencha os dados e gere o recibo. O PDF salvo no OneDrive aparece abaixo.</div>
           {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) obrigatório(s).</div> : null}
+          {receiptLink ? (
+            <div className="receipt-editor-link-panel">
+              <div className="receipt-editor-link-copy">
+                <span>Recibo gerado</span>
+                <strong>Clique no link para abrir o PDF</strong>
+              </div>
+              <a href={receiptLink} target="_blank" rel="noreferrer">Abrir PDF</a>
+            </div>
+          ) : null}
           <div className="receipt-editor-grid">
             <div className={`finalize-input-block receipt-editor-block receipt-editor-block-span-2 ${errors.nomePagante ? "is-invalid" : ""}`}>
               <label>Pagante</label>
@@ -100,22 +106,13 @@ function ReceiptForm({
       <ActionBar className="finalize-actions receipt-editor-actions">
         <ActionButton
           className="receipt-editor-action"
-          label="Salvar"
-          loadingLabel="Salvando"
-          successLabel="Aberto"
-          state={saveState}
-          onClick={onSave}
-          icon={<img src={saveReceiptIcon} alt="" />}
-        />
-        <ActionButton
-          className="receipt-editor-action"
           variant="primary"
-          label="Compartilhar"
-          loadingLabel="Compartilhando"
-          successLabel="Aberto"
-          state={shareState}
-          onClick={onShare}
-          icon={<img src={shareReceiptIcon} alt="" />}
+          label="Gerar"
+          loadingLabel="Gerando"
+          successLabel="Gerado"
+          state={generateState}
+          onClick={onGenerate}
+          icon={<img src={invoiceReceiptIcon} alt="" />}
         />
       </ActionBar>
     </article>
@@ -484,13 +481,12 @@ function ReceiptViewport({
   model,
   draft,
   errors,
-  saveState,
-  shareState,
+  generateState,
+  receiptLink,
   toast,
   documentRef,
   onDraftChange,
-  onSave,
-  onShare,
+  onGenerate,
   onDismissToast,
   onBack,
   title,
@@ -500,13 +496,12 @@ function ReceiptViewport({
   model: PersonalReceiptModel;
   draft?: PersonalReceiptEditableDraft;
   errors?: ReceiptDraftErrors;
-  saveState?: ActionButtonState;
-  shareState?: ActionButtonState;
+  generateState?: ActionButtonState;
+  receiptLink?: string | null;
   toast?: ToastState | null;
   documentRef?: RefObject<HTMLElement>;
   onDraftChange?: (field: ReceiptDraftKey, value: string) => void;
-  onSave?: () => void;
-  onShare?: () => void;
+  onGenerate?: () => void;
   onDismissToast?: () => void;
   onBack?: () => void;
   title: string;
@@ -525,15 +520,14 @@ function ReceiptViewport({
       <FormMenu title={title} onBack={onBack} />
       <section className="main-panel receipt-main receipt-editor-main">
         <div className="receipt-editor-layout">
-          {detail && draft && onDraftChange && onSave && onShare ? (
+          {detail && draft && onDraftChange && onGenerate ? (
             <ReceiptForm
               draft={draft}
               errors={errors ?? {}}
-              saveState={saveState ?? "idle"}
-              shareState={shareState ?? "idle"}
+              generateState={generateState ?? "idle"}
+              receiptLink={receiptLink}
               onChange={onDraftChange}
-              onSave={onSave}
-              onShare={onShare}
+              onGenerate={onGenerate}
             />
           ) : null}
           <ReceiptPreview model={model} documentRef={documentRef} onExpand={openExpandedPreview} />
@@ -549,19 +543,21 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
   const [draft, setDraft] = useState<PersonalReceiptEditableDraft>(() => buildPersonalReceiptDraft(detail));
   const [errors, setErrors] = useState<ReceiptDraftErrors>({});
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [saveState, setSaveState] = useState<ActionButtonState>("idle");
-  const [shareState, setShareState] = useState<ActionButtonState>("idle");
+  const [receiptLink, setReceiptLink] = useState<string | null>(null);
+  const [generateState, setGenerateState] = useState<ActionButtonState>("idle");
   const receiptDocumentRef = useRef<HTMLElement | null>(null);
   const receiptPdfCacheRef = useRef<{ key: string; blob: Blob } | null>(null);
+  const receiptUploadCacheRef = useRef<{ key: string; result: ReceiptPdfUploadResult } | null>(null);
   const model = useMemo(() => buildPersonalReceiptModel(detail, draft), [detail, draft]);
 
   useEffect(() => {
     setDraft(buildPersonalReceiptDraft(detail));
     setErrors({});
     setToast(null);
-    setSaveState("idle");
-    setShareState("idle");
+    setReceiptLink(null);
+    setGenerateState("idle");
     receiptPdfCacheRef.current = null;
+    receiptUploadCacheRef.current = null;
   }, [detail]);
 
   useEffect(() => {
@@ -591,6 +587,8 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
   const updateField = (field: ReceiptDraftKey, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
+    setReceiptLink(null);
+    receiptUploadCacheRef.current = null;
   };
 
   const ensureValidDraft = () => {
@@ -599,54 +597,53 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const withActionFeedback = async (
-    kind: "save" | "share",
-    action: (blob: Blob, fileName: string) => Promise<ReceiptPdfActionOutcome> | ReceiptPdfActionOutcome
-  ) => {
+  const handleGenerate = () => {
     if (!ensureValidDraft()) {
       setToast(nextToast("Preencha todos os campos antes de continuar.", "warning"));
       return;
     }
 
-    const setState = kind === "save" ? setSaveState : setShareState;
-    setState("loading");
+    setGenerateState("loading");
 
-    try {
+    void (async () => {
       const cacheKey = JSON.stringify(model);
       const cachedPdf = receiptPdfCacheRef.current;
       const blob = cachedPdf?.key === cacheKey ? cachedPdf.blob : await generateReceiptPdfBlob(model);
       receiptPdfCacheRef.current = { key: cacheKey, blob };
       const fileName = buildReceiptPdfFileName(model);
-      const outcome = await action(blob, fileName);
-      setState(outcome.confirmed ? "success" : "idle");
-      setToast(nextToast(outcome.message, outcome.tone));
-    } catch (error) {
+      const result = await ensureReceiptUploaded(blob, fileName, cacheKey);
+      setReceiptLink(result.link);
+      setGenerateState("success");
+      setToast(nextToast("Recibo gerado. Abra o link do PDF.", "success"));
+      window.setTimeout(() => setGenerateState("idle"), 1400);
+    })().catch((error) => {
       reportAppError(error, {
         severity: "error",
         source: "receipt",
-        action: kind === "save" ? "save-pdf" : "share-pdf",
+        action: "generate-pdf-link",
         component: "ReceiptScreen",
         screen: "TelaReciboPersonalizado",
         detailId: detail.id
       });
-      const message = error instanceof Error ? error.message : "Falha ao exportar o recibo em PDF.";
-      setState("idle");
+      const message = error instanceof Error ? error.message : "Falha ao gerar o recibo em PDF.";
+      setGenerateState("idle");
       setToast(nextToast(message, "error"));
-      return;
-    }
-
-    window.setTimeout(() => setState("idle"), 1400);
+    });
   };
 
-  const handleSave = () =>
-    void withActionFeedback("save", async (blob, fileName) => {
-      return saveReceiptPdf(blob, fileName);
-    });
+  const ensureReceiptUploaded = async (blob: Blob, fileName: string, cacheKey: string) => {
+    const cachedUpload = receiptUploadCacheRef.current;
+    if (cachedUpload?.key === cacheKey) return cachedUpload.result;
 
-  const handleShare = () =>
-    void withActionFeedback("share", async (blob, fileName) => {
-      return shareReceiptPdf(blob, fileName);
+    const result = await uploadReceiptPdfRemote({
+      detail,
+      model,
+      pdfBlob: blob,
+      fileName
     });
+    receiptUploadCacheRef.current = { key: cacheKey, result };
+    return result;
+  };
 
   return (
     <ReceiptViewport
@@ -654,13 +651,12 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
       model={model}
       draft={draft}
       errors={errors}
-      saveState={saveState}
-      shareState={shareState}
+      generateState={generateState}
+      receiptLink={receiptLink}
       toast={toast}
       documentRef={receiptDocumentRef}
       onDraftChange={updateField}
-      onSave={handleSave}
-      onShare={handleShare}
+      onGenerate={handleGenerate}
       onDismissToast={() => setToast(null)}
       onBack={onBack}
       title="Recibo personalizado"

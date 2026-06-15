@@ -1,0 +1,37 @@
+<appaction uniquename="new__Auditoria!dc2a1d8fa0694353adbb69ce9bc4fb8f!cr40f_ModelDrivenBetinhos!cr40f_bancodedados!1">
+  <appmoduleid>
+    <uniquename>cr40f_ModelDrivenBetinhos</uniquename>
+  </appmoduleid>
+  <buttonlabeltext default="Auditoria">
+    <label description="Auditoria" languagecode="1046" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cr40f_bancodedados</logicalname>
+  </contextentity>
+  <contextvalue>cr40f_bancodedados</contextvalue>
+  <fonticon>$clientsvg:Archive</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>1</location>
+  <name>Auditoria!dc2a1d8fa0694353adbb69ce9bc4fb8f</name>
+  <onclickeventjavascriptfunctionname>AbrirAuditoriaDialog</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[{"type":5}]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>1922f168-f821-f111-8342-000d3a88b0c7</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>1000100045.0000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilityformulacomponentlibraryid>
+    <name>cr40f_modeldrivenbetinhosdefaultcommandlibrary_1739f</name>
+  </visibilityformulacomponentlibraryid>
+  <visibilityformulacomponentname>288f2ff512194b2f8289fc4e8bd186d2</visibilityformulacomponentname>
+  <visibilityformulafunctionname>Visible</visibilityformulafunctionname>
+  <visibilitytype>1</visibilitytype>
+</appaction>

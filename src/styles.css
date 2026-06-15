@@ -870,6 +870,59 @@ svg {
   line-height: 1.35;
 }
 
+.receipt-editor-link-panel {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid rgba(0, 14, 35, 0.10);
+  border-radius: 12px;
+  background: rgb(255, 255, 255);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: "Manrope", Arial, sans-serif;
+  color: rgb(0, 14, 35);
+  box-shadow: inset 4px 0 0 rgb(0, 14, 35);
+}
+
+.receipt-editor-link-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.receipt-editor-link-copy span {
+  color: rgb(0, 14, 35);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.receipt-editor-link-copy strong {
+  color: rgb(106, 116, 130);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.receipt-editor-link-panel a {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: rgb(0, 14, 35);
+  color: rgb(255, 255, 255);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .receipt-editor-actions {
   width: 100%;
   max-width: none;

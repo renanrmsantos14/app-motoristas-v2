@@ -1,0 +1,53 @@
+// Código para o botão "Salvar com Retorno"
+(function() {
+    // Verificar se o Web Resource está carregado
+    if (typeof window.salvarComRetorno !== 'function') {
+        // Função não encontrada
+        Xrm.Navigation.openAlertDialog({
+            text: "Para usar esta funcionalidade, preencha primeiro a aba 'Retorno' no formulário.",
+            title: "Atenção"
+        }).then(function() {
+            // Tentar focar na aba de retorno
+            try {
+                var tab = Xrm.Page.ui.tabs.get("tab_retorno");
+                if (tab) {
+                    tab.setFocus();
+                }
+            } catch(e) {
+                // Se não encontrar a aba, apenas ignora
+            }
+        });
+        return;
+    }
+    
+    // Mostrar indicador de processamento
+    Xrm.Page.ui.setFormNotification("Processando salvamento...", "INFO", "savewithreturn");
+    
+    // Executar função principal
+    window.salvarComRetorno().then(
+        function(success) {
+            // Remover notificação
+            Xrm.Page.ui.clearFormNotification("savewithreturn");
+            
+            if (success) {
+                // Sucesso - mostrar confirmação
+                Xrm.Navigation.openAlertDialog({
+                    text: "Serviço(s) criado(s) com sucesso!",
+                    title: "Operação Concluída"
+                }).then(function() {
+                    // Recarregar formulário para limpar dados
+                    Xrm.Page.data.refresh(false);
+                });
+            }
+            // Em caso de erro, a função já mostrou mensagem
+        },
+        function(error) {
+            // Erro na execução
+            Xrm.Page.ui.clearFormNotification("savewithreturn");
+            Xrm.Navigation.openAlertDialog({
+                text: "Erro inesperado: " + (error.message || "Contate o suporte"),
+                title: "Erro"
+            });
+        }
+    );
+})();

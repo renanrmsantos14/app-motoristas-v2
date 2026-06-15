@@ -1,4 +1,4 @@
-﻿import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import logoBetinhosBUrl from "../../Logo Betinhos B.png";
 import logoBetinhosPretaUrl from "../../Logo Betinhos Preta.png";
 import nlaLogoUrl from "../../NLA.jpg";
@@ -7,370 +7,272 @@ import type { PersonalReceiptModel } from "./personalReceipt";
 
 const A4_WIDTH_PT = 595.28;
 const A4_HEIGHT_PT = 841.89;
-const PAGE_MARGIN_PT = 36;
+const SVG_WIDTH = 794;
+const SVG_HEIGHT = 1123;
+const SNAPSHOT_SCALE = 2;
+const MARGIN = 48;
+const bytesCache = new Map<string, Promise<string>>();
 
-const COLORS = {
-  navy: rgb(0, 14 / 255, 35 / 255),
-  blue: rgb(0, 57 / 255, 142 / 255),
-  paleBlue: rgb(235 / 255, 243 / 255, 255 / 255),
-  tableBlue: rgb(205 / 255, 225 / 255, 255 / 255),
-  text: rgb(17 / 255, 29 / 255, 33 / 255),
-  muted: rgb(116 / 255, 116 / 255, 116 / 255),
-  grey: rgb(209 / 255, 209 / 255, 209 / 255),
-  white: rgb(1, 1, 1)
-};
-
-type PdfAssets = {
-  logoB: PDFImage;
-  logoPreta: PDFImage;
-  nlaLogo: PDFImage;
-  qrCode: PDFImage;
-  title: PDFFont;
-  regular: PDFFont;
-  bold: PDFFont;
-};
-
-type TextOptions = {
-  font: PDFFont;
+type SvgTextOptions = {
+  x: number;
+  y: number;
   size: number;
-  color?: ReturnType<typeof rgb>;
+  weight?: number;
+  fill?: string;
+  family?: string;
+  anchor?: "start" | "middle" | "end";
   maxWidth?: number;
   lineHeight?: number;
   maxLines?: number;
 };
 
-const bytesCache = new Map<string, Promise<Uint8Array>>();
-
-function sanitizePdfText(value: string) {
-  return (value || "")
-    .normalize("NFKC")
-    .replace(/[â€“â€”]/g, "-")
-    .replace(/[â€œâ€]/g, '"')
-    .replace(/[â€˜â€™]/g, "'")
-    .replace(/\u00a0/g, " ")
-    .replace(/[^\n\r\t\x20-\x7e\u00a1-\u00ff]/g, "?");
+function escapeXml(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
-async function fetchBytes(url: string) {
+function normalizeText(value: unknown) {
+  return String(value ?? "").normalize("NFKC").replace(/\u00a0/g, " ").trim();
+}
+
+function estimateTextWidth(text: string, size: number, weight = 500) {
+  const weightFactor = weight >= 700 ? 0.58 : 0.52;
+  return Array.from(text).reduce((width, char) => {
+    if (char === " ") return width + size * 0.28;
+    if (/[A-Z0-9]/.test(char)) return width + size * (weight >= 700 ? 0.61 : 0.56);
+    if (/[il.,:;]/.test(char)) return width + size * 0.27;
+    return width + size * weightFactor;
+  }, 0);
+}
+
+function wrapText(value: unknown, size: number, maxWidth: number, weight = 500) {
+  const paragraphs = normalizeText(value).split(/\r?\n/);
+  const lines: string[] = [];
+
+  for (const paragraph of paragraphs) {
+    const words = paragraph.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+    let current = "";
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word;
+      if (!current || estimateTextWidth(next, size, weight) <= maxWidth) {
+        current = next;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+  }
+
+  return lines;
+}
+
+function svgText(value: unknown, options: SvgTextOptions) {
+  const fill = options.fill ?? "#111d21";
+  const family = options.family ?? "Montserrat, Open Sans, Arial, sans-serif";
+  const weight = options.weight ?? 500;
+  const lineHeight = options.lineHeight ?? Math.round(options.size * 1.35);
+  const maxWidth = options.maxWidth ?? SVG_WIDTH;
+  let lines = wrapText(value, options.size, maxWidth, weight);
+
+  if (options.maxLines && lines.length > options.maxLines) {
+    lines = lines.slice(0, options.maxLines);
+    const lastIndex = lines.length - 1;
+    while (lines[lastIndex] && estimateTextWidth(`${lines[lastIndex]}...`, options.size, weight) > maxWidth) {
+      lines[lastIndex] = lines[lastIndex].slice(0, -1).trimEnd();
+    }
+    lines[lastIndex] = `${lines[lastIndex]}...`;
+  }
+
+  return [
+    `<text x="${options.x}" y="${options.y}" fill="${fill}" font-family="${escapeXml(family)}" font-size="${options.size}" font-weight="${weight}" text-anchor="${options.anchor ?? "start"}">`,
+    ...lines.map((line, index) => `<tspan x="${options.x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`),
+    "</text>"
+  ].join("");
+}
+
+async function urlToDataUrl(url: string) {
+  if (url.startsWith("data:")) return url;
   const cached = bytesCache.get(url);
   if (cached) return cached;
 
   const request = fetch(url).then(async (response) => {
-    if (!response.ok) throw new Error("Falha ao carregar recurso do PDF do recibo.");
-    return new Uint8Array(await response.arrayBuffer());
+    if (!response.ok) throw new Error("Falha ao carregar imagem do recibo.");
+    const blob = await response.blob();
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => reject(new Error("Falha ao preparar imagem do recibo."));
+      reader.readAsDataURL(blob);
+    });
   });
 
   bytesCache.set(url, request);
   return request;
 }
 
-async function embedImage(pdfDoc: PDFDocument, url: string) {
-  const bytes = await fetchBytes(url);
-  const lowerUrl = url.toLowerCase();
-  if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg") || lowerUrl.startsWith("data:image/jpeg")) {
-    return pdfDoc.embedJpg(bytes);
-  }
-  return pdfDoc.embedPng(bytes);
+function rect(x: number, y: number, width: number, height: number, fill: string) {
+  return `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${fill}"/>`;
 }
 
-async function loadAssets(pdfDoc: PDFDocument): Promise<PdfAssets> {
-  const [logoB, logoPreta, nlaLogo, qrCode, title, regular, bold] = await Promise.all([
-    embedImage(pdfDoc, logoBetinhosBUrl),
-    embedImage(pdfDoc, logoBetinhosPretaUrl),
-    embedImage(pdfDoc, nlaLogoUrl),
-    embedImage(pdfDoc, qrCodeAvaliacaoUrl),
-    pdfDoc.embedFont(StandardFonts.TimesRoman),
-    pdfDoc.embedFont(StandardFonts.Helvetica),
-    pdfDoc.embedFont(StandardFonts.HelveticaBold)
+function line(x1: number, y: number, x2: number, color = "#d1d1d1", width = 1) {
+  return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="${width}"/>`;
+}
+
+function image(href: string, x: number, y: number, width: number, height: number) {
+  return `<image href="${href}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"/>`;
+}
+
+async function buildReceiptSvg(model: PersonalReceiptModel) {
+  const [logoB, logoPreta, nlaLogo, qrCode] = await Promise.all([
+    urlToDataUrl(logoBetinhosBUrl),
+    urlToDataUrl(logoBetinhosPretaUrl),
+    urlToDataUrl(nlaLogoUrl),
+    urlToDataUrl(qrCodeAvaliacaoUrl)
   ]);
 
-  return { logoB, logoPreta, nlaLogo, qrCode, title, regular, bold };
-}
-
-function drawText(page: PDFPage, text: string, x: number, y: number, options: TextOptions) {
-  page.drawText(sanitizePdfText(text), {
-    x,
-    y,
-    size: options.size,
-    font: options.font,
-    color: options.color ?? COLORS.text
-  });
-}
-
-function fitImage(image: PDFImage, boxWidth: number, boxHeight: number) {
-  const scale = Math.min(boxWidth / image.width, boxHeight / image.height);
-  return { width: image.width * scale, height: image.height * scale };
-}
-
-function drawImageFit(page: PDFPage, image: PDFImage, x: number, y: number, boxWidth: number, boxHeight: number) {
-  const fitted = fitImage(image, boxWidth, boxHeight);
-  page.drawImage(image, {
-    x: x + (boxWidth - fitted.width) / 2,
-    y: y + (boxHeight - fitted.height) / 2,
-    width: fitted.width,
-    height: fitted.height
-  });
-}
-
-function splitWords(text: string) {
-  return sanitizePdfText(text).replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
-}
-
-function wrapLine(text: string, font: PDFFont, size: number, maxWidth: number) {
-  const words = splitWords(text);
-  const lines: string[] = [];
-  let current = "";
-
-  for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
-    if (font.widthOfTextAtSize(next, size) <= maxWidth || !current) {
-      current = next;
-    } else {
-      lines.push(current);
-      current = word;
-    }
-  }
-
-  if (current) lines.push(current);
-  return lines;
-}
-
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
-  return sanitizePdfText(text)
-    .split(/\r?\n/)
-    .flatMap((line) => wrapLine(line, font, size, maxWidth))
-    .filter(Boolean);
-}
-
-function drawWrappedText(page: PDFPage, text: string, x: number, y: number, options: TextOptions) {
-  const maxWidth = options.maxWidth ?? A4_WIDTH_PT - x - PAGE_MARGIN_PT;
-  const lineHeight = options.lineHeight ?? options.size * 1.35;
-  const rawLines = wrapText(text || "", options.font, options.size, maxWidth);
-  const lines = options.maxLines && rawLines.length > options.maxLines ? rawLines.slice(0, options.maxLines) : rawLines;
-
-  if (options.maxLines && rawLines.length > options.maxLines && lines.length) {
-    const lastIndex = lines.length - 1;
-    let lastLine = lines[lastIndex];
-    while (lastLine && options.font.widthOfTextAtSize(`${lastLine}...`, options.size) > maxWidth) {
-      lastLine = lastLine.slice(0, -1).trimEnd();
-    }
-    lines[lastIndex] = `${lastLine}...`;
-  }
-
-  lines.forEach((line, index) => {
-    drawText(page, line, x, y - index * lineHeight, options);
-  });
-
-  return y - lines.length * lineHeight;
-}
-
-function drawRightText(page: PDFPage, text: string, rightX: number, y: number, options: TextOptions) {
-  const safeText = sanitizePdfText(text);
-  const width = options.font.widthOfTextAtSize(safeText, options.size);
-  drawText(page, safeText, rightX - width, y, options);
-}
-
-function drawRect(page: PDFPage, x: number, y: number, width: number, height: number, color: ReturnType<typeof rgb>) {
-  page.drawRectangle({ x, y, width, height, color });
-}
-
-function drawLine(page: PDFPage, x1: number, y: number, x2: number, color = COLORS.grey, thickness = 1) {
-  page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, color, thickness });
-}
-
-function drawHeader(page: PDFPage, assets: PdfAssets, model: PersonalReceiptModel) {
-  drawRect(page, 0, 716, A4_WIDTH_PT, 126, COLORS.navy);
-  drawText(page, "INVOICE", PAGE_MARGIN_PT, 747, {
-    font: assets.title,
-    size: 58,
-    color: COLORS.white
-  });
-  drawImageFit(page, assets.logoB, A4_WIDTH_PT - PAGE_MARGIN_PT - 58, 748, 58, 58);
-
-  drawRect(page, 0, 671, A4_WIDTH_PT, 45, COLORS.paleBlue);
-  drawWrappedText(page, "Obrigado por escolher seu recibo digital, vocÃª faz parte da soluÃ§Ã£o!", PAGE_MARGIN_PT, 690, {
-    font: assets.regular,
-    size: 11,
-    color: COLORS.muted,
-    maxWidth: 380,
-    lineHeight: 13,
-    maxLines: 2
-  });
-  drawRightText(page, model.idOp, A4_WIDTH_PT - PAGE_MARGIN_PT, 689, {
-    font: assets.bold,
-    size: 12,
-    color: COLORS.navy
-  });
-}
-
-function drawSummary(page: PDFPage, assets: PdfAssets, model: PersonalReceiptModel) {
-  drawWrappedText(page, model.nomePagante, PAGE_MARGIN_PT, 636, {
-    font: assets.bold,
-    size: 16,
-    maxWidth: 235,
-    lineHeight: 18,
-    maxLines: 2
-  });
-  drawWrappedText(page, model.cliente, PAGE_MARGIN_PT, 596, {
-    font: assets.regular,
-    size: 11,
-    color: COLORS.muted,
-    maxWidth: 245,
-    lineHeight: 14,
-    maxLines: 2
-  });
-
-  const labelX = 350;
-  const valueRight = A4_WIDTH_PT - PAGE_MARGIN_PT;
-  const labels = ["IdentificaÃ§Ã£o", "Data de EmissÃ£o", "MÃ©todo de Pagamento"];
-  const values = [model.idPag, model.dataEmissao, model.metodoPagamento];
-
-  labels.forEach((label, index) => {
-    const y = 634 - index * 18;
-    drawRightText(page, label, labelX + 82, y, {
-      font: assets.regular,
-      size: 10,
-      color: COLORS.muted
-    });
-    drawRightText(page, values[index] ?? "", valueRight, y, {
-      font: assets.bold,
-      size: 10,
-      color: COLORS.text
-    });
-  });
-}
-
-function drawBody(page: PDFPage, assets: PdfAssets, model: PersonalReceiptModel) {
-  const left = PAGE_MARGIN_PT;
-  const right = A4_WIDTH_PT - PAGE_MARGIN_PT;
-  const contentWidth = right - left;
-
-  drawLine(page, left, 545, right);
-  drawLine(page, left, 516, right);
-  drawText(page, "DescriÃ§Ã£o", left + 14, 525, { font: assets.bold, size: 14 });
-
-  drawLine(page, left, 516, right);
-  drawLine(page, left, 376, right);
-
-  drawWrappedText(page, `ServiÃ§o(s) de transporte terrestre executivo prestado(s) no perÃ­odo de ${model.periodo}.`, left + 14, 492, {
-    font: assets.regular,
-    size: 11,
-    maxWidth: contentWidth - 28,
-    lineHeight: 16,
-    maxLines: 3
-  });
-
-  drawText(page, "Viagens percorridas nos seguintes trajetos:", left + 14, 434, {
-    font: assets.bold,
-    size: 11
-  });
-
-  drawWrappedText(page, model.trajetos, left + 14, 414, {
-    font: assets.regular,
-    size: 11,
-    maxWidth: contentWidth - 28,
-    lineHeight: 15,
-    maxLines: 5
-  });
-
-  drawRect(page, left, 346, contentWidth - 260, 30, COLORS.paleBlue);
-  drawRect(page, right - 260, 346, 110, 30, COLORS.tableBlue);
-  drawRect(page, right - 150, 346, 150, 30, COLORS.tableBlue);
-  drawLine(page, left, 376, right);
-
-  drawText(page, "Obrigado por viajar com a Betinhos", left + 14, 355, {
-    font: assets.bold,
-    size: 12
-  });
-  drawText(page, "Total", right - 220, 355, {
-    font: assets.bold,
-    size: 12
-  });
-  drawRightText(page, model.valorTotal, right - 14, 355, {
-    font: assets.bold,
-    size: 12
-  });
-
-  drawText(page, "ObservaÃ§Ãµes:", left, 304, {
-    font: assets.bold,
-    size: 10,
-    color: COLORS.muted
-  });
-  drawWrappedText(page, model.observacoes, left, 284, {
-    font: assets.regular,
-    size: 10,
-    color: COLORS.muted,
-    maxWidth: 275,
-    lineHeight: 14,
-    maxLines: 6
-  });
-
-  const companyRight = right;
-  const companyLines = [
-    "BETINHOS EXECUTIVE SERVICE LTDA EPP",
-    "CNPJ: 07.108.241/0001-06",
-    "CNPJ: 24.484.228/0001-62",
-    "Sede: SÃ£o JosÃ© dos Campos, SÃ£o Paulo - Brasil",
-    "Filial: Pindamonhangaba, SÃ£o Paulo - Brasil"
-  ];
-  companyLines.forEach((line, index) => {
-    drawRightText(page, line, companyRight, 304 - index * 13, {
-      font: index === 0 ? assets.bold : assets.regular,
-      size: index === 0 ? 8.5 : 8,
-      color: COLORS.muted
-    });
-  });
-}
-
-function drawFooter(page: PDFPage, assets: PdfAssets) {
-  const left = PAGE_MARGIN_PT;
-  const right = A4_WIDTH_PT - PAGE_MARGIN_PT;
-  const contentWidth = right - left;
+  const right = SVG_WIDTH - MARGIN;
+  const contentWidth = SVG_WIDTH - MARGIN * 2;
   const colWidth = contentWidth / 3;
 
-  drawImageFit(page, assets.nlaLogo, left + 4, 118, colWidth - 18, 70);
-  drawImageFit(page, assets.logoPreta, left + colWidth + 4, 105, colWidth - 8, 92);
-  drawImageFit(page, assets.qrCode, left + colWidth * 2 + 48, 126, 58, 58);
-  drawWrappedText(page, "Avalie sua experiÃªncia", left + colWidth * 2 + 20, 111, {
-    font: assets.bold,
-    size: 8,
-    color: COLORS.blue,
-    maxWidth: colWidth - 40,
-    lineHeight: 9,
-    maxLines: 2
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}">`,
+    rect(0, 0, SVG_WIDTH, SVG_HEIGHT, "#ffffff"),
+    rect(0, 0, SVG_WIDTH, 125, "#000e23"),
+    svgText("INVOICE", {
+      x: MARGIN,
+      y: 86,
+      size: 70,
+      weight: 400,
+      fill: "#ffffff",
+      family: "Centabel Book, Cormorant Garamond, Times New Roman, serif"
+    }),
+    image(logoB, right - 74, 25, 74, 74),
+    rect(0, 125, SVG_WIDTH, 45, "#ebf3ff"),
+    svgText("Obrigado por escolher seu recibo digital, você faz parte da solução!", {
+      x: MARGIN,
+      y: 153,
+      size: 15,
+      fill: "#595959",
+      maxWidth: 520,
+      maxLines: 1
+    }),
+    svgText(model.idOp, { x: right, y: 153, size: 16, weight: 700, anchor: "end", fill: "#000e23", maxWidth: 180 }),
+
+    svgText(model.nomePagante, { x: MARGIN, y: 224, size: 22, weight: 700, maxWidth: 360, maxLines: 2, lineHeight: 26 }),
+    svgText(model.cliente, { x: MARGIN, y: 263, size: 15, fill: "#595959", maxWidth: 360, maxLines: 2, lineHeight: 20 }),
+    svgText("Identificação", { x: 565, y: 222, size: 14, fill: "#747474", anchor: "end" }),
+    svgText("Data de Emissão", { x: 565, y: 244, size: 14, fill: "#747474", anchor: "end" }),
+    svgText("Método de Pagamento", { x: 565, y: 266, size: 14, fill: "#747474", anchor: "end" }),
+    svgText(model.idPag, { x: right, y: 222, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+    svgText(model.dataEmissao, { x: right, y: 244, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+    svgText(model.metodoPagamento, { x: right, y: 266, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+
+    line(MARGIN, 348, right),
+    line(MARGIN, 383, right),
+    svgText("Descrição", { x: MARGIN + 16, y: 371, size: 18, weight: 800 }),
+    line(MARGIN, 383, right),
+    line(MARGIN, 548, right),
+    svgText(`Serviço(s) de transporte terrestre executivo prestado(s) no período de ${model.periodo}.`, {
+      x: MARGIN + 16,
+      y: 423,
+      size: 15,
+      maxWidth: contentWidth - 32,
+      lineHeight: 23,
+      maxLines: 3
+    }),
+    svgText("Viagens percorridas nos seguintes trajetos:", { x: MARGIN + 16, y: 488, size: 15, weight: 700 }),
+    svgText(model.trajetos, { x: MARGIN + 16, y: 516, size: 15, maxWidth: contentWidth - 32, lineHeight: 22, maxLines: 5 }),
+
+    rect(MARGIN, 548, contentWidth - 260, 40, "#ebf3ff"),
+    rect(right - 260, 548, 110, 40, "#cde1ff"),
+    rect(right - 150, 548, 150, 40, "#cde1ff"),
+    line(MARGIN, 548, right),
+    svgText("Obrigado por viajar com a Betinhos", { x: MARGIN + 16, y: 574, size: 16, weight: 700, maxWidth: contentWidth - 290 }),
+    svgText("Total", { x: right - 205, y: 574, size: 16, weight: 700, anchor: "middle" }),
+    svgText(model.valorTotal, { x: right - 16, y: 574, size: 16, weight: 700, anchor: "end", maxWidth: 135 }),
+
+    svgText("Observações:", { x: MARGIN, y: 645, size: 13, weight: 700, fill: "#747474" }),
+    svgText(model.observacoes, { x: MARGIN, y: 673, size: 13, fill: "#747474", maxWidth: 340, lineHeight: 18, maxLines: 6 }),
+    svgText("BETINHOS EXECUTIVE SERVICE LTDA EPP", { x: right, y: 645, size: 11, weight: 700, fill: "#747474", anchor: "end", maxWidth: 320 }),
+    svgText("CNPJ: 07.108.241/0001-06", { x: right, y: 663, size: 11, fill: "#747474", anchor: "end" }),
+    svgText("CNPJ: 24.484.228/0001-62", { x: right, y: 681, size: 11, fill: "#747474", anchor: "end" }),
+    svgText("Sede: São José dos Campos, São Paulo - Brasil", { x: right, y: 699, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
+    svgText("Filial: Pindamonhangaba, São Paulo - Brasil", { x: right, y: 717, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
+
+    image(nlaLogo, MARGIN + 4, 835, colWidth - 18, 78),
+    image(logoPreta, MARGIN + colWidth + 4, 820, colWidth - 8, 100),
+    image(qrCode, MARGIN + colWidth * 2 + 48, 842, 72, 72),
+    svgText("Avalie sua experiência", { x: MARGIN + colWidth * 2 + 84, y: 933, size: 11, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: colWidth - 30 }),
+    line(MARGIN + 24, 963, right - 24, "#00398e", 2),
+
+    svgText("Junior de Paula", { x: 76, y: 1001, size: 11, weight: 700 }),
+    svgText("Concierge (Bilingual)", { x: 184, y: 1001, size: 11, fill: "#00398e" }),
+    svgText("+55 12 99723 6961", { x: 314, y: 1001, size: 11, fill: "#747474" }),
+    svgText("junior@betinhos.com.br", { x: 426, y: 1001, size: 11, fill: "#747474" }),
+    svgText("Deborah Keila", { x: 76, y: 1022, size: 11, weight: 700 }),
+    svgText("Operations Manager", { x: 184, y: 1022, size: 11, fill: "#00398e" }),
+    svgText("+55 12 99615 9093", { x: 314, y: 1022, size: 11, fill: "#747474" }),
+    svgText("deborah.keila@betinhos.com.br", { x: 426, y: 1022, size: 11, fill: "#747474" }),
+    svgText("Juliana Rodrigues", { x: 76, y: 1043, size: 11, weight: 700 }),
+    svgText("Finance Manager", { x: 184, y: 1043, size: 11, fill: "#00398e" }),
+    svgText("+55 12 99615 9085", { x: 314, y: 1043, size: 11, fill: "#747474" }),
+    svgText("financeiro@betinhos.com.br", { x: 426, y: 1043, size: 11, fill: "#747474" }),
+    "</svg>"
+  ].join("");
+}
+
+async function svgToPngBytes(svg: string) {
+  const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  const imageElement = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const nextImage = new Image();
+    nextImage.onload = () => resolve(nextImage);
+    nextImage.onerror = () => reject(new Error("Falha ao renderizar recibo para PDF."));
+    nextImage.src = dataUrl;
   });
 
-  drawLine(page, left + 24, 92, right - 24, COLORS.blue, 1.4);
+  const canvas = document.createElement("canvas");
+  canvas.width = SVG_WIDTH * SNAPSHOT_SCALE;
+  canvas.height = SVG_HEIGHT * SNAPSHOT_SCALE;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas indisponivel para renderizar recibo.");
+  context.scale(SNAPSHOT_SCALE, SNAPSHOT_SCALE);
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, SVG_WIDTH, SVG_HEIGHT);
+  context.drawImage(imageElement, 0, 0, SVG_WIDTH, SVG_HEIGHT);
 
-  const contactRows = [
-    ["Junior de Paula", "Concierge (Bilingual)", "+55 12 99723 6961", "junior@betinhos.com.br"],
-    ["Deborah Keila", "Operations Manager", "+55 12 99615 9093", "deborah.keila@betinhos.com.br"],
-    ["Juliana Rodrigues", "Finance Manager", "+55 12 99615 9085", "financeiro@betinhos.com.br"]
-  ];
-  const columns = [76, 184, 314, 426];
-
-  contactRows.forEach((row, rowIndex) => {
-    const y = 66 - rowIndex * 15;
-    drawText(page, row[0], columns[0], y, { font: assets.bold, size: 8.4 });
-    drawText(page, row[1], columns[1], y, { font: assets.regular, size: 8.4, color: COLORS.blue });
-    drawText(page, row[2], columns[2], y, { font: assets.regular, size: 8.4, color: COLORS.muted });
-    drawText(page, row[3], columns[3], y, { font: assets.regular, size: 8.4, color: COLORS.muted });
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    try {
+      canvas.toBlob((nextBlob) => {
+        if (nextBlob) resolve(nextBlob);
+        else reject(new Error("Falha ao converter recibo em imagem."));
+      }, "image/png", 1);
+    } catch (error) {
+      reject(error);
+    }
   });
+  return new Uint8Array(await blob.arrayBuffer());
 }
 
 export async function generateReceiptPdfBlob(model: PersonalReceiptModel) {
+  const svg = await buildReceiptSvg(model);
+  const pngBytes = await svgToPngBytes(svg);
   const pdfDoc = await PDFDocument.create();
-  const assets = await loadAssets(pdfDoc);
   const page = pdfDoc.addPage([A4_WIDTH_PT, A4_HEIGHT_PT]);
+  const previewImage = await pdfDoc.embedPng(pngBytes);
 
-  drawRect(page, 0, 0, A4_WIDTH_PT, A4_HEIGHT_PT, COLORS.white);
-  drawHeader(page, assets, model);
-  drawSummary(page, assets, model);
-  drawBody(page, assets, model);
-  drawFooter(page, assets);
+  page.drawImage(previewImage, {
+    x: 0,
+    y: 0,
+    width: A4_WIDTH_PT,
+    height: A4_HEIGHT_PT
+  });
 
   const bytes = await pdfDoc.save();
   const bytesCopy = new Uint8Array(bytes);
   return new Blob([bytesCopy.buffer], { type: "application/pdf" });
 }
-

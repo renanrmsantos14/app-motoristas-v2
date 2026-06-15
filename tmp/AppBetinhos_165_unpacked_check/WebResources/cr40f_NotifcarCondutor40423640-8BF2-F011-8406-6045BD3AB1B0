@@ -1,0 +1,122 @@
+// Command Button JS — NotificarMotorista_Multas
+// flowUrl lida de Variável de Ambiente Dataverse: new_FlowUrlNotificarMotoristaMultas
+
+var TAG_NM = "[BT-NOTIF-MOTORISTA]";
+
+function getEnvVarValue_NM(schemaName) {
+    var baseUrl = Xrm.Utility.getGlobalContext().getClientUrl();
+    var url =
+        baseUrl +
+        "/api/data/v9.2/environmentvariabledefinitions" +
+        "?$filter=schemaname eq '" + schemaName + "'" +
+        "&$select=defaultvalue,schemaname" +
+        "&$expand=environmentvariabledefinition_environmentvariablevalue($select=value)";
+
+    return fetch(url, {
+        headers: {
+            "OData-MaxVersion": "4.0",
+            "OData-Version": "4.0",
+            "Accept": "application/json",
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data || !data.value || !data.value.length) return null;
+            var def = data.value[0];
+            var cur = def["environmentvariabledefinition_environmentvariablevalue"];
+            if (cur && cur.length && cur[0].value) return cur[0].value;
+            if (def.defaultvalue) return def.defaultvalue;
+            return null;
+        })
+        .catch(function (e) {
+            console.error(TAG_NM, "Erro ao buscar env var:", e);
+            return null;
+        });
+}
+
+function NotificarMotorista_Multas(selectedItems) {
+    try {
+        if (!selectedItems || !selectedItems.length) {
+            Xrm.Navigation.openAlertDialog({ text: "Nenhuma multa selecionada." });
+            return;
+        }
+
+        var ids = [];
+        selectedItems.forEach(function (r) {
+            if (r && r.Id) ids.push(r.Id.replace(/[{}]/g, "").toLowerCase());
+        });
+
+        if (!ids.length) {
+            Xrm.Navigation.openAlertDialog({ text: "IDs inválidos." });
+            return;
+        }
+
+        Xrm.Utility.showProgressIndicator("Buscando configuração...");
+
+        getEnvVarValue_NM("new_FlowUrlNotificarMotoristaMultas").then(function (flowUrl) {
+
+            if (!flowUrl) {
+                try { Xrm.Utility.closeProgressIndicator(); } catch (e) {}
+                Xrm.Navigation.openAlertDialog({
+                    text:
+                        "Variável de ambiente 'new_FlowUrlNotificarMotoristaMultas' não encontrada ou sem valor.\n" +
+                        "Configure-a em Power Apps > Soluções > Variáveis de Ambiente."
+                });
+                return;
+            }
+
+            console.log(TAG_NM, "flowUrl resolvida:", flowUrl);
+
+            var body = JSON.stringify({ guids: ids.join(",") });
+            Xrm.Utility.showProgressIndicator("Notificando motorista(s)...");
+
+            var req = new XMLHttpRequest();
+            req.open("POST", flowUrl, true);
+            req.setRequestHeader("Content-Type", "application/json");
+            req.timeout = 15000;
+
+            req.onload = function () {
+                Xrm.Utility.closeProgressIndicator();
+                var status = req.status;
+                var txt = req.responseText || "";
+
+                if (status !== 200 && status !== 207 && status !== 400 && status !== 422) {
+                    Xrm.Navigation.openAlertDialog({
+                        text: "Falha ao iniciar/retornar.\nStatus: " + status + "\nResposta: " + (txt.substring(0, 800) || "(vazio)")
+                    });
+                    return;
+                }
+                if (status === 200) {
+                    Xrm.Navigation.openAlertDialog({ text: "Notificação enviada com sucesso." })
+                        .then(function () { try { Xrm.Utility.refreshParentGrid(); } catch (e) {} });
+                    return;
+                }
+                if (status === 207) {
+                    Xrm.Navigation.openAlertDialog({ text: "Parcial: algumas multas sem motorista." })
+                        .then(function () { try { Xrm.Utility.refreshParentGrid(); } catch (e) {} });
+                    return;
+                }
+                Xrm.Navigation.openAlertDialog({ text: "Nenhuma notificação: motorista não identificado." });
+            };
+
+            req.ontimeout = function () {
+                Xrm.Utility.closeProgressIndicator();
+                Xrm.Navigation.openAlertDialog({ text: "Timeout (15s). O Flow não respondeu." });
+            };
+
+            req.onerror = function () {
+                Xrm.Utility.closeProgressIndicator();
+                Xrm.Navigation.openAlertDialog({
+                    text: "Erro de rede/bloqueio do browser (status 0).\nVerifique: URL do Flow, rede, bloqueio de segurança."
+                });
+            };
+
+            req.send(body);
+        });
+
+    } catch (e) {
+        try { Xrm.Utility.closeProgressIndicator(); } catch (_) {}
+        Xrm.Navigation.openAlertDialog({ text: "Erro no JS: " + (e.message || e) });
+    }
+}

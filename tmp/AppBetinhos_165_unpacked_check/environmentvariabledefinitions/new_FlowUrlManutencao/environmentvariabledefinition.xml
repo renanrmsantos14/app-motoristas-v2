@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="new_FlowUrlManutencao">
+  <description default="Flow URL Agendar Manutenção">
+    <label description="Flow URL Agendar Manutenção" languagecode="1046" />
+  </description>
+  <displayname default="Flow URL Agendar Manutenção">
+    <label description="Flow URL Agendar Manutenção" languagecode="1046" />
+  </displayname>
+  <introducedversion>1.0.0.19</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

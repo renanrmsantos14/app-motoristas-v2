@@ -2,6 +2,7 @@
 
 import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
 import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
+import type { PersonalReceiptModel } from "./personalReceipt";
 
 import { getFieldValue } from "./fieldLookup.ts";
 
@@ -87,6 +88,12 @@ const OPERATION_STATUS = {
   concluido: 202410008
 } as const;
 
+const RECEIPT_STATUS = {
+  gerado: 100000000,
+  salvoNoOneDrive: 100000001,
+  falha: 100000002
+} as const;
+
 const DRIVER_LINK_TYPE = {
   colaborador: 0,
   terceiro: 1
@@ -141,6 +148,7 @@ export const DATAVERSE = {
   cidades: "cr40f_cidades",
   colisoes: "cr40f_colisaos",
   anexosColisoes: "cr40f_anexocolisaos",
+  recibos: "cr40f_reciboses",
   trocas: "cr40f_trocasdecarros",
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
   posseVeiculos: "new_possedeveiculos",
@@ -167,6 +175,7 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.cidades]: "cr40f_cidade",
   [DATAVERSE.colisoes]: "cr40f_colisao",
   [DATAVERSE.anexosColisoes]: "cr40f_anexocolisao",
+  [DATAVERSE.recibos]: "cr40f_recibos",
   [DATAVERSE.trocas]: "cr40f_trocasdecarro",
   [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
   [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
@@ -837,6 +846,15 @@ function getDataUrlMimeType(value = "") {
   return match?.[1]?.trim().toLowerCase() || "application/octet-stream";
 }
 
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Falha ao preparar arquivo para envio ao Flow."));
+    reader.readAsDataURL(blob);
+  });
+}
+
 function getFileExtensionFromMimeType(mimeType: string) {
   const normalized = mimeType.trim().toLowerCase();
   if (normalized === "image/jpeg" || normalized === "image/jpg") return "jpg";
@@ -858,6 +876,23 @@ function sanitizePathSegment(value: unknown, fallback: string) {
     .replace(/\s+/g, " ")
     .replace(/\.+$/g, "");
   return sanitized || fallback;
+}
+
+function truncateDataverseText(value: unknown, maxLength: number) {
+  const text = String(value ?? "").trim();
+  return text.length > maxLength ? text.slice(0, maxLength) : text;
+}
+
+function parseReceiptDate(value: string) {
+  const trimmed = value.trim();
+  const brDate = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(trimmed);
+  if (brDate) {
+    const [, day, month, year] = brDate;
+    const date = new Date(Number(year), Number(month) - 1, Number(day), 12, 0, 0);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+  }
+  const date = trimmed ? new Date(trimmed) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toISOString() : "";
 }
 
 function shouldUseDevFolderPrefix() {
@@ -922,7 +957,7 @@ function requireFlowLink(result: unknown, context: Record<string, unknown>) {
     expectedKeys: ["shareLink", "link", "webUrl", "url", "fileLink", "sharedLink"],
     flowResult: describeFlowResultForLog(result)
   });
-  throw new Error("Foto salva no OneDrive, mas o Flow nao retornou link compartilhavel. Envio interrompido.");
+  throw new Error("Arquivo salvo no OneDrive, mas o Flow nao retornou link compartilhavel. Envio interrompido.");
 }
 
 async function buildMaintenancePhotoFolder(record: DataverseRecord) {
@@ -1066,6 +1101,134 @@ export async function uploadReceiveProofRemote({
   if (motoristaId) record[`${lookupNavigationNames.enviadoPor}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
   await createOne(DATAVERSE.anexosRecebimento, record);
   return link;
+}
+
+export type ReceiptPdfUploadResult = {
+  recordId: string;
+  link: string;
+  fileName: string;
+  path: string;
+};
+
+function getReceiptMotoristaId(detail: DetailData) {
+  const record = (detail.dataverse?.record as DataverseRecord | undefined) ?? {};
+  return cleanODataGuid(record._cr40f_motorista_value);
+}
+
+function buildReceiptRecordName(model: PersonalReceiptModel) {
+  return truncateDataverseText([model.idPag, model.cliente].filter(Boolean).join(" - ") || "Recibo", 100);
+}
+
+export async function uploadReceiptPdfRemote({
+  detail,
+  model,
+  pdfBlob,
+  fileName,
+  onProgress
+}: {
+  detail: DetailData;
+  model: PersonalReceiptModel;
+  pdfBlob: Blob;
+  fileName: string;
+  onProgress?: (message: string) => void;
+}): Promise<ReceiptPdfUploadResult> {
+  const reservaId = cleanGuid(detail.dataverse?.id ?? "");
+  if (!reservaId) throw new Error("Serviço sem referência Dataverse. Nao e possivel registrar o recibo.");
+
+  const motoristaId = getReceiptMotoristaId(detail);
+  const lookupNavigationNames = await loadReceiptLookupNavigationNamesRemote();
+  const fileNameBase = sanitizePathSegment(fileName.replace(/\.pdf$/i, ""), model.idPag || "recibo");
+  const storedFileName = `${fileNameBase}.pdf`;
+  const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+  const path = `Recibos/${devPrefix}${sanitizePathSegment(model.cliente, "Sem cliente")}/${sanitizePathSegment(model.idPag, "Sem identificacao")}`;
+  const emittedAt = new Date().toISOString();
+  const numericValue = parseCurrencyNumber(model.valorTotal);
+  const dataEmissao = parseReceiptDate(model.dataEmissao);
+  const baseRecord: Record<string, unknown> = {
+    cr40f_name: buildReceiptRecordName(model),
+    cr40f_id_pagamento: truncateDataverseText(model.idPag, 1000),
+    cr40f_id_operacao: truncateDataverseText(model.idOp, 1000),
+    cr40f_pagante: truncateDataverseText(model.nomePagante, 1000),
+    cr40f_cliente: truncateDataverseText(model.cliente, 1000),
+    cr40f_valor_total_texto: truncateDataverseText(model.valorTotal, 1000),
+    cr40f_metodo_pagamento: truncateDataverseText(model.metodoPagamento, 1000),
+    cr40f_periodo: truncateDataverseText(model.periodo, 1000),
+    cr40f_trajetos: model.trajetos,
+    cr40f_observacoes: model.observacoes,
+    cr40f_nome_arquivo: storedFileName,
+    cr40f_caminho_onedrive: path,
+    cr40f_mime_type: "application/pdf",
+    cr40f_tamanho_bytes: Math.max(0, Math.trunc(pdfBlob.size)),
+    cr40f_status_geracao: RECEIPT_STATUS.gerado,
+    cr40f_modelo_json: JSON.stringify(model),
+    cr40f_gerado_em: emittedAt,
+    [`${lookupNavigationNames.reserva}@odata.bind`]: bind(DATAVERSE.geral, reservaId)
+  };
+  if (motoristaId) baseRecord[`${lookupNavigationNames.motorista}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+  if (Number.isFinite(numericValue) && numericValue > 0) baseRecord.cr40f_valor_total = numericValue;
+  if (dataEmissao) baseRecord.cr40f_data_emissao = dataEmissao;
+
+  onProgress?.("Registrando recibo no Dataverse.");
+  const created = await createOne(DATAVERSE.recibos, baseRecord);
+  const receiptId = cleanGuid(created.id);
+
+  try {
+    onProgress?.("Enviando PDF para o Flow.");
+    const dataUrl = await blobToDataUrl(pdfBlob);
+    const link = await uploadMaintenancePhoto(path, dataUrl, fileNameBase, {
+      reciboGuid: receiptId,
+      reservaGuid: reservaId,
+      motoristaGuid: motoristaId,
+      idPagamento: model.idPag,
+      idOperacao: model.idOp,
+      tipo: "RECIBO",
+      mimeType: "application/pdf"
+    });
+
+    onProgress?.("Gravando link do PDF em Recibos.");
+    await updateOne(DATAVERSE.recibos, receiptId, {
+      cr40f_link_pdf: link,
+      cr40f_share_link: link,
+      cr40f_status_geracao: RECEIPT_STATUS.salvoNoOneDrive,
+      cr40f_erro: null
+    });
+
+    const verified = await retrieveOne(
+      DATAVERSE.recibos,
+      receiptId,
+      "$select=cr40f_link_pdf,cr40f_share_link,cr40f_status_geracao"
+    );
+    const verifiedLink = String(verified.cr40f_link_pdf ?? verified.cr40f_share_link ?? "").trim();
+    if (verifiedLink !== link || Number(verified.cr40f_status_geracao) !== RECEIPT_STATUS.salvoNoOneDrive) {
+      dataverseError("Recibo salvo no Flow, mas link/status nao foram confirmados no Dataverse.", {
+        receiptId,
+        expectedLink: link,
+        verifiedLink,
+        verifiedStatus: verified.cr40f_status_geracao
+      });
+      throw new Error("PDF salvo no OneDrive, mas o registro em Recibos nao confirmou link/status.");
+    }
+
+    return {
+      recordId: receiptId,
+      link,
+      fileName: storedFileName,
+      path
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await updateOne(DATAVERSE.recibos, receiptId, {
+      cr40f_status_geracao: RECEIPT_STATUS.falha,
+      cr40f_erro: message
+    }).catch((updateError) => {
+      dataverseWarn("Falha ao marcar recibo como Falha.", {
+        receiptId,
+        originalError: message,
+        updateError: describeDataverseError(updateError)
+      });
+    });
+    throw error;
+  }
 }
 
 export async function uploadCollisionPhotoRemote({
@@ -1275,6 +1438,11 @@ type ReceiveAttachmentLookupNavigationNames = {
 type CollisionAttachmentLookupNavigationNames = {
   colisao: string;
   enviadoPor: string;
+};
+
+type ReceiptLookupNavigationNames = {
+  reserva: string;
+  motorista: string;
 };
 
 const lookupNavigationNameCache = new Map<string, string>();
@@ -1647,6 +1815,41 @@ async function loadReceiveAttachmentLookupNavigationNamesRemote(): Promise<Recei
     throw new Error(`Schema de Anexos de Recebimento incompleto. Falhas: ${failures.join(" | ")}`);
   }
   return { reserva: names.reserva, enviadoPor: names.enviadoPor };
+}
+
+async function loadReceiptLookupNavigationNamesRemote(): Promise<ReceiptLookupNavigationNames> {
+  const requests: Array<LookupNavigationRequest & { key: keyof ReceiptLookupNavigationNames }> = [
+    {
+      key: "reserva",
+      referencingEntitySetName: DATAVERSE.recibos,
+      referencedEntitySetName: DATAVERSE.geral,
+      referencingAttribute: "cr40f_reserva",
+      label: "Recibos.Reserva"
+    },
+    {
+      key: "motorista",
+      referencingEntitySetName: DATAVERSE.recibos,
+      referencedEntitySetName: DATAVERSE.funcionarios,
+      referencingAttribute: "cr40f_motorista",
+      label: "Recibos.Motorista"
+    }
+  ];
+
+  const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
+  const names: Partial<ReceiptLookupNavigationNames> = {};
+  const failures: string[] = [];
+  settled.forEach((result, index) => {
+    const request = requests[index];
+    if (result.status === "fulfilled") {
+      names[request.key] = result.value;
+      return;
+    }
+    failures.push(`${request.label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+  });
+  if (failures.length || !names.reserva || !names.motorista) {
+    throw new Error(`Schema de Recibos incompleto. Falhas: ${failures.join(" | ")}`);
+  }
+  return { reserva: names.reserva, motorista: names.motorista };
 }
 
 async function loadCollisionAttachmentLookupNavigationNamesRemote(): Promise<CollisionAttachmentLookupNavigationNames> {

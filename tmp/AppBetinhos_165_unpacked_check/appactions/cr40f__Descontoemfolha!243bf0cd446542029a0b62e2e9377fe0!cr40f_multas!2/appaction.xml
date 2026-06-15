@@ -1,0 +1,29 @@
+<appaction uniquename="cr40f__Descontoemfolha!243bf0cd446542029a0b62e2e9377fe0!cr40f_multas!2">
+  <buttonlabeltext default="Desconto em folha">
+    <label description="Desconto em folha" languagecode="1046" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cr40f_multas</logicalname>
+  </contextentity>
+  <contextvalue>cr40f_multas</contextvalue>
+  <fonticon>$clientsvg:Fax</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>2</location>
+  <name>Descontoemfolha!243bf0cd446542029a0b62e2e9377fe0</name>
+  <onclickeventjavascriptfunctionname>teste</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>50d5ebb7-9b9c-4ae0-b215-b4c4fb1d90d1</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>100100015.0000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilitytype>0</visibilitytype>
+</appaction>

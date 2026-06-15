@@ -1,0 +1,37 @@
+<appaction uniquename="new__GerarOP!01772d4578314612b129509e0cec6c09!cr40f_ModelDrivenBetinhos!cr40f_composicaodeprecos!1">
+  <appmoduleid>
+    <uniquename>cr40f_ModelDrivenBetinhos</uniquename>
+  </appmoduleid>
+  <buttonlabeltext default="Gerar OP">
+    <label description="Gerar OP" languagecode="1046" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cr40f_composicaodeprecos</logicalname>
+  </contextentity>
+  <contextvalue>cr40f_composicaodeprecos</contextvalue>
+  <fonticon>CreateInvoice</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>1</location>
+  <name>GerarOP!01772d4578314612b129509e0cec6c09</name>
+  <onclickeventjavascriptfunctionname>TriggerFlow</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[{"type":24}]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>6abeb722-6408-f111-8406-7ced8db0fdba</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>1000100027.5000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilityformulacomponentlibraryid>
+    <name>cr40f_modeldrivenbetinhosdefaultcommandlibrary_1739f</name>
+  </visibilityformulacomponentlibraryid>
+  <visibilityformulacomponentname>b2efe00c59314dee83b90fed2d0e7539</visibilityformulacomponentname>
+  <visibilityformulafunctionname>Visible</visibilityformulafunctionname>
+  <visibilitytype>1</visibilitytype>
+</appaction>

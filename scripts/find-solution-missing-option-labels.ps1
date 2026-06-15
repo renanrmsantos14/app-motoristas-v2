@@ -144,7 +144,7 @@ try {
     if (-not (Test-IsOptionNode $option)) { continue }
 
     $entity = Get-NearestEntityLogicalName $option
-    if ($EntityLogicalName -and $entity -and $entity.ToLowerInvariant() -ne $EntityLogicalName.ToLowerInvariant()) {
+    if ($EntityLogicalName -and $EntityLogicalName -ne "*" -and $entity -and $entity.ToLowerInvariant() -ne $EntityLogicalName.ToLowerInvariant()) {
       continue
     }
 
