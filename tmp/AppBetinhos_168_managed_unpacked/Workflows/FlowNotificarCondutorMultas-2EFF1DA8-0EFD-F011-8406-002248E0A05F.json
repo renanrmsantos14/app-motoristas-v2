@@ -1,0 +1,706 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_onedriveforbusiness": {
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_50699"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_de4c0"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "triggerAuthenticationType": "All",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "guids": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "guids"
+              ]
+            }
+          },
+          "metadata": {}
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Sanitize": {
+              "type": "Compose",
+              "inputs": "@replace(replace(replace(triggerBody()?['guids'],'{',''),'}',''),' ','')\r\n"
+            },
+            "GuidsArray": {
+              "type": "Compose",
+              "inputs": "@split(outputs('Sanitize'),',')\r\n",
+              "runAfter": {
+                "Sanitize": [
+                  "SUCCEEDED"
+                ]
+              }
+            },
+            "Apply_to_each_GUID": {
+              "type": "Foreach",
+              "foreach": "@outputs('GuidsArray')",
+              "actions": {
+                "Get_a_row_by_ID_Multa": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_multases",
+                      "recordId": "@items('Apply_to_each_GUID')"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                },
+                "Condition_Mot_Vazio": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@outputs('Get_a_row_by_ID_Multa')?['body/_cr40f_motorista_value']",
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Increment_variable_varNoDriver": {
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "varNoDriver",
+                        "value": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Update_a_row_Multas": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_multases",
+                            "recordId": "@items('Apply_to_each_GUID')",
+                            "item/cr40f_datadeavisoaocondutor": "@utcNow()",
+                            "item/cr40f_status": 202410004
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "UpdateOnlyRecord",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        },
+                        "runAfter": {
+                          "Send_an_email_(V2)": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Download_a_file_or_an_image_Auto": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_multases",
+                            "recordId": "@items('Apply_to_each_GUID')",
+                            "fileImageFieldName": "cr40f_autodainfracao"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "GetEntityFileImageFieldContent",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        },
+                        "runAfter": {
+                          "Compose_PastaMulta": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Condition_auto_1": {
+                        "type": "If",
+                        "expression": {
+                          "and": [
+                            {
+                              "equals": [
+                                "@actions('Download_a_file_or_an_image_Auto').status",
+                                "Succeeded"
+                              ]
+                            }
+                          ]
+                        },
+                        "actions": {
+                          "Compose_Ext1": {
+                            "type": "Compose",
+                            "inputs": "@if(\r\n  startsWith(body('Download_a_file_or_an_image_Auto')?['$content'], 'JVBERi0'),\r\n  'pdf',\r\n  if(\r\n    startsWith(body('Download_a_file_or_an_image_Auto')?['$content'], 'iVBORw0KGgo'),\r\n    'png',\r\n    if(\r\n      startsWith(body('Download_a_file_or_an_image_Auto')?['$content'], '/9j/'),\r\n      'jpg',\r\n      'bin'\r\n    )\r\n  )\r\n)\r\n"
+                          },
+                          "Compose_NomeAuto1": {
+                            "type": "Compose",
+                            "inputs": "@concat('AUTO_1.', outputs('Compose_Ext1'))\r\n",
+                            "runAfter": {
+                              "Compose_Ext1": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Get_file_metadata_por_FolderID": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "id": "@outputs('Get_a_row_by_ID_Motorista')?['body/cr40f_folderid']"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                                "operationId": "GetFileMetadata",
+                                "connectionName": "shared_onedriveforbusiness"
+                              }
+                            },
+                            "runAfter": {
+                              "Compose_NomeAuto1": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Create_file": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "folderPath": "@outputs('Compose_FolderPath_Multa')",
+                                "name": "@outputs('Compose_NomeAuto1')",
+                                "body": "@base64ToBinary(body('Download_a_file_or_an_image_Auto')?['$content'])\r\n"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                                "operationId": "CreateFile",
+                                "connectionName": "shared_onedriveforbusiness"
+                              }
+                            },
+                            "runAfter": {
+                              "Compose_FolderPath_Multa": [
+                                "Succeeded"
+                              ]
+                            },
+                            "runtimeConfiguration": {
+                              "contentTransfer": {
+                                "transferMode": "Chunked"
+                              }
+                            }
+                          },
+                          "Create_share_link": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "id": "@outputs('Create_file')?['body/Id']",
+                                "type": "View",
+                                "scope": "Anonymous"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                                "operationId": "CreateShareLinkV2",
+                                "connectionName": "shared_onedriveforbusiness"
+                              }
+                            },
+                            "runAfter": {
+                              "Create_file": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Compose_FolderPath_Multa": {
+                            "type": "Compose",
+                            "inputs": "@concat(\r\n  outputs('Get_file_metadata_por_FolderID')?['body/Path'],\r\n  '/Multas/',\r\n  outputs('Get_a_row_by_ID_Multa')?['body/cr40f_id_multa']\r\n)\r\n",
+                            "runAfter": {
+                              "Get_file_metadata_por_FolderID": [
+                                "Succeeded"
+                              ]
+                            }
+                          }
+                        },
+                        "else": {
+                          "actions": {}
+                        },
+                        "runAfter": {
+                          "Download_a_file_or_an_image_Auto": [
+                            "Succeeded",
+                            "Failed"
+                          ]
+                        }
+                      },
+                      "Get_a_row_by_ID_Motorista": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_funcionarioses",
+                            "recordId": "@outputs('Get_a_row_by_ID_Multa')?['body/_cr40f_motorista_value']"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "GetItem",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        },
+                        "runAfter": {
+                          "Get_a_row_by_ID_veiculo": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Get_a_row_by_ID_veiculo": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_veiculoses",
+                            "recordId": "@outputs('Get_a_row_by_ID_Multa')?['body/_cr40f_placa_value']"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "GetItem",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        }
+                      },
+                      "Get_a_row_by_ID_Infração": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_infracaodetransitos",
+                            "recordId": "@outputs('Get_a_row_by_ID_Multa')?['body/_cr40f_codigodainfracao_value']"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "GetItem",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        },
+                        "runAfter": {
+                          "Get_a_row_by_ID_Motorista": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Condition_auto_2": {
+                        "type": "If",
+                        "expression": {
+                          "and": [
+                            {
+                              "equals": [
+                                "@actions('Download_a_file_or_an_image_Auto_2').status",
+                                "Succeeded"
+                              ]
+                            }
+                          ]
+                        },
+                        "actions": {
+                          "Compose_Ext2": {
+                            "type": "Compose",
+                            "inputs": "@if(\r\n  startsWith(body('Download_a_file_or_an_image_Auto_2')?['$content'], 'JVBERi0'),\r\n  'pdf',\r\n  if(\r\n    startsWith(body('Download_a_file_or_an_image_Auto_2')?['$content'], 'iVBORw0KGgo'),\r\n    'png',\r\n    if(\r\n      startsWith(body('Download_a_file_or_an_image_Auto_2')?['$content'], '/9j/'),\r\n      'jpg',\r\n      'bin'\r\n    )\r\n  )\r\n)\r\n"
+                          },
+                          "Compose_NomeAuto2": {
+                            "type": "Compose",
+                            "inputs": "@concat('AUTO_2.', outputs('Compose_Ext2'))\r\n",
+                            "runAfter": {
+                              "Compose_Ext2": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Get_file_metadata_por_FolderID_2": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "id": "@outputs('Get_a_row_by_ID_Motorista')?['body/cr40f_folderid']"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                                "operationId": "GetFileMetadata",
+                                "connectionName": "shared_onedriveforbusiness"
+                              }
+                            },
+                            "runAfter": {
+                              "Compose_NomeAuto2": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Compose_FolderPath_Multa_2": {
+                            "type": "Compose",
+                            "inputs": "@concat(\r\n  outputs('Get_file_metadata_por_FolderID_2')?['body/Path'],\r\n  '/Multas/',\r\n  outputs('Get_a_row_by_ID_Multa')?['body/cr40f_id_multa']\r\n)\r\n",
+                            "runAfter": {
+                              "Get_file_metadata_por_FolderID_2": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Create_file_2": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "folderPath": "@outputs('Compose_FolderPath_Multa')",
+                                "name": "@outputs('Compose_NomeAuto2')",
+                                "body": "@base64ToBinary(body('Download_a_file_or_an_image_Auto_2')?['$content'])\r\n"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                                "operationId": "CreateFile",
+                                "connectionName": "shared_onedriveforbusiness"
+                              }
+                            },
+                            "runAfter": {
+                              "Compose_FolderPath_Multa_2": [
+                                "Succeeded"
+                              ]
+                            },
+                            "runtimeConfiguration": {
+                              "contentTransfer": {
+                                "transferMode": "Chunked"
+                              }
+                            }
+                          },
+                          "Create_share_link_2": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "id": "@outputs('Create_file_2')?['body/Id']",
+                                "type": "View",
+                                "scope": "Anonymous"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                                "operationId": "CreateShareLinkV2",
+                                "connectionName": "shared_onedriveforbusiness"
+                              }
+                            },
+                            "runAfter": {
+                              "Create_file_2": [
+                                "Succeeded"
+                              ]
+                            }
+                          }
+                        },
+                        "else": {
+                          "actions": {}
+                        },
+                        "runAfter": {
+                          "Download_a_file_or_an_image_Auto_2": [
+                            "Succeeded",
+                            "Failed"
+                          ]
+                        }
+                      },
+                      "Download_a_file_or_an_image_Auto_2": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_multases",
+                            "recordId": "@items('Apply_to_each_GUID')",
+                            "fileImageFieldName": "cr40f_autodainfracao02"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "GetEntityFileImageFieldContent",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        },
+                        "runAfter": {
+                          "Condition_auto_1": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Send_an_email_(V2)": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "emailMessage/To": "junior@betinhos.com.br;noreply@betinhos.onmicrosoft.com; deborah.keila@betinhos.com.br",
+                            "emailMessage/Subject": "Notificação de Multa para @{outputs('Get_a_row_by_ID_Motorista')?['body/cr40f_nomecompleto']} - @{outputs('Get_a_row_by_ID_Multa')?['body/cr40f_novacoluna']}",
+                            "emailMessage/Body": "<p class=\"editor-paragraph\">Caro Sr. @{outputs('Get_a_row_by_ID_Motorista')?['body/cr40f_nomecompleto']}, bom dia! Espero que esteja bem.<br><br>Encaminho abaixo os detalhes da Notificação de Infração de Trânsito recebida:<br><br><b><strong class=\"editor-text-bold\">Placa do veículo:</strong></b> @{outputs('Get_a_row_by_ID_veiculo')?['body/cr40f_placa']}<br><b><strong class=\"editor-text-bold\">Data da multa:</strong></b> @{formatDateTime(outputs('Get_a_row_by_ID_Multa')?['body/cr40f_dataehorario'], 'dd/MM/yyyy HH:mm')}<br><b><strong class=\"editor-text-bold\">Número da AIT:</strong></b> @{outputs('Get_a_row_by_ID_Multa')?['body/cr40f_novacoluna']}<br><b><strong class=\"editor-text-bold\">Local da multa:</strong></b> @{outputs('Get_a_row_by_ID_Multa')?['body/cr40f_localdainfracao']}<br><b><strong class=\"editor-text-bold\">Motivo:</strong></b> @{outputs('Get_a_row_by_ID_Infração')?['body/cr40f_descricaodainfracao']}<br><b><strong class=\"editor-text-bold\">Código da multa:</strong></b> @{outputs('Get_a_row_by_ID_Infração')?['body/cr40f_codigodainfracao']}<br><b><strong class=\"editor-text-bold\">Custo: </strong></b>@{if(\nequals(outputs('Get_a_row_by_ID_Infração')?['body/cr40f_valordamulta'], null),\n'R$ 0,00',\nconcat(\n'R$ ',\nreplace(\nformatNumber(\noutputs('Get_a_row_by_ID_Infração')?['body/cr40f_valordamulta'],\n'#,##0.00'\n),\n'.',\n','\n)\n)\n)}<br><b><strong class=\"editor-text-bold\">Pontos na CNH:</strong></b> @{outputs('Get_a_row_by_ID_Infração')?['body/cr40f_pontosnacnh']}<br><b><strong class=\"editor-text-bold\">ID da Multa:</strong></b> @{outputs('Get_a_row_by_ID_Multa')?['body/cr40f_id_multa']}<br><br>Todos os custos provenientes da falta de indicação do condutor ou da indicação realizada fora do prazo legal, incluindo a penalidade acima mencionada, serão de responsabilidade do <b><strong class=\"editor-text-bold\">condutor</strong></b>.<br><br><b><strong class=\"editor-text-bold\">OBSERVAÇÕES IMPORTANTES</strong></b><br><br>• A assinatura no Termo de Declaração de Responsabilidade por Infração de Trânsito e Outras Avenças deverá ser idêntica à constante na CNH ou Permissão para Dirigir.<br><br>• O condutor declara-se ciente de que a multa será cobrada com agravo, em igual valor, conforme legislação vigente, nas seguintes hipóteses:<br>(i) ausência de identificação do condutor infrator;<br>(ii) formulário preenchido de forma incorreta ou incompleta;<br>(iii) ausência de cópia legível da CNH ou Permissão para Dirigir;<br>(iv) divergência de assinatura;<br>(v) entrega da documentação fora do prazo estipulado;<br>(vi) interposição de recurso sem o devido preenchimento do formulário de indicação.<br><br>• A não indicação do condutor ou a indicação fora do prazo implicará nas sanções previstas no Art. 257, §8º do CTB e na Resolução 151/2003 do CONTRAN, resultando em penalidade de multa (AGRAVO), cujo valor será fixado em duas vezes o valor da multa originária.<br><br>Os documentos (Autos da Infração) estão disponíveis para acesso nos links abaixo:<br><br>@{outputs('Create_share_link')?['body/WebUrl']}<br>@{outputs('Create_share_link_2')?['body/WebUrl']}<br>Atenciosamente,<br>Betinhos Executive Service</p>",
+                            "emailMessage/Importance": "High"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                            "operationId": "SendEmailV2",
+                            "connectionName": "shared_office365"
+                          }
+                        },
+                        "runAfter": {
+                          "Condition_auto_2": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Compose_PastaMulta": {
+                        "type": "Compose",
+                        "inputs": "@concat(\r\n  '/Colaboradores/',\r\n  trim(replace(replace(replace(outputs('Get_a_row_by_ID_Motorista')?['body/cr40f_nomecompleto'],'/',' '),'\\',' '),':',' ')),\r\n  '/Multas/',\r\n  outputs('Get_a_row_by_ID_Multa')?['body/cr40f_id_multa']\r\n)\r\n",
+                        "runAfter": {
+                          "Get_a_row_by_ID_Infração": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Increment_variable_vvarOK": {
+                        "type": "IncrementVariable",
+                        "inputs": {
+                          "name": "varOk",
+                          "value": 1
+                        },
+                        "runAfter": {
+                          "Update_a_row_Multas": [
+                            "Succeeded"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Get_a_row_by_ID_Multa": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "GuidsArray": [
+                  "SUCCEEDED"
+                ]
+              }
+            },
+            "Condition_varOK": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "greater": [
+                      "@variables('varOk')",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Condition_varNoDriver": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "greater": [
+                          "@variables('varNoDriver')",
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Response_207_partial": {
+                      "type": "Response",
+                      "kind": "Http",
+                      "inputs": {
+                        "statusCode": 207,
+                        "headers": {
+                          "Content-Type": "application/json; charset=utf-8"
+                        },
+                        "body": {
+                          "success": false,
+                          "code": "PARTIAL",
+                          "ok": "@variables('varOk')",
+                          "noDriver": "@variables('varNoDriver')"
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Response_200_(tudo_certo)": {
+                        "type": "Response",
+                        "kind": "Http",
+                        "inputs": {
+                          "statusCode": 200,
+                          "headers": {
+                            "Content-Type": "application/json; charset=utf-8"
+                          },
+                          "body": {
+                            "success": true,
+                            "code": "OK",
+                            "ok": "@variables('varOk')",
+                            "noDriver": "@variables('varNoDriver')"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Response_400_(nenhum_ok)": {
+                    "type": "Response",
+                    "kind": "Http",
+                    "inputs": {
+                      "statusCode": 400,
+                      "headers": {
+                        "Content-Type": "application/json; charset=utf-8"
+                      },
+                      "body": {
+                        "success": false,
+                        "code": "Fail",
+                        "ok": "@variables('varOk')",
+                        "noDriver": "@variables('varNoDriver')"
+                      }
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Apply_to_each_GUID": [
+                  "SUCCEEDED"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_varFolderIdArquivos": [
+              "SUCCEEDED"
+            ]
+          }
+        },
+        "Initialize_variable_varOk": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varOk",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          },
+          "runAfter": {}
+        },
+        "Initialize_variable_varNoDriver": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varNoDriver",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_varOk": [
+              "SUCCEEDED"
+            ]
+          }
+        },
+        "Initialize_variable_varFolderIdArquivos": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varFolderIdArquivos",
+                "type": "string",
+                "value": "b!W2Pu6XLmSkySLLl028lHOKLX_53M8pxFre3ZVypq9hBrVjO-OqeESbI2YmRrsub5"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_varNoDriver": [
+              "SUCCEEDED"
+            ]
+          }
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)_1": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; financeiro@betinhos.com..br; junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLUXO -  Notificar Condutor Multas",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">Ocorreu um erro ao Notificar Condutor Multas.</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365"
+                }
+              }
+            },
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "400"
+                }
+              },
+              "runAfter": {
+                "Send_an_email_(V2)_1": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TIMEDOUT",
+              "SKIPPED",
+              "FAILED"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

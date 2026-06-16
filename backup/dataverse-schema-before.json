@@ -1,0 +1,281 @@
+﻿{
+    "generatedAt":  "2026-06-16T11:00:02.0556757-03:00",
+    "environment":  "DEV assumed from repo default https://org23b93544.crm2.dynamics.com/ and MCP search scope",
+    "sources":  [
+                    "Dataverse MCP describe tables/cr40f_anexorecebimento",
+                    "Dataverse MCP describe tables/cr40f_anexocolisao",
+                    "Dataverse MCP describe tables/cr40f_colisao",
+                    "tmp/AppBetinhos_165_unpacked_check/customizations.xml"
+                ],
+    "tables":  {
+                   "cr40f_anexorecebimento":  {
+                                                  "displayName":  "Anexo de Recebimento",
+                                                  "logicalName":  "cr40f_anexorecebimento",
+                                                  "entitySetName":  "cr40f_anexorecebimentos",
+                                                  "primaryId":  "cr40f_anexorecebimentoid",
+                                                  "primaryName":  "cr40f_name",
+                                                  "columns":  [
+                                                                  {
+                                                                      "name":  "cr40f_dataenvio",
+                                                                      "type":  "datetime",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "name":  "cr40f_enviadopor",
+                                                                      "relatedTable":  "cr40f_funcionarios",
+                                                                      "type":  "lookup",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "maxLength":  100,
+                                                                      "name":  "cr40f_name",
+                                                                      "type":  "string",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "maxLength":  1000,
+                                                                      "name":  "cr40f_nome",
+                                                                      "type":  "string",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "maxLength":  1000,
+                                                                      "name":  "cr40f_nomearquivo",
+                                                                      "type":  "string",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "name":  "cr40f_observacao",
+                                                                      "type":  "multiline text",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "name":  "cr40f_ordem",
+                                                                      "type":  "integer",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "name":  "cr40f_reserva",
+                                                                      "relatedTable":  "cr40f_reservadeveculos",
+                                                                      "type":  "lookup",
+                                                                      "required":  true
+                                                                  },
+                                                                  {
+                                                                      "maxLength":  1000,
+                                                                      "name":  "cr40f_sharelink",
+                                                                      "type":  "url",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "name":  "cr40f_status",
+                                                                      "type":  "choice",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "name":  "cr40f_tipo",
+                                                                      "type":  "choice",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "name":  "cr40f_tipomidia",
+                                                                      "type":  "choice",
+                                                                      "required":  false
+                                                                  },
+                                                                  {
+                                                                      "maxLength":  1000,
+                                                                      "name":  "cr40f_urlsharepoint",
+                                                                      "type":  "url",
+                                                                      "required":  false
+                                                                  }
+                                                              ]
+                                              },
+                   "cr40f_anexocolisao":  {
+                                              "displayName":  "Anexo de Colisão",
+                                              "logicalName":  "cr40f_anexocolisao",
+                                              "entitySetName":  "cr40f_anexocolisaos",
+                                              "primaryId":  "cr40f_anexocolisaoid",
+                                              "primaryName":  "cr40f_name",
+                                              "columns":  [
+                                                              {
+                                                                  "name":  "cr40f_colisao",
+                                                                  "relatedTable":  "cr40f_colisao",
+                                                                  "type":  "lookup",
+                                                                  "required":  true
+                                                              },
+                                                              {
+                                                                  "name":  "cr40f_dataenvio",
+                                                                  "type":  "datetime",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "name":  "cr40f_enviadopor",
+                                                                  "relatedTable":  "cr40f_funcionarios",
+                                                                  "type":  "lookup",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "maxLength":  100,
+                                                                  "name":  "cr40f_name",
+                                                                  "type":  "string",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "maxLength":  1000,
+                                                                  "name":  "cr40f_nome",
+                                                                  "type":  "string",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "maxLength":  1000,
+                                                                  "name":  "cr40f_nomearquivo",
+                                                                  "type":  "string",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "name":  "cr40f_ordem",
+                                                                  "type":  "integer",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "maxLength":  1000,
+                                                                  "name":  "cr40f_sharelink",
+                                                                  "type":  "url",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "name":  "cr40f_status",
+                                                                  "type":  "choice",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "name":  "cr40f_tipo",
+                                                                  "type":  "choice",
+                                                                  "required":  false
+                                                              },
+                                                              {
+                                                                  "name":  "cr40f_tipomidia",
+                                                                  "type":  "choice",
+                                                                  "required":  true
+                                                              },
+                                                              {
+                                                                  "maxLength":  1000,
+                                                                  "name":  "cr40f_urlsharepoint",
+                                                                  "type":  "url",
+                                                                  "required":  false
+                                                              }
+                                                          ]
+                                          },
+                   "cr40f_colisao":  {
+                                         "displayName":  "Colisão",
+                                         "logicalName":  "cr40f_colisao",
+                                         "entitySetName":  "cr40f_colisaos",
+                                         "primaryId":  "cr40f_colisaoid",
+                                         "primaryName":  "cr40f_name",
+                                         "columns":  [
+                                                         {
+                                                             "name":  "cr40f_datahora",
+                                                             "type":  "datetime",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  4000,
+                                                             "name":  "cr40f_descricao",
+                                                             "type":  "text area",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "name":  "cr40f_houveterceiro",
+                                                             "type":  "boolean",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_local",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "name":  "cr40f_motorista",
+                                                             "relatedTable":  "cr40f_funcionarios",
+                                                             "type":  "lookup",
+                                                             "required":  true
+                                                         },
+                                                         {
+                                                             "maxLength":  100,
+                                                             "name":  "cr40f_name",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_nome",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "name":  "cr40f_statusanexo",
+                                                             "type":  "choice",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "name":  "cr40f_statusoperacional",
+                                                             "type":  "choice",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_terceirodocumento",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_terceironome",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  4000,
+                                                             "name":  "cr40f_terceiroobservacao",
+                                                             "type":  "text area",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_terceiroplaca",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_terceiroseguradora",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_terceirotelefone",
+                                                             "type":  "phone",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "maxLength":  1000,
+                                                             "name":  "cr40f_terceiroveiculo",
+                                                             "type":  "string",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "name":  "cr40f_tipoocorrencia",
+                                                             "type":  "choice",
+                                                             "required":  false
+                                                         },
+                                                         {
+                                                             "name":  "cr40f_veiculo",
+                                                             "relatedTable":  "cr40f_veiculos",
+                                                             "type":  "lookup",
+                                                             "required":  true
+                                                         }
+                                                     ]
+                                     }
+               }
+}

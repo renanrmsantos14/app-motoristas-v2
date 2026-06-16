@@ -1,0 +1,235 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_onedriveforbusiness-1": {
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_1f480"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365-1": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "triggerAuthenticationType": "All",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "curriculoId": {
+                  "type": "string"
+                },
+                "expenseId": {
+                  "type": "string"
+                },
+                "externalId": {
+                  "type": "string"
+                },
+                "fileName": {
+                  "type": "string"
+                },
+                "mimeType": {
+                  "type": "string"
+                },
+                "fileSize": {
+                  "type": "number"
+                },
+                "base64": {
+                  "type": "string"
+                },
+                "candidateName": {
+                  "type": "string"
+                },
+                "candidateEmail": {
+                  "type": "string"
+                },
+                "cargoInteresse": {
+                  "type": "string"
+                },
+                "indicadoPor": {
+                  "type": "string"
+                },
+                "uploadedBy": {
+                  "type": "string"
+                },
+                "uploadedAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "curriculoId",
+                "fileName",
+                "base64",
+                "candidateName"
+              ]
+            }
+          },
+          "metadata": {}
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "NomeArquivoSeguro": {
+              "type": "Compose",
+              "inputs": "@concat(\r\n  outputs('Compose_NomePessoaSeguro'),\r\n  ' - ',\r\n  replace(\r\n    replace(\r\n      replace(\r\n        replace(triggerBody()?['fileName'], '/', '-'),\r\n        '\\',\r\n        '-'\r\n      ),\r\n      ':',\r\n      '-'\r\n    ),\r\n    '#',\r\n    '-'\r\n  )\r\n)",
+              "runAfter": {
+                "Compose_NomePessoaSeguro": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "PastaDestino": {
+              "type": "Compose",
+              "inputs": "@concat('/Currículos/', trim(triggerBody()?['candidateName']))",
+              "runAfter": {
+                "NomeArquivoSeguro": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Create_file": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "folderPath": "@outputs('PastaDestino')",
+                  "name": "@outputs('NomeArquivoSeguro')",
+                  "body": "@base64ToBinary(triggerBody()?['base64'])"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                  "operationId": "CreateFile",
+                  "connectionName": "shared_onedriveforbusiness-1"
+                }
+              },
+              "runAfter": {
+                "PastaDestino": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Create_share_link": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "id": "@outputs('Create_file')?['body/Id']",
+                  "type": "View",
+                  "scope": "Organization"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                  "operationId": "CreateShareLinkV2",
+                  "connectionName": "shared_onedriveforbusiness-1"
+                }
+              },
+              "runAfter": {
+                "Create_file": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Response": {
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "webUrl": "@{outputs('Create_share_link')?['body/WebUrl']}",
+                  "driveItemId": "@{outputs('Create_file')?['body/Id']}",
+                  "fileName": "@{outputs('Create_file')?['body/Name']}",
+                  "size": "@{triggerBody()?['fileSize']}",
+                  "uploadedAt": "@{utcNow()}",
+                  "uploadedBy": "@{triggerBody()?['uploadedBy']}",
+                  "previewDataUrl": "@{concat('data:', triggerBody()?['mimeType'], ';base64,', triggerBody()?['base64'])}"
+                }
+              },
+              "runAfter": {
+                "Create_share_link": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Compose_NomePessoaSeguro": {
+              "type": "Compose",
+              "inputs": "@trim(replace(replace(replace(replace(replace(replace(coalesce(triggerBody()?['candidateName'], triggerBody()?['fileName'], 'Sem nome'), '/', '-'), '\\', '-'), ':', '-'), '*', '-'), '?', '-'), '#', '-'))"
+            }
+          },
+          "runAfter": {}
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com;junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLOW - Flow Salvar Anexo Currículo - Onedrive",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Flow Salvar Anexo Currículo - Onedrive</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365-1"
+                }
+              }
+            },
+            "Terminate": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              },
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Failed"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

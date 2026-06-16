@@ -1,0 +1,933 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365-1": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_de4c0"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_wordonlinebusiness": {
+        "api": {
+          "name": "shared_wordonlinebusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedwordonlinebusiness_2cd88"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_onedriveforbusiness": {
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_1f480"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "cr40f_pagantes",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr40f_statusdorecibo",
+              "subscriptionRequest/filterexpression": "cr40f_statusdorecibo eq 202410000 or cr40f_statusdorecibo eq 202410002"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          }
+        }
+      },
+      "actions": {
+        "Scope_erro": {
+          "type": "Scope",
+          "actions": {
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "401",
+                  "message": "Fluxo Falhou"
+                }
+              },
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLUXO - Fluxo Enviar Recibo Automático",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">O Fluxo Enviar Recibo Automático falhou.</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "High"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365-1"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Failed",
+              "TimedOut",
+              "Skipped"
+            ]
+          }
+        },
+        "Initialize_variable_Array_OS": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Array OS",
+                "type": "array",
+                "value": []
+              }
+            ]
+          },
+          "runAfter": {}
+        },
+        "Initialize_variable_Array_Passageiros": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Array Passageiros",
+                "type": "array",
+                "value": []
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_Array_OS": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Initialize_variable_Array_Trajetos": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Array Trajetos",
+                "type": "array",
+                "value": []
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_Array_Passageiros": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Initialize_variable_varCaminhoRecibo": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varBodyPopulate",
+                "type": "object"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_Array_Trajetos": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_a_row_by_ID_PAG": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_paganteses",
+                  "recordId": "@triggerOutputs()?['body/cr40f_pagantesid']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              }
+            },
+            "Condition_é_pra_gerar": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@outputs('Get_a_row_by_ID_PAG')?['body/cr40f_statusdorecibo']",
+                      202410000
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Scope_Processo": {
+                  "type": "Scope",
+                  "actions": {
+                    "Get_a_row_by_ID_BD": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_bancodedadoses",
+                          "recordId": "@outputs('Get_a_row_by_ID_PAG')?['body/_cr40f_bancodedados_value']"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "GetItem",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      }
+                    },
+                    "Get_a_row_by_ID_OP": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_financeiros",
+                          "recordId": "@outputs('Get_a_row_by_ID_PAG')?['body/_cr40f_financeiro_value']"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "GetItem",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "Get_a_row_by_ID_BD": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Get_a_row_by_ID_Cliente": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_clientes1s",
+                          "recordId": "@outputs('Get_a_row_by_ID_BD')?['body/_cr40f_cliente_value']"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "GetItem",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "Get_a_row_by_ID_OP": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "List_rows_geral_filtrado": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_reservadeveculoses",
+                          "$filter": "_cr40f_financeiro_value eq '@{outputs('Get_a_row_by_ID_OP')?['body/cr40f_financeiroid']}'"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "ListRecords",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "Get_a_row_by_ID_Cliente": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "For_each": {
+                      "type": "Foreach",
+                      "foreach": "@outputs('List_rows_geral_filtrado')?['body/value']",
+                      "actions": {
+                        "List_rows_Serviços_por_Passageiro": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_servicosporpassageiros",
+                              "$filter": "_cr40f_geral_value eq \n@{items('For_each')?['cr40f_reservadeveculosid']}"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "operationId": "ListRecords",
+                              "connectionName": "shared_commondataserviceforapps"
+                            }
+                          }
+                        },
+                        "Condition_serviços_por_passageirop_tem_itens": {
+                          "type": "If",
+                          "expression": {
+                            "and": [
+                              {
+                                "greater": [
+                                  "@length(outputs('List_rows_Serviços_por_Passageiro')?['body/value'])",
+                                  0
+                                ]
+                              }
+                            ]
+                          },
+                          "actions": {
+                            "For_each_1": {
+                              "type": "Foreach",
+                              "foreach": "@outputs('List_rows_Serviços_por_Passageiro')?['body/value']",
+                              "actions": {
+                                "Condition_repetido": {
+                                  "type": "If",
+                                  "expression": {
+                                    "and": [
+                                      {
+                                        "not": {
+                                          "equals": [
+                                            "@outputs('NomePassageiro')",
+                                            ""
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "equals": [
+                                          "@contains(variables('Array Passageiros'), outputs('NomePassageiro'))\r\n",
+                                          false
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "actions": {
+                                    "Append_to_array_variable_Passageiros": {
+                                      "type": "AppendToArrayVariable",
+                                      "inputs": {
+                                        "name": "Array Passageiros",
+                                        "value": "@outputs('NomePassageiro')"
+                                      }
+                                    }
+                                  },
+                                  "else": {
+                                    "actions": {}
+                                  },
+                                  "runAfter": {
+                                    "NomePassageiro": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                },
+                                "NomePassageiro": {
+                                  "type": "Compose",
+                                  "inputs": "@trim(items('For_each_1')?['_cr40f_bancodedados_value@OData.Community.Display.V1.FormattedValue'])\r\n"
+                                }
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {
+                              "Compose_—_ArrayPassageirosDoServico": {
+                                "type": "Compose",
+                                "inputs": "@createArray(\r\n  items('For_each')?['_cr40f_passageiro1_value@OData.Community.Display.V1.FormattedValue'],\r\n  items('For_each')?['_cr40f_passageiro2_value@OData.Community.Display.V1.FormattedValue'],\r\n  items('For_each')?['_cr40f_passageiro3_value@OData.Community.Display.V1.FormattedValue'],\r\n  items('For_each')?['_cr40f_passageiro4_value@OData.Community.Display.V1.FormattedValue']\r\n)\r\n"
+                              },
+                              "Filter_array_—_PassageirosDoServico_Limpos": {
+                                "type": "Query",
+                                "inputs": {
+                                  "from": "@outputs('Compose_—_ArrayPassageirosDoServico')",
+                                  "where": "@and(\r\n  not(equals(item(), null)),\r\n  greater(length(trim(string(item()))), 0)\r\n)\r\n"
+                                },
+                                "runAfter": {
+                                  "Compose_—_ArrayPassageirosDoServico": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              },
+                              "Apply_to_each_—_For_each_PassageiroDoServico": {
+                                "type": "Foreach",
+                                "foreach": "@body('Filter_array_—_PassageirosDoServico_Limpos')",
+                                "actions": {
+                                  "Compose_—_NomePassageiro": {
+                                    "type": "Compose",
+                                    "inputs": "@item()\r\n"
+                                  },
+                                  "Condition_repetido_1": {
+                                    "type": "If",
+                                    "expression": {
+                                      "and": [
+                                        {
+                                          "not": {
+                                            "equals": [
+                                              "@outputs('Compose_—_NomePassageiro')",
+                                              ""
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "equals": [
+                                            "@contains(variables('Array Passageiros'), outputs('Compose_—_NomePassageiro'))",
+                                            false
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "actions": {
+                                      "Append_to_array_variable_Passageiros_1": {
+                                        "type": "AppendToArrayVariable",
+                                        "inputs": {
+                                          "name": "Array Passageiros",
+                                          "value": "@outputs('Compose_—_NomePassageiro')"
+                                        }
+                                      }
+                                    },
+                                    "else": {
+                                      "actions": {}
+                                    },
+                                    "runAfter": {
+                                      "Compose_—_NomePassageiro": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "runAfter": {
+                                  "Filter_array_—_PassageirosDoServico_Limpos": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "runAfter": {
+                            "Condition_repetido_TRAJETO": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "Condition_repetido_TRAJETO": {
+                          "type": "If",
+                          "expression": {
+                            "and": [
+                              {
+                                "not": {
+                                  "equals": [
+                                    "@items('For_each')?['cr40f_tipodoservico@OData.Community.Display.V1.FormattedValue']",
+                                    ""
+                                  ]
+                                }
+                              },
+                              {
+                                "equals": [
+                                  "@contains(variables('Array Trajetos'), \r\nitems('For_each')?['cr40f_tipodoservico@OData.Community.Display.V1.FormattedValue'])",
+                                  false
+                                ]
+                              }
+                            ]
+                          },
+                          "actions": {
+                            "Append_to_array_variable_Array_Trajetos": {
+                              "type": "AppendToArrayVariable",
+                              "inputs": {
+                                "name": "Array Trajetos",
+                                "value": "@items('For_each')?['cr40f_tipodoservico@OData.Community.Display.V1.FormattedValue']"
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          },
+                          "runAfter": {
+                            "List_rows_Serviços_por_Passageiro": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "List_rows_geral_filtrado": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Compose_Trajetos": {
+                      "type": "Compose",
+                      "inputs": "@if(\r\n    equals(length(variables('Array Trajetos')),1),\r\n    first(variables('Array Trajetos')),\r\n    if(\r\n        equals(length(variables('Array Trajetos')),2),\r\n        concat(first(variables('Array Trajetos')),' e ',last(variables('Array Trajetos'))),\r\n        concat(\r\n            join(\r\n                take(\r\n                    variables('Array Trajetos'),\r\n                    sub(length(variables('Array Trajetos')),1)\r\n                ),\r\n                ', '\r\n            ),\r\n            ' e ',\r\n            last(variables('Array Trajetos'))\r\n        )\r\n    )\r\n)\r\n",
+                      "runAfter": {
+                        "For_each": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Compose_Passageiros": {
+                      "type": "Compose",
+                      "inputs": "@if(\r\n  equals(length(variables('Array Passageiros')),0),\r\n  '',\r\n  if(\r\n    equals(length(variables('Array Passageiros')),1),\r\n    first(variables('Array Passageiros')),\r\n    if(\r\n      equals(length(variables('Array Passageiros')),2),\r\n      concat(first(variables('Array Passageiros')),' e ',last(variables('Array Passageiros'))),\r\n      concat(\r\n        join(\r\n          take(\r\n            variables('Array Passageiros'),\r\n            sub(length(variables('Array Passageiros')),1)\r\n          ),\r\n          ', '\r\n        ),\r\n        ' e ',\r\n        last(variables('Array Passageiros'))\r\n      )\r\n    )\r\n  )\r\n)\r\n",
+                      "runAfter": {
+                        "Compose_Trajetos": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Select": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@outputs('List_rows_geral_filtrado')?['body/value']",
+                        "select": "@item()?['cr40f_id']"
+                      },
+                      "runAfter": {
+                        "Compose_Passageiros": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Join_IDs_Geral": {
+                      "type": "Join",
+                      "inputs": {
+                        "from": "@body('Select')",
+                        "joinWith": " / "
+                      },
+                      "runAfter": {
+                        "Select": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Select_array_das_OS": {
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@outputs('List_rows_geral_filtrado')?['body/value']",
+                        "select": {
+                          "IDOS": "@item()?['cr40f_id']",
+                          "DataeHoráriodeSaída": "@formatDateTime(\r\n  item()?['cr40f_dataehorriodesada'], 'dd/MM/yyyy hh:mm')",
+                          "Trajeto": "@item()?['cr40f_trajeto']",
+                          "ValorOS": "@concat(\r\n  'R$ ',\r\n  replace(\r\n    formatNumber(\r\n      coalesce(item()?['cr40f_cotao'], 0),\r\n      '#,##0.00'\r\n    ),\r\n    '.',\r\n    ','\r\n  )\r\n)\r\n"
+                        }
+                      },
+                      "runAfter": {
+                        "Join_IDs_Geral": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Switch": {
+                      "type": "Switch",
+                      "expression": "@outputs('Get_a_row_by_ID_Cliente')?['body/cr40f_nomedocliente']",
+                      "default": {
+                        "actions": {
+                          "Set_variable_varBodyPopulate": {
+                            "type": "SetVariable",
+                            "inputs": {
+                              "name": "varBodyPopulate",
+                              "value": "@body('Populate_a_Microsoft_Word_template')"
+                            },
+                            "runAfter": {
+                              "Populate_a_Microsoft_Word_template": [
+                                "Succeeded"
+                              ]
+                            }
+                          },
+                          "Populate_a_Microsoft_Word_template": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "source": "me",
+                                "drive": "b!tXW_UJ49lkKoZ1rZ1Vm3cnOV05T8OAFDkhrHsR6Mahr4EmsPA3hfRKGTqdJtvOXC",
+                                "file": "01ZJNU27QHZARMLEKJNNAY7C5FHFK6ORQ2",
+                                "dynamicFileSchema/312836050": "@{formatDateTime(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datado1servico'], 'dd/MM/yyyy')} - @{formatDateTime(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datadoultimoservico'], 'dd/MM/yyyy')}",
+                                "dynamicFileSchema/1027596855": "R$@{replace(formatNumber(coalesce(outputs('Get_a_row_by_ID_PAG')?['body/cr40f_valor'],0),'#,##0.00'),'.',',')}\n",
+                                "dynamicFileSchema/1260028647": "@outputs('Get_a_row_by_ID_BD')?['body/cr40f_nomedopassageiro']",
+                                "dynamicFileSchema/1609545809": "@outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']",
+                                "dynamicFileSchema/-61951347": "@outputs('Get_a_row_by_ID_Cliente')?['body/cr40f_nomedocliente']",
+                                "dynamicFileSchema/-632090327": "@formatDateTime(utcNow(), 'dd/MM/yyyy')",
+                                "dynamicFileSchema/-389186342": "@outputs('Get_a_row_by_ID_PAG')?['body/cr40f_formadepagamento@OData.Community.Display.V1.FormattedValue']\n",
+                                "dynamicFileSchema/-236478392": "@outputs('Compose_Trajetos')",
+                                "dynamicFileSchema/-818726388": "@outputs('Get_a_row_by_ID_PAG')?['body/new_observacaodorecibo']",
+                                "dynamicFileSchema/-41686245": "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_idfinanceiro']"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness",
+                                "operationId": "CreateFileItem",
+                                "connectionName": "shared_wordonlinebusiness"
+                              }
+                            },
+                            "metadata": {
+                              "01ZJNU27V7AMWJX6BMN5AYKBJOJFJEXC6R": "/Attachments/Recibo Dinâmico Teste.docx",
+                              "01ZJNU27X3MAZ5KZGJYZD377QN2CKWTEOW": "/Recibos/Recibo Template.docx",
+                              "01ZJNU27VNJP6XSW3DTZBZFBVIY6SADI6I": "/Recibos/Recibo Template 2 J&J.docx",
+                              "01ZJNU27QHZARMLEKJNNAY7C5FHFK6ORQ2": "/Recibos/Recibo Template 2 Comum.docx"
+                            }
+                          }
+                        }
+                      },
+                      "cases": {
+                        "Case_J&J": {
+                          "actions": {
+                            "Set_variable_varBodyPopulate_2": {
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "varBodyPopulate",
+                                "value": "@body('Populate_a_Microsoft_Word_template_JJ_1')"
+                              },
+                              "runAfter": {
+                                "Populate_a_Microsoft_Word_template_JJ_1": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Populate_a_Microsoft_Word_template_JJ_1": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "parameters": {
+                                  "source": "me",
+                                  "drive": "b!tXW_UJ49lkKoZ1rZ1Vm3cnOV05T8OAFDkhrHsR6Mahr4EmsPA3hfRKGTqdJtvOXC",
+                                  "file": "01ZJNU27VNJP6XSW3DTZBZFBVIY6SADI6I",
+                                  "dynamicFileSchema/312836050": "@{formatDateTime(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datado1servico'], 'dd/MM/yyyy')} - @{formatDateTime(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datadoultimoservico'], 'dd/MM/yyyy')}",
+                                  "dynamicFileSchema/1027596855": "R$@{replace(formatNumber(coalesce(outputs('Get_a_row_by_ID_PAG')?['body/cr40f_valor'],0),'#,##0.00'),'.',',')}\n",
+                                  "dynamicFileSchema/1260028647": "@outputs('Get_a_row_by_ID_BD')?['body/cr40f_nomedopassageiro']",
+                                  "dynamicFileSchema/1609545809": "@outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']",
+                                  "dynamicFileSchema/-61951347": "@outputs('Get_a_row_by_ID_Cliente')?['body/cr40f_nomedocliente']",
+                                  "dynamicFileSchema/-632090327": "@formatDateTime(utcNow(), 'dd/MM/yyyy')",
+                                  "dynamicFileSchema/-389186342": "@outputs('Get_a_row_by_ID_PAG')?['body/cr40f_formadepagamento@OData.Community.Display.V1.FormattedValue']\n",
+                                  "dynamicFileSchema/-952173044": "@outputs('Compose_Trajetos')",
+                                  "dynamicFileSchema/-818726388": "@outputs('Get_a_row_by_ID_PAG')?['body/new_observacaodorecibo']",
+                                  "dynamicFileSchema/-41686245": "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_idfinanceiro']"
+                                },
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness",
+                                  "operationId": "CreateFileItem",
+                                  "connectionName": "shared_wordonlinebusiness"
+                                }
+                              },
+                              "metadata": {
+                                "01ZJNU27V7AMWJX6BMN5AYKBJOJFJEXC6R": "/Attachments/Recibo Dinâmico Teste.docx",
+                                "01ZJNU27X3MAZ5KZGJYZD377QN2CKWTEOW": "/Recibos/Recibo Template.docx",
+                                "01ZJNU27VNJP6XSW3DTZBZFBVIY6SADI6I": "/Recibos/Recibo Template 2 J&J.docx"
+                              }
+                            }
+                          },
+                          "case": "Johnson&Johnson"
+                        }
+                      },
+                      "runAfter": {
+                        "Select_array_das_OS": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Create_file_1": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "folderPath": "/Recibo temp",
+                          "name": "ReciboTemp - @{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']}.docx",
+                          "body": "@variables('varBodyPopulate')"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                          "operationId": "CreateFile",
+                          "connectionName": "shared_onedriveforbusiness"
+                        }
+                      },
+                      "runAfter": {
+                        "Switch": [
+                          "Succeeded"
+                        ]
+                      },
+                      "runtimeConfiguration": {
+                        "contentTransfer": {
+                          "transferMode": "Chunked"
+                        }
+                      }
+                    },
+                    "Convert_Word_Document_to_PDF": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "source": "me",
+                          "drive": "b!tXW_UJ49lkKoZ1rZ1Vm3cnOV05T8OAFDkhrHsR6Mahr4EmsPA3hfRKGTqdJtvOXC",
+                          "file": "@outputs('Create_file_1')?['body/Path']"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness",
+                          "operationId": "GetFilePDF",
+                          "connectionName": "shared_wordonlinebusiness"
+                        }
+                      },
+                      "runAfter": {
+                        "Create_file_1": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Create_file": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "folderPath": "/Recibos",
+                          "name": "Recibo - @{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']}.pdf",
+                          "body": "@body('Convert_Word_Document_to_PDF')"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                          "operationId": "CreateFile",
+                          "connectionName": "shared_onedriveforbusiness"
+                        }
+                      },
+                      "runAfter": {
+                        "Convert_Word_Document_to_PDF": [
+                          "Succeeded"
+                        ]
+                      },
+                      "runtimeConfiguration": {
+                        "contentTransfer": {
+                          "transferMode": "Chunked"
+                        }
+                      }
+                    },
+                    "Switch_Idioma": {
+                      "type": "Switch",
+                      "expression": "@coalesce(outputs('Get_a_row_by_ID_BD')?['body/_cr40f_idioma_label'], 'Português')\r\n",
+                      "default": {
+                        "actions": {}
+                      },
+                      "cases": {
+                        "Case_Inglês": {
+                          "actions": {
+                            "Send_an_email_(V2)_Inglês": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "parameters": {
+                                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com;financeiro@betinhos.com.br;junior@betinhos.com.br;@{outputs('Get_a_row_by_ID_BD')?['body/cr40f_email']}",
+                                  "emailMessage/Subject": "Invoice - @{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']} | Betinhos Executive Service",
+                                  "emailMessage/Body": "<p class=\"editor-paragraph\">Dear @{outputs('Get_a_row_by_ID_BD')?['body/cr40f_nomedopassageiro']},<br><br>Please find attached the invoice related to the transportation services provided during the period from @{formatDateTime(convertTimeZone(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datado1servico'],'UTC','E. South America Standard Time'),'dd/MM/yyyy HH:mm')} to @{formatDateTime(convertTimeZone(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datadoultimoservico'],'UTC','E. South America Standard Time'),'dd/MM/yyyy HH:mm')}.<br><br>To help us evaluate and improve our services, we invite you to complete our satisfaction survey:<br>https://forms.office.com/r/Bn8aqiTuZf<br><br>We remain at your disposal should you require any further information.<br><br>Thank you for choosing our services.<br><br>Sincerely,<br>Betinhos Executive Service</p><br>",
+                                  "emailMessage/From": "noreply@betinhos.com.br",
+                                  "emailMessage/Attachments": [
+                                    {
+                                      "Name": "Invoice_@{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']}.pdf",
+                                      "ContentBytes": "@body('Convert_Word_Document_to_PDF')"
+                                    }
+                                  ],
+                                  "emailMessage/ReplyTo": "financeiro@betinhos.com.br",
+                                  "emailMessage/Importance": "Normal"
+                                },
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                  "operationId": "SendEmailV2",
+                                  "connectionName": "shared_office365"
+                                }
+                              },
+                              "metadata": {
+                                "operationMetadataId": "aca0ab63-af3c-4b05-ac6f-69ada74a45b0"
+                              }
+                            }
+                          },
+                          "case": "Inglês"
+                        },
+                        "Case_Português": {
+                          "actions": {
+                            "Send_an_email_(V2)_Português": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "parameters": {
+                                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com;financeiro@betinhos.com.br;junior@betinhos.com.br;@{outputs('Get_a_row_by_ID_BD')?['body/cr40f_email']}",
+                                  "emailMessage/Subject": "Recibo - @{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']} | Betinhos Executive Service",
+                                  "emailMessage/Body": "<p class=\"editor-paragraph\">Prezado(a) @{outputs('Get_a_row_by_ID_BD')?['body/cr40f_nomedopassageiro']},<br><br>Em anexo, segue o recibo referente aos serviços de transporte prestados no período de @{formatDateTime(convertTimeZone(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datado1servico'],'UTC','E. South America Standard Time'),'dd/MM/yyyy HH:mm')} - @{formatDateTime(convertTimeZone(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datadoultimoservico'],'UTC','E. South America Standard Time'),'dd/MM/yyyy HH:mm')}.<br><br>Para avaliarmos e aprimorarmos nossos serviços, convidamos você a responder nossa pesquisa de satisfação:<br>https://forms.office.com/r/Bn8aqiTuZf<br><br>Ficamos à disposição para quaisquer esclarecimentos.<br><br>Agradecemos pela preferência.<br><br>Atenciosamente,<br>Betinhos Executive Service</p><br>",
+                                  "emailMessage/From": "noreply@betinhos.com.br",
+                                  "emailMessage/Attachments": [
+                                    {
+                                      "Name": "Recibo_@{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']}.pdf",
+                                      "ContentBytes": "@body('Convert_Word_Document_to_PDF')"
+                                    }
+                                  ],
+                                  "emailMessage/ReplyTo": "financeiro@betinhos.com.br",
+                                  "emailMessage/Importance": "Normal"
+                                },
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                  "operationId": "SendEmailV2",
+                                  "connectionName": "shared_office365"
+                                }
+                              },
+                              "metadata": {
+                                "operationMetadataId": "aca0ab63-af3c-4b05-ac6f-69ada74a45b0"
+                              }
+                            }
+                          },
+                          "case": "Português"
+                        },
+                        "Case_Espanhol": {
+                          "actions": {
+                            "Send_an_email_(V2)_Espanhol": {
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "parameters": {
+                                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com;financeiro@betinhos.com.br;junior@betinhos.com.br;@{outputs('Get_a_row_by_ID_BD')?['body/cr40f_email']}",
+                                  "emailMessage/Subject": "Recibo - @{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']} | Betinhos Executive Service",
+                                  "emailMessage/Body": "<p class=\"editor-paragraph\">Estimado(a) @{outputs('Get_a_row_by_ID_BD')?['body/cr40f_nomedopassageiro']},<br><br>Adjunto encontrará el recibo correspondiente a los servicios de transporte prestados durante el período comprendido entre @{formatDateTime(convertTimeZone(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datado1servico'],'UTC','E. South America Standard Time'),'dd/MM/yyyy HH:mm')} y @{formatDateTime(convertTimeZone(outputs('Get_a_row_by_ID_OP')?['body/cr40f_datadoultimoservico'],'UTC','E. South America Standard Time'),'dd/MM/yyyy HH:mm')}.<br><br>Para evaluar y mejorar nuestros servicios, le invitamos a completar nuestra encuesta de satisfacción:<br>https://forms.office.com/r/Bn8aqiTuZf<br><br>Quedamos a su disposición para cualquier aclaración.<br><br>Gracias por elegir nuestros servicios.<br><br>Atentamente,<br>Betinhos Executive Service</p><br>",
+                                  "emailMessage/From": "noreply@betinhos.com.br",
+                                  "emailMessage/Attachments": [
+                                    {
+                                      "Name": "Recibo_@{outputs('Get_a_row_by_ID_PAG')?['body/cr40f_id']}.pdf",
+                                      "ContentBytes": "@body('Convert_Word_Document_to_PDF')"
+                                    }
+                                  ],
+                                  "emailMessage/ReplyTo": "financeiro@betinhos.com.br",
+                                  "emailMessage/Importance": "Normal"
+                                },
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                  "operationId": "SendEmailV2",
+                                  "connectionName": "shared_office365"
+                                }
+                              },
+                              "metadata": {
+                                "operationMetadataId": "aca0ab63-af3c-4b05-ac6f-69ada74a45b0"
+                              }
+                            }
+                          },
+                          "case": "Espanhol"
+                        }
+                      },
+                      "runAfter": {
+                        "Create_file": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Create_share_link_by_path": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "path": "@outputs('Create_file')?['body/Path']",
+                          "type": "Edit",
+                          "scope": "Anonymous"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                          "operationId": "CreateShareLinkByPathV2",
+                          "connectionName": "shared_onedriveforbusiness"
+                        }
+                      },
+                      "runAfter": {
+                        "Switch_Idioma": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Update_a_row": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_paganteses",
+                          "recordId": "@triggerOutputs()?['body/cr40f_pagantesid']",
+                          "item/cr40f_linkdorecibo": "@outputs('Create_share_link_by_path')?['body/WebUrl']",
+                          "item/cr40f_statusdorecibo": 202410001
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "Create_share_link_by_path": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Delete_file": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "id": "@outputs('Create_file_1')?['body/Id']"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                          "operationId": "DeleteFile",
+                          "connectionName": "shared_onedriveforbusiness"
+                        }
+                      },
+                      "runAfter": {
+                        "Update_a_row": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Terminate": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Get_a_row_by_ID_PAG": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_varCaminhoRecibo": [
+              "Succeeded"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

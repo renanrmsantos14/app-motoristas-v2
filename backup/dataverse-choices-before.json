@@ -1,0 +1,160 @@
+﻿{
+    "generatedAt":  "2026-06-16T11:00:02.0556757-03:00",
+    "sources":  [
+                    "Dataverse MCP describe output used for labels/values because old customizations.xml has some option nodes without labels"
+                ],
+    "choices":  {
+                    "cr40f_anexorecebimento.cr40f_status":  [
+                                                                {
+                                                                    "value":  100000000,
+                                                                    "label":  "Pendente"
+                                                                },
+                                                                {
+                                                                    "value":  100000001,
+                                                                    "label":  "Enviado"
+                                                                },
+                                                                {
+                                                                    "value":  100000002,
+                                                                    "label":  "Falhou"
+                                                                },
+                                                                {
+                                                                    "value":  100000003,
+                                                                    "label":  "Inválido"
+                                                                }
+                                                            ],
+                    "cr40f_anexorecebimento.cr40f_tipo":  [
+                                                              {
+                                                                  "value":  100000000,
+                                                                  "label":  "Comprovante"
+                                                              },
+                                                              {
+                                                                  "value":  100000001,
+                                                                  "label":  "Foto complementar"
+                                                              },
+                                                              {
+                                                                  "value":  100000002,
+                                                                  "label":  "Outros"
+                                                              }
+                                                          ],
+                    "cr40f_anexorecebimento.cr40f_tipomidia":  [
+                                                                   {
+                                                                       "value":  100000000,
+                                                                       "label":  "Foto"
+                                                                   },
+                                                                   {
+                                                                       "value":  100000001,
+                                                                       "label":  "Vídeo"
+                                                                   }
+                                                               ],
+                    "cr40f_anexocolisao.cr40f_status":  [
+                                                            {
+                                                                "value":  100000000,
+                                                                "label":  "Pendente"
+                                                            },
+                                                            {
+                                                                "value":  100000001,
+                                                                "label":  "Enviado"
+                                                            },
+                                                            {
+                                                                "value":  100000002,
+                                                                "label":  "Falhou"
+                                                            },
+                                                            {
+                                                                "value":  100000003,
+                                                                "label":  "Inválido"
+                                                            }
+                                                        ],
+                    "cr40f_anexocolisao.cr40f_tipo":  [
+                                                          {
+                                                              "value":  100000000,
+                                                              "label":  "Cena"
+                                                          },
+                                                          {
+                                                              "value":  100000001,
+                                                              "label":  "Dano Betinhos"
+                                                          },
+                                                          {
+                                                              "value":  100000002,
+                                                              "label":  "Dano terceiro"
+                                                          },
+                                                          {
+                                                              "value":  100000003,
+                                                              "label":  "Documento/placa"
+                                                          },
+                                                          {
+                                                              "value":  100000004,
+                                                              "label":  "Extra"
+                                                          }
+                                                      ],
+                    "cr40f_anexocolisao.cr40f_tipomidia":  [
+                                                               {
+                                                                   "value":  100000000,
+                                                                   "label":  "Foto"
+                                                               },
+                                                               {
+                                                                   "value":  100000001,
+                                                                   "label":  "Vídeo"
+                                                               }
+                                                           ],
+                    "cr40f_colisao.cr40f_statusanexo":  [
+                                                            {
+                                                                "value":  100000000,
+                                                                "label":  "Sem anexo"
+                                                            },
+                                                            {
+                                                                "value":  100000001,
+                                                                "label":  "Enviando"
+                                                            },
+                                                            {
+                                                                "value":  100000002,
+                                                                "label":  "Completo"
+                                                            },
+                                                            {
+                                                                "value":  100000003,
+                                                                "label":  "Falhou"
+                                                            },
+                                                            {
+                                                                "value":  100000004,
+                                                                "label":  "Parcial"
+                                                            }
+                                                        ],
+                    "cr40f_colisao.cr40f_statusoperacional":  [
+                                                                  {
+                                                                      "value":  100000000,
+                                                                      "label":  "Enviado"
+                                                                  },
+                                                                  {
+                                                                      "value":  100000001,
+                                                                      "label":  "Em análise"
+                                                                  },
+                                                                  {
+                                                                      "value":  100000002,
+                                                                      "label":  "Resolvido"
+                                                                  },
+                                                                  {
+                                                                      "value":  100000003,
+                                                                      "label":  "Cancelado"
+                                                                  }
+                                                              ],
+                    "cr40f_colisao.cr40f_tipoocorrencia":  [
+                                                               {
+                                                                   "value":  100000000,
+                                                                   "label":  "Eu bati"
+                                                               },
+                                                               {
+                                                                   "value":  100000001,
+                                                                   "label":  "Bateram em mim"
+                                                               }
+                                                           ],
+                    "cr40f_colisao.cr40f_houveterceiro":  [
+                                                              {
+                                                                  "value":  1,
+                                                                  "label":  "Sim"
+                                                              },
+                                                              {
+                                                                  "value":  0,
+                                                                  "label":  "Não"
+                                                              }
+                                                          ]
+                }
+}

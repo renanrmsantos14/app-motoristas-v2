@@ -1,0 +1,1253 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps-1": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_excelonlinebusiness": {
+        "api": {
+          "name": "shared_excelonlinebusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedexcelonlinebusiness_ecec5"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_b74b5"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "triggerAuthenticationType": "All",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "linhas": {
+                  "type": "array"
+                },
+                "totalLinhas": {
+                  "type": "integer"
+                },
+                "ultimaSyncAntes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "executadoEm": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "d68ff3e9-0afb-4a16-8acb-dcc6f01ee2b5"
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Condition_linhas_mais_que_0": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "greater": [
+                      "@triggerBody()?['totalLinhas']",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Loop_Servicos": {
+                  "type": "Foreach",
+                  "foreach": "@triggerBody()?['linhas']",
+                  "actions": {
+                    "Loop_Create_Pax": {
+                      "type": "Foreach",
+                      "foreach": "@body('Filter_PaxValidos')",
+                      "actions": {
+                        "Condition_TemGUID": {
+                          "type": "If",
+                          "expression": {
+                            "and": [
+                              {
+                                "equals": [
+                                  "@empty(items('Loop_Create_Pax')?['guid'])",
+                                  false
+                                ]
+                              }
+                            ]
+                          },
+                          "actions": {
+                            "Filter_FindGUID": {
+                              "type": "Query",
+                              "inputs": {
+                                "from": "@variables('varGUIDMap')",
+                                "where": "@equals(item()?['guidTenaris'],items('Loop_Create_Pax')?['guid'])"
+                              },
+                              "metadata": {
+                                "operationMetadataId": "8874638d-3116-4181-9013-20dad89ffca0"
+                              }
+                            },
+                            "Condition_FindGUID_Encontrou_e_Link_GUID_Nao_Existe": {
+                              "type": "If",
+                              "expression": {
+                                "and": [
+                                  {
+                                    "greater": [
+                                      "@length(body('Filter_FindGUID'))",
+                                      0
+                                    ]
+                                  },
+                                  {
+                                    "equals": [
+                                      "@length(body('Filter_LinkExistente_GUID'))\r\n",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              },
+                              "actions": {
+                                "Add_a_new_row": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "parameters": {
+                                      "entityName": "cr40f_servicosporpassageiros",
+                                      "item/cr40f_BancodeDados@odata.bind": "/cr40f_bancodedadoses(@{first(body('Filter_FindGUID'))?['guidNativo']})",
+                                      "item/cr40f_Geral@odata.bind": "/cr40f_reservadeveculoses(@{items('Loop_Servicos')?['GUID']})",
+                                      "item/cr40f_ordemdeselecao": "@items('Loop_Create_Pax')?['ordem']"
+                                    },
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "CreateRecord",
+                                      "connectionName": "shared_commondataserviceforapps"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "20d3a482-85d7-4933-9678-3fc38d0af9de"
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {
+                                  "Compose_log_2": {
+                                    "type": "Compose",
+                                    "inputs": "@concat('AVISO: Passageiro GUID ', items('Loop_Create_Pax')?['guid'], ' não encontrado no varGUIDMap para serviço ', items('Loop_Servicos')?['GUID'])"
+                                  }
+                                }
+                              },
+                              "runAfter": {
+                                "Filter_LinkExistente_GUID": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Filter_LinkExistente_GUID": {
+                              "type": "Query",
+                              "inputs": {
+                                "from": "@outputs('List_rows_LinksServicoExistentes')?['body/value']\n",
+                                "where": "@equals(item()?['_cr40f_bancodedados_value'],first(body('Filter_FindGUID'))?['guidNativo'])"
+                              },
+                              "runAfter": {
+                                "Filter_FindGUID": [
+                                  "Succeeded"
+                                ]
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {
+                              "Filter_FindGUID_PorNome": {
+                                "type": "Query",
+                                "inputs": {
+                                  "from": "@variables('varGUIDMap')",
+                                  "where": "@equals(toLower(item()?['guidNome']),toLower(items('Loop_Create_Pax')?['nome']))"
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "96e4c88e-5084-4ae6-87ed-373ec7b776e0"
+                                }
+                              },
+                              "Condition_FindNome_Encontrou_e_Link_Nome_Nao_Existe": {
+                                "type": "If",
+                                "expression": {
+                                  "and": [
+                                    {
+                                      "greater": [
+                                        "@length(body('Filter_FindGUID_PorNome'))",
+                                        0
+                                      ]
+                                    },
+                                    {
+                                      "equals": [
+                                        "@length(body('Filter_LinkExistente_Nome'))\r\n",
+                                        0
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "actions": {
+                                  "Add_a_new_row_2": {
+                                    "type": "OpenApiConnection",
+                                    "inputs": {
+                                      "parameters": {
+                                        "entityName": "cr40f_servicosporpassageiros",
+                                        "item/cr40f_BancodeDados@odata.bind": "/cr40f_bancodedadoses(@{first(body('Filter_FindGUID_PorNome'))?['guidNativo']})",
+                                        "item/cr40f_Geral@odata.bind": "/cr40f_reservadeveculoses(@{items('Loop_Servicos')?['GUID']})",
+                                        "item/cr40f_ordemdeselecao": "@items('Loop_Create_Pax')?['ordem']"
+                                      },
+                                      "host": {
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                        "operationId": "CreateRecord",
+                                        "connectionName": "shared_commondataserviceforapps"
+                                      }
+                                    },
+                                    "metadata": {
+                                      "operationMetadataId": "485699db-4a07-4368-b289-ae2c0d7144c5"
+                                    }
+                                  }
+                                },
+                                "else": {
+                                  "actions": {
+                                    "Compose_log": {
+                                      "type": "Compose",
+                                      "inputs": "@concat('AVISO: Passageiro nome \"', items('Loop_Create_Pax')?['nome'], '\" não encontrado no varGUIDMap para serviço ', items('Loop_Servicos')?['GUID'])"
+                                    }
+                                  }
+                                },
+                                "runAfter": {
+                                  "Filter_LinkExistente_Nome": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              },
+                              "Filter_LinkExistente_Nome": {
+                                "type": "Query",
+                                "inputs": {
+                                  "from": "@outputs('List_rows_LinksServicoExistentes')?['body/value']\n",
+                                  "where": "@equals(item()?['_cr40f_bancodedados_value'],first(body('Filter_FindGUID_PorNome'))?['guidNativo'])"
+                                },
+                                "runAfter": {
+                                  "Filter_FindGUID_PorNome": [
+                                    "Succeeded"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "metadata": {
+                            "operationMetadataId": "75dcdc78-8d47-422d-9514-51051898ccd5"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "List_rows_LinksServicoExistentes": [
+                          "Succeeded"
+                        ]
+                      },
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 50
+                        }
+                      },
+                      "metadata": {
+                        "operationMetadataId": "f6785387-b6f5-4193-af36-85c7b5910120"
+                      }
+                    },
+                    "Compose_PaxAtual": {
+                      "type": "Compose",
+                      "inputs": "@concat(\r\ncoalesce(items('Loop_Servicos')?['Passageiro 1 - Nome'], ''), '|',\r\ncoalesce(items('Loop_Servicos')?['Passageiro 2 - Nome'], ''), '|',\r\ncoalesce(items('Loop_Servicos')?['Passageiro 3 - Nome'], ''), '|',\r\ncoalesce(items('Loop_Servicos')?['Passageiro 4 - Nome'], '')\r\n)"
+                    },
+                    "Compose_PaxSalvo": {
+                      "type": "Compose",
+                      "inputs": "@coalesce(first(outputs('List_rows_Geral')?['body/value'])?['new_snapshotsharepoint'], '')",
+                      "runAfter": {
+                        "List_rows_Geral": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Condition_PaxMudou": {
+                      "type": "If",
+                      "expression": {
+                        "or": [
+                          {
+                            "not": {
+                              "contains": [
+                                "@outputs('Compose_PaxSalvo')",
+                                "@coalesce(items('Loop_Servicos')?['Passageiro 1 - Nome'], '')"
+                              ]
+                            }
+                          },
+                          {
+                            "not": {
+                              "contains": [
+                                "@outputs('Compose_PaxSalvo')",
+                                "@coalesce(items('Loop_Servicos')?['Passageiro 2 - Nome'], '')"
+                              ]
+                            }
+                          },
+                          {
+                            "not": {
+                              "contains": [
+                                "@outputs('Compose_PaxSalvo')",
+                                "@coalesce(items('Loop_Servicos')?['Passageiro 3 - Nome'], '')"
+                              ]
+                            }
+                          },
+                          {
+                            "not": {
+                              "contains": [
+                                "@outputs('Compose_PaxSalvo')",
+                                "@coalesce(items('Loop_Servicos')?['Passageiro 4 - Nome'], '')"
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "List_rows_ServicosPax": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_servicosporpassageiros",
+                              "$select": "cr40f_servicosporpassageiroid",
+                              "$filter": "_cr40f_geral_value eq @{items('Loop_Servicos')?['GUID']}"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "operationId": "ListRecords",
+                              "connectionName": "shared_commondataserviceforapps"
+                            }
+                          },
+                          "metadata": {
+                            "operationMetadataId": "218c414a-6874-4a1b-ba67-eef2a6a83ff2"
+                          }
+                        },
+                        "Loop_Delete_Pax": {
+                          "type": "Foreach",
+                          "foreach": "@outputs('List_rows_ServicosPax')?['body/value']",
+                          "actions": {
+                            "Condition_nao_vazio": {
+                              "type": "If",
+                              "expression": {
+                                "and": [
+                                  {
+                                    "equals": [
+                                      "@empty(items('Loop_Delete_Pax')?['cr40f_servicosporpassageiroid'])",
+                                      false
+                                    ]
+                                  }
+                                ]
+                              },
+                              "actions": {
+                                "Delete_a_row": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "parameters": {
+                                      "entityName": "cr40f_servicosporpassageiros",
+                                      "recordId": "@items('Loop_Delete_Pax')?['cr40f_servicosporpassageiroid']"
+                                    },
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "DeleteRecord",
+                                      "connectionName": "shared_commondataserviceforapps"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "c3c7d8d3-c9a3-44ea-841e-26120848ee3c"
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {}
+                              },
+                              "metadata": {
+                                "operationMetadataId": "97b7f0fd-acb6-460d-ad8b-b8d5db43d4ff"
+                              }
+                            }
+                          },
+                          "runAfter": {
+                            "List_rows_ServicosPax": [
+                              "Succeeded"
+                            ]
+                          },
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 50
+                            }
+                          },
+                          "metadata": {
+                            "operationMetadataId": "13f29246-224e-4957-b542-bb209a180976"
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Compose_PaxSalvo": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "List_rows_Geral": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_reservadeveculoses",
+                          "$filter": "cr40f_reservadeveculosid eq @{items('Loop_Servicos')?['GUID']}",
+                          "$top": 1
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "ListRecords",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "Compose_PaxAtual": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "c49ad4f7-6ac9-4278-a910-999396607319"
+                      }
+                    },
+                    "Upsert_Geral": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_reservadeveculoses",
+                          "recordId": "@items('Loop_Servicos')?['GUID']",
+                          "item/new_categoriadoitem": 100000000,
+                          "item/cr40f_Cliente@odata.bind": "@concat('/cr40f_clientes1s(', coalesce(first(body('Filter_array_Tenaris'))?['cr40f_clientes1id'], null), ')')",
+                          "item/cr40f_cr": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_cr'),first(body('List_rows_Geral')?['value'])?['cr40f_cr'],items('Loop_Servicos')?['CR'])",
+                          "item/cr40f_dataehorriodesada": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_dataehorriodesada'),first(body('List_rows_Geral')?['value'])?['cr40f_dataehorriodesada'],items('Loop_Servicos')?['Data e Horário de Saída'])",
+                          "item/cr40f_destino": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_destino'),first(body('List_rows_Geral')?['value'])?['cr40f_destino'],items('Loop_Servicos')?['Endereço de Destino'])",
+                          "item/cr40f_endereodesada": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_endereodesada'),first(body('List_rows_Geral')?['value'])?['cr40f_endereodesada'],items('Loop_Servicos')?['Endereço de Saída'])",
+                          "item/cr40f_email": "@items('Loop_Servicos')?['Passageiro 1 - Email']",
+                          "item/cr40f_idtenaris": "@items('Loop_Servicos')?['IDPrincipal']",
+                          "item/cr40f_obsdeoperao": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_observaointerna'),first(body('List_rows_Geral')?['value'])?['cr40f_observaointerna'],outputs('Compose_Observacao'))",
+                          "item/cr40f_passageirosetelefonedecontato": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_passageirosetelefonedecontato'),first(body('List_rows_Geral')?['value'])?['cr40f_passageirosetelefonedecontato'],items('Loop_Servicos')?['Passageiros e Telefone de Contato'])",
+                          "item/cr40f_horrioprevistoderetorno": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_horrioprevistoderetorno'),first(body('List_rows_Geral')?['value'])?['cr40f_horrioprevistoderetorno'],if(equals(items('Loop_Servicos')?['Data de Retorno'],''),null,items('Loop_Servicos')?['Data de Retorno']))",
+                          "item/new_snapshotsharepoint": "{\"cr40f_destino\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['Endereço de Destino']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_endereodesada\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['Endereço de Saída']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_dataehorriodesada\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['Data e Horário de Saída']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_observaointerna\":\"@{replace(replace(replace(replace(replace(string(outputs('Compose_Observacao')), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_horrioprevistoderetorno\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['Data de Retorno']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_status\":\"@{replace(replace(replace(replace(replace(string(outputs('Compose_Status')), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_trajeto\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['Trajeto']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_cr\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['CR']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_passageirosetelefonedecontato\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['Passageiros e Telefone de Contato']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\",\"cr40f_idtenaris\":\"@{replace(replace(replace(replace(replace(string(items('Loop_Servicos')?['IDPrincipal']), '\\', '\\\\'), '\\\"', '\\\\\\\"'), decodeUriComponent('%0D'), '\\r'), decodeUriComponent('%0A'), '\\n'), decodeUriComponent('%09'), '\\t')}\"}\n",
+                          "item/cr40f_Solicitante@odata.bind": "@if(\r\n    empty(body('Filter_array_Solicitante_First')), \r\n    null, \r\n    concat('/cr40f_bancodedadoses(', first(body('Filter_array_Solicitante_First'))?['guidNativo'], ')')\r\n)",
+                          "item/cr40f_statusdefaturamento": 202410008,
+                          "item/cr40f_status": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_status'),first(body('List_rows_Geral')?['value'])?['cr40f_status'],outputs('Compose_Status'))",
+                          "item/cr40f_tipodeveiculo": "@if(\r\n    contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'], ''), 'cr40f_tipodeveiculo'),\r\n    first(body('List_rows_Geral')?['value'])?['cr40f_tipodeveiculo'],\r\n    outputs('Compose_Tipo_Veiculo')\r\n)",
+                          "item/cr40f_trajeto": "@if(contains(coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'],''),'cr40f_trajeto'),first(body('List_rows_Geral')?['value'])?['cr40f_trajeto'],items('Loop_Servicos')?['Trajeto'])"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "UpdateRecord",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "Compose_Tipo_Veiculo": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "16cefe10-222b-41b4-ac0c-8dcd1103fe84"
+                      }
+                    },
+                    "Compose_Tipo_Veiculo": {
+                      "type": "Compose",
+                      "inputs": "@if(\n    equals(outputs('Compose_CategoriaLimpa'), ''),\n    null,\n    if(\n        contains(\n            json('{\"basico\":\"202410000\",\"executivo\":\"202410001\",\"blindado\":\"202410002\",\"van\":\"202410003\",\"van blindado\":\"202410004\",\"spin\":\"202410005\",\"somente motorista\":\"202410006\"}'),\n            outputs('Compose_CategoriaLimpa')\n        ),\n        int(\n            json('{\"basico\":\"202410000\",\"executivo\":\"202410001\",\"blindado\":\"202410002\",\"van\":\"202410003\",\"van blindado\":\"202410004\",\"spin\":\"202410005\",\"somente motorista\":\"202410006\"}')?[outputs('Compose_CategoriaLimpa')]\n        ),\n        null\n    )\n)",
+                      "runAfter": {
+                        "Compose_CategoriaLimpa": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "f09b706f-d32c-4deb-8826-0f3a57473162"
+                      }
+                    },
+                    "Compose_CategoriaLimpa": {
+                      "type": "Compose",
+                      "inputs": "@trim(toLower(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(coalesce(items('Loop_Servicos')?['Categoria de Serviço'], ''), decodeUriComponent('%0D%0A'), ' '), decodeUriComponent('%0A'), ' '), decodeUriComponent('%0D'), ' '), decodeUriComponent('%09'), ' '), decodeUriComponent('%C2%A0'), ' '), decodeUriComponent('%E2%80%8B'), ''), decodeUriComponent('%E2%80%8C'), ''), decodeUriComponent('%E2%80%8D'), ''), decodeUriComponent('%EF%BB%BF'), ''), 'á', 'a'), 'ã', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u')))",
+                      "runAfter": {
+                        "Filter_array_Solicitante_First": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Filter_array_Solicitante_First": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@variables('varGUIDMap')",
+                        "where": "@if(\r\n    empty(body('Filter_PaxValidos')),\r\n    false,\r\n    equals(\r\n        toLower(coalesce(item()?['guidNome'], '')),\r\n        toLower(coalesce(first(body('Filter_PaxValidos'))?['nome'], ''))\r\n    )\r\n)"
+                      },
+                      "runAfter": {
+                        "Filter_PaxValidos": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "24702f24-79fa-4b10-bd24-40d9047e0bfe"
+                      }
+                    },
+                    "Filter_PaxValidos": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('Compose_PaxDoServico')",
+                        "where": "@equals(empty(item()?['nome']),false)"
+                      },
+                      "runAfter": {
+                        "Compose_PaxDoServico": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "06c18b39-3ee2-43b3-98f5-467d7c1f193e"
+                      }
+                    },
+                    "Compose_PaxDoServico": {
+                      "type": "Compose",
+                      "inputs": "@createArray(\r\n  json(concat('{\"guid\":\"', items('Loop_Servicos')?['Passageiro 1 - GUID'], '\",\"nome\":\"', items('Loop_Servicos')?['Passageiro 1 - Nome'], '\",\"ordem\":1}')),\r\n  json(concat('{\"guid\":\"', items('Loop_Servicos')?['Passageiro 2 - GUID'], '\",\"nome\":\"', items('Loop_Servicos')?['Passageiro 2 - Nome'], '\",\"ordem\":2}')),\r\n  json(concat('{\"guid\":\"', items('Loop_Servicos')?['Passageiro 3 - GUID'], '\",\"nome\":\"', items('Loop_Servicos')?['Passageiro 3 - Nome'], '\",\"ordem\":3}')),\r\n  json(concat('{\"guid\":\"', items('Loop_Servicos')?['Passageiro 4 - GUID'], '\",\"nome\":\"', items('Loop_Servicos')?['Passageiro 4 - Nome'], '\",\"ordem\":4}'))\r\n)",
+                      "runAfter": {
+                        "Compose_CamposProtegidos": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "3dbc1b94-7d31-471f-9632-b1d139686daf"
+                      }
+                    },
+                    "Compose_CamposProtegidos": {
+                      "type": "Compose",
+                      "inputs": "@coalesce(first(body('List_rows_Geral')?['value'])?['new_camposprotegidos'], '')",
+                      "runAfter": {
+                        "Compose_Observacao": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "70b03471-e899-4206-92d9-113ea107d5fb"
+                      }
+                    },
+                    "Compose_Observacao": {
+                      "type": "Compose",
+                      "inputs": "@concat(\r\n  coalesce(first(outputs('List_rows_Geral')?['body/value'])?['cr40f_observaointerna'], ''),\r\n  if(\r\n    and(\r\n      not(empty(items('Loop_Servicos')?['Observações'])),\r\n      not(contains(coalesce(first(outputs('List_rows_Geral')?['body/value'])?['cr40f_observaointerna'], ''), 'Obs Tenaris:'))\r\n    ),\r\n    concat(' | Obs Tenaris: ', items('Loop_Servicos')?['Observações']),\r\n    ''\r\n  ),\r\n  if(\r\n    and(\r\n      not(empty(items('Loop_Servicos')?['Motivo da Viagem'])),\r\n      not(contains(coalesce(first(outputs('List_rows_Geral')?['body/value'])?['cr40f_observaointerna'], ''), 'Motivo da Viagem:'))\r\n    ),\r\n    concat(' | Motivo da Viagem: ', items('Loop_Servicos')?['Motivo da Viagem']),\r\n    ''\r\n  )\r\n)",
+                      "runAfter": {
+                        "Compose_Status": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "e882368f-fab0-4a33-861c-d0985356e1e4"
+                      }
+                    },
+                    "Compose_Status": {
+                      "type": "Compose",
+                      "inputs": "@coalesce(json('{\"cancelado\":\"202410002\",\"cancelado com ressalvas\":\"202410010\",\"requer análise\":\"100000001\",\"pré-reserva\":\"202410000\",\"concluído\":\"202410008\",\"solicitado\":\"202410004\",\"confirmado\":\"202410001\",\"programado\":\"202410005\",\"em execução\":\"202410006\"}')?[trim(toLower(coalesce(items('Loop_Servicos')?['Status'], '')))], null)",
+                      "runAfter": {
+                        "Condition_PaxMudou": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "b73dd826-ffe6-4f89-a8f0-5e867a531a8d"
+                      }
+                    },
+                    "List_rows_LinksServicoExistentes": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_servicosporpassageiros",
+                          "$select": "cr40f_servicosporpassageiroid,_cr40f_bancodedados_value,_cr40f_geral_value",
+                          "$filter": "_cr40f_geral_value eq @{items('Loop_Servicos')?['GUID']}"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "ListRecords",
+                          "connectionName": "shared_commondataserviceforapps-1"
+                        }
+                      },
+                      "runAfter": {
+                        "Upsert_Geral": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Loop_UpsertBD": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 7
+                    }
+                  },
+                  "metadata": {
+                    "operationMetadataId": "7d79df99-57ab-43b3-a9ad-5b793d2c1e9f"
+                  }
+                },
+                "Select_Responsável": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@triggerBody()?['linhas']",
+                    "select": {
+                      "guid": "@{item()?['Responsável - GUID']}",
+                      "nome": "@{item()?['Responsável - Nome']}",
+                      "telefone": "",
+                      "email": "@{item()?['Responsável - Email']}",
+                      "departamento": "@{item()?['Responsável - Departamento']}",
+                      "cargo": "@{item()?['Responsável - Cargo']}"
+                    }
+                  },
+                  "runAfter": {
+                    "Filter_array_Tenaris": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "0f252230-153a-43fb-968e-6b8f1efe6288"
+                  }
+                },
+                "Select_Pax_1": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@triggerBody()?['linhas']",
+                    "select": {
+                      "guid": "@{item()?['Passageiro 1 - GUID']}",
+                      "nome": "@{item()?['Passageiro 1 - Nome']}",
+                      "telefone": "@{item()?['Passageiro 1 - Telefone']}",
+                      "email": "@{item()?['Passageiro 1 - Email']}",
+                      "departamento": "@{item()?['Passageiro 1 - Departamento']}",
+                      "cargo": "@{item()?['Passageiro 1 - Cargo']}"
+                    }
+                  },
+                  "runAfter": {
+                    "Select_Responsável": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "ffe6ab62-36bd-4d0a-a9db-ec0e2b311820"
+                  }
+                },
+                "Select_Pax_2": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@triggerBody()?['linhas']",
+                    "select": {
+                      "guid": "@{item()?['Passageiro 2 - GUID']}",
+                      "nome": "@{item()?['Passageiro 2 - Nome']}",
+                      "telefone": "@{item()?['Passageiro 2 - Telefone']}",
+                      "email": "@{item()?['Passageiro 2 - Email']}",
+                      "departamento": "@{item()?['Passageiro 2 - Departamento']}",
+                      "cargo": "@{item()?['Passageiro 2 - Cargo']}"
+                    }
+                  },
+                  "runAfter": {
+                    "Select_Pax_1": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "d3936336-e4ca-4e9d-aab2-de01819bc4d7"
+                  }
+                },
+                "Select_Pax_3": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@triggerBody()?['linhas']",
+                    "select": {
+                      "guid": "@{item()?['Passageiro 3 - GUID']}",
+                      "nome": "@{item()?['Passageiro 3 - Nome']}",
+                      "telefone": "@{item()?['Passageiro 3 - Telefone']}",
+                      "email": "@{item()?['Passageiro 3 - Email']}",
+                      "departamento": "@{item()?['Passageiro 3 - Departamento']}",
+                      "cargo": "@{item()?['Passageiro 3 - Cargo']}"
+                    }
+                  },
+                  "runAfter": {
+                    "Select_Pax_2": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "26cfeadb-4ff8-4aec-a970-e1efcb542aa1"
+                  }
+                },
+                "Select_Pax_4": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@triggerBody()?['linhas']",
+                    "select": {
+                      "guid": "@{item()?['Passageiro 4 - GUID']}",
+                      "nome": "@{item()?['Passageiro 4 - Nome']}",
+                      "telefone": "@{item()?['Passageiro 4 - Telefone']}",
+                      "email": "@{item()?['Passageiro 4 - Email']}",
+                      "departamento": "@{item()?['Passageiro 4 - Departamento']}",
+                      "cargo": "@{item()?['Passageiro 4 - Cargo']}"
+                    }
+                  },
+                  "runAfter": {
+                    "Select_Pax_3": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "b4a3d66a-1467-4fcb-a4ba-b8d755b6a578"
+                  }
+                },
+                "Compose_TodasPessoas": {
+                  "type": "Compose",
+                  "inputs": "@union(body('Select_Responsável'),body('Select_Pax_1'),body('Select_Pax_2'),body('Select_Pax_3'),body('Select_Pax_4'))",
+                  "runAfter": {
+                    "Select_Pax_4": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "9e2f52ef-2f76-43db-8d6c-b7c77b212221"
+                  }
+                },
+                "Loop_Dedup": {
+                  "type": "Foreach",
+                  "foreach": "@body('Filter_SemVazios')",
+                  "actions": {
+                    "Condition_unico": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@or(\r\n  not(contains(variables('varGUIDsVistos'), items('Loop_Dedup')?['guid'])),\r\n  and(\r\n    empty(items('Loop_Dedup')?['guid']),\r\n    not(contains(variables('varNomesVistos'), items('Loop_Dedup')?['nome']))\r\n  )\r\n)",
+                              true
+                            ]
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "Append_to_array_variable_varGUIDsVistos": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "varGUIDsVistos",
+                            "value": "@items('Loop_Dedup')?['guid']"
+                          },
+                          "metadata": {
+                            "operationMetadataId": "20e3d705-80d6-4fcc-b80e-4eddf6593137"
+                          }
+                        },
+                        "Append_to_array_variable_varPessoasUnicas": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "varPessoasUnicas",
+                            "value": {
+                              "guid": "@{items('Loop_Dedup')?['guid']}",
+                              "nome": "@{items('Loop_Dedup')?['nome']}",
+                              "email": "@{items('Loop_Dedup')?['email']}",
+                              "telefone": "@{items('Loop_Dedup')?['telefone']}",
+                              "departamento": "@{items('Loop_Dedup')?['departamento']}",
+                              "cargo": "@{items('Loop_Dedup')?['cargo']}"
+                            }
+                          },
+                          "runAfter": {
+                            "Append_to_array_variable_varNomesVistos": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "c9efdf5d-7ec4-441e-8d8f-28d75e89183d"
+                          }
+                        },
+                        "Append_to_array_variable_varNomesVistos": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "varNomesVistos",
+                            "value": "@toLower(items('Loop_Dedup')?['nome'])"
+                          },
+                          "runAfter": {
+                            "Append_to_array_variable_varGUIDsVistos": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "9d1cbef2-053d-4096-96db-a2f4f1ccb067"
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "metadata": {
+                        "operationMetadataId": "bf514745-c4dd-4006-bf63-aa9a20d37be2"
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "List_rows_BancodeDados_Completo": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "681d90f4-e600-4684-8a7a-4dd82f9e9021"
+                  }
+                },
+                "Loop_UpsertBD": {
+                  "type": "Foreach",
+                  "foreach": "@variables('varPessoasUnicas')",
+                  "actions": {
+                    "Condition_nome_nao_existe_ainda": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@empty(body('Filter_BDLocal'))",
+                              true
+                            ]
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "Append_to_array_variable_varGUIDMap": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "varGUIDMap",
+                            "value": {
+                              "guidTenaris": "@{items('Loop_UpsertBD')?['guid']}",
+                              "guidNativo": "@{outputs('Add_a_new_row_BD_1')?['body/cr40f_bancodedadosid']}",
+                              "guidNome": "@{outputs('Add_a_new_row_BD_1')?['body/cr40f_nomedopassageiro']}"
+                            }
+                          },
+                          "runAfter": {
+                            "Add_a_new_row_BD_1": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "74dde1aa-af47-4658-8cff-7520e8d191cb"
+                          }
+                        },
+                        "Add_a_new_row_BD_1": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_bancodedadoses",
+                              "item/cr40f_idioma": 202410000,
+                              "item/cr40f_nomedopassageiro": "@items('Loop_UpsertBD')?['nome']",
+                              "item/cr40f_status": 202410000,
+                              "item/cr40f_classificacao": 202410000,
+                              "item/cr40f_Cliente@odata.bind": "@concat('/cr40f_clientes1s(', coalesce(first(body('Filter_array_Tenaris'))?['cr40f_clientes1id'], null), ')')",
+                              "item/cr40f_datadecadastro": "@utcNow()",
+                              "item/cr40f_departamento": "@items('Loop_UpsertBD')?['departamento']",
+                              "item/cr40f_email": "@items('Loop_UpsertBD')?['email']",
+                              "item/cr40f_telefone": "@items('Loop_UpsertBD')?['telefone']"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "operationId": "CreateRecord",
+                              "connectionName": "shared_commondataserviceforapps"
+                            }
+                          },
+                          "metadata": {
+                            "operationMetadataId": "b37bf22a-7a53-48eb-8ee9-ac784205d506"
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {
+                          "Update_BD_Existente": {
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "parameters": {
+                                "entityName": "cr40f_bancodedadoses",
+                                "recordId": "@first(body('Filter_BDLocal'))?['cr40f_bancodedadosid']",
+                                "item/cr40f_nomedopassageiro": "@items('Loop_UpsertBD')?['nome']",
+                                "item/cr40f_classificacao": 202410000,
+                                "item/cr40f_Cliente@odata.bind": "@concat('/cr40f_clientes1s(', coalesce(first(body('Filter_array_Tenaris'))?['cr40f_clientes1id'], null), ')')",
+                                "item/cr40f_departamento": "@items('Loop_UpsertBD')?['departamento']",
+                                "item/cr40f_email": "@items('Loop_UpsertBD')?['email']",
+                                "item/cr40f_telefone": "@items('Loop_UpsertBD')?['telefone']"
+                              },
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                "operationId": "UpdateRecord",
+                                "connectionName": "shared_commondataserviceforapps"
+                              }
+                            },
+                            "metadata": {
+                              "operationMetadataId": "62bd849b-8e73-4bf9-80db-9525c2819ce9"
+                            }
+                          },
+                          "Append_to_array_variable_varGUIDMap_2": {
+                            "type": "AppendToArrayVariable",
+                            "inputs": {
+                              "name": "varGUIDMap",
+                              "value": {
+                                "guidTenaris": "@{items('Loop_UpsertBD')?['guid']}",
+                                "guidNativo": "@{outputs('Update_BD_Existente')?['body/cr40f_bancodedadosid']}",
+                                "guidNome": "@{outputs('Update_BD_Existente')?['body/cr40f_nomedopassageiro']}"
+                              }
+                            },
+                            "runAfter": {
+                              "Update_BD_Existente": [
+                                "Succeeded"
+                              ]
+                            },
+                            "metadata": {
+                              "operationMetadataId": "1bf2e9dc-bb33-4088-93b6-595cd00c48f6"
+                            }
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Filter_BDLocal": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "9d405821-956f-4fbb-8f98-e779807b3de8"
+                      }
+                    },
+                    "Filter_BDLocal": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows_BancodeDados_Completo')?['body/value']",
+                        "where": "@equals(\r\n    toLower(item()?['cr40f_nomedopassageiro']),\r\n    toLower(items('Loop_UpsertBD')?['nome'])\r\n  )"
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Loop_Dedup": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  },
+                  "metadata": {
+                    "operationMetadataId": "fb8762f5-3b35-4832-b8f5-304dc5b2364e"
+                  }
+                },
+                "Filter_SemVazios": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@outputs('Compose_TodasPessoas')",
+                    "where": "@or(not(empty(item()?['guid'])),not(empty(item()?['nome'])))"
+                  },
+                  "runAfter": {
+                    "Compose_TodasPessoas": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "6029b09b-6d7e-4044-8849-85a8f8c4a902"
+                  }
+                },
+                "List_rows_Cliente": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_clientes1s"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps-1"
+                    }
+                  }
+                },
+                "Filter_array_Tenaris": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@outputs('List_rows_Cliente')?['body/value']",
+                    "where": "@contains(item()?['cr40f_nomedocliente'],'Tenaris')"
+                  },
+                  "runAfter": {
+                    "List_rows_Cliente": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "List_rows_BancodeDados_Completo": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_bancodedadoses",
+                      "$select": "cr40f_bancodedadosid, cr40f_nomedopassageiro",
+                      "$top": 100000000
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps-1"
+                    }
+                  },
+                  "runAfter": {
+                    "Filter_SemVazios": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Terminate": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    },
+                    "metadata": {
+                      "operationMetadataId": "8b39c835-cc2d-4f32-bd76-5e9bac75c832"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Response_1": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "9c0f9eed-e00d-4354-b5e6-d4b2d7c5fdc0"
+              }
+            },
+            "Response_1": {
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": 202,
+                "body": {
+                  "status": "accepted"
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "0e582ced-37a1-4fb9-b83c-5c1431c44326"
+              }
+            },
+            "Run_script": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "source": "me",
+                  "drive": "b!W2Pu6XLmSkySLLl028lHOKLX_53M8pxFre3ZVypq9hBrVjO-OqeESbI2YmRrsub5",
+                  "file": "01RDHJEPEZTVGKUQDV3VFZ2VBX62K374IL",
+                  "scriptId": "ms-officescript%3A%2F%2Fonedrive_business_itemlink%2F01RDHJEPFJD7CSYZ7WFBBKEDXOASSPPJNB",
+                  "ScriptParameters/status": "@if(equals(result('Condition_linhas_mais_que_0')?[0]?['status'],'Succeeded'),'Concluído','Erro')",
+                  "ScriptParameters/mensagem": "@if(equals(result('Condition_linhas_mais_que_0')?[0]?['status'],'Succeeded'),concat(triggerBody()?['totalLinhas'],' linha(s) processada(s).'),concat('FALHA no processamento. Verifique o histórico do flow. Erro: ',coalesce(string(result('Condition_linhas_mais_que_0')?[0]?['error']?['message']),'desconhecido')))",
+                  "ScriptParameters/dataSync": "@utcNow()"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness",
+                  "operationId": "RunScriptProd",
+                  "connectionName": "shared_excelonlinebusiness"
+                }
+              },
+              "runAfter": {
+                "Delay": [
+                  "Succeeded",
+                  "TimedOut",
+                  "Skipped",
+                  "Failed"
+                ]
+              },
+              "metadata": {
+                "01RDHJEPEZTVGKUQDV3VFZ2VBX62K374IL": "/Documentos de Betinhos Executive Service/Operacional/2024/Query dos Sharepoint.xlsx",
+                "tableId": null,
+                "operationMetadataId": "88bf885a-3ca4-4b64-8a24-1ec2ca5d8134"
+              }
+            },
+            "Scope_1_1": {
+              "type": "Scope",
+              "actions": {
+                "Terminate_2_2": {
+                  "type": "Terminate",
+                  "inputs": {
+                    "runStatus": "Failed"
+                  },
+                  "runAfter": {
+                    "Send_an_email_(V2)_2": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "bdcf0a02-8713-4fb2-8bc5-5ea3e8922739"
+                  }
+                },
+                "Send_an_email_(V2)_2": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "emailMessage/To": "junior@betinhos.com.br;noreply@betinhos.onmicrosoft.com",
+                      "emailMessage/Subject": "ERRO NO FLOW - Novo Sistema Tenaris -> Dataverse",
+                      "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Novo Sistema Tenaris -&gt; Dataverse</p>",
+                      "emailMessage/From": "noreply@betinhos.com.br",
+                      "emailMessage/Importance": "High"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                      "operationId": "SendEmailV2",
+                      "connectionName": "shared_office365"
+                    }
+                  },
+                  "metadata": {
+                    "operationMetadataId": "65c72e14-9bce-42cf-b379-26426ccc332a"
+                  }
+                }
+              },
+              "runAfter": {
+                "Delay": [
+                  "TimedOut",
+                  "Skipped",
+                  "Failed"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "5c8d1934-ae0f-47c5-a52a-38442e368503"
+              }
+            },
+            "Delay": {
+              "type": "Wait",
+              "inputs": {
+                "interval": {
+                  "count": 20,
+                  "unit": "Second"
+                }
+              },
+              "runAfter": {
+                "Condition_linhas_mais_que_0": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_varGUIDMap": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0f8a9c97-3d65-4b3a-a6b0-08fa5539dd3f"
+          }
+        },
+        "Initialize_variable_varGUIDsVistos": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varGUIDsVistos",
+                "type": "array"
+              }
+            ]
+          },
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "6d1f8356-57e0-4dce-9a07-3d2b16fc8c0d"
+          }
+        },
+        "Initialize_variable_varPessoasUnicas": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varPessoasUnicas",
+                "type": "array"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_varNomesVistos": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "c11e0e54-2692-4ba5-933e-cd5b013d3ec8"
+          }
+        },
+        "Initialize_variable_varNomesVistos": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varNomesVistos",
+                "type": "array"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_varGUIDsVistos": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "42c291fd-60fc-4e92-b026-640a50a1f712"
+          }
+        },
+        "Initialize_variable_varGUIDMap": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varGUIDMap",
+                "type": "array"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable_varPessoasUnicas": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0c563b32-5b5d-4cb5-a109-f3bbab4cba80"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

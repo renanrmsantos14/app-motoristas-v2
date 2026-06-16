@@ -1,0 +1,260 @@
+/* new_open_dialog.js - VERSÃO CORRIGIDA PARA SEU CENÁRIO */
+const CONFIG = {
+    TARGET_ENTITY: "cr40f_reservadeveculos",
+    FIELDS: {
+        OPTIONS: "cr40f_new_assistant_options",
+        PENDING: "cr40f_new_assistant_pending"
+    }
+};
+
+// Função principal que será chamada no OnSave
+window.processAssistantOnSave = async function() {
+    console.log("🎯 [ASSISTANT] processAssistantOnSave iniciado");
+    
+    try {
+        // Usar Xrm.Page diretamente (não precisa de executionContext)
+        const formContext = window.Xrm && Xrm.Page ? Xrm.Page : null;
+        
+        if (!formContext) {
+            throw new Error("Form context não disponível");
+        }
+        
+        // 1. Verificar se há dados do assistente
+        const optionsAttr = formContext.getAttribute(CONFIG.FIELDS.OPTIONS);
+        const pendingAttr = formContext.getAttribute(CONFIG.FIELDS.PENDING);
+        
+        if (!optionsAttr || !pendingAttr) {
+            console.error("❌ Campos do assistente não encontrados");
+            throw new Error("Campos do assistente não configurados");
+        }
+        
+        const optionsJson = optionsAttr.getValue();
+        const isPending = pendingAttr.getValue();
+        
+        if (!optionsJson || !isPending) {
+            console.log("ℹ️  Nenhuma ação do assistente pendente");
+            throw new Error("Nenhuma ação pendente");
+        }
+        
+        // 2. Parsear opções
+        const assistantOptions = JSON.parse(optionsJson);
+        console.log("📋 Opções do assistente:", assistantOptions);
+        
+        // Verificar estrutura baseada nos seus dados de teste
+        if (!assistantOptions.retorno) {
+            console.error("❌ Estrutura de dados inválida");
+            throw new Error("Estrutura de dados inválida. Campo 'retorno' não encontrado");
+        }
+        
+        const retorno = assistantOptions.retorno;
+        
+        // 3. Construir payload SIMPLIFICADO
+        const payload = {};
+        
+        // Dados básicos do retorno (baseado nos seus testes)
+        if (retorno.destino) {
+            payload.cr40f_destino = retorno.destino;
+        }
+        
+        if (retorno.endereco || retorno.endereco_saida) {
+            payload.cr40f_endereodesada = retorno.endereco || retorno.endereco_saida;
+        }
+        
+        if (retorno.observacao || retorno.obs_interna) {
+            payload.cr40f_observaointerna = retorno.observacao || retorno.obs_interna;
+        }
+        
+        // Data/hora (ajustar baseado nos seus dados)
+        if (retorno.dataHora || retorno.datetime) {
+            const dataHora = retorno.dataHora || retorno.datetime;
+            payload.cr40f_dataehorriodesada = new Date(dataHora).toISOString();
+        } else {
+            // Data atual como fallback
+            payload.cr40f_dataehorriodesada = new Date().toISOString();
+        }
+        
+        // Campos obrigatórios fixos
+        payload.cr40f_status = 202410001; // Status: Agendado
+        payload.cr40f_receber = false;
+        payload.cr40f_name = `Retorno: ${retorno.destino || "Serviço"}`;
+        
+        // Owner (obrigatório)
+        const userId = Xrm.Utility.getGlobalContext().userSettings.userId;
+        payload["ownerid@odata.bind"] = `/systemusers(${userId})`;
+        
+        // 4. Log do payload
+        console.log("🚀 Criando registro de retorno...");
+        console.log("📦 Payload:", payload);
+        
+        // 5. Criar registro
+        const result = await Xrm.WebApi.createRecord(CONFIG.TARGET_ENTITY, payload);
+        
+        console.log("✅ Registro criado! ID:", result.id);
+        console.log("Entity Type:", result.entityType);
+        
+        // 6. Limpar campos do assistente
+        optionsAttr.setValue(null);
+        pendingAttr.setValue(false);
+        
+        // 7. Notificar usuário
+        setTimeout(() => {
+            Xrm.Navigation.openAlertDialog({
+                text: `✅ Registro de retorno criado com sucesso!`,
+                title: "Assistente"
+            });
+        }, 500);
+        
+        return result;
+        
+    } catch (error) {
+        console.error("❌ ERRO no processAssistantOnSave:", error);
+        
+        // Log detalhado
+        if (error.message) {
+            console.error("Mensagem:", error.message);
+        }
+        if (error.stack) {
+            console.error("Stack:", error.stack);
+        }
+        
+        throw error;
+    }
+};
+
+// Função de teste (para usar no console)
+window.testAssistantSave = async function() {
+    console.log("🧪 Testando processAssistantOnSave...");
+    
+    // Simular dados de teste (baseado nos seus logs)
+    const testData = {
+        retorno: {
+            destino: "Teste via console",
+            endereco: "Endereço de teste",
+            observacao: "Teste do console",
+            dataHora: new Date().toISOString()
+        }
+    };
+    
+    // Preencher campos
+    Xrm.Page.getAttribute("cr40f_new_assistant_options").setValue(JSON.stringify(testData));
+    Xrm.Page.getAttribute("cr40f_new_assistant_pending").setValue(true);
+    
+    console.log("📝 Dados de teste definidos");
+    console.log("🔄 Executando processAssistantOnSave...");
+    
+    try {
+        const result = await window.processAssistantOnSave();
+        console.log("✅ Sucesso:", result);
+        return result;
+    } catch (error) {
+        console.error("❌ Erro:", error);
+        return null;
+    }
+};
+
+// Função para registrar evento OnSave (OPCIONAL - se quiser auto-inicialização)
+function registerAssistantOnSave() {
+    try {
+        console.log("🔧 Registrando evento OnSave do assistente...");
+        
+        // Remover se já existir
+        Xrm.Page.data.entity.removeOnSave(handleAssistantSave);
+        
+        // Adicionar
+        Xrm.Page.data.entity.addOnSave(handleAssistantSave);
+        
+        console.log("✅ Evento OnSave registrado!");
+    } catch (error) {
+        console.error("❌ Erro ao registrar evento:", error);
+    }
+}
+
+// Handler para o evento OnSave
+async function handleAssistantSave(context) {
+    console.log("💾 Evento OnSave do assistente disparado");
+    
+    try {
+        // Verificar se há pendência
+        const pendingAttr = Xrm.Page.getAttribute("cr40f_new_assistant_pending");
+        const optionsAttr = Xrm.Page.getAttribute("cr40f_new_assistant_options");
+        
+        if (!pendingAttr || !optionsAttr) return;
+        if (pendingAttr.getValue() !== true || !optionsAttr.getValue()) return;
+        
+        console.log("🎯 Processando retorno pendente...");
+        
+        // Prevenir save normal
+        context.getEventArgs().preventDefault();
+        
+        // Processar assistente
+        await window.processAssistantOnSave();
+        
+        // Limpar campos
+        pendingAttr.setValue(false);
+        optionsAttr.setValue(null);
+        
+        // Aguardar e salvar formulário
+        await new Promise(resolve => setTimeout(resolve, 500));
+        Xrm.Page.data.entity.save();
+        
+    } catch (error) {
+        console.error("❌ Erro no handler:", error);
+        
+        // Limpar campos em caso de erro
+        try {
+            const pending = Xrm.Page.getAttribute("cr40f_new_assistant_pending");
+            const options = Xrm.Page.getAttribute("cr40f_new_assistant_options");
+            if (pending) pending.setValue(false);
+            if (options) options.setValue(null);
+        } catch (e) {}
+        
+        Xrm.Page.data.entity.save();
+    }
+}
+
+// Auto-inicialização (se quiser que o script se registre automaticamente)
+function initialize() {
+    console.log("🚀 Inicializando new_open_dialog.js...");
+    
+    // Aguardar Xrm estar disponível
+    if (typeof Xrm === 'undefined' || !Xrm.Page || !Xrm.Page.data) {
+        setTimeout(initialize, 1000);
+        return;
+    }
+    
+    // Aguardar formulário carregar
+    Xrm.Page.data.addOnLoad(function() {
+        console.log("✅ Formulário carregado - new_open_dialog.js pronto");
+        
+        // Opcional: registrar evento automaticamente
+        // setTimeout(registerAssistantOnSave, 1500);
+    });
+}
+
+// Iniciar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+} else {
+    setTimeout(initialize, 1500);
+}
+
+console.log("✅ new_open_dialog.js carregado!");
+
+// NO FINAL do arquivo new_open_dialog.js, adicione:
+
+// Função que será chamada pelo OnLoad do formulário
+function newOpenDialogOnLoad() {
+    console.log("✅ new_open_dialog.js - OnLoad executado");
+    
+    // Esta função não faz nada além de log,
+    // porque a inicialização já é feita automaticamente
+    // pela função initialize() que já existe no código
+    
+    // Você pode adicionar aqui qualquer inicialização adicional se necessário
+    if (typeof initialize === 'function') {
+        initialize();
+    }
+}
+
+// Expor a função globalmente
+window.newOpenDialogOnLoad = newOpenDialogOnLoad;

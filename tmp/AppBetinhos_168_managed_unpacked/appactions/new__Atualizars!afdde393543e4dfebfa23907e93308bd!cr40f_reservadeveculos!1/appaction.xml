@@ -1,0 +1,29 @@
+<appaction uniquename="new__Atualizars!afdde393543e4dfebfa23907e93308bd!cr40f_reservadeveculos!1">
+  <buttonlabeltext default="Atualizars">
+    <label description="Atualizars" languagecode="1046" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cr40f_reservadeveculos</logicalname>
+  </contextentity>
+  <contextvalue>cr40f_reservadeveculos</contextvalue>
+  <fonticon>$clientsvg:Refresh</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>1</location>
+  <name>Atualizars!afdde393543e4dfebfa23907e93308bd</name>
+  <onclickeventjavascriptfunctionname>refreshGridView</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[{"type":5}]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>2f0a5ae9-7f12-f111-8341-7ced8da86b71</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>1000100022.5000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilitytype>0</visibilitytype>
+</appaction>

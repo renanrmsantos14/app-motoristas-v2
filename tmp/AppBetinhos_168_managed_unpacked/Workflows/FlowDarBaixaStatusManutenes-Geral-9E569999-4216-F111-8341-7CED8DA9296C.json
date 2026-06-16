@@ -1,0 +1,343 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "impersonation": {},
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_commondataserviceforapps-3": {
+        "impersonation": {},
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_3a680"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_office365-1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "cr40f_manutencoes",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr40f_status"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "actions": {
+            "Switch": {
+              "runAfter": {
+                "List_rows": [
+                  "Succeeded"
+                ]
+              },
+              "cases": {
+                "Case_Concluido": {
+                  "case": 202410002,
+                  "actions": {
+                    "Filter_array_1": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows')?['body/value']",
+                        "where": "@not(contains(toLower(coalesce(item()?['cr40f_status@OData.Community.Display.V1.FormattedValue'], '')),'conclu'))"
+                      }
+                    },
+                    "For_each_2": {
+                      "foreach": "@body('Filter_array_1')",
+                      "actions": {
+                        "Update_a_row_1": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_reservadeveculoses",
+                              "recordId": "@items('For_each_2')?['cr40f_reservadeveculosid']",
+                              "item/cr40f_status": 202410008,
+                              "accept": "application/json;odata.metadata=minimal"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "connectionName": "shared_commondataserviceforapps-3",
+                              "operationId": "UpdateOnlyRecord"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Filter_array_1": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Foreach"
+                    }
+                  }
+                },
+                "Case_Cancelado": {
+                  "case": 100000001,
+                  "actions": {
+                    "For_each": {
+                      "foreach": "@body('Filter_array')",
+                      "actions": {
+                        "Update_a_row": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_reservadeveculoses",
+                              "recordId": "@items('For_each')?['cr40f_reservadeveculosid']",
+                              "item/cr40f_status": 202410002,
+                              "accept": "application/json;odata.metadata=minimal"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "connectionName": "shared_commondataserviceforapps-3",
+                              "operationId": "UpdateOnlyRecord"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Filter_array": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Foreach"
+                    },
+                    "Filter_array": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows')?['body/value']",
+                        "where": "@not(contains(toLower(coalesce(item()?['cr40f_status@OData.Community.Display.V1.FormattedValue'], '')),'cancel'))"
+                      }
+                    }
+                  }
+                },
+                "Case_Programado": {
+                  "case": 202410005,
+                  "actions": {
+                    "Filter_array_1_1": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows')?['body/value']",
+                        "where": "@not(contains(toLower(coalesce(item()?['cr40f_status@OData.Community.Display.V1.FormattedValue'], '')),'programa'))"
+                      }
+                    },
+                    "For_each_4": {
+                      "foreach": "@body('Filter_array_1_1')",
+                      "actions": {
+                        "Update_a_row_3": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_reservadeveculoses",
+                              "recordId": "@items('For_each_4')?['cr40f_reservadeveculosid']",
+                              "item/cr40f_status": 202410005,
+                              "accept": "application/json;odata.metadata=minimal"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "connectionName": "shared_commondataserviceforapps-3",
+                              "operationId": "UpdateOnlyRecord"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Filter_array_1_1": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Foreach"
+                    }
+                  }
+                },
+                "Case_Aprovado": {
+                  "case": 202410001,
+                  "actions": {
+                    "Filter_array_3": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows')?['body/value']",
+                        "where": "@not(contains(toLower(coalesce(item()?['cr40f_status@OData.Community.Display.V1.FormattedValue'], '')),'confirmad'))"
+                      }
+                    },
+                    "For_each_4_1": {
+                      "foreach": "@body('Filter_array_3')",
+                      "actions": {
+                        "Update_a_row_4": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_reservadeveculoses",
+                              "recordId": "@items('For_each_4_1')?['cr40f_reservadeveculosid']",
+                              "item/cr40f_status": 202410001,
+                              "accept": "application/json;odata.metadata=minimal"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "connectionName": "shared_commondataserviceforapps-3",
+                              "operationId": "UpdateOnlyRecord"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Filter_array_3": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Foreach"
+                    }
+                  }
+                },
+                "Case_Reprovado": {
+                  "case": 100000002,
+                  "actions": {
+                    "For_each_1": {
+                      "foreach": "@outputs('List_rows')?['body/value']",
+                      "actions": {
+                        "Delete_a_row": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_reservadeveculoses",
+                              "recordId": "@items('For_each_1')?['cr40f_reservadeveculosid']"
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "connectionName": "shared_commondataserviceforapps",
+                              "operationId": "DeleteRecord"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          }
+                        }
+                      },
+                      "type": "Foreach"
+                    }
+                  }
+                }
+              },
+              "default": {
+                "actions": {
+                  "Terminate": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  }
+                }
+              },
+              "expression": "@triggerOutputs()?['body/cr40f_status']",
+              "type": "Switch"
+            },
+            "List_rows": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_reservadeveculoses",
+                  "$filter": "_cr40f_om_value eq @{triggerOutputs()?['body/cr40f_manutencoesid']}",
+                  "accept": "application/json;odata.metadata=minimal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {},
+          "type": "Scope"
+        },
+        "Scope_1": {
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "JUNIOR@betinhos.com.br;noreply@betinhos.onmicrosoft.com;renan.mendonca@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLUXO - Flow Dar Baixa Status Manutenções -> Geral",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLUXO - Flow Dar Baixa Status Manutenções -&gt; Geral</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "connectionName": "shared_office365-1",
+                  "operationId": "SendEmailV2"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Terminate_1": {
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Skipped",
+              "Failed"
+            ]
+          },
+          "type": "Scope"
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

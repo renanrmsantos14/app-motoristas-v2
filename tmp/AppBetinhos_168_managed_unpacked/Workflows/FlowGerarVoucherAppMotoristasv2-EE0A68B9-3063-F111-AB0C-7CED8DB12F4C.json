@@ -1,0 +1,514 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps-1": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_wordonlinebusiness-1": {
+        "api": {
+          "name": "shared_wordonlinebusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedwordonlinebusiness_2cd88"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_onedriveforbusiness-1": {
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_1f480"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps-2": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_25a23"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365-1": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "triggerAuthenticationType": "All",
+            "schema": {
+              "type": "object",
+              "required": [
+                "text",
+                "text_1",
+                "text_2",
+                "text_5",
+                "text_6",
+                "text_7",
+                "text_8",
+                "text_9",
+                "text_10",
+                "text_11",
+                "text_12",
+                "text_13",
+                "text_14",
+                "text_15"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "description": "GUID do serviço Geral (record id)."
+                },
+                "text_1": {
+                  "type": "string",
+                  "description": "Assinatura em base64 (sem prefixo data:image)."
+                },
+                "text_2": {
+                  "type": "string",
+                  "description": "Desvio: 'Sim' ou 'Nao'."
+                },
+                "text_5": {
+                  "type": "string",
+                  "description": "Horário inicial (HH:mm)."
+                },
+                "text_6": {
+                  "type": "string",
+                  "description": "Espera início (HH:mm)."
+                },
+                "text_7": {
+                  "type": "string",
+                  "description": "Espera final (HH:mm)."
+                },
+                "text_8": {
+                  "type": "string",
+                  "description": "Pedágio no formato monetário com 2 casas (ex.: 12.00)."
+                },
+                "text_9": {
+                  "type": "string",
+                  "description": "Estacionamento no formato monetário com 2 casas."
+                },
+                "text_10": {
+                  "type": "string",
+                  "description": "Combustível no formato monetário com 2 casas."
+                },
+                "text_11": {
+                  "type": "string",
+                  "description": "Hospedagem no formato monetário com 2 casas."
+                },
+                "text_12": {
+                  "type": "string",
+                  "description": "Outros no formato monetário com 2 casas."
+                },
+                "text_13": {
+                  "type": "string",
+                  "description": "Observação do voucher."
+                },
+                "text_14": {
+                  "type": "string",
+                  "description": "Horário final (HH:mm)."
+                },
+                "text_15": {
+                  "type": "string",
+                  "description": "Data/hora de geração ISO (ex.: 2026-06-08T12:00:00.000Z)."
+                }
+              }
+            }
+          },
+          "metadata": {}
+        }
+      },
+      "actions": {
+        "Initialize_variable_arrayPassageiros": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "arrayPassageiros",
+                "type": "array",
+                "value": []
+              }
+            ]
+          },
+          "runAfter": {}
+        },
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_a_row_by_ID_Geral": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_reservadeveculoses",
+                  "recordId": "@triggerBody()?['text']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps-1"
+                }
+              }
+            },
+            "Get_a_row_by_ID_motorista": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_funcionarioses",
+                  "recordId": "@outputs('Get_a_row_by_ID_Geral')?['body/_cr40f_motorista_value']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps-1"
+                }
+              },
+              "runAfter": {
+                "Get_a_row_by_ID_Geral": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Compose_Ano": {
+              "type": "Compose",
+              "inputs": "@convertFromUtc(outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time', 'yyyy')",
+              "runAfter": {
+                "Get_a_row_by_ID_motorista": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Compose_Mês": {
+              "type": "Compose",
+              "inputs": "@concat(\n    toUpper(\n        substring(\n            formatDateTime(\n                convertFromUtc(\n                    outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'],\n                    'E. South America Standard Time'\n                ),\n                'MMMM',\n                'pt-BR'\n            ),\n            0,\n            1\n        )\n    ),\n    substring(\n        formatDateTime(\n            convertFromUtc(\n                outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'],\n                'E. South America Standard Time'\n            ),\n            'MMMM',\n            'pt-BR'\n        ),\n        1,\n        sub(\n            length(\n                formatDateTime(\n                    convertFromUtc(\n                        outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'],\n                        'E. South America Standard Time'\n                    ),\n                    'MMMM',\n                    'pt-BR'\n                )\n            ),\n            1\n        )\n    )\n)",
+              "runAfter": {
+                "Compose_Ano": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "List_rows_Serviços_Por_passageiro": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_servicosporpassageiros",
+                  "$filter": "_cr40f_geral_value eq @{outputs('Get_a_row_by_ID_Geral')?['body/cr40f_reservadeveculosid']}"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps-1"
+                }
+              },
+              "runAfter": {
+                "Compose_Mês": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "For_each": {
+              "type": "Foreach",
+              "foreach": "@outputs('List_rows_Serviços_Por_passageiro')?['body/value']",
+              "actions": {
+                "Get_a_row_by_ID_BD": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_bancodedadoses",
+                      "recordId": "@item()?['_cr40f_bancodedados_value']"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "connectionName": "shared_commondataserviceforapps-1"
+                    }
+                  }
+                },
+                "Append_to_array_variable_arrayPassageiros": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "arrayPassageiros",
+                    "value": "@outputs('Get_a_row_by_ID_BD')?['body/cr40f_nomedopassageiro']"
+                  },
+                  "runAfter": {
+                    "Get_a_row_by_ID_BD": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "List_rows_Serviços_Por_passageiro": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Populate_a_Microsoft_Word_template": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "source": "me",
+                  "drive": "b!tXW_UJ49lkKoZ1rZ1Vm3cnOV05T8OAFDkhrHsR6Mahr4EmsPA3hfRKGTqdJtvOXC",
+                  "file": "01ZJNU27X2KTLSDXSCLVA2UV3I7X54E4XD",
+                  "dynamicFileSchema/58441941": "@triggerBody()?['text_14']",
+                  "dynamicFileSchema/239228522": "@if(empty(triggerBody()?['text_10']), 'R$ 0,00', formatNumber(float(triggerBody()?['text_10']), 'C2', 'pt-BR'))",
+                  "dynamicFileSchema/297274301": "@variables('arrayPassageiros')?[2]",
+                  "dynamicFileSchema/776218460": "@if(empty(triggerBody()?['text_8']), 'R$ 0,00', formatNumber(float(triggerBody()?['text_8']), 'C2', 'pt-BR'))",
+                  "dynamicFileSchema/1217864216": "@triggerBody()?['text_13']",
+                  "dynamicFileSchema/1452052961": "@triggerBody()?['text_5']",
+                  "dynamicFileSchema/1785231936": "@outputs('Get_a_row_by_ID_Geral')?['body/cr40f_endereodesada']",
+                  "dynamicFileSchema/2022035621": "@convertFromUtc(outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time', 'dd/MM/yyyy')",
+                  "dynamicFileSchema/-1042740771": "@triggerBody()?['text_15']",
+                  "dynamicFileSchema/-813336530": "@outputs('Get_a_row_by_ID_motorista')?['body/cr40f_nomecompleto']",
+                  "dynamicFileSchema/-1340618262": "@outputs('Get_a_row_by_ID_Geral')?['body/cr40f_destino']",
+                  "dynamicFileSchema/-309709453": "@outputs('Get_a_row_by_ID_Geral')?['body/cr40f_id']",
+                  "dynamicFileSchema/-512768281": "@json(concat('{\"$content\": \"', triggerBody()?['text_1'], '\", \"$content-type\": \"image/png\"}'))",
+                  "dynamicFileSchema/-357972972": "@triggerBody()?['text_2']",
+                  "dynamicFileSchema/-1863977281": "@convertFromUtc(outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time', 'HH:mm')",
+                  "dynamicFileSchema/-1585840545": "@if(empty(triggerBody()?['text_11']), 'R$ 0,00', formatNumber(float(triggerBody()?['text_11']), 'C2', 'pt-BR'))",
+                  "dynamicFileSchema/-477297744": "@if(empty(triggerBody()?['text_9']), 'R$ 0,00', formatNumber(float(triggerBody()?['text_9']), 'C2', 'pt-BR'))",
+                  "dynamicFileSchema/-100884550": "@if(empty(triggerBody()?['text_12']), 'R$ 0,00', formatNumber(float(triggerBody()?['text_12']), 'C2', 'pt-BR'))",
+                  "dynamicFileSchema/-763605152": "@triggerBody()?['text_7']",
+                  "dynamicFileSchema/-939297373": "@triggerBody()?['text_6']",
+                  "dynamicFileSchema/-1568493283": "@outputs('Get_a_row_by_ID_Geral')?['body/cr40f_id']",
+                  "dynamicFileSchema/-2144883961": "@variables('arrayPassageiros')?[3]",
+                  "dynamicFileSchema/-1572040817": "@variables('arrayPassageiros')?[1]",
+                  "dynamicFileSchema/-1691213073": "@variables('arrayPassageiros')?[0]"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness",
+                  "operationId": "CreateFileItem",
+                  "connectionName": "shared_wordonlinebusiness-1"
+                }
+              },
+              "runAfter": {
+                "For_each": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "01ZJNU27QVKBJVFLT2H5AJSJJPV5H3MDD5": "/Vouchers/Template - Voucher.docx",
+                "01ZJNU27V5ERDCN4UYLBHKWPP4PE3SNOKG": "/Template - Formulário de Indicação Sem Assinatura do Condutor.docx",
+                "01ZJNU27X2KTLSDXSCLVA2UV3I7X54E4XD": "/Vouchers/Template - Voucher.docx"
+              }
+            },
+            "Respond_to_a_Power_App_or_flow": {
+              "type": "Response",
+              "kind": "PowerApp",
+              "inputs": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "title": "ID",
+                      "type": "string",
+                      "x-ms-content-hint": "TEXT",
+                      "x-ms-dynamically-added": true
+                    }
+                  },
+                  "additionalProperties": {}
+                },
+                "statusCode": 200,
+                "body": {
+                  "id": "@{outputs('Get_a_row_by_ID_Geral')?['body/cr40f_id']}"
+                }
+              },
+              "runAfter": {
+                "Populate_a_Microsoft_Word_template": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Create_file": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "folderPath": "/Vouchers/DOCX/@{outputs('Compose_Ano')}/@{outputs('Compose_Mês')}",
+                  "name": "Voucher - @{outputs('Get_a_row_by_ID_Geral')?['body/cr40f_id']}.docx",
+                  "body": "@body('Populate_a_Microsoft_Word_template')"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                  "operationId": "CreateFile",
+                  "connectionName": "shared_onedriveforbusiness-1"
+                }
+              },
+              "runAfter": {
+                "Respond_to_a_Power_App_or_flow": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Convert_Word_Document_to_PDF": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "source": "me",
+                  "drive": "b!tXW_UJ49lkKoZ1rZ1Vm3cnOV05T8OAFDkhrHsR6Mahr4EmsPA3hfRKGTqdJtvOXC",
+                  "file": "@outputs('Create_file')?['body/Path']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness",
+                  "operationId": "GetFilePDF",
+                  "connectionName": "shared_wordonlinebusiness-1"
+                }
+              },
+              "runAfter": {
+                "Create_file": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Create_file_1": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "folderPath": "/Vouchers/PDF/@{outputs('Compose_Ano')}/@{outputs('Compose_Mês')}",
+                  "name": "Voucher - @{outputs('Get_a_row_by_ID_Geral')?['body/cr40f_id']}.pdf",
+                  "body": "@body('Convert_Word_Document_to_PDF')"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                  "operationId": "CreateFile",
+                  "connectionName": "shared_onedriveforbusiness-1"
+                }
+              },
+              "runAfter": {
+                "Convert_Word_Document_to_PDF": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Create_share_link": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "id": "@outputs('Create_file_1')?['body/Id']",
+                  "type": "View",
+                  "scope": "Anonymous"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                  "operationId": "CreateShareLinkV2",
+                  "connectionName": "shared_onedriveforbusiness-1"
+                }
+              },
+              "runAfter": {
+                "Create_file_1": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Update_a_row": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_reservadeveculoses",
+                  "recordId": "@outputs('Get_a_row_by_ID_Geral')?['body/cr40f_reservadeveculosid']",
+                  "item/new_linkdovoucher": "@outputs('Create_share_link')?['body/WebUrl']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "connectionName": "shared_commondataserviceforapps-2"
+                }
+              },
+              "runAfter": {
+                "Create_share_link": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_arrayPassageiros": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)_1": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; financeiro@betinhos.com..br; junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLUXO -  Flow Gerar Voucher App Motoristas v2",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLUXO -  Flow Gerar Voucher App Motoristas v2</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365-1"
+                }
+              }
+            },
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "400"
+                }
+              },
+              "runAfter": {
+                "Send_an_email_(V2)_1": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Failed"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,632 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_commondataserviceforapps_2": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_onedriveforbusiness-2": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_3c4de"
+        },
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        }
+      },
+      "shared_office365-1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_b74b5"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "ebfcaf17-1c66-4da7-af82-f119cf21dda7"
+          },
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "text",
+                "text_1",
+                "text_2",
+                "text_3",
+                "text_4"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "description": "GUID da manutenção (geralId) ou ID do registro de manutenção se fallback."
+                },
+                "text_1": {
+                  "type": "string",
+                  "description": "Foto Nota Fiscal em base64 (sem prefixo data URI)."
+                },
+                "text_2": {
+                  "type": "string",
+                  "description": "Foto 1 em base64 (sem prefixo data URI)."
+                },
+                "text_3": {
+                  "type": "string",
+                  "description": "Foto 2 em base64 (sem prefixo data URI)."
+                },
+                "text_4": {
+                  "type": "string",
+                  "description": "Foto 3 em base64 (sem prefixo data URI)."
+                }
+              }
+            },
+            "triggerAuthenticationType": "All"
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "actions": {
+            "Get_a_row_by_ID_Manutenção": {
+              "runAfter": {
+                "Get_a_row_by_ID_Geral": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "346c9d2d-a0aa-456a-b74e-7391fd6b951d"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cr40f_manutencoeses",
+                  "recordId": "@outputs('Get_a_row_by_ID_Geral')?['body/_cr40f_om_value']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Compose_mês": {
+              "runAfter": {
+                "Get_a_row_by_ID_Veículo": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "cc593e22-44f4-42a9-a465-3da1e8b6e524"
+              },
+              "type": "Compose",
+              "inputs": "@concat(\n    toUpper(\n        substring(\n            formatDateTime(\n                convertFromUtc(\n                    outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'],\n                    'E. South America Standard Time'\n                ),\n                'MMMM',\n                'pt-BR'\n            ),\n            0,\n            1\n        )\n    ),\n    substring(\n        formatDateTime(\n            convertFromUtc(\n                outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'],\n                'E. South America Standard Time'\n            ),\n            'MMMM',\n            'pt-BR'\n        ),\n        1,\n        sub(\n            length(\n                formatDateTime(\n                    convertFromUtc(\n                        outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'],\n                        'E. South America Standard Time'\n                    ),\n                    'MMMM',\n                    'pt-BR'\n                )\n            ),\n            1\n        )\n    )\n)"
+            },
+            "Get_a_row_by_ID_Geral": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "fd279f67-f985-49a9-93e4-9cff2a46a44a"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps_2",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cr40f_reservadeveculoses",
+                  "recordId": "@triggerBody()?['text']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Compose_ano": {
+              "runAfter": {
+                "Compose_mês": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "e411fe9c-b542-49bb-85e5-0750d638ac79"
+              },
+              "type": "Compose",
+              "inputs": "@formatDateTime(\n    convertFromUtc(\n        outputs('Get_a_row_by_ID_Geral')?['body/cr40f_dataehorriodesada'],\n        'E. South America Standard Time',\n        'yyyy-MM-dd'\n    ),\n    'yyyy'\n)"
+            },
+            "Get_a_row_by_ID_Veículo": {
+              "runAfter": {
+                "Get_a_row_by_ID_Manutenção": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "5079b7bc-3f56-490d-9177-106faca6913d"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cr40f_veiculoses",
+                  "recordId": "@outputs('Get_a_row_by_ID_Manutenção')?['body/_cr40f_placa_carro_value']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Compose_veículo": {
+              "runAfter": {
+                "Compose_ano": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "a797b3c2-70a9-407e-a1d6-853c37c223a5"
+              },
+              "type": "Compose",
+              "inputs": "@concat(\n    coalesce(outputs('Get_a_row_by_ID_Veículo')?['body/cr40f_modelo'], 'Sem modelo'),\n    ' - ',\n    coalesce(outputs('Get_a_row_by_ID_Veículo')?['body/cr40f_placa'], 'Sem placa')\n)"
+            },
+            "Respond_to_a_Power_App_or_flow": {
+              "runAfter": {
+                "Compose_Sucesso": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "53174b54-3fd9-4c6c-be59-e09343f9f190"
+              },
+              "type": "Response",
+              "kind": "PowerApp",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "status": "@{outputs('Compose_Sucesso')}"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "title": "status",
+                      "x-ms-dynamically-added": true,
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "Update_a_row": {
+              "runAfter": {
+                "Condition_NF_existe": [
+                  "Succeeded"
+                ],
+                "Condition_Foto_03_existe_": [
+                  "Succeeded"
+                ],
+                "Condition_Foto_1_existe": [
+                  "Succeeded"
+                ],
+                "Condition_Foto_2_existe_": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "dd1e3d5b-f909-412e-8358-9741b718ac79"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cr40f_manutencoeses",
+                  "recordId": "@outputs('Get_a_row_by_ID_Manutenção')?['body/cr40f_manutencoesid']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Compose_Sucesso": {
+              "runAfter": {
+                "Update_a_row": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "4b5f4fdb-c82b-4b17-a4be-7ee062fae8ae"
+              },
+              "type": "Compose",
+              "inputs": "Sucesso"
+            },
+            "Condition_NF_existe": {
+              "actions": {
+                "Create_file_Nota_Fiscal": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "1a46236d-a0b9-4b5b-a350-70f01c8e7b39"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateFile",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "folderPath": "/Manutenções/@{outputs('Compose_veículo')}/@{outputs('Get_a_row_by_ID_Manutenção')?['body/cr40f_id']}",
+                      "name": "Nota Fiscal.jpg",
+                      "body": "@base64ToBinary(triggerBody()?['text_1'])"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runtimeConfiguration": {
+                    "contentTransfer": {
+                      "transferMode": "Chunked"
+                    }
+                  }
+                },
+                "Create_share_link_NF": {
+                  "runAfter": {
+                    "Create_file_Nota_Fiscal": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "dc9e5e6a-2ab1-4c0a-adb9-f4231324d304"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateShareLinkV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "id": "@outputs('Create_file_Nota_Fiscal')?['body/Id']",
+                      "type": "Edit",
+                      "scope": "Anonymous"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose_veículo": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@triggerBody()?['text_1']",
+                        "nul"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "8f1ffdc7-e503-4605-b145-8e361ac863bf"
+              },
+              "type": "If"
+            },
+            "Condition_Foto_03_existe_": {
+              "actions": {
+                "Create_file_Foto_3": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "aa176e70-2e0e-4d1a-a273-077fc0e1b832"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateFile",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "folderPath": "/Manutenções/@{outputs('Compose_veículo')}/@{outputs('Get_a_row_by_ID_Manutenção')?['body/cr40f_id']}",
+                      "name": "Foto 3 Final.jpg",
+                      "body": "@base64ToBinary(triggerBody()?['text_4'])"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runtimeConfiguration": {
+                    "contentTransfer": {
+                      "transferMode": "Chunked"
+                    }
+                  }
+                },
+                "Create_share_link_foto_3": {
+                  "runAfter": {
+                    "Create_file_Foto_3": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "77f5a1b0-20c6-4232-8953-95f06321b925"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateShareLinkV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "id": "@outputs('Create_file_Foto_3')?['body/Id']",
+                      "type": "Edit",
+                      "scope": "Anonymous"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose_veículo": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@triggerBody()?['text_4']",
+                        "nul"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "1ee779d5-6aa6-4ea6-b19b-bc4bc1376b22"
+              },
+              "type": "If"
+            },
+            "Condition_Foto_2_existe_": {
+              "actions": {
+                "Create_file_Foto_2": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "36d2c520-90b8-4fa5-8973-5a8cf2190a8a"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateFile",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "folderPath": "/Manutenções/@{outputs('Compose_veículo')}/@{outputs('Get_a_row_by_ID_Manutenção')?['body/cr40f_id']}",
+                      "name": "Foto 2 Final.jpg",
+                      "body": "@base64ToBinary(triggerBody()?['text_3'])"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runtimeConfiguration": {
+                    "contentTransfer": {
+                      "transferMode": "Chunked"
+                    }
+                  }
+                },
+                "Create_share_link_foto_2": {
+                  "runAfter": {
+                    "Create_file_Foto_2": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "bc255811-ece4-4a9b-b659-343da2416def"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateShareLinkV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "id": "@outputs('Create_file_Foto_2')?['body/Id']",
+                      "type": "Edit",
+                      "scope": "Anonymous"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose_veículo": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@triggerBody()?['text_3']",
+                        "nul"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "7eb0cff4-03e9-40b0-9532-62214f2d9a34"
+              },
+              "type": "If"
+            },
+            "Condition_Foto_1_existe": {
+              "actions": {
+                "Create_file_Foto_1": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "99ea7be5-1503-4306-aba4-9004d13132ba"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateFile",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "folderPath": "/Manutenções/@{outputs('Compose_veículo')}/@{outputs('Get_a_row_by_ID_Manutenção')?['body/cr40f_id']}",
+                      "name": "Foto 1 Final.jpg",
+                      "body": "@base64ToBinary(triggerBody()?['text_2'])"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runtimeConfiguration": {
+                    "contentTransfer": {
+                      "transferMode": "Chunked"
+                    }
+                  }
+                },
+                "Create_share_link_foto_1": {
+                  "runAfter": {
+                    "Create_file_Foto_1": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "df442d7a-d820-4d91-a7f7-714314005190"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_onedriveforbusiness-2",
+                      "operationId": "CreateShareLinkV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                    },
+                    "parameters": {
+                      "id": "@outputs('Create_file_Foto_1')?['body/Id']",
+                      "type": "Edit",
+                      "scope": "Anonymous"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose_veículo": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@triggerBody()?['text_2']",
+                        "nul"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "62170650-c26a-4ccd-9fcd-ceccc49c2e77"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "37b92faf-7582-4a04-aca2-ddfac754754a"
+          },
+          "type": "Scope"
+        },
+        "Scope_1": {
+          "actions": {
+            "Send_an_email_(V2)": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "77e3de03-cc16-4957-b43d-87ab93d73d0c"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_office365-1",
+                  "operationId": "SendEmailV2",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                },
+                "parameters": {
+                  "emailMessage/To": "junior@betinhos.com.br;noreply@betinhos.onmicrosoft.com;renan.mendonca@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLOW - Flow Salvar Fotos Manutenção | App Motoristas",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Flow Salvar Fotos Manutenção | App Motoristas</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Terminate": {
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "b5cf4aa0-8549-4525-9b96-c444e9574972"
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Failed"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b3fdfdff-eac3-4f38-90d5-a7f7db031175"
+          },
+          "type": "Scope"
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

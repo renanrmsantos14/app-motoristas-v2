@@ -1,0 +1,377 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_de4c0"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "cr40f_pagantes",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr40f_status",
+              "subscriptionRequest/filterexpression": "_cr40f_financeiro_value ne null"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "conditions": []
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "List_rows_Pagantes_da_OP": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_paganteses",
+                  "$filter": "_cr40f_financeiro_value eq '@{triggerOutputs()?['body/_cr40f_financeiro_value']}'"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "runAfter": {
+                "Get_a_row_by_ID_OP": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Switch_Status_Pag_": {
+              "type": "Switch",
+              "expression": "@triggerOutputs()?['body/cr40f_status']",
+              "default": {
+                "actions": {}
+              },
+              "cases": {
+                "Case_Pendente": {
+                  "actions": {
+                    "Filter_array_nao_pendente": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows_Pagantes_da_OP')?['body/value']",
+                        "where": "@not(equals(item()?['cr40f_status'],202410001))"
+                      }
+                    },
+                    "Condition_Op_não_esta_pgto_pendente_e_todos_pgtos_pendente": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "not": {
+                              "equals": [
+                                "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_status']",
+                                100000001
+                              ]
+                            }
+                          },
+                          {
+                            "equals": [
+                              "@length(body('Filter_array_nao_pendente'))",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "Update_a_row": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_financeiros",
+                              "recordId": "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_financeiroid']",
+                              "item/cr40f_status": 100000001
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "operationId": "UpdateOnlyRecord",
+                              "connectionName": "shared_commondataserviceforapps"
+                            }
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Filter_array_nao_pendente": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "case": 202410001
+                },
+                "Case_Pago": {
+                  "actions": {
+                    "Filter_array_nao_pago": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows_Pagantes_da_OP')?['body/value']",
+                        "where": "@not(equals(item()?['cr40f_status'],202410002))"
+                      }
+                    },
+                    "Condition_todos_pgtos_pagos": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@length(body('Filter_array_nao_pago'))",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "Condition_Op_já_está_Paga": {
+                          "type": "If",
+                          "expression": {
+                            "and": [
+                              {
+                                "equals": [
+                                  "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_status']",
+                                  202410003
+                                ]
+                              }
+                            ]
+                          },
+                          "actions": {},
+                          "else": {
+                            "actions": {
+                              "Update_a_row_2": {
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "parameters": {
+                                    "entityName": "cr40f_financeiros",
+                                    "recordId": "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_financeiroid']",
+                                    "item/cr40f_status": 202410003
+                                  },
+                                  "host": {
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                    "operationId": "UpdateOnlyRecord",
+                                    "connectionName": "shared_commondataserviceforapps"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {
+                          "Condition_Op_já_está_Pgto_pgto_parcial": {
+                            "type": "If",
+                            "expression": {
+                              "and": [
+                                {
+                                  "equals": [
+                                    "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_status']",
+                                    202410006
+                                  ]
+                                }
+                              ]
+                            },
+                            "actions": {},
+                            "else": {
+                              "actions": {
+                                "Update_a_row_1": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "parameters": {
+                                      "entityName": "cr40f_financeiros",
+                                      "recordId": "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_financeiroid']",
+                                      "item/cr40f_status": 202410006
+                                    },
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "UpdateOnlyRecord",
+                                      "connectionName": "shared_commondataserviceforapps"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Filter_array_nao_pago": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "case": 202410002
+                },
+                "Case_Cancelado": {
+                  "actions": {
+                    "Filter_array_nao_cancelado": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('List_rows_Pagantes_da_OP')?['body/value']",
+                        "where": "@not(equals(item()?['cr40f_status'],202410005))"
+                      }
+                    },
+                    "Condition_Op_não_esta_cancelado_e_todos_pgtos_cancelado": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "not": {
+                              "equals": [
+                                "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_status']",
+                                202410004
+                              ]
+                            }
+                          },
+                          {
+                            "equals": [
+                              "@length(body('Filter_array_nao_cancelado'))",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "Update_a_row_3": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "parameters": {
+                              "entityName": "cr40f_financeiros",
+                              "recordId": "@outputs('Get_a_row_by_ID_OP')?['body/cr40f_financeiroid']",
+                              "item/cr40f_status": 202410004
+                            },
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "operationId": "UpdateOnlyRecord",
+                              "connectionName": "shared_commondataserviceforapps"
+                            }
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Filter_array_nao_cancelado": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "case": 202410005
+                }
+              },
+              "runAfter": {
+                "List_rows_Pagantes_da_OP": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Get_a_row_by_ID_OP": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_financeiros",
+                  "recordId": "@triggerOutputs()?['body/_cr40f_financeiro_value']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; financeiro@betinhos.com.br; junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLOW - Flow Dar Baixa Status Pagantes -> OP",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Flow Dar Baixa Status Pagantes -&gt; OP</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365"
+                }
+              }
+            },
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "400"
+                }
+              },
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Skipped",
+              "Failed"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

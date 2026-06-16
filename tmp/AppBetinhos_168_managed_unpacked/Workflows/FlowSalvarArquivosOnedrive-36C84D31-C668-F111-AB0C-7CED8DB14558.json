@@ -1,0 +1,207 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_onedriveforbusiness": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_1f480"
+        },
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {},
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "caminhoCompleto": {
+                  "type": "string",
+                  "description": "Caminho da pasta no OneDrive sem o nome do arquivo. Ex: FotosMotoristas/2026/06/Motorista-123/CNH"
+                },
+                "nomeArquivo": {
+                  "type": "string",
+                  "description": "Nome final do arquivo com extensao. Ex: frente-cnh.jpg"
+                },
+                "conteudoBase64": {
+                  "type": "string",
+                  "description": "Conteudo do arquivo em base64, sem prefixo data:"
+                },
+                "mimeType": {
+                  "type": "string",
+                  "description": "Tipo MIME original. Ex: image/jpeg"
+                },
+                "metadados": {
+                  "type": "object",
+                  "description": "Campo opcional para auditoria ou contexto adicional",
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "caminhoCompleto",
+                "nomeArquivo",
+                "conteudoBase64"
+              ],
+              "additionalProperties": false
+            },
+            "triggerAuthenticationType": "All"
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "actions": {
+            "Criar_arquivo": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "folderPath": "@triggerBody()?['caminhoCompleto']",
+                  "name": "@triggerBody()?['nomeArquivo']",
+                  "body": "@base64ToBinary(triggerBody()?['conteudoBase64'])"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                  "connectionName": "shared_onedriveforbusiness",
+                  "operationId": "CreateFile"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Criar_link_de_compartilhamento_para_um_arquivo_ou_pasta": {
+              "runAfter": {
+                "Criar_arquivo": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "id": "@outputs('Criar_arquivo')?['body/Id']",
+                  "type": "Edit",
+                  "scope": "Organization"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness",
+                  "connectionName": "shared_onedriveforbusiness",
+                  "operationId": "CreateShareLinkV2"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Response": {
+              "runAfter": {
+                "Criar_link_de_compartilhamento_para_um_arquivo_ou_pasta": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "ok": true,
+                  "fileId": "@{body('Criar_arquivo')?['Id']}",
+                  "fileName": "@{triggerBody()?['nomeArquivo']}",
+                  "path": "@{triggerBody()?['caminhoCompleto']}",
+                  "shareLink": "@{outputs('Criar_link_de_compartilhamento_para_um_arquivo_ou_pasta')?['body/WebUrl']}"
+                }
+              }
+            }
+          },
+          "runAfter": {},
+          "type": "Scope"
+        },
+        "Scope_1": {
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; junior@betinhos.com",
+                  "emailMessage/Subject": "ERRO NO FLOW - Flow Salvar Arquivos Onedrive",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Flow Salvar Arquivos Onedrive</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "connectionName": "shared_office365",
+                  "operationId": "SendEmailV2"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Response_1": {
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": 400,
+                "body": {
+                  "ok": false,
+                  "message": "Falha ao salvar arquivo no OneDrive"
+                }
+              }
+            },
+            "Terminate": {
+              "runAfter": {
+                "Response_1": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Failed"
+            ]
+          },
+          "type": "Scope"
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

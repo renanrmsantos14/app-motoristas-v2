@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="new_IDAppBetinhosInterno">
+  <description default="ID App Betinhos Interno">
+    <label description="ID App Betinhos Interno" languagecode="1046" />
+  </description>
+  <displayname default="ID App Betinhos Interno">
+    <label description="ID App Betinhos Interno" languagecode="1046" />
+  </displayname>
+  <introducedversion>1.0.0.45</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

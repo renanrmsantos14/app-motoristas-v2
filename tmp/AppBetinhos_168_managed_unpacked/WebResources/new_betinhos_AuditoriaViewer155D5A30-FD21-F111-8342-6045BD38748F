@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Histórico de Auditoria</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --bg:#f3f2f1; --surface:#fff; --header:#1b1a19; --accent:#0078d4;
+    --border:#edebe9; --text:#201f1e; --text-sub:#605e5c; --text-dim:#a19f9d;
+    --op-create:#107c10; --op-update:#0078d4; --op-delete:#d13438; --op-access:#8764b8;
+    --panel-w:520px;
+}
+body { font-family:"Segoe UI",system-ui,sans-serif; background:var(--bg); display:flex; flex-direction:column; height:100vh; overflow:hidden; color:var(--text); font-size:14px; }
+
+/* HEADER */
+.header { height:56px; background:var(--header); color:#fff; display:flex; align-items:center; padding:0 20px; gap:12px; flex-shrink:0; }
+.header-icon  { font-size:20px; }
+.header-info  { flex:1; }
+.header-title { font-size:15px; font-weight:600; }
+.header-sub   { font-size:12px; color:#a19f9d; margin-top:2px; }
+.ver-badge    { font-family:monospace; font-size:11px; background:#323130; color:#8a8886; padding:3px 10px; border-radius:10px; }
+
+/* TOOLBAR */
+.toolbar { height:48px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; gap:8px; flex-shrink:0; }
+.chip        { font-size:12px; font-weight:600; padding:4px 12px; border-radius:12px; white-space:nowrap; }
+.chip-table  { background:#deecf9; color:#004578; }
+.chip-filter { background:#dff6dd; color:#107c10; }
+.chip-count  { background:#f3f2f1; color:#605e5c; border:1px solid #edebe9; }
+.search { margin-left:auto; display:flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:5px 12px; width:260px; transition:border-color .15s; }
+.search:focus-within { border-color:var(--accent); }
+.search input { border:none; background:transparent; outline:none; font-size:13px; width:100%; color:var(--text); }
+
+/* BODY */
+.body { flex:1; display:flex; overflow:hidden; position:relative; }
+.list-pane { flex:1; overflow-y:auto; overflow-x:hidden; transition:margin-right .25s ease; }
+.list-pane.panel-open { margin-right:var(--panel-w); }
+
+/* TABLE */
+table { width:100%; border-collapse:collapse; }
+thead th { position:sticky; top:0; background:var(--surface); border-bottom:2px solid var(--border); padding:11px 16px; text-align:left; font-size:12px; font-weight:600; color:var(--text-sub); letter-spacing:.3px; white-space:nowrap; cursor:pointer; user-select:none; z-index:2; }
+thead th:hover  { color:var(--accent); }
+thead th.sorted { color:var(--accent); }
+tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background .1s; }
+tbody tr:hover    { background:#f3f9ff; }
+tbody tr.selected { background:#deecf9; border-left:3px solid var(--accent); }
+td { padding:11px 16px; vertical-align:middle; white-space:nowrap; font-size:13.5px; }
+
+.op-dot { display:inline-flex; align-items:center; gap:7px; font-weight:600; font-size:13px; }
+.op-dot::before { content:''; width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.op-1 { color:var(--op-create); } .op-1::before { background:var(--op-create); }
+.op-2 { color:var(--op-update); } .op-2::before { background:var(--op-update); }
+.op-3 { color:var(--op-delete); } .op-3::before { background:var(--op-delete); }
+.op-4 { color:var(--op-access); } .op-4::before { background:var(--op-access); }
+
+.fields-count { display:inline-block; background:var(--bg); color:var(--text-sub); border:1px solid var(--border); border-radius:10px; padding:2px 10px; font-size:12px; }
+.primary-val  { font-weight:600; }
+
+/* DETAIL PANEL */
+.detail-panel { position:absolute; top:0; right:0; bottom:0; width:var(--panel-w); background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; z-index:10; box-shadow:-4px 0 20px rgba(0,0,0,.10); }
+.detail-panel.open { transform:translateX(0); }
+.panel-header { padding:16px 18px 14px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:10px; flex-shrink:0; }
+.panel-header-info { flex:1; min-width:0; }
+.panel-title  { font-size:14px; font-weight:700; }
+.panel-meta   { font-size:12px; color:var(--text-sub); margin-top:4px; line-height:1.7; }
+.panel-close  { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:20px; line-height:1; padding:0 2px; border-radius:3px; transition:all .15s; }
+.panel-close:hover { background:var(--bg); color:var(--text); }
+.panel-body { flex:1; overflow-y:auto; padding:14px 18px; }
+.panel-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; height:200px; gap:10px; color:var(--text-dim); font-size:13px; }
+
+/* CHANGE CARDS */
+.change-card { border:1px solid var(--border); border-radius:7px; overflow:hidden; margin-bottom:10px; }
+.change-card-header { background:var(--bg); padding:9px 14px; font-size:12.5px; font-weight:700; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:7px; }
+.change-row  { display:flex; }
+.change-cell { flex:1; padding:10px 14px; font-size:13px; line-height:1.5; }
+.change-cell:first-child { border-right:1px solid var(--border); background:#fff5f5; }
+.change-cell:last-child  { background:#f6ffed; }
+.change-label { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; margin-bottom:4px; }
+.change-cell:first-child .change-label { color:#d13438; }
+.change-cell:last-child  .change-label { color:#107c10; }
+.change-val       { color:var(--text); word-break:break-word; white-space:pre-wrap; }
+.change-val.empty { color:var(--text-dim); font-style:italic; }
+
+.no-changes { display:flex; flex-direction:column; align-items:center; gap:10px; padding:50px 20px; color:var(--text-dim); font-size:13px; text-align:center; }
+
+/* STATES */
+.state-box { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:300px; gap:14px; color:var(--text-sub); font-size:14px; text-align:center; padding:20px; }
+.state-icon { font-size:42px; }
+.spinner    { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .75s linear infinite; }
+.spinner-sm { width:20px; height:20px; border-width:2px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* PAGINATION */
+.pagination { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:8px 16px; border-top:1px solid var(--border); background:var(--surface); font-size:13px; color:var(--text-sub); flex-shrink:0; }
+.pg-btn { padding:5px 14px; border:1px solid var(--border); border-radius:4px; background:var(--surface); cursor:pointer; font-size:13px; color:var(--text); transition:all .15s; }
+.pg-btn:hover:not(:disabled) { background:var(--accent); color:#fff; border-color:var(--accent); }
+.pg-btn:disabled { opacity:.4; cursor:default; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <span class="header-icon">📋</span>
+    <div class="header-info">
+        <div class="header-title">Histórico de Auditoria</div>
+        <div class="header-sub" id="headerSub">Carregando...</div>
+    </div>
+    <span class="ver-badge" id="verBadge">v—</span>
+</div>
+
+<div class="toolbar">
+    <span class="chip chip-table"  id="chipTabela">—</span>
+    <span class="chip chip-filter" id="chipFiltro" style="display:none">—</span>
+    <span class="chip chip-count"  id="chipCount"  style="display:none">—</span>
+    <div class="search">
+        <span>🔍</span>
+        <input id="searchInput" type="text" placeholder="Pesquisar..."/>
+    </div>
+</div>
+
+<div class="body">
+    <div class="list-pane" id="listPane">
+        <div class="state-box" id="stateBox">
+            <div class="spinner"></div>
+            <span>Buscando histórico de auditoria...</span>
+        </div>
+        <table id="auditTable" style="display:none">
+            <thead><tr>
+                <th data-col="createdon" class="sorted">Data / Hora ↓</th>
+                <th data-col="operation">Operação</th>
+                <th data-col="user">Usuário</th>
+                <th data-col="primaryval" id="thPrimary">Registro</th>
+                <th>Campos alterados</th>
+            </tr></thead>
+            <tbody id="auditBody"></tbody>
+        </table>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+        <div class="panel-header">
+            <div class="panel-header-info">
+                <div class="panel-title" id="panelTitle">Detalhes</div>
+                <div class="panel-meta"  id="panelMeta">—</div>
+            </div>
+            <button class="panel-close" id="panelClose">✕</button>
+        </div>
+        <div class="panel-body" id="panelBody"></div>
+    </div>
+</div>
+
+<div class="pagination" id="pagination" style="display:none">
+    <span id="pageInfo"></span>
+    <button class="pg-btn" id="btnPrev">← Anterior</button>
+    <button class="pg-btn" id="btnNext">Próxima →</button>
+</div>
+
+<script>
+(function () {
+    var VERSION   = "8.0.0";
+    var PAGE_SIZE = 50;
+    var allRecs   = [];
+    var filtered  = [];
+    var page      = 1;
+    var sortCol   = "createdon";
+    var sortAsc   = false;
+    var orgUrl    = "";
+    var activeRow = null;
+
+    // Metadados
+    var entitySetName       = "";
+    var primaryFieldLogical = ""; // ex: cr40f_id
+    var primaryIdField      = ""; // ex: cr40f_reservadeveculosid
+    var fieldDisplayMap     = {}; // logicalname → displayname
+    var primaryValueMap     = {}; // objectid guid → valor primário
+
+    // Contadores para inicialização paralela
+    var pendingInits = 0;
+    var auditReady   = false;
+
+    console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Iniciando...");
+
+    // ── 1. PARAMS ─────────────────────────────────────────────
+    var params = {};
+    try {
+        var match = window.location.search.match(/[?&]data=([^&]*)/i);
+        if (!match) throw new Error("Parâmetro 'data' ausente.");
+        params = JSON.parse(decodeURIComponent(match[1]));
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Params:", params);
+    } catch (e) {
+        console.error("[Betinhos AuditoriaViewer v" + VERSION + "] ERRO params:", e);
+        estado("erro", "Erro ao ler parâmetros: " + e.message);
+        return;
+    }
+
+    var entityName = params.entityName || "—";
+    var validIds   = params.validIds   || [];
+    orgUrl         = (params.orgUrl    || "").replace(/\/+$/, "");
+    entitySetName  = params.entitySetName || (entityName + "s");
+    var version    = params.version    || VERSION;
+
+    document.getElementById("verBadge").textContent   = "v" + version;
+    document.getElementById("chipTabela").textContent = entityName;
+    document.getElementById("headerSub").textContent  =
+        "Tabela: " + entityName + "  ·  " + new Date().toLocaleString("pt-BR");
+
+    if (validIds.length > 0) {
+        var cf = document.getElementById("chipFiltro");
+        cf.style.display = "inline";
+        cf.textContent   = validIds.length === 1
+            ? "1 registro selecionado"
+            : validIds.length + " registros selecionados";
+    }
+
+    // ── 2. FILTRO ODATA AUDITORIA ─────────────────────────────
+    var filter = "objecttypecode eq '" + entityName + "'";
+    if (validIds.length === 1) {
+        filter += " and _objectid_value eq " + validIds[0];
+    } else if (validIds.length > 1) {
+        filter += " and (" + validIds.map(function (id) {
+            return "_objectid_value eq " + id;
+        }).join(" or ") + ")";
+    }
+
+    var apiUrl = orgUrl + "/api/data/v9.2/audits" +
+        "?$select=auditid,createdon,operation,objecttypecode,_objectid_value,_userid_value,changedata" +
+        "&$expand=userid($select=fullname)" +
+        "&$filter=" + encodeURIComponent(filter) +
+        "&$orderby=createdon desc" +
+        "&$top=500";
+
+    // ── 3. INICIAR CARGAS PARALELAS ───────────────────────────
+    // 3 chamadas paralelas: auditoria + meta base + meta atributos
+    pendingInits = 3;
+
+    // 3a — Auditoria
+    apiGet(apiUrl, function (data) {
+        allRecs    = data.value || [];
+        auditReady = true;
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Auditoria: " + allRecs.length + " registros");
+        checkInits();
+    }, function (status) {
+        estado(status === 403
+            ? "erro" : "erro",
+            status === 403
+            ? "Sem permissão.\nSolicite o privilégio 'Histórico de Auditoria de Leitura'."
+            : "Erro HTTP " + status + " ao buscar auditoria.");
+    });
+
+    // 3b — Metadados base (PrimaryNameAttribute, PrimaryIdAttribute)
+    var metaBaseUrl = orgUrl + "/api/data/v9.2/EntityDefinitions(LogicalName='" + entityName + "')" +
+        "?$select=PrimaryNameAttribute,PrimaryIdAttribute";
+
+    apiGet(metaBaseUrl, function (meta) {
+        primaryFieldLogical = meta.PrimaryNameAttribute || "";
+        primaryIdField      = meta.PrimaryIdAttribute   || (entityName + "id");
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] primaryFieldLogical:", primaryFieldLogical, "| primaryIdField:", primaryIdField);
+        checkInits();
+    }, function (status) {
+        console.warn("[Betinhos AuditoriaViewer v" + VERSION + "] Meta base falhou HTTP " + status);
+        checkInits();
+    });
+
+    // 3c — Metadados de atributos (display names)
+    var metaAttrUrl = orgUrl + "/api/data/v9.2/EntityDefinitions(LogicalName='" + entityName + "')" +
+        "/Attributes?$select=LogicalName,DisplayName,AttributeType";
+
+    apiGet(metaAttrUrl, function (data) {
+        (data.value || []).forEach(function (a) {
+            var dn = (a.DisplayName && a.DisplayName.UserLocalizedLabel)
+                ? a.DisplayName.UserLocalizedLabel.Label
+                : a.LogicalName;
+            fieldDisplayMap[a.LogicalName] = dn;
+        });
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] fieldDisplayMap: " + Object.keys(fieldDisplayMap).length + " campos");
+        checkInits();
+    }, function (status) {
+        console.warn("[Betinhos AuditoriaViewer v" + VERSION + "] Meta atributos falhou HTTP " + status);
+        checkInits();
+    });
+
+    // ── 4. AGUARDAR TODAS AS INITS ────────────────────────────
+    function checkInits() {
+        pendingInits--;
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] pendingInits restantes:", pendingInits);
+        if (pendingInits === 0) iniciar();
+    }
+
+    function iniciar() {
+        // Atualizar cabeçalho da coluna com nome de exibição do campo primário
+        if (primaryFieldLogical && fieldDisplayMap[primaryFieldLogical]) {
+            document.getElementById("thPrimary").textContent =
+                fieldDisplayMap[primaryFieldLogical];
+        }
+
+        if (!primaryFieldLogical || !primaryIdField || allRecs.length === 0) {
+            console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Sem campo primário ou sem registros — renderizando direto");
+            renderizar();
+            return;
+        }
+
+        // Coletar GUIDs únicos
+        var guids = [];
+        var seen  = {};
+        allRecs.forEach(function (r) {
+            var g = (r._objectid_value || "").replace(/[{}]/g, "").toLowerCase();
+            if (g && !seen[g]) { seen[g] = true; guids.push(g); }
+        });
+
+        if (guids.length === 0) { renderizar(); return; }
+
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Buscando valores primários para " + guids.length + " GUIDs...");
+
+        // Batch lookup em grupos de 30
+        var BATCH = 30;
+        var batches   = [];
+        for (var i = 0; i < guids.length; i += BATCH) {
+            batches.push(guids.slice(i, i + BATCH));
+        }
+
+        var done = 0;
+        batches.forEach(function (batch) {
+            var idFilter = batch.map(function (g) {
+                return primaryIdField + " eq " + g;
+            }).join(" or ");
+
+            var bUrl = orgUrl + "/api/data/v9.2/" + entitySetName +
+                "?$select=" + primaryIdField + "," + primaryFieldLogical +
+                "&$filter=(" + idFilter + ")";
+
+            console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Batch URL:", bUrl);
+
+            apiGet(bUrl, function (res) {
+                (res.value || []).forEach(function (rec) {
+                    // Chave = GUID do ID do registro, normalizado
+                    var idRaw = rec[primaryIdField] || "";
+                    var id    = idRaw.replace(/[{}]/g, "").toLowerCase();
+                    var val   = rec[primaryFieldLogical];
+                    if (id && val !== undefined && val !== null) {
+                        primaryValueMap[id] = String(val);
+                        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Mapeado:", id, "→", val);
+                    }
+                });
+                done++;
+                if (done === batches.length) {
+                    console.log("[Betinhos AuditoriaViewer v" + VERSION + "] primaryValueMap completo:", Object.keys(primaryValueMap).length, "entradas");
+                    renderizar();
+                }
+            }, function (status) {
+                console.warn("[Betinhos AuditoriaViewer v" + VERSION + "] Batch falhou HTTP " + status);
+                done++;
+                if (done === batches.length) renderizar();
+            });
+        });
+    }
+
+    // ── 5. RENDER ─────────────────────────────────────────────
+    function renderizar() { aplicarFiltro(); }
+
+    function aplicarFiltro() {
+        var q = (document.getElementById("searchInput").value || "").toLowerCase();
+        filtered = allRecs.filter(function (r) {
+            if (!q) return true;
+            var pv = getPrimaryVal(r);
+            return (nomeUsuario(r) + fmtData(r.createdon) + nomeOp(r.operation) + pv)
+                .toLowerCase().indexOf(q) !== -1;
+        });
+        page = 1;
+        ordenar();
+        renderPagina();
+    }
+
+    function ordenar() {
+        filtered.sort(function (a, b) {
+            var va, vb;
+            if      (sortCol === "user")       { va = nomeUsuario(a); vb = nomeUsuario(b); }
+            else if (sortCol === "primaryval") { va = getPrimaryVal(a); vb = getPrimaryVal(b); }
+            else                               { va = a[sortCol] || ""; vb = b[sortCol] || ""; }
+            if (va < vb) return sortAsc ? -1 : 1;
+            if (va > vb) return sortAsc ?  1 : -1;
+            return 0;
+        });
+    }
+
+    function renderPagina() {
+        var total = filtered.length;
+        var pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (page > pages) page = pages;
+
+        var cc = document.getElementById("chipCount");
+        cc.style.display = "inline";
+        cc.textContent   = total + " registro" + (total !== 1 ? "s" : "");
+
+        if (total === 0) {
+            estado("vazio", "Nenhum registro de auditoria encontrado.");
+            document.getElementById("pagination").style.display = "none";
+            return;
+        }
+
+        document.getElementById("stateBox").style.display   = "none";
+        document.getElementById("auditTable").style.display = "table";
+        document.getElementById("pagination").style.display = "flex";
+        document.getElementById("pageInfo").textContent     =
+            "Página " + page + " / " + pages + "  (" + total + " registros)";
+        document.getElementById("btnPrev").disabled = page <= 1;
+        document.getElementById("btnNext").disabled = page >= pages;
+
+        var slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+        var tbody = document.getElementById("auditBody");
+        tbody.innerHTML = "";
+
+        slice.forEach(function (r) {
+            var campos = contarCampos(r.changedata);
+            var pval   = getPrimaryVal(r);
+            var tr     = document.createElement("tr");
+
+            tr.innerHTML =
+                "<td>" + fmtData(r.createdon) + "</td>" +
+                "<td><span class='op-dot op-" + r.operation + "'>" + nomeOp(r.operation) + "</span></td>" +
+                "<td>" + escHtml(nomeUsuario(r)) + "</td>" +
+                "<td class='primary-val'>" + escHtml(pval || "—") + "</td>" +
+                "<td>" + (campos > 0
+                    ? "<span class='fields-count'>" + campos + " campo" + (campos !== 1 ? "s" : "") + "</span>"
+                    : "<span style='color:var(--text-dim)'>—</span>") +
+                "</td>";
+
+            tr.addEventListener("click", function () { abrirPainel(tr, r); });
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ── 6. PAINEL ─────────────────────────────────────────────
+    function abrirPainel(tr, record) {
+        if (activeRow) activeRow.classList.remove("selected");
+        tr.classList.add("selected");
+        activeRow = tr;
+
+        document.getElementById("detailPanel").classList.add("open");
+        document.getElementById("listPane").classList.add("panel-open");
+
+        var pval = getPrimaryVal(record);
+        document.getElementById("panelTitle").textContent =
+            nomeOp(record.operation) + " — " + fmtData(record.createdon);
+        document.getElementById("panelMeta").innerHTML =
+            "Por: <strong>" + escHtml(nomeUsuario(record)) + "</strong>" +
+            (pval ? "<br>Registro: <strong>" + escHtml(pval) + "</strong>" : "");
+
+        var pb = document.getElementById("panelBody");
+        pb.innerHTML = "<div class='panel-loading'><div class='spinner spinner-sm'></div><span>Carregando detalhes...</span></div>";
+
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Buscando AuditDetails para:", record.auditid);
+
+        var detUrl = orgUrl + "/api/data/v9.2/audits(" + record.auditid +
+            ")/Microsoft.Dynamics.CRM.RetrieveAuditDetails";
+
+        apiGet(detUrl, function (det) {
+            console.log("[Betinhos AuditoriaViewer v" + VERSION + "] AuditDetail recebido:", JSON.stringify(det).substring(0, 500));
+            renderPainel(pb, det);
+        }, function (status) {
+            pb.innerHTML = "<div class='no-changes'><span style='font-size:30px'>⚠️</span><span>Erro HTTP " + status + " ao buscar detalhes.</span></div>";
+        });
+    }
+
+    // ── 7. RENDER PAINEL ──────────────────────────────────────
+    function renderPainel(pb, det) {
+        var changes = [];
+
+        var ad = det && det.AuditDetail;
+        if (!ad) {
+            pb.innerHTML = semAlteracoes();
+            return;
+        }
+
+        var nv = ad.NewValue || {};
+        var ov = ad.OldValue || {};
+
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] NewValue keys:", Object.keys(nv));
+        console.log("[Betinhos AuditoriaViewer v" + VERSION + "] OldValue keys:", Object.keys(ov));
+
+        // Coletar todas as chaves de campo (excluir anotações @)
+        var allKeys = {};
+        [nv, ov].forEach(function (obj) {
+            Object.keys(obj).forEach(function (k) {
+                if (k.indexOf("@") === -1) allKeys[k] = true;
+            });
+        });
+
+        Object.keys(allKeys).forEach(function (key) {
+            var isLookup = key.charAt(0) === "_" && key.slice(-6) === "_value";
+            var logicalName, displayName;
+
+            if (isLookup) {
+                // _cr40f_motorista_value → cr40f_motorista
+                logicalName = key.slice(1, -6);
+                displayName = fieldDisplayMap[logicalName] || logicalName;
+            } else {
+                logicalName = key;
+                displayName = fieldDisplayMap[key] || key;
+            }
+
+            // FormattedValue já contém label de Choice, nome de Lookup, etc.
+            var fmtSuffix = "@OData.Community.Display.V1.FormattedValue";
+            var oldFmt = ov[key + fmtSuffix] || "";
+            var newFmt = nv[key + fmtSuffix] || "";
+            var oldRaw = ov[key];
+            var newRaw = nv[key];
+
+            var oldDisplay = oldFmt || formatRaw(oldRaw);
+            var newDisplay = newFmt || formatRaw(newRaw);
+
+            console.log("[Betinhos AuditoriaViewer v" + VERSION + "] Campo:", key,
+                "| logicalName:", logicalName,
+                "| displayName:", displayName,
+                "| old:", oldDisplay,
+                "| new:", newDisplay);
+
+            changes.push({
+                displayName: displayName,
+                oldDisplay:  oldDisplay,
+                newDisplay:  newDisplay
+            });
+        });
+
+        if (changes.length === 0) {
+            pb.innerHTML = semAlteracoes();
+            return;
+        }
+
+        var html = "";
+        changes.forEach(function (c) {
+            var oldEmpty = !c.oldDisplay;
+            var newEmpty = !c.newDisplay;
+            html +=
+                "<div class='change-card'>" +
+                    "<div class='change-card-header'>📌 " + escHtml(c.displayName) + "</div>" +
+                    "<div class='change-row'>" +
+                        "<div class='change-cell'>" +
+                            "<div class='change-label'>Antes</div>" +
+                            "<div class='change-val" + (oldEmpty ? " empty" : "") + "'>" +
+                                (oldEmpty ? "vazio" : escHtml(c.oldDisplay)) +
+                            "</div>" +
+                        "</div>" +
+                        "<div class='change-cell'>" +
+                            "<div class='change-label'>Depois</div>" +
+                            "<div class='change-val" + (newEmpty ? " empty" : "") + "'>" +
+                                (newEmpty ? "vazio" : escHtml(c.newDisplay)) +
+                            "</div>" +
+                        "</div>" +
+                    "</div>" +
+                "</div>";
+        });
+        pb.innerHTML = html;
+    }
+
+    function semAlteracoes() {
+        return "<div class='no-changes'><span style='font-size:32px'>📄</span><span>Sem alterações de campo registradas.</span></div>";
+    }
+
+    // ── 8. FECHAR PAINEL ──────────────────────────────────────
+    document.getElementById("panelClose").addEventListener("click", function () {
+        document.getElementById("detailPanel").classList.remove("open");
+        document.getElementById("listPane").classList.remove("panel-open");
+        if (activeRow) { activeRow.classList.remove("selected"); activeRow = null; }
+    });
+
+    // ── 9. HELPERS ────────────────────────────────────────────
+    function apiGet(url, onSuccess, onError) {
+        var x = new XMLHttpRequest();
+        x.open("GET", url, true);
+        x.setRequestHeader("Accept", "application/json");
+        x.setRequestHeader("OData-MaxVersion", "4.0");
+        x.setRequestHeader("OData-Version", "4.0");
+        x.setRequestHeader("Prefer", 'odata.include-annotations="*"');
+        x.onreadystatechange = function () {
+            if (x.readyState !== 4) return;
+            if (x.status === 200) {
+                try { onSuccess(JSON.parse(x.responseText)); }
+                catch (e) { console.error("[Betinhos AuditoriaViewer] Parse error:", e); onError(0); }
+            } else {
+                console.error("[Betinhos AuditoriaViewer] HTTP " + x.status + " para:", url);
+                onError(x.status);
+            }
+        };
+        x.onerror = function () { onError(0); };
+        x.send();
+    }
+
+    function getPrimaryVal(r) {
+        if (!r._objectid_value) return "";
+        var key = r._objectid_value.replace(/[{}]/g, "").toLowerCase();
+        var val = primaryValueMap[key];
+        return val !== undefined ? String(val) : "";
+    }
+
+    function formatRaw(val) {
+        if (val === null || val === undefined) return "";
+        if (typeof val === "boolean") return val ? "Sim" : "Não";
+        return String(val);
+    }
+
+    function fmtData(iso) {
+        if (!iso) return "—";
+        return new Date(iso).toLocaleString("pt-BR", {
+            day:"2-digit", month:"2-digit", year:"numeric",
+            hour:"2-digit", minute:"2-digit", second:"2-digit"
+        });
+    }
+
+    function nomeOp(op) {
+        return { 1:"Criação", 2:"Atualização", 3:"Exclusão", 4:"Acesso" }[op] || "Op " + op;
+    }
+
+    function nomeUsuario(r) {
+        return (r.userid && r.userid.fullname)
+            ? r.userid.fullname
+            : (r["_userid_value@OData.Community.Display.V1.FormattedValue"] || r._userid_value || "—");
+    }
+
+    function contarCampos(changedata) {
+        if (!changedata) return 0;
+        try {
+            var o = JSON.parse(changedata);
+            return (o.changedAttributes || o.auditDetails || []).length;
+        } catch (e) { return 0; }
+    }
+
+    function escHtml(s) {
+        return String(s)
+            .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+            .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function estado(tipo, msg) {
+        document.getElementById("auditTable").style.display = "none";
+        document.getElementById("pagination").style.display = "none";
+        var sb = document.getElementById("stateBox");
+        sb.style.display = "flex";
+        sb.innerHTML =
+            "<span class='state-icon'>" + (tipo === "erro" ? "⚠️" : "📭") + "</span>" +
+            "<span style='white-space:pre-line;text-align:center'>" + msg + "</span>";
+    }
+
+    // ── 10. EVENTOS ───────────────────────────────────────────
+    document.getElementById("searchInput").addEventListener("input", aplicarFiltro);
+
+    document.getElementById("btnPrev").addEventListener("click", function () {
+        if (page > 1) { page--; renderPagina(); }
+    });
+    document.getElementById("btnNext").addEventListener("click", function () {
+        page++; renderPagina();
+    });
+
+    document.querySelectorAll("thead th[data-col]").forEach(function (th) {
+        th.addEventListener("click", function () {
+            var col = th.getAttribute("data-col");
+            document.querySelectorAll("thead th").forEach(function (t) {
+                t.textContent = t.textContent.replace(/ [↑↓]$/, "");
+                t.classList.remove("sorted");
+            });
+            sortAsc = sortCol === col ? !sortAsc : true;
+            sortCol = col;
+            th.classList.add("sorted");
+            th.textContent += sortAsc ? " ↑" : " ↓";
+            ordenar();
+            renderPagina();
+        });
+    });
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+﻿{
+    "generatedAt":  "2026-06-16T11:00:02.0556757-03:00",
+    "source":  "tmp/AppBetinhos_165_unpacked_check/customizations.xml",
+    "relationships":  [
+                          {
+                              "referencedEntity":  "cr40f_colisao",
+                              "referencingEntity":  "cr40f_anexocolisao",
+                              "name":  "cr40f_cr40f_colisao_Colisao_cr40f_anexocolisao",
+                              "type":  "OneToMany",
+                              "referencingAttribute":  "cr40f_colisao"
+                          },
+                          {
+                              "referencedEntity":  "cr40f_funcionarios",
+                              "referencingEntity":  "cr40f_anexocolisao",
+                              "name":  "cr40f_cr40f_funcionarios_EnviadoPor_cr40f_anexocolisao",
+                              "type":  "OneToMany",
+                              "referencingAttribute":  "cr40f_enviadopor"
+                          },
+                          {
+                              "referencedEntity":  "cr40f_funcionarios",
+                              "referencingEntity":  "cr40f_anexorecebimento",
+                              "name":  "cr40f_cr40f_funcionarios_EnviadoPor_cr40f_anexorecebimento",
+                              "type":  "OneToMany",
+                              "referencingAttribute":  "cr40f_enviadopor"
+                          },
+                          {
+                              "referencedEntity":  "cr40f_funcionarios",
+                              "referencingEntity":  "cr40f_colisao",
+                              "name":  "cr40f_cr40f_funcionarios_Motorista_cr40f_colisao",
+                              "type":  "OneToMany",
+                              "referencingAttribute":  "cr40f_motorista"
+                          },
+                          {
+                              "referencedEntity":  "cr40f_reservadeveculos",
+                              "referencingEntity":  "cr40f_anexorecebimento",
+                              "name":  "cr40f_cr40f_reservadeveculos_Reserva_cr40f_anexorecebimento",
+                              "type":  "OneToMany",
+                              "referencingAttribute":  "cr40f_reserva"
+                          },
+                          {
+                              "referencedEntity":  "cr40f_veiculos",
+                              "referencingEntity":  "cr40f_colisao",
+                              "name":  "cr40f_cr40f_veiculos_Veiculo_cr40f_colisao",
+                              "type":  "OneToMany",
+                              "referencingAttribute":  "cr40f_veiculo"
+                          }
+                      ]
+}

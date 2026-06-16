@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
-import type { Ref, RefObject } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { AppShell } from "../components/layout/AppShell";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { SearchableSelect } from "../components/common/SearchableSelect";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { VoucherInputRow } from "../components/voucher/VoucherInputRow";
 import { VoucherSection } from "../components/voucher/VoucherSection";
@@ -46,20 +47,43 @@ function TimeSelects({
   hour: string;
   minute: string;
   error?: string;
-  hourRef?: RefObject<HTMLSelectElement | null>;
-  minuteRef?: RefObject<HTMLSelectElement | null>;
+  hourRef?: RefObject<HTMLButtonElement | null>;
+  minuteRef?: RefObject<HTMLButtonElement | null>;
   onHourChange: (value: string) => void;
   onMinuteChange: (value: string) => void;
 }) {
+  const hourOptions = useMemo(
+    () => hours.map((item) => ({ value: item, label: item || "Hora" })),
+    []
+  );
+  const minuteOptions = useMemo(
+    () => minutes.map((item) => ({ value: item, label: item || "Min" })),
+    []
+  );
+
   return (
     <div className={`voucher-time ${error ? "is-invalid" : ""}`}>
-      <select ref={hourRef as Ref<HTMLSelectElement>} aria-label={`${prefix} hora`} aria-invalid={Boolean(error)} value={hour} onChange={(event) => onHourChange(event.target.value)}>
-        {hours.map((item) => <option key={`${prefix}-h-${item || "empty"}`} value={item}>{item || "Hora"}</option>)}
-      </select>
+      <SearchableSelect
+        ref={hourRef}
+        value={hour}
+        options={hourOptions}
+        placeholder="Hora"
+        ariaLabel={`${prefix} hora`}
+        invalid={Boolean(error)}
+        searchPlaceholder="Hora"
+        onChange={onHourChange}
+      />
       <span>:</span>
-      <select ref={minuteRef as Ref<HTMLSelectElement>} aria-label={`${prefix} minuto`} aria-invalid={Boolean(error)} value={minute} onChange={(event) => onMinuteChange(event.target.value)}>
-        {minutes.map((item) => <option key={`${prefix}-m-${item || "empty"}`} value={item}>{item || "Min"}</option>)}
-      </select>
+      <SearchableSelect
+        ref={minuteRef}
+        value={minute}
+        options={minuteOptions}
+        placeholder="Min"
+        ariaLabel={`${prefix} minuto`}
+        invalid={Boolean(error)}
+        searchPlaceholder="Min"
+        onChange={onMinuteChange}
+      />
     </div>
   );
 }
@@ -72,7 +96,7 @@ function splitTime(value = "") {
 function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, string>) {
   if (initialDraft) {
     const start = splitTime(initialDraft["Horário Inicial"] ?? initialDraft["Horario Inicial"]);
-    const waitStart = splitTime(initialDraft["Espera Inicio"]);
+    const waitStart = splitTime(initialDraft["Espera Inicio"] ?? initialDraft["Espera Início"]);
     const waitEnd = splitTime(initialDraft["Espera Final"]);
     return {
       hora_saida: start.hour,
@@ -114,8 +138,8 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
   const clientName = detail.fields.find((field) => field.label === "Cliente")?.value ?? "";
   const showSignature = /tenn?aris/i.test(clientName);
   const draftRef = useRef(readVoucherDraft(detail, initialDraft));
-  const startHourRef = useRef<HTMLSelectElement | null>(null);
-  const startMinuteRef = useRef<HTMLSelectElement | null>(null);
+  const startHourRef = useRef<HTMLButtonElement | null>(null);
+  const startMinuteRef = useRef<HTMLButtonElement | null>(null);
   const signatureButtonRef = useRef<HTMLButtonElement | null>(null);
   const [startHour, setStartHour] = useState(() => draftRef.current.hora_saida ?? "");
   const [startMinute, setStartMinute] = useState(() => draftRef.current.min_saida ?? "");
@@ -138,8 +162,19 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
   };
 
   const clear = () => {
-    setStartHour(""); setStartMinute(""); setWaitStartHour(""); setWaitStartMinute(""); setWaitEndHour(""); setWaitEndMinute("");
-    setDeviation(false); setObs(""); setToll(""); setParking(""); setFuel(""); setHotel(""); setOthers("");
+    setStartHour("");
+    setStartMinute("");
+    setWaitStartHour("");
+    setWaitStartMinute("");
+    setWaitEndHour("");
+    setWaitEndMinute("");
+    setDeviation(false);
+    setObs("");
+    setToll("");
+    setParking("");
+    setFuel("");
+    setHotel("");
+    setOthers("");
     setErrors({});
     onDraftChange?.({});
   };
@@ -149,13 +184,13 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
       "Horário Inicial": startHour && startMinute ? `${startHour}:${startMinute}` : "",
       "Espera Início": waitStartHour && waitStartMinute ? `${waitStartHour}:${waitStartMinute}` : "",
       "Espera Final": waitEndHour && waitEndMinute ? `${waitEndHour}:${waitEndMinute}` : "",
-      "Desvio": deviation ? "Sim" : "Não",
+      Desvio: deviation ? "Sim" : "Não",
       "Observação Voucher": obs,
-      "Pedágio": toll,
-      "Estacionamento": parking,
-      "Combustível": fuel,
-      "Hospedagem": hotel,
-      "Outros": others,
+      Pedagio: toll,
+      Estacionamento: parking,
+      Combustivel: fuel,
+      Hospedagem: hotel,
+      Outros: others,
       ...updates
     };
     onDraftChange?.(fields);
@@ -167,14 +202,14 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
       "Horário Inicial": startHour && startMinute ? `${startHour}:${startMinute}` : "Não informado",
       "Espera Início": waitStartHour && waitStartMinute ? `${waitStartHour}:${waitStartMinute}` : "Não informado",
       "Espera Final": waitEndHour && waitEndMinute ? `${waitEndHour}:${waitEndMinute}` : "Não informado",
-      "Desvio": deviation ? "Sim" : "Não",
+      Desvio: deviation ? "Sim" : "Não",
       "Observação Voucher": obs || "Sem observação.",
-      "Pedágio": toll || "R$ 0,00",
-      "Estacionamento": parking || "R$ 0,00",
-      "Combustível": fuel || "R$ 0,00",
-      "Hospedagem": hotel || "R$ 0,00",
-      "Outros": others || "R$ 0,00",
-      "Assinatura": hasSignature ? "Assinatura registrada localmente." : "Sem assinatura."
+      Pedágio: toll || "R$ 0,00",
+      Estacionamento: parking || "R$ 0,00",
+      Combustível: fuel || "R$ 0,00",
+      Hospedagem: hotel || "R$ 0,00",
+      Outros: others || "R$ 0,00",
+      Assinatura: hasSignature ? "Assinatura registrada localmente." : "Sem assinatura."
     };
 
     const nextErrors: VoucherErrors = {};
@@ -215,17 +250,49 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
                     error={errors.startTime}
                     hourRef={startHourRef}
                     minuteRef={startMinuteRef}
-                    onHourChange={(value) => { setStartHour(value); clearError("startTime"); emitDraft({ "Horário Inicial": value && startMinute ? `${value}:${startMinute}` : "" }); }}
-                    onMinuteChange={(value) => { setStartMinute(value); clearError("startTime"); emitDraft({ "Horário Inicial": startHour && value ? `${startHour}:${value}` : "" }); }}
+                    onHourChange={(value) => {
+                      setStartHour(value);
+                      clearError("startTime");
+                      emitDraft({ "Horário Inicial": value && startMinute ? `${value}:${startMinute}` : "" });
+                    }}
+                    onMinuteChange={(value) => {
+                      setStartMinute(value);
+                      clearError("startTime");
+                      emitDraft({ "Horário Inicial": startHour && value ? `${startHour}:${value}` : "" });
+                    }}
                   />
                 </VoucherInputRow>
               </VoucherSection>
               <VoucherSection title="Espera">
                 <VoucherInputRow label="Início">
-                  <TimeSelects prefix="espera-inicio" hour={waitStartHour} minute={waitStartMinute} onHourChange={(value) => { setWaitStartHour(value); emitDraft({ "Espera Início": value && waitStartMinute ? `${value}:${waitStartMinute}` : "" }); }} onMinuteChange={(value) => { setWaitStartMinute(value); emitDraft({ "Espera Início": waitStartHour && value ? `${waitStartHour}:${value}` : "" }); }} />
+                  <TimeSelects
+                    prefix="espera-inicio"
+                    hour={waitStartHour}
+                    minute={waitStartMinute}
+                    onHourChange={(value) => {
+                      setWaitStartHour(value);
+                      emitDraft({ "Espera Início": value && waitStartMinute ? `${value}:${waitStartMinute}` : "" });
+                    }}
+                    onMinuteChange={(value) => {
+                      setWaitStartMinute(value);
+                      emitDraft({ "Espera Início": waitStartHour && value ? `${waitStartHour}:${value}` : "" });
+                    }}
+                  />
                 </VoucherInputRow>
                 <VoucherInputRow label="Final">
-                  <TimeSelects prefix="espera-final" hour={waitEndHour} minute={waitEndMinute} onHourChange={(value) => { setWaitEndHour(value); emitDraft({ "Espera Final": value && waitEndMinute ? `${value}:${waitEndMinute}` : "" }); }} onMinuteChange={(value) => { setWaitEndMinute(value); emitDraft({ "Espera Final": waitEndHour && value ? `${waitEndHour}:${value}` : "" }); }} />
+                  <TimeSelects
+                    prefix="espera-final"
+                    hour={waitEndHour}
+                    minute={waitEndMinute}
+                    onHourChange={(value) => {
+                      setWaitEndHour(value);
+                      emitDraft({ "Espera Final": value && waitEndMinute ? `${value}:${waitEndMinute}` : "" });
+                    }}
+                    onMinuteChange={(value) => {
+                      setWaitEndMinute(value);
+                      emitDraft({ "Espera Final": waitEndHour && value ? `${waitEndHour}:${value}` : "" });
+                    }}
+                  />
                 </VoucherInputRow>
               </VoucherSection>
               <VoucherSection title="Informações Adicionais">
@@ -253,7 +320,10 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
                 label={hasSignature ? "Refazer assinatura" : "Assinar"}
                 disabled={isSubmitting}
                 ariaInvalid={Boolean(errors.signature)}
-                onClick={() => { clearError("signature"); onOpenSignature(); }}
+                onClick={() => {
+                  clearError("signature");
+                  onOpenSignature();
+                }}
               />
             ) : null}
             <ActionButton className="voucher-finish" variant="primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="ENVIADO" state={submitState} onClick={finish} />

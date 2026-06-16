@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-06-16T14:47:58.078Z",
+  "environment": "https://org23b93544.crm2.dynamics.com",
+  "solutionUniqueName": "Betinhos_Core_Clean",
+  "tables": {
+    "cr40f_colisao": {
+      "newLogicalName": "cr40f_colisao_v2",
+      "newEntitySetName": "cr40f_colisao_v2s",
+      "primaryIdAttribute": "cr40f_colisao_v2id",
+      "primaryNameAttribute": "cr40f_name"
+    },
+    "cr40f_anexorecebimento": {
+      "newLogicalName": "cr40f_anexorecebimento_v2",
+      "newEntitySetName": "cr40f_anexorecebimento_v2s",
+      "primaryIdAttribute": "cr40f_anexorecebimento_v2id",
+      "primaryNameAttribute": "cr40f_name"
+    },
+    "cr40f_anexocolisao": {
+      "newLogicalName": "cr40f_anexocolisao_v2",
+      "newEntitySetName": "cr40f_anexocolisao_v2s",
+      "primaryIdAttribute": "cr40f_anexocolisao_v2id",
+      "primaryNameAttribute": "cr40f_name"
+    }
+  }
+}

@@ -1,0 +1,834 @@
+<ImportExportXml version="9.2.26061.133" SolutionPackageVersion="9.2" languagecode="1046" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26061.133" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="9.2.26061.00133">
+  <SolutionManifest>
+    <UniqueName>AppBetinhos</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="App Betinhos" languagecode="1046" />
+    </LocalizedNames>
+    <Descriptions />
+    <Version>1.0.0.168</Version>
+    <Managed>1</Managed>
+    <Publisher>
+      <UniqueName>DefaultPublisherorg23b93544</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="Publicador Padrão para org23b93544" languagecode="1046" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="Publicador padrão para essa organização" languagecode="1046" />
+      </Descriptions>
+      <EMailAddress xsi:nil="true"></EMailAddress>
+      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <CustomizationPrefix>new</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10000</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode xsi:nil="true"></AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode xsi:nil="true"></ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+        <Address>
+          <AddressNumber>2</AddressNumber>
+          <AddressTypeCode xsi:nil="true"></AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode xsi:nil="true"></ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="1" schemaName="cr40f_anexodespesaoperacional" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_bancodedados" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_categoriadespesaoperacional" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_cidade" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_clientes1" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_colisao" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_composicaodeprecos" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_despesaoperacional" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_financeiro" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_formapagamentodespesa" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_funcionarios" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_infracaodetransito" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_manutencoes" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_multas" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_pagantes" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_recibopersonalizado" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_recibos" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_registrodeviagem" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_reservadeveculos" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_servicosporpassageiro" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_statusdamanutencao" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_trocasdecarro" behavior="0" />
+      <RootComponent type="1" schemaName="cr40f_veiculos" behavior="0" />
+      <RootComponent type="1" schemaName="new_appmotoristaslog" behavior="0" />
+      <RootComponent type="1" schemaName="new_centraldenotificacoes" behavior="0" />
+      <RootComponent type="1" schemaName="new_curriculo" behavior="0" />
+      <RootComponent type="1" schemaName="new_fotomanutencao" behavior="0" />
+      <RootComponent type="1" schemaName="new_marketing" behavior="0" />
+      <RootComponent type="1" schemaName="new_possedeveiculo" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_ativoouvendido" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_canaldeenvio" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_cargo" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_carrotipodeveiculo" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_classifficacao" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_competencia" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_formadepagamento" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_formadepagamentofin" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_grau" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_idioma" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_opcoes" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_patrimonioativoouvendido" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_sexo" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_status" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_statusdatrocadecarro" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_statusdefaturamento" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_statusdorecibo" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_statuspagante" behavior="0" />
+      <RootComponent type="9" schemaName="cr40f_tipodoservico" behavior="0" />
+      <RootComponent type="9" schemaName="new_canaldeenviodanotificacao" behavior="0" />
+      <RootComponent type="9" schemaName="new_categoriadoitem" behavior="0" />
+      <RootComponent type="9" schemaName="new_categoriadoveiculo" behavior="0" />
+      <RootComponent type="9" schemaName="new_statusdanotificacao" behavior="0" />
+      <RootComponent type="9" schemaName="new_statusdecomposicaodepreco" behavior="0" />
+      <RootComponent type="9" schemaName="new_tipodenotificacao" behavior="0" />
+      <RootComponent type="9" schemaName="new_tipodetrocadecarro" behavior="0" />
+      <RootComponent type="20" id="{3ec5cd83-641e-f111-88b1-6045bd3903f1}" behavior="0" />
+      <RootComponent type="20" id="{9b738929-651e-f111-88b1-6045bd3903f1}" behavior="0" />
+      <RootComponent type="20" behavior="0" parentId="{119f245c-3cc8-4b62-b31c-d1a046ced15d}" />
+      <RootComponent type="20" id="{b51ebc41-191e-f111-88b1-7ced8da87540}" behavior="0" />
+      <RootComponent type="20" id="{e564dc8f-47fc-f011-8406-7ced8da87992}" behavior="0" />
+      <RootComponent type="29" id="{0bcd0073-68df-f011-8406-002248e14e09}" behavior="0" />
+      <RootComponent type="29" id="{0fce14c4-4a34-f111-88b4-6045bd3c4061}" behavior="0" />
+      <RootComponent type="29" id="{10e9105c-c42e-f111-88b4-7ced8db0fc7d}" behavior="0" />
+      <RootComponent type="29" id="{1477727b-990e-f111-8341-7ced8db14575}" behavior="0" />
+      <RootComponent type="29" id="{15936261-4407-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{21af6806-0043-f111-bec6-7ced8da82ee9}" behavior="0" />
+      <RootComponent type="29" id="{22af6806-0043-f111-bec6-7ced8da82ee9}" behavior="0" />
+      <RootComponent type="29" id="{2eff1da8-0efd-f011-8406-002248e0a05f}" behavior="0" />
+      <RootComponent type="29" id="{36c84d31-c668-f111-ab0c-7ced8db14558}" behavior="0" />
+      <RootComponent type="29" id="{3812fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{3912fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{3a12fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{3b12fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{3b753311-cf39-f111-bec6-7ced8da8964d}" behavior="0" />
+      <RootComponent type="29" id="{3f1e60d7-4307-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{3f2f23a2-0efd-f011-8406-002248e0a05f}" behavior="0" />
+      <RootComponent type="29" id="{402f23a2-0efd-f011-8406-002248e0a05f}" behavior="0" />
+      <RootComponent type="29" id="{412f23a2-0efd-f011-8406-002248e0a05f}" behavior="0" />
+      <RootComponent type="29" id="{422f23a2-0efd-f011-8406-002248e0a05f}" behavior="0" />
+      <RootComponent type="29" id="{4355f029-4407-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{44c091aa-0b53-f111-bec6-000d3ac01483}" behavior="0" />
+      <RootComponent type="29" id="{48bd4dcd-e93f-f111-bec6-002248dede64}" behavior="0" />
+      <RootComponent type="29" id="{49bd4dcd-e93f-f111-bec6-002248dede64}" behavior="0" />
+      <RootComponent type="29" id="{4c6a5e89-a706-f111-8406-7ced8da8aedd}" behavior="0" />
+      <RootComponent type="29" id="{4d6a5e89-a706-f111-8406-7ced8da8aedd}" behavior="0" />
+      <RootComponent type="29" id="{4e6a5e89-a706-f111-8406-7ced8da8aedd}" behavior="0" />
+      <RootComponent type="29" id="{4f6a5e89-a706-f111-8406-7ced8da8aedd}" behavior="0" />
+      <RootComponent type="29" id="{4fb94870-aed9-f011-8543-000d3a886267}" behavior="0" />
+      <RootComponent type="29" id="{518868f7-6ae3-f011-8406-00224836e105}" behavior="0" />
+      <RootComponent type="29" id="{5c8c9c3d-4307-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{61907c19-c610-f111-8341-7ced8da828d4}" behavior="0" />
+      <RootComponent type="29" id="{6d2a60bb-4334-f111-88b4-6045bd3c4061}" behavior="0" />
+      <RootComponent type="29" id="{70433a56-d811-f111-8341-7ced8db14bc5}" behavior="0" />
+      <RootComponent type="29" id="{768c01bf-4507-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{777f3cf7-6529-f111-88b4-7ced8da86705}" behavior="0" />
+      <RootComponent type="29" id="{7af1b60f-ed5d-f111-a825-70a8a5a95b84}" behavior="0" />
+      <RootComponent type="29" id="{7c12fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{7d12fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{7dc8040d-2822-f111-8342-6045bd38748f}" behavior="0" />
+      <RootComponent type="29" id="{7e12fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{7f12fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{7f7ffa1d-4407-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{88cfc205-ba18-f111-8341-6045bd3c7605}" behavior="0" />
+      <RootComponent type="29" id="{89b342c4-3d21-f111-88b2-000d3a886185}" behavior="0" />
+      <RootComponent type="29" id="{8a6a5e89-a706-f111-8406-7ced8da8aedd}" behavior="0" />
+      <RootComponent type="29" id="{8ae9969f-4216-f111-8341-7ced8da9296c}" behavior="0" />
+      <RootComponent type="29" id="{8b6a5e89-a706-f111-8406-7ced8da8aedd}" behavior="0" />
+      <RootComponent type="29" id="{96415e6a-3734-f111-88b4-6045bd3c4061}" behavior="0" />
+      <RootComponent type="29" id="{96b4056d-68df-f011-8406-002248e14e09}" behavior="0" />
+      <RootComponent type="29" id="{9b569999-4216-f111-8341-7ced8da9296c}" behavior="0" />
+      <RootComponent type="29" id="{9be7d4df-f44e-f111-bec6-70a8a5a978ec}" behavior="0" />
+      <RootComponent type="29" id="{9d569999-4216-f111-8341-7ced8da9296c}" behavior="0" />
+      <RootComponent type="29" id="{9d805571-4407-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{9e569999-4216-f111-8341-7ced8da9296c}" behavior="0" />
+      <RootComponent type="29" id="{a190189e-3a22-f111-8342-6045bd38748f}" behavior="0" />
+      <RootComponent type="29" id="{a442faae-a3da-f011-8543-7ced8da92499}" behavior="0" />
+      <RootComponent type="29" id="{a694e349-4407-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{a8991159-342c-f111-88b4-6045bd394f68}" behavior="0" />
+      <RootComponent type="29" id="{a912fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{ad12fce1-ec26-f111-88b4-7ced8da87663}" behavior="0" />
+      <RootComponent type="29" id="{ad2686c1-cae2-f011-8406-000d3ac180f4}" behavior="0" />
+      <RootComponent type="29" id="{ae1333c5-eb3f-f111-bec6-002248dede64}" behavior="0" />
+      <RootComponent type="29" id="{aef79286-2bdf-f011-8407-7ced8da7d478}" behavior="0" />
+      <RootComponent type="29" id="{b75515f4-9239-f111-88b4-70a8a5a983d7}" behavior="0" />
+      <RootComponent type="29" id="{b874b974-7529-f111-88b4-7ced8da86705}" behavior="0" />
+      <RootComponent type="29" id="{b99df642-e118-f111-8341-6045bd3c7605}" behavior="0" />
+      <RootComponent type="29" id="{ba137dbe-4107-f111-8407-7ced8da7d478}" behavior="0" />
+      <RootComponent type="29" id="{bdc1e4af-3e63-f111-ab0c-7ced8db12f4c}" behavior="0" />
+      <RootComponent type="29" id="{bf266cc7-4007-f111-8407-7ced8da7d478}" behavior="0" />
+      <RootComponent type="29" id="{cbcd9564-1b1e-f111-88b1-7ced8da87540}" behavior="0" />
+      <RootComponent type="29" id="{ccc80502-4407-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{cd6770be-4307-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{d0d43d01-2d43-f111-bec6-7ced8da82ee9}" behavior="0" />
+      <RootComponent type="29" id="{d9569999-4216-f111-8341-7ced8da9296c}" behavior="0" />
+      <RootComponent type="29" id="{db569999-4216-f111-8341-7ced8da9296c}" behavior="0" />
+      <RootComponent type="29" id="{dbfd4ff6-4207-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{e12fdbc5-4207-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{e950a28a-4407-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{ed9ca81d-4307-f111-8406-7ced8db11a3d}" behavior="0" />
+      <RootComponent type="29" id="{ee0a68b9-3063-f111-ab0c-7ced8db12f4c}" behavior="0" />
+      <RootComponent type="60" id="{0c94439c-3d37-f111-88b4-7ced8db141e0}" />
+      <RootComponent type="60" id="{494a02df-3e37-f111-88b4-7ced8db141e0}" behavior="0" />
+      <RootComponent type="60" id="{ba60f291-d1e4-f011-8406-7ced8da85b7f}" />
+      <RootComponent type="61" schemaName="accessChecker_openDialog.js" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_abrirfuncoesoperacionais" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_assistant_onsave.js" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_assistente_completo.js" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_BotaoSalvar2" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_bulletlistsvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_carsvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_carsvgrepocom1" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_CommandBarFunctions" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_companysvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_companysvgrepocom1" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_ConfiguracaoRetorno" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_ConfiguracaoRetorno_v2" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_creditcardpaysvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_Flow_Gerar_OP" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_formhooks.js." behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_foto" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_GerarRecibo" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_highanglebirthdaycakecutlery" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_invoicesvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_judgesvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_LogoBetinhosB" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_maintenanceelectriccarsvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_megaphonesvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_new_assistente.html" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_new_assistente.js" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_NotifcarCondutor" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_paymentcardsvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_paymentrequestapisvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_paymentsvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_rateioabalateral" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_ScriptGerarContrato" behavior="0" />
+      <RootComponent type="61" schemaName="cr40f_tool01svgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="new_AbrirCustomPage" behavior="0" />
+      <RootComponent type="61" schemaName="new_app-motoristas-v2" behavior="0" />
+      <RootComponent type="61" schemaName="new_assistente.html" behavior="0" />
+      <RootComponent type="61" schemaName="new_assistente_autosave.js" behavior="0" />
+      <RootComponent type="61" schemaName="new_assistente_preview.html" behavior="0" />
+      <RootComponent type="61" schemaName="new_auditoriaacessar" behavior="0" />
+      <RootComponent type="61" schemaName="new_betinhos_AuditoriaViewer" behavior="0" />
+      <RootComponent type="61" schemaName="new_campoendereco" behavior="0" />
+      <RootComponent type="61" schemaName="new_campoendereco2" behavior="0" />
+      <RootComponent type="61" schemaName="new_cr40f_enviar_todos.js" behavior="0" />
+      <RootComponent type="61" schemaName="new_cr40f_SaveAndReturn" behavior="0" />
+      <RootComponent type="61" schemaName="new_dashboard" behavior="0" />
+      <RootComponent type="61" schemaName="new_dialog_agendamento.html" behavior="0" />
+      <RootComponent type="61" schemaName="new_Flow_Gerar_OP_Pela_CP" behavior="0" />
+      <RootComponent type="61" schemaName="new_formulario_geral.html" behavior="0" />
+      <RootComponent type="61" schemaName="new_gerarvoucherdeconfirmacao" behavior="0" />
+      <RootComponent type="61" schemaName="new_judgesvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="new_model_driven_formulario_geral_command.js" behavior="0" />
+      <RootComponent type="61" schemaName="new_moneyreceivesvgrepocom" behavior="0" />
+      <RootComponent type="61" schemaName="new_new_chamarServico.js" behavior="0" />
+      <RootComponent type="61" schemaName="new_open_dialog.js" behavior="0" />
+      <RootComponent type="61" schemaName="new_preencherEnderecoPassageiro" behavior="0" />
+      <RootComponent type="61" schemaName="new_programarRegistros.js" behavior="0" />
+      <RootComponent type="61" schemaName="new_refreshGrid" behavior="0" />
+      <RootComponent type="61" schemaName="new_scriptabalateralservicospormotorista" behavior="0" />
+      <RootComponent type="61" schemaName="new_ScriptCopiarServicos" behavior="0" />
+      <RootComponent type="61" schemaName="new_script_abrir_tela_curriculo" behavior="0" />
+      <RootComponent type="61" schemaName="new_TelaCurriculo" behavior="0" />
+      <RootComponent type="61" schemaName="new_teladespesasoperacionais" behavior="0" />
+      <RootComponent type="61" schemaName="new_TelaOperacional" behavior="0" />
+      <RootComponent type="61" schemaName="new_temabetinhos" behavior="0" />
+      <RootComponent type="61" schemaName="new_temabetinhos2" behavior="0" />
+      <RootComponent type="62" schemaName="cr40f_ModelDrivenBetinhos" behavior="0" />
+      <RootComponent type="62" schemaName="new_AppMotoristasv2" behavior="0" />
+      <RootComponent type="80" schemaName="cr40f_ModelDrivenBetinhos" behavior="0" />
+      <RootComponent type="80" schemaName="new_AppMotoristasv2" behavior="0" />
+      <RootComponent type="300" schemaName="cr40f_funesoperacionais_d5e5a" behavior="0" />
+      <RootComponent type="300" schemaName="cr40f_modeldrivenbetinhosdefaultcommandlibrary_1739f" behavior="0" />
+      <RootComponent type="300" schemaName="cr40f_pgina1_8cac9" behavior="0" />
+      <RootComponent type="300" schemaName="cr40f_reservarveculos_9ec70" behavior="0" />
+      <RootComponent type="300" schemaName="new_appbetinhosmotoristas_8fcab" behavior="0" />
+      <RootComponent type="300" schemaName="new_pgina2_f0001" behavior="0" />
+    </RootComponents>
+    <MissingDependencies>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Sem Voucher | Interno" id="{3812fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Editado | Interno e Motoristas" id="{3a12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Novo &quot;Requer Análise&quot; | Interno" id="{3b12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notficação OP do Serviço Não Gerada (3 dias) | Interno" id="{7c12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviços Sem CR da Semana | Interno" id="{7d12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Não Visualizado | Interno e Motoristas" id="{7e12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Lembrete Query Tenaris | Interno" id="{7f12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Sem Motorista Designado | Interno" id="{a190189e-3a22-f111-8342-6045bd38748f}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Novo Serviço Dia Posterior | App Interno" id="{ad12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="appnotification" displayName="Notificação" solution="AppNotifications (10.0.0.17)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Novo Serviço Emergencial | App Interno" id="{d9569999-4216-f111-8341-7ced8da9296c}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariabledefinition" displayName="Environment Variable Definition" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Retirado da Agenda | Motoristas" id="{3912fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariabledefinition" displayName="Environment Variable Definition" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Editado | Interno e Motoristas" id="{3a12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariabledefinition" displayName="Environment Variable Definition" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Novo Serviço | Motoristas" id="{4fb94870-aed9-f011-8543-000d3a886267}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariabledefinition" displayName="Environment Variable Definition" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Não Visualizado | Interno e Motoristas" id="{7e12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariablevalue" displayName="Environment Variable Value" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Retirado da Agenda | Motoristas" id="{3912fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariablevalue" displayName="Environment Variable Value" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Editado | Interno e Motoristas" id="{3a12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariablevalue" displayName="Environment Variable Value" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Novo Serviço | Motoristas" id="{4fb94870-aed9-f011-8543-000d3a886267}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariablevalue" displayName="Environment Variable Value" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="29" displayName="Flow Notificação Serviço Não Visualizado | Interno e Motoristas" id="{7e12fce1-ec26-f111-88b4-7ced8da87663}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="20" displayName="App Opener" solution="AuthorizationCore (1.131.0.0)" id="{979144c2-989b-41a5-a146-6b3ea4130e8c}">
+          <package appName="Authorization Package" version="1.7.0.0">msft_PrivilegeChecker (1.7.0.0)</package>
+        </Required>
+        <Dependent type="80" schemaName="cr40f_ModelDrivenBetinhos" displayName="App Betinhos Interno" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="61" schemaName="accessChecker_openDialog.js" displayName="accessChecker_openDialog.js" solution="msft_AccessCheckerExtension (1.1.0.4)">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="61" schemaName="accessChecker_openDialog.js" displayName="accessChecker_openDialog.js" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="61" schemaName="Administration.svg" displayName="Administration.svg" solution="PowerPlatformEnvironmentSettings (2.2.3426.2)">
+          <package appName="PowerPlatformEnvironmentSettingsApp" version="2.2.3426.2">PowerPlatformEnvironmentSettingsApp_Anchor (2.2.3426.2)</package>
+        </Required>
+        <Dependent type="1" schemaName="cr40f_funcionarios" displayName="Funcionários" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="61" schemaName="Administration.svg" displayName="Administration.svg" solution="PowerPlatformEnvironmentSettings (2.2.3426.2)">
+          <package appName="PowerPlatformEnvironmentSettingsApp" version="2.2.3426.2">PowerPlatformEnvironmentSettingsApp_Anchor (2.2.3426.2)</package>
+        </Required>
+        <Dependent type="62" schemaName="cr40f_ModelDrivenBetinhos" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="61" schemaName="adx_contacts.svg" displayName="adx_contacts.svg" solution="PowerPages_RuntimeCoreDependencies (1.0.2305.1)">
+          <package appName="Power Pages Core Package" version="1.1.2602.237">PowerPages_Core (1.1.2602.237)</package>
+        </Required>
+        <Dependent type="62" schemaName="cr40f_ModelDrivenBetinhos" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{009678ee-a3b8-428a-95ed-70ca408a8b67}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{07ff455c-05e8-4ae0-9499-f71ead51f791}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{23a2835d-3480-4ab8-a851-10008ae98162}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{63020d0f-9b2d-4723-93e7-e6ada5fb7305}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{64bef1f1-f29a-4bd1-a3ad-27accaa8d411}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{6689695b-c1a0-4ea9-ac98-43d6b077915d}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{6f773e03-a843-4b78-a224-6ed47bbc1ad3}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{70f64289-f6b6-44ef-b9c2-7d3107f72931}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{91672aca-2704-4b4d-aeb1-f0fbaddd3a59}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{a1a8735b-1e30-4da0-bcc3-351ecaf8722a}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{b3446765-30a6-4095-a777-695c3ee43b5f}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{b344aa91-b966-4968-8635-9e99147e096f}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{bddc6bc2-73a4-4073-8716-a49e2279d650}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{c14d7b64-11b8-45a4-9f41-a5961ca585ec}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{c1e373ce-e021-4142-b31d-59180a0adeeb}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{ce89d5db-11a0-4cdb-9958-99a964e1e488}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="Microsoft.PowerApps.PowerAppsOneGrid" displayName="Microsoft.PowerApps.PowerAppsOneGrid" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="68" id="{cea5ace8-6dc3-442d-a765-80e92efdb31f}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="MscrmControls.FieldControls.ToggleControl" displayName="MscrmControls.FieldControls.ToggleControl" solution="BaseCustomControlsCore (9.0.2606.1004)">
+          <package appName="Base Custom Controls" version="9.0.2606.1004">BaseCustomControlsCore (9.0.2606.1004)</package>
+        </Required>
+        <Dependent type="60" displayName="Informações" parentDisplayName="Multas" id="{575bbc88-e006-4d35-8f7a-908a38b1fe33}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="66" schemaName="MscrmControls.OptionSet.OptionSetControl" displayName="MscrmControls.OptionSet.OptionSetControl" solution="CustomControlsCore (9.2.26061.00133)">
+          <package appName="Custom Controls Package" version="9.2.26061.00133">CustomControlsCore (9.2.26061.00133)</package>
+        </Required>
+        <Dependent type="60" displayName="Informações" parentDisplayName="Manutenções" id="{1d236ed9-c494-4186-8436-fb120a6a10bc}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.CanWriteSelected!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.CanWriteSelected!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.CanWriteSelected!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.CanWriteSelected!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.CanWriteSelected!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.CanWriteSelected!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.CanWriteSelected!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.CanWriteSelected!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.CanWriteSelected!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.CanWriteSelected!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.CanWriteSelected!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.CanWriteSelected!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.CanWriteSelected!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.CanWriteSelected!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.CanWriteSelected!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.CanWriteSelected!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.CreateSelectedEntityPermission!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.CreateSelectedEntityPermission!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.CreateSelectedEntityPermission!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.CreateSelectedEntityPermission!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.HideAddressEntities!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.HideAddressEntities!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.HideAddressEntities!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.HideAddressEntities!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.HideNewForChildEntities!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.HideNewForChildEntities!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.HideNewForChildEntities!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.HideNewForChildEntities!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.IsEntityAvailableForUserInMocaOffline!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.IsEntityAvailableForUserInMocaOffline!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.IsEntityAvailableForUserInMocaOffline!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.IsEntityAvailableForUserInMocaOffline!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.IsNotActivityPointer!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.IsNotActivityPointer!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.IsNotActivityPointer!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.IsNotActivityPointer!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.IsValidForHierarchyPageInUC!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.IsValidForHierarchyPageInUC!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.IsValidForHierarchyPageInUC!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.IsValidForHierarchyPageInUC!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.IsValidForHierarchyView!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.IsValidForHierarchyView!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.IsValidForHierarchyView!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.IsValidForHierarchyView!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.PrimaryIsNotActivityHomePageGrid!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.PrimaryIsNotActivityHomePageGrid!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.PrimaryIsNotActivityHomePageGrid!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.PrimaryIsNotActivityHomePageGrid!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectedEntityHasStatecode!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.SelectedEntityHasStatecode!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectedEntityHasStatecode!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.SelectedEntityHasStatecode!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectedEntityHasStatecode!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.SelectedEntityHasStatecode!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectedEntityHasStatecode!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.SelectedEntityHasStatecode!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectedEntityHasStatecode!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectedEntityIsNotBPFEntity!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectedEntityIsNotBPFEntity!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.SelectedEntityIsNotBPFEntity!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectedEntityIsNotBPFEntity!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectionCountAtLeastOne!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.SelectionCountAtLeastOne!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectionCountAtLeastOne!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.SelectionCountAtLeastOne!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectionCountAtLeastOne!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.SelectionCountAtLeastOne!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.SelectionCountAtLeastOne!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.SelectionCountAtLeastOne!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.SelectionCountAtLeastOne!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.ShowForNonRelationshipBoundGrids!1" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.ShowForNonRelationshipBoundGrids!1">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1,appactionruleid.uniquename=msdyn_Mscrm.ShowForNonRelationshipBoundGrids!1" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.NewRecord!cr40f_ModelDrivenBetinhos!new_curriculo!1" id.appactionruleid.uniquename="msdyn_Mscrm.ShowForNonRelationshipBoundGrids!1" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.VisualizationPaneNotMaximized!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.VisualizationPaneNotMaximized!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.VisualizationPaneNotMaximized!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.VisualizationPaneNotMaximized!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Activate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.VisualizationPaneNotMaximized!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1,appactionruleid.uniquename=msdyn_Mscrm.VisualizationPaneNotMaximized!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_multas!1" id.appactionruleid.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="appactionrule" displayName="msdyn_Mscrm.VisualizationPaneNotMaximized!0" solution="msdyn_SystemAppActions (9.1.0.57)" id.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0">
+          <package appName="PowerAppsActions Package" version="9.1.0.57">PowerAppsActions_Anchor (9.1.0.57)</package>
+        </Required>
+        <Dependent type="appaction_appactionrule_classicrules" displayName="appactionid.uniquename=new__Mscrm.HomepageGrid.%7B!EntityLogicalName%7D.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1,appactionruleid.uniquename=msdyn_Mscrm.VisualizationPaneNotMaximized!0" id.appactionid.uniquename="new__Mscrm.HomepageGrid.{!EntityLogicalName}.Deactivate!cr40f_ModelDrivenBetinhos!cr40f_reservadeveculos!1" id.appactionruleid.uniquename="msdyn_Mscrm.VisualizationPaneNotMaximized!0" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="AllowNotificationsEarlyAccess" solution="AppNotifications (10.0.0.17)" id.uniquename="AllowNotificationsEarlyAccess">
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.62">msft_PowerAppsUnifiedClientInfraExtensions (1.0.0.62)</package>
+          <package appName="PowerAppsUnifiedClientExtensionApp Package" version="1.0.0.103">PowerAppsUnifiedClientExtensionApp_Anchor (1.0.0.103)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=cr40f_ModelDrivenBetinhos,settingdefinitionid.uniquename=AllowNotificationsEarlyAccess" id.parentappmoduleid.uniquename="cr40f_ModelDrivenBetinhos" id.settingdefinitionid.uniquename="AllowNotificationsEarlyAccess" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="AppChannel" solution="msdyn_AppFrameworkInfraExtensions (1.0.0.17)" id.uniquename="AppChannel">
+          <package appName="PowerAppsAppFramework Package" version="1.0.0.25">PowerAppsAppFramework_Anchor (1.0.0.25)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=cr40f_ModelDrivenBetinhos,settingdefinitionid.uniquename=AppChannel" id.parentappmoduleid.uniquename="cr40f_ModelDrivenBetinhos" id.settingdefinitionid.uniquename="AppChannel" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="AppChannel" solution="msdyn_AppFrameworkInfraExtensions (1.0.0.17)" id.uniquename="AppChannel">
+          <package appName="PowerAppsAppFramework Package" version="1.0.0.25">PowerAppsAppFramework_Anchor (1.0.0.25)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=AppChannel" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="AppChannel" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="appcopilotenabled" solution="msdyn_AppCopilotAppInfraSettings (9.2.2026052.260501061)" id.uniquename="appcopilotenabled">
+          <package appName="PowerAppsAppCopilotApp Package" version="1.0.0.2">msdyn_SuggestedAction (1.0.0.2)</package>
+          <package appName="PowerAppsAppCopilotApp Package" version="9.2.0.5">msdyn_M365CopilotAppInfraSettings (9.2.0.5)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=appcopilotenabled" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="appcopilotenabled" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="CustomThemeDefinition" solution="msdyn_PowerAppsThemingSettings (1.0.0.13)" id.uniquename="CustomThemeDefinition">
+          <package appName="PowerAppsThemingApp Package" version="1.0.0.12">PowerAppsThemingApp_Anchor (1.0.0.12)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=cr40f_ModelDrivenBetinhos,settingdefinitionid.uniquename=CustomThemeDefinition" id.parentappmoduleid.uniquename="cr40f_ModelDrivenBetinhos" id.settingdefinitionid.uniquename="CustomThemeDefinition" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="CustomThemeDefinition" solution="msdyn_PowerAppsThemingSettings (1.0.0.13)" id.uniquename="CustomThemeDefinition">
+          <package appName="PowerAppsThemingApp Package" version="1.0.0.12">PowerAppsThemingApp_Anchor (1.0.0.12)</package>
+        </Required>
+        <Dependent type="OrganizationSetting" displayName="CustomThemeDefinition" id.settingdefinitionid.uniquename="CustomThemeDefinition" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="CustomThemeDefinition" solution="msdyn_PowerAppsThemingSettings (1.0.0.13)" id.uniquename="CustomThemeDefinition">
+          <package appName="PowerAppsThemingApp Package" version="1.0.0.12">PowerAppsThemingApp_Anchor (1.0.0.12)</package>
+        </Required>
+        <Dependent type="SettingDefinition" displayName="CustomThemeDefinition" id.uniquename="CustomThemeDefinition" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="EnablePowerBIQuickReport" solution="SettingDefinitionsData (9.2.2603.2603182)" id.uniquename="EnablePowerBIQuickReport">
+          <package appName="AppModule" version="9.2.2603.2603182">AppModuleSolutionAnchor (9.2.2603.2603182)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=EnablePowerBIQuickReport" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="EnablePowerBIQuickReport" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="EnableRoleBasedOfflineProfileAccess" solution="SettingDefinitionsData (9.2.2603.2603182)" id.uniquename="EnableRoleBasedOfflineProfileAccess">
+          <package appName="AppModule" version="9.2.2603.2603182">AppModuleSolutionAnchor (9.2.2603.2603182)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=EnableRoleBasedOfflineProfileAccess" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="EnableRoleBasedOfflineProfileAccess" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="FormFillBarUXEnabled" solution="msdyn_FormsInfraSettings (1.0.0.8)" id.uniquename="FormFillBarUXEnabled">
+          <package appName="PowerAppsFormsApp Package" version="1.0.0.5">msdyn_FormsInsightSettings (1.0.0.5)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=FormFillBarUXEnabled" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="FormFillBarUXEnabled" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="HeaderAndNavigationRefresh" solution="msdyn_AppFrameworkInfraExtensions (1.0.0.17)" id.uniquename="HeaderAndNavigationRefresh">
+          <package appName="PowerAppsAppFramework Package" version="1.0.0.25">PowerAppsAppFramework_Anchor (1.0.0.25)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=HeaderAndNavigationRefresh" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="HeaderAndNavigationRefresh" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="HideShowAs" solution="msdyn_PowerAppsHideShowAsSettings (1.0.0.1)" id.uniquename="HideShowAs">
+          <package appName="PowerAppsDataVizApp Package" version="1.0.0.2">msdyn_PowerAppsNLChartVizSettings (1.0.0.2)</package>
+          <package appName="PowerAppsDataVizApp Package" version="1.0.0.2">msdyn_FuzzySearchSettings (1.0.0.2)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=HideShowAs" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="HideShowAs" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="m365copilotmodelappenabled" solution="msdyn_M365CopilotAppInfraSettings (9.2.0.5)" id.uniquename="m365copilotmodelappenabled">
+          <package appName="PowerAppsAppCopilotApp Package" version="9.2.0.5">msdyn_M365CopilotAppInfraSettings (9.2.0.5)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=cr40f_ModelDrivenBetinhos,settingdefinitionid.uniquename=m365copilotmodelappenabled" id.parentappmoduleid.uniquename="cr40f_ModelDrivenBetinhos" id.settingdefinitionid.uniquename="m365copilotmodelappenabled" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="m365copilotmodelappenabled" solution="msdyn_M365CopilotAppInfraSettings (9.2.0.5)" id.uniquename="m365copilotmodelappenabled">
+          <package appName="PowerAppsAppCopilotApp Package" version="9.2.0.5">msdyn_M365CopilotAppInfraSettings (9.2.0.5)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=m365copilotmodelappenabled" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="m365copilotmodelappenabled" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="MobileCommandingImprovements2022" solution="msdyn_CommandingSettings (1.0.0.2)" id.uniquename="MobileCommandingImprovements2022">
+          <package appName="PowerAppsCommandingApp Package" version="1.0.0.6">PowerAppsCommandingApp_Anchor (1.0.0.6)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=MobileCommandingImprovements2022" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="MobileCommandingImprovements2022" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="MobileCommandingImprovements2022Tablet" solution="msdyn_CommandingSettings (1.0.0.2)" id.uniquename="MobileCommandingImprovements2022Tablet">
+          <package appName="PowerAppsCommandingApp Package" version="1.0.0.6">PowerAppsCommandingApp_Anchor (1.0.0.6)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=cr40f_ModelDrivenBetinhos,settingdefinitionid.uniquename=MobileCommandingImprovements2022Tablet" id.parentappmoduleid.uniquename="cr40f_ModelDrivenBetinhos" id.settingdefinitionid.uniquename="MobileCommandingImprovements2022Tablet" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="msdyn_TimelineCopilotForApps" solution="msdyn_TimelineExtended (9.0.26061.1001)" id.uniquename="msdyn_TimelineCopilotForApps">
+          <package appName="msdyn_CustomControlsExtended" version="9.0.26061.1001">msdyn_TimelineExtended (9.0.26061.1001)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=msdyn_TimelineCopilotForApps" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="msdyn_TimelineCopilotForApps" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="ServerMode" solution="SettingDefinitionsData (9.2.2603.2603182)" id.uniquename="ServerMode">
+          <package appName="AppModule" version="9.2.2603.2603182">AppModuleSolutionAnchor (9.2.2603.2603182)</package>
+        </Required>
+        <Dependent type="AppSetting" displayName="parentappmoduleid.uniquename=new_AppMotoristasv2,settingdefinitionid.uniquename=ServerMode" id.parentappmoduleid.uniquename="new_AppMotoristasv2" id.settingdefinitionid.uniquename="ServerMode" />
+      </MissingDependency>
+    </MissingDependencies>
+  </SolutionManifest>
+</ImportExportXml>

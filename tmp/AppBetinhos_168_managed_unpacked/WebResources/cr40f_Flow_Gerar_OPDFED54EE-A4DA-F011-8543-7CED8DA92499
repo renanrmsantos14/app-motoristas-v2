@@ -1,0 +1,218 @@
+// Command Button JS — TriggerFlow (Criar OP)
+// flowUrl lida de Variável de Ambiente Dataverse: new_FlowUrlCriarOP
+
+var TAG_OP = "[BT-CRIAR-OP]";
+
+function _getEnvVarValue_OP(schemaName, onSuccess, onError) {
+    Xrm.WebApi.retrieveMultipleRecords(
+        "environmentvariablevalue",
+        "?$select=value&$expand=EnvironmentVariableDefinitionId($select=schemaname)&$filter=EnvironmentVariableDefinitionId/schemaname eq '" + schemaName + "'"
+    ).then(
+        function (result) {
+            if (result.entities && result.entities.length > 0) {
+                onSuccess(result.entities[0].value);
+            } else {
+                Xrm.WebApi.retrieveMultipleRecords(
+                    "environmentvariabledefinition",
+                    "?$select=defaultvalue&$filter=schemaname eq '" + schemaName + "'"
+                ).then(
+                    function (defResult) {
+                        onSuccess(
+                            defResult.entities && defResult.entities.length > 0
+                                ? defResult.entities[0].defaultvalue
+                                : null
+                        );
+                    },
+                    onError
+                );
+            }
+        },
+        onError
+    );
+}
+
+// ===== ENTRY POINT =====
+function TriggerFlow(selectedItems) {
+    console.log(TAG_OP, "=== INÍCIO TriggerFlow ===");
+    console.log(TAG_OP, "selectedItems:", selectedItems);
+
+    var selectedRecords = selectedItems;
+
+    if (!selectedRecords || selectedRecords.length === 0) {
+        Xrm.Navigation.openAlertDialog(
+            { confirmButtonLabel: "OK", text: "Nenhum registro selecionado!" },
+            { height: 120, width: 260 }
+        );
+        return;
+    }
+
+    console.log(TAG_OP, "Total selecionados:", selectedRecords.length);
+    Xrm.Utility.showProgressIndicator("Validando registros...");
+
+    var recordIds = selectedRecords.map(function (r) {
+        return r.Id.replace(/[{}]/g, "");
+    });
+
+    console.log(TAG_OP, "GUIDs:", recordIds);
+
+    validateRecords(recordIds, function (validRecords, invalidRecords) {
+        console.log(TAG_OP, "Válidos:", validRecords.length, "Inválidos:", invalidRecords.length);
+        Xrm.Utility.closeProgressIndicator();
+
+        if (invalidRecords.length > 0) {
+            var message = invalidRecords.length + " reserva(s) já possui(em) OP criada:\n\n";
+            invalidRecords.forEach(function (rec) {
+                message += "• " + (rec.name || rec.id) + "\n";
+            });
+
+            if (validRecords.length > 0) {
+                message += "\nDeseja criar OP para as " + validRecords.length + " reserva(s) restante(s)?";
+                Xrm.Navigation.openConfirmDialog({
+                    title: "Registros com OP existente",
+                    text: message,
+                    confirmButtonLabel: "Sim, continuar",
+                    cancelButtonLabel: "Cancelar"
+                }).then(function (result) {
+                    if (result.confirmed) processFlow(validRecords);
+                });
+            } else {
+                Xrm.Navigation.openAlertDialog(
+                    { confirmButtonLabel: "OK", text: "Todos os registros selecionados já possuem OP criada." },
+                    { height: 150, width: 300 }
+                );
+            }
+        } else {
+            processFlow(validRecords);
+        }
+    });
+}
+
+// ===== VALIDAÇÃO =====
+function validateRecords(recordIds, callback) {
+    var validRecords   = [];
+    var invalidRecords = [];
+    var processedCount = 0;
+
+    recordIds.forEach(function (recordId, index) {
+        console.log(TAG_OP, "Validando", (index + 1) + "/" + recordIds.length, "GUID:", recordId);
+
+        Xrm.WebApi.retrieveRecord("cr40f_reservadeveculos", recordId)
+            .then(function (record) {
+                processedCount++;
+
+                var possibleLookupFields = [
+                    "_cr40f_financeiro_value",
+                    "cr40f_financeiro",
+                    "_cr40f_op_value",
+                    "cr40f_op"
+                ];
+
+                var opLookupValue     = null;
+                var opLookupFieldName = null;
+
+                possibleLookupFields.forEach(function (fieldName) {
+                    if (!opLookupValue && record.hasOwnProperty(fieldName) && record[fieldName]) {
+                        opLookupValue     = record[fieldName];
+                        opLookupFieldName = fieldName;
+                    }
+                });
+
+                if (opLookupValue) {
+                    console.log(TAG_OP, "INVÁLIDO (já tem OP):", recordId, "campo:", opLookupFieldName);
+                    invalidRecords.push({
+                        id:   recordId,
+                        name: record.cr40f_name ||
+                              record["cr40f_name@OData.Community.Display.V1.FormattedValue"] ||
+                              recordId
+                    });
+                } else {
+                    console.log(TAG_OP, "VÁLIDO:", recordId);
+                    validRecords.push(recordId);
+                }
+
+                if (processedCount === recordIds.length) callback(validRecords, invalidRecords);
+            })
+            .catch(function (error) {
+                processedCount++;
+                console.error(TAG_OP, "Erro ao buscar registro:", recordId, error.message);
+                validRecords.push(recordId); // não bloqueia em caso de erro
+                if (processedCount === recordIds.length) callback(validRecords, invalidRecords);
+            });
+    });
+}
+
+// ===== DISPARO DO FLOW =====
+function processFlow(validRecordIds) {
+    console.log(TAG_OP, "processFlow — registros:", validRecordIds.length, validRecordIds);
+
+    if (validRecordIds.length === 0) return;
+
+    Xrm.Utility.showProgressIndicator("Buscando configuração...");
+
+    _getEnvVarValue_OP(
+        "new_FlowUrlCriarOP",
+        function (flowUrl) {
+            if (!flowUrl) {
+                try { Xrm.Utility.closeProgressIndicator(); } catch (e) {}
+                Xrm.Navigation.openAlertDialog({
+                    confirmButtonLabel: "OK",
+                    text: "Variável de ambiente 'new_FlowUrlCriarOP' não encontrada ou sem valor.\nConfigure-a em Power Apps > Soluções > Variáveis de Ambiente."
+                }, { height: 160, width: 420 });
+                return;
+            }
+
+            console.log(TAG_OP, "flowUrl resolvida:", flowUrl);
+
+            var guidsString  = validRecordIds.join(",");
+            var requestBody  = JSON.stringify({ guids: guidsString });
+
+            Xrm.Utility.showProgressIndicator("Processando " + validRecordIds.length + " reserva(s)...");
+
+            var req = new XMLHttpRequest();
+            req.open("POST", flowUrl, true);
+            req.setRequestHeader("Content-Type", "application/json");
+
+            req.onreadystatechange = function () {
+                if (req.readyState !== 4) return;
+
+                console.log(TAG_OP, "Resposta Flow — status:", req.status, req.responseText);
+                Xrm.Utility.closeProgressIndicator();
+
+                if (req.status === 200 || req.status === 202) {
+                    Xrm.Navigation.openAlertDialog({
+                        confirmButtonLabel: "OK",
+                        text: "OP criada com sucesso para " + validRecordIds.length + " reserva(s)!"
+                    }, { height: 120, width: 260 });
+                } else {
+                    var errorMsg = "Erro ao acionar o Flow. Status: " + req.status;
+                    try {
+                        var response = JSON.parse(req.responseText);
+                        if (response.error && response.error.message) errorMsg += "\n" + response.error.message;
+                    } catch (e) {}
+                    Xrm.Navigation.openAlertDialog(
+                        { confirmButtonLabel: "OK", text: errorMsg },
+                        { height: 150, width: 300 }
+                    );
+                }
+            };
+
+            req.onerror = function () {
+                Xrm.Utility.closeProgressIndicator();
+                Xrm.Navigation.openAlertDialog(
+                    { confirmButtonLabel: "OK", text: "Erro de conexão ao tentar acionar o Flow." },
+                    { height: 120, width: 260 }
+                );
+            };
+
+            req.send(requestBody);
+        },
+        function (err) {
+            try { Xrm.Utility.closeProgressIndicator(); } catch (e) {}
+            console.error(TAG_OP, "Erro ao buscar env var:", err);
+            Xrm.Navigation.openAlertDialog(
+                { confirmButtonLabel: "OK", text: "Erro ao carregar configuração do flow." },
+                { height: 120, width: 260 }
+            );
+        }
+    );
+}

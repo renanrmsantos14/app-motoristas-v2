@@ -33,6 +33,7 @@ import {
   hasDataverseRuntime,
   loadCollisionLookupNavigationNamesRemote,
   loadExpenseReferenceDataRemote,
+  loadReceiptClienteOptionsRemote,
   loadExpenseLookupNavigationNamesRemote,
   loadMaintenanceRequestVehiclesRemote,
   loadRemoteDetailByParams,
@@ -219,6 +220,7 @@ function App() {
   const [expenseReferenceData, setExpenseReferenceData] = useState<ExpenseReferenceData>(DEFAULT_EXPENSE_REFERENCE_DATA);
   const [expenseReferenceLoading, setExpenseReferenceLoading] = useState(false);
   const [expenseReferenceError, setExpenseReferenceError] = useState("");
+  const [receiptClienteOptions, setReceiptClienteOptions] = useState<string[]>([]);
   const [expensePhotos, setExpensePhotos] = useState<ExpensePhoto[]>([]);
   const [expensePhotoDraft, setExpensePhotoDraft] = useState("");
   const [expensePhotoPreviewUrl, setExpensePhotoPreviewUrl] = useState("");
@@ -484,6 +486,35 @@ function App() {
       .finally(() => {
         if (alive) setExpenseReferenceLoading(false);
       });
+    return () => {
+      alive = false;
+    };
+  }, [screen, remoteMode]);
+
+  useEffect(() => {
+    if (screen !== "reciboPersonalizado" || !remoteMode) {
+      setReceiptClienteOptions([]);
+      return;
+    }
+
+    let alive = true;
+    loadReceiptClienteOptionsRemote()
+      .then((clientes) => {
+        if (!alive) return;
+        setReceiptClienteOptions(clientes);
+      })
+      .catch((error) => {
+        if (!alive) return;
+        reportAppError(error, {
+          severity: "error",
+          source: "app",
+          action: "loadReceiptClienteOptionsRemote",
+          phase: "receipt-form",
+          screen
+        });
+        setReceiptClienteOptions([]);
+      });
+
     return () => {
       alive = false;
     };
@@ -811,6 +842,10 @@ function App() {
   };
 
   const navigateFromInitial = (screenName: string) => {
+    if (screenName === "personalReceipt" || screenName === "reciboPersonalizado" || screenName === "gerarReciboPersonalizado") {
+      openPersonalReceiptFromHome();
+      return;
+    }
     if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos" || screenName === "colisoesInicio") {
       setScreen(screenName);
     }
@@ -1462,6 +1497,14 @@ function App() {
     setScreen("reciboPersonalizado");
   };
 
+  const openPersonalReceiptFromHome = () => {
+    if (!canGeneratePersonalReceipt) {
+      setToast("Você não tem permissão para gerar recibo personalizado.");
+      return;
+    }
+    setScreen("reciboPersonalizado");
+  };
+
   const startCollision = (type: CollisionDraft["tipoOcorrencia"]) => {
     setCollisionDraft((current) => ({
       ...current,
@@ -1837,8 +1880,28 @@ function App() {
     );
   }
 
-  if (screen === "reciboPersonalizado" && selectedDetail) {
-    return show(<ReceiptScreen detail={selectedDetail} onBack={() => setScreen("receber")} />);
+  if (screen === "reciboPersonalizado") {
+    return show(
+      <ReceiptScreen
+        detail={selectedDetail ?? undefined}
+        onBack={() => setScreen(selectedDetail ? "receber" : "inicio")}
+        clienteOptions={receiptClienteOptions}
+        metodoPagamentoOptions={expenseReferenceData.paymentMethods.map((method) => method.name)}
+        onProgress={(progress) => {
+          if (!progress) {
+            setRemoteOperation(null);
+            return;
+          }
+          const flowPhase = progress.phase === "success" ? "success" : "loading";
+          setRemoteOperation({
+            title: "Gerando recibo personalizado",
+            message: progress.message,
+            detailId: selectedDetail?.id,
+            phase: flowPhase
+          });
+        }}
+      />
+    );
   }
 
   if (screen === "fotoReceber") {
@@ -2062,8 +2125,12 @@ function App() {
   return show(
     <InitialScreen
       onNavigate={navigateFromInitial}
+      onOpenPersonalReceipt={openPersonalReceiptFromHome}
+      onPersonalReceipt={openPersonalReceiptFromHome}
+      openPersonalReceipt={openPersonalReceiptFromHome}
       onResetLocal={resetLocal}
       onRefresh={refreshLocal}
+      canGeneratePersonalReceipt={canGeneratePersonalReceipt}
       services={store.agenda}
       driverName={driverContext?.fullName}
     />

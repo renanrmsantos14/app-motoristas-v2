@@ -1,5 +1,7 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { useMemo } from "react";
+import { SearchableSelect } from "../components/common/SearchableSelect";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
@@ -56,7 +58,7 @@ export function CollisionScreen({
   driverName
 }: CollisionScreenProps) {
   const isSubmitting = submitState !== "idle";
-  const vehicleRef = useRef<HTMLSelectElement | null>(null);
+  const vehicleRef = useRef<HTMLButtonElement | null>(null);
   const localRef = useRef<HTMLInputElement | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
   const thirdNameRef = useRef<HTMLInputElement | null>(null);
@@ -80,6 +82,13 @@ export function CollisionScreen({
     photos: photos.filter((photo) => photo.kind === requiredPhoto.kind)
   }));
   const optionalPhotos = photos.filter((photo) => photo.kind === "extra" || photo.kind === "video");
+  const vehicleOptions = useMemo(
+    () => vehicles.map((vehicle) => ({
+      value: vehicle.id,
+      label: vehicle.isCurrent ? `${vehicle.label} - atual` : vehicle.label
+    })),
+    [vehicles]
+  );
 
   useEffect(() => {
     if (currentVehicleId && !draft.veiculoId) onDraftChange({ ...draft, veiculoId: currentVehicleId });
@@ -128,21 +137,19 @@ export function CollisionScreen({
 
               <div className={`finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`}>
                 <label>Veículo da Betinhos</label>
-                <select
+                <SearchableSelect
                   ref={vehicleRef}
-                  aria-invalid={Boolean(errors.veiculoId)}
                   value={draft.veiculoId}
+                  options={vehicleOptions}
+                  placeholder={vehiclesLoading ? "Carregando veículos" : "Selecione"}
+                  ariaLabel="Selecionar veículo da Betinhos"
+                  invalid={Boolean(errors.veiculoId)}
                   disabled={isSubmitting || vehiclesLoading}
-                  onChange={(event) => {
-                    updateDraft({ veiculoId: event.target.value });
+                  onChange={(value) => {
+                    updateDraft({ veiculoId: value });
                     clearError("veiculoId");
                   }}
-                >
-                  <option value="">{vehiclesLoading ? "Carregando veículos" : "Selecione"}</option>
-                  {vehicles.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.id}>{vehicle.isCurrent ? `${vehicle.label} - atual` : vehicle.label}</option>
-                  ))}
-                </select>
+                />
                 {errors.veiculoId ? <div className="field-error">{errors.veiculoId}</div> : null}
               </div>
 

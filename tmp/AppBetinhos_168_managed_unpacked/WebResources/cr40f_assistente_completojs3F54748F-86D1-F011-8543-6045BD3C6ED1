@@ -1,0 +1,101 @@
+// cr40f_assistente_simples.js - Código MÍNIMO e FUNCIONAL
+console.log('🚀 Assistente SIMPLES carregado');
+
+// Função OBRIGATÓRIA para o OnLoad
+function assistenteSimplesOnLoad() {
+    console.log('✅ assistenteSimplesOnLoad executado');
+    
+    // Esperar Xrm estar pronto
+    setTimeout(function() {
+        if (!window.Xrm || !Xrm.Page || !Xrm.Page.data) {
+            console.log('⏳ Aguardando Xrm...');
+            setTimeout(arguments.callee, 1000);
+            return;
+        }
+        
+        console.log('📄 Formulário carregado, registrando eventos...');
+        
+        // Registrar evento OnSave
+        Xrm.Page.data.entity.addOnSave(async function(context) {
+            console.log('💾 Save disparado');
+            
+            try {
+                // Verificar campos do assistente
+                const pendingField = Xrm.Page.getAttribute("cr40f_new_assistant_pending");
+                const optionsField = Xrm.Page.getAttribute("cr40f_new_assistant_options");
+                
+                if (!pendingField || !optionsField) {
+                    console.log('❌ Campos não encontrados');
+                    return;
+                }
+                
+                const isPending = pendingField.getValue();
+                const optionsValue = optionsField.getValue();
+                
+                console.log(`📊 Status: pending=${isPending}, options=${!!optionsValue}`);
+                
+                // Se não há pendência, permitir save normal
+                if (!isPending || !optionsValue) {
+                    console.log('ℹ️ Nada a processar');
+                    return;
+                }
+                
+                console.log('🎯 Processando retorno...');
+                
+                // Prevenir save normal
+                context.getEventArgs().preventDefault();
+                
+                // Parsear opções
+                const options = JSON.parse(optionsValue);
+                const retorno = options.retorno;
+                
+                // Criar payload
+                const userId = Xrm.Utility.getGlobalContext().userSettings.userId;
+                const payload = {
+                    "cr40f_destino": retorno.destino || "",
+                    "cr40f_endereodesada": retorno.endereco || "",
+                    "cr40f_observaointerna": retorno.observacao || "",
+                    "cr40f_dataehorriodesada": retorno.dataHora || new Date().toISOString(),
+                    "cr40f_status": 202410001,
+                    "cr40f_receber": false,
+                    "cr40f_name": `Retorno: ${retorno.destino || "Serviço"}`,
+                    "ownerid@odata.bind": `/systemusers(${userId})`
+                };
+                
+                console.log('📦 Payload:', payload);
+                
+                // Criar registro
+                const result = await Xrm.WebApi.createRecord("cr40f_reservadeveculos", payload);
+                console.log('✅ Registro criado:', result.id);
+                
+                // Limpar campos
+                pendingField.setValue(false);
+                optionsField.setValue(null);
+                
+                // Aguardar e salvar formulário
+                await new Promise(resolve => setTimeout(resolve, 300));
+                Xrm.Page.data.entity.save();
+                
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                
+                // Limpar campos em caso de erro
+                try {
+                    Xrm.Page.getAttribute("cr40f_new_assistant_pending")?.setValue(false);
+                    Xrm.Page.getAttribute("cr40f_new_assistant_options")?.setValue(null);
+                } catch (e) {}
+                
+                Xrm.Page.data.entity.save();
+            }
+        });
+        
+        console.log('✅ Assistente configurado com sucesso!');
+        
+    }, 2000);
+}
+
+// Expor a função
+window.assistenteSimplesOnLoad = assistenteSimplesOnLoad;
+
+// Inicializar automaticamente também
+setTimeout(assistenteSimplesOnLoad, 1500);

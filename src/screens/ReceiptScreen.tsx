@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import logoBetinhosB from "../../Logo Betinhos B.png";
 import logoBetinhosPreta from "../../Logo Betinhos Preta.png";
 import nlaLogo from "../../NLA.jpg";
@@ -6,6 +6,7 @@ import qrCodeAvaliacao from "../../QrCode-Avaliação.png";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { LocalToast, type ToastState, type ToastTone } from "../components/common/LocalToast";
+import { SearchableSelect } from "../components/common/SearchableSelect";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
@@ -15,8 +16,11 @@ import { generateReceiptPdfBlob } from "../lib/receiptPdf";
 import type { DetailData } from "../types";
 
 type ReceiptScreenProps = {
-  detail: DetailData;
+  detail?: DetailData;
+  clienteOptions?: string[];
+  metodoPagamentoOptions?: string[];
   onBack: () => void;
+  onProgress?: (progress: { message: string; phase?: string } | null) => void;
 };
 
 type ReceiptDraftKey = keyof PersonalReceiptEditableDraft;
@@ -46,6 +50,8 @@ function ReceiptForm({
   errors,
   generateState,
   receiptLink,
+  clienteOptions = [],
+  metodoPagamentoOptions = [],
   onChange,
   onGenerate
 }: {
@@ -53,6 +59,8 @@ function ReceiptForm({
   errors: ReceiptDraftErrors;
   generateState: ActionButtonState;
   receiptLink?: string | null;
+  clienteOptions?: string[];
+  metodoPagamentoOptions?: string[];
   onChange: (field: ReceiptDraftKey, value: string) => void;
   onGenerate: () => void;
 }) {
@@ -82,7 +90,14 @@ function ReceiptForm({
             </div>
             <div className={`finalize-input-block receipt-editor-block receipt-editor-block-span-2 ${errors.cliente ? "is-invalid" : ""}`}>
               <label>Cliente</label>
-              <input value={draft.cliente} onChange={(event) => onChange("cliente", event.target.value)} />
+              <SearchableSelect
+                value={draft.cliente}
+                options={clienteOptions.map((option) => ({ value: option, label: option }))}
+                placeholder="Digite ou escolha um cliente"
+                ariaLabel="Selecionar cliente"
+                invalid={Boolean(errors.cliente)}
+                onChange={(value) => onChange("cliente", value)}
+              />
               {errors.cliente ? <div className="field-error">{errors.cliente}</div> : null}
             </div>
             <div className={`finalize-input-block receipt-editor-block ${errors.valorTotal ? "is-invalid" : ""}`}>
@@ -97,7 +112,14 @@ function ReceiptForm({
             </div>
             <div className={`finalize-input-block receipt-editor-block receipt-editor-block-span-2 ${errors.metodoPagamento ? "is-invalid" : ""}`}>
               <label>Método de pagamento</label>
-              <input value={draft.metodoPagamento} onChange={(event) => onChange("metodoPagamento", event.target.value)} />
+              <SearchableSelect
+                value={draft.metodoPagamento}
+                options={metodoPagamentoOptions.map((option) => ({ value: option, label: option }))}
+                placeholder="Digite ou escolha um método"
+                ariaLabel="Selecionar método de pagamento"
+                invalid={Boolean(errors.metodoPagamento)}
+                onChange={(value) => onChange("metodoPagamento", value)}
+              />
               {errors.metodoPagamento ? <div className="field-error">{errors.metodoPagamento}</div> : null}
             </div>
           </div>
@@ -483,6 +505,8 @@ function ReceiptViewport({
   errors,
   generateState,
   receiptLink,
+  clienteOptions,
+  metodoPagamentoOptions,
   toast,
   documentRef,
   onDraftChange,
@@ -498,6 +522,8 @@ function ReceiptViewport({
   errors?: ReceiptDraftErrors;
   generateState?: ActionButtonState;
   receiptLink?: string | null;
+  clienteOptions?: string[];
+  metodoPagamentoOptions?: string[];
   toast?: ToastState | null;
   documentRef?: RefObject<HTMLElement>;
   onDraftChange?: (field: ReceiptDraftKey, value: string) => void;
@@ -520,11 +546,13 @@ function ReceiptViewport({
       <FormMenu title={title} onBack={onBack} />
       <section className="main-panel receipt-main receipt-editor-main">
         <div className="receipt-editor-layout">
-          {detail && draft && onDraftChange && onGenerate ? (
+          {draft && onDraftChange && onGenerate ? (
             <ReceiptForm
               draft={draft}
               errors={errors ?? {}}
               generateState={generateState ?? "idle"}
+              clienteOptions={clienteOptions}
+              metodoPagamentoOptions={metodoPagamentoOptions}
               receiptLink={receiptLink}
               onChange={onDraftChange}
               onGenerate={onGenerate}
@@ -539,7 +567,13 @@ function ReceiptViewport({
   );
 }
 
-export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
+export function ReceiptScreen({
+  detail,
+  onBack,
+  clienteOptions = [],
+  metodoPagamentoOptions = [],
+  onProgress
+}: ReceiptScreenProps) {
   const [draft, setDraft] = useState<PersonalReceiptEditableDraft>(() => buildPersonalReceiptDraft(detail));
   const [errors, setErrors] = useState<ReceiptDraftErrors>({});
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -604,6 +638,7 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
     }
 
     setGenerateState("loading");
+    onProgress?.({ message: "Gerando recibo personalizado", phase: "loading" });
 
     void (async () => {
       const cacheKey = JSON.stringify(model);
@@ -614,8 +649,10 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
       const result = await ensureReceiptUploaded(blob, fileName, cacheKey);
       setReceiptLink(result.link);
       setGenerateState("success");
+      onProgress?.({ message: "Recibo pronto para abertura.", phase: "success" });
       setToast(nextToast("Recibo gerado. Abra o link do PDF.", "success"));
       window.setTimeout(() => setGenerateState("idle"), 1400);
+      window.setTimeout(() => onProgress?.(null), 1600);
     })().catch((error) => {
       reportAppError(error, {
         severity: "error",
@@ -623,15 +660,19 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
         action: "generate-pdf-link",
         component: "ReceiptScreen",
         screen: "TelaReciboPersonalizado",
-        detailId: detail.id
+        detailId: detail?.id
       });
       const message = error instanceof Error ? error.message : "Falha ao gerar o recibo em PDF.";
       setGenerateState("idle");
+      onProgress?.(null);
       setToast(nextToast(message, "error"));
     });
   };
 
   const ensureReceiptUploaded = async (blob: Blob, fileName: string, cacheKey: string) => {
+    if (!detail) {
+      throw new Error("Selecione um serviço para registrar o recibo personalizado.");
+    }
     const cachedUpload = receiptUploadCacheRef.current;
     if (cachedUpload?.key === cacheKey) return cachedUpload.result;
 
@@ -639,7 +680,10 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
       detail,
       model,
       pdfBlob: blob,
-      fileName
+      fileName,
+      onProgress: (message) => {
+        onProgress?.({ message, phase: "loading" });
+      }
     });
     receiptUploadCacheRef.current = { key: cacheKey, result };
     return result;
@@ -652,6 +696,8 @@ export function ReceiptScreen({ detail, onBack }: ReceiptScreenProps) {
       draft={draft}
       errors={errors}
       generateState={generateState}
+      clienteOptions={clienteOptions}
+      metodoPagamentoOptions={metodoPagamentoOptions}
       receiptLink={receiptLink}
       toast={toast}
       documentRef={receiptDocumentRef}
@@ -681,3 +727,7 @@ const PREVIEW_MODEL: PersonalReceiptModel = {
 export function ReceiptPreviewScreen({ onBack }: { onBack?: () => void }) {
   return <ReceiptViewport model={PREVIEW_MODEL} onBack={onBack} title="Preview do recibo" screenLabel="TelaPreviewRecibo" />;
 }
+
+
+
+

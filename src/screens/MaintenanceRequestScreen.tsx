@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { SearchableSelect } from "../components/common/SearchableSelect";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { MaintenanceRequestVehicleOption } from "../lib/dataverse";
@@ -73,12 +74,24 @@ export function MaintenanceRequestScreen({
   vehiclesLoading = false
 }: MaintenanceRequestScreenProps) {
   const isSubmitting = submitState !== "idle";
-  const vehicleRef = useRef<HTMLSelectElement | null>(null);
+  const vehicleRef = useRef<HTMLButtonElement | null>(null);
   const kmRef = useRef<HTMLInputElement | null>(null);
-  const severityRef = useRef<HTMLSelectElement | null>(null);
+  const severityRef = useRef<HTMLButtonElement | null>(null);
   const descricaoRef = useRef<HTMLTextAreaElement | null>(null);
   const photoRef = useRef<HTMLButtonElement | null>(null);
   const [errors, setErrors] = useState<MaintenanceRequestErrors>({});
+
+  const vehicleOptions = useMemo(
+    () => vehicles.map((vehicle) => ({
+      value: vehicle.id,
+      label: vehicle.isCurrent ? `${vehicle.label} - atual` : vehicle.label
+    })),
+    [vehicles]
+  );
+  const gravityOptions = useMemo(
+    () => severityOptions.map((option) => ({ value: String(option.value), label: option.label })),
+    []
+  );
 
   useEffect(() => {
     if (initialVehicleId && !draft.veiculoId) onDraftChange({ ...draft, veiculoId: initialVehicleId });
@@ -137,21 +150,19 @@ export function MaintenanceRequestScreen({
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
               <div className={`finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`}>
                 <label>Veículo</label>
-                <select
+                <SearchableSelect
                   ref={vehicleRef}
-                  aria-invalid={Boolean(errors.veiculoId)}
                   value={draft.veiculoId}
+                  options={vehicleOptions}
+                  placeholder={vehiclesLoading ? "Carregando veiculos" : "Selecione"}
+                  ariaLabel="Selecionar veículo"
+                  invalid={Boolean(errors.veiculoId)}
                   disabled={vehiclesLoading || isSubmitting}
-                  onChange={(event) => {
-                    updateDraft({ veiculoId: event.target.value });
+                  onChange={(value) => {
+                    updateDraft({ veiculoId: value });
                     clearError("veiculoId");
                   }}
-                >
-                  <option value="" disabled>{vehiclesLoading ? "Carregando veiculos" : "Selecione"}</option>
-                  {vehicles.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.id}>{vehicle.isCurrent ? `${vehicle.label} - atual` : vehicle.label}</option>
-                  ))}
-                </select>
+                />
                 {errors.veiculoId ? <div className="field-error">{errors.veiculoId}</div> : null}
               </div>
               <div className={`finalize-input-block ${errors.kmAtual ? "is-invalid" : ""}`}>
@@ -171,19 +182,19 @@ export function MaintenanceRequestScreen({
               </div>
               <div className={`finalize-input-block ${errors.gravidade ? "is-invalid" : ""}`}>
                 <label>Gravidade</label>
-                <select
+                <SearchableSelect
                   ref={severityRef}
-                  aria-invalid={Boolean(errors.gravidade)}
                   value={draft.gravidade}
+                  options={gravityOptions}
+                  placeholder="Selecione"
+                  ariaLabel="Selecionar gravidade"
+                  invalid={Boolean(errors.gravidade)}
                   disabled={isSubmitting}
-                  onChange={(event) => {
-                    updateDraft({ gravidade: event.target.value });
+                  onChange={(value) => {
+                    updateDraft({ gravidade: value });
                     clearError("gravidade");
                   }}
-                >
-                  <option value="" disabled />
-                  {severityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
+                />
                 {errors.gravidade ? <div className="field-error">{errors.gravidade}</div> : null}
               </div>
               <div className={`finalize-input-block ${errors.descricao ? "is-invalid" : ""}`}>

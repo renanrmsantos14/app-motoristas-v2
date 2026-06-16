@@ -1,0 +1,7 @@
+A vari†vel '$EntitySetName?' n∆o pode ser recuperada porque ainda n∆o foi definida.
+No C:\Users\mendo\Desktop\vscode\App Motoristas\scripts\export-collision-rebuild-backup.ps1:120 caractere:24
++   $next = "$apiBaseUrl/$EntitySetName?`$top=5000"
++                        ~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (EntitySetName?:String) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : VariableIsUndefined
+ 

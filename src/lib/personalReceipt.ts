@@ -18,8 +18,8 @@ export type PersonalReceiptEditableDraft = Pick<
   "nomePagante" | "cliente" | "valorTotal" | "dataEmissao" | "metodoPagamento"
 >;
 
-function getField(detail: DetailData, label: string) {
-  return detail.fields.find((field) => field.label === label)?.value?.trim() ?? "";
+function getField(detail: DetailData | undefined, label: string) {
+  return detail?.fields?.find((field) => field.label === label)?.value?.trim() ?? "";
 }
 
 function stripHtml(value: string) {
@@ -66,13 +66,13 @@ function buildReceiptId(operationId: string) {
   return `PAG-${digits.padStart(4, "0").slice(-4)}`;
 }
 
-function buildPeriodText(detail: DetailData, record: Record<string, unknown>) {
+function buildPeriodText(detail: DetailData | undefined, record: Record<string, unknown>) {
   const dateTime = formatDateTime(record.cr40f_dataehorriodesada);
   if (dateTime) return dateTime;
-  return getField(detail, "Data e Horário de Saída") || getField(detail, "Data e Horario de Saida") || "Não informado";
+  return getField(detail, "Data e Horário de Saída") || "Não informado";
 }
 
-function buildTrajetos(detail: DetailData) {
+function buildTrajetos(detail: DetailData | undefined) {
   const parts = [
     getField(detail, "Trajeto"),
     getField(detail, "Endereço de Saída") || getField(detail, "Endereco de Saida"),
@@ -83,7 +83,7 @@ function buildTrajetos(detail: DetailData) {
   return parts.join("\n");
 }
 
-function buildObservations(detail: DetailData) {
+function buildObservations(detail: DetailData | undefined) {
   return (
     getField(detail, "Obs de Operação") ||
     getField(detail, "Obs de Operacao") ||
@@ -92,50 +92,108 @@ function buildObservations(detail: DetailData) {
   );
 }
 
+function getFallbackOperationId() {
+  return `OP-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
+}
+
+function toYmdDateString(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  }
+
+  const brMatch = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(trimmed);
+  if (brMatch) {
+    return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+  }
+
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toISOString().slice(0, 10);
+}
+
+function toDisplayDateString(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return trimmed;
+
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+  if (isoMatch) {
+    const [year, month, day] = isoMatch.slice(1);
+    return `${day}/${month}/${year}`;
+  }
+
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) return trimmed;
+  return date.toLocaleDateString("pt-BR");
+}
+
 export function buildPersonalReceiptModel(
-  detail: DetailData,
+  detail: DetailData | undefined,
   overrides: Partial<PersonalReceiptEditableDraft> = {}
 ): PersonalReceiptModel {
-  const record = (detail.dataverse?.record as Record<string, unknown> | undefined) ?? {};
+  const hasDetail = Boolean(detail);
+  const record = (detail?.dataverse?.record as Record<string, unknown> | undefined) ?? {};
+  const operationId = detail?.id?.trim() || getFallbackOperationId();
   const passengersRaw = getField(detail, "Passageiros e Telefones de Contato");
   const nomePagante =
-    firstPassengerName(passengersRaw) ||
-    getField(detail, "Solicitante") ||
-    getField(detail, "Cliente") ||
-    "Passageiro não informado";
+    hasDetail
+      ? firstPassengerName(passengersRaw) ||
+        getField(detail, "Solicitante") ||
+        getField(detail, "Cliente") ||
+        "Passageiro não informado"
+      : "";
 
-  const cliente = getField(detail, "Cliente") || "Não informado";
+  const cliente = hasDetail ? (getField(detail, "Cliente") || "Não informado") : "";
   const valorFromRecord = typeof record.cr40f_valor === "number" ? record.cr40f_valor : null;
-  const valorTotal = valorFromRecord !== null
-    ? valorFromRecord.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-    : "Não informado";
+  const valorTotal = hasDetail
+    ? (valorFromRecord !== null
+      ? valorFromRecord.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+      : "Não informado")
+    : "";
 
   const baseModel: PersonalReceiptModel = {
-    idOp: detail.id || "Não informado",
+    idOp: operationId,
     nomePagante,
     cliente,
-    idPag: buildReceiptId(detail.id || "0"),
-    dataEmissao: formatDate(new Date().toISOString()) || "Não informado",
-    metodoPagamento: "Não informado",
-    periodo: buildPeriodText(detail, record),
-    trajetos: buildTrajetos(detail),
+    idPag: buildReceiptId(operationId),
+    dataEmissao: hasDetail ? (formatDate(new Date().toISOString()) || "Não informado") : "",
+    metodoPagamento: hasDetail ? "Não informado" : "",
+    periodo: hasDetail ? buildPeriodText(detail, record) : "Não informado",
+    trajetos: hasDetail ? buildTrajetos(detail) : "",
     valorTotal,
-    observacoes: buildObservations(detail)
+    observacoes: hasDetail ? buildObservations(detail) : ""
   };
 
   return {
     ...baseModel,
-    ...overrides
+    ...overrides,
+    dataEmissao: toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao)
   };
 }
 
-export function buildPersonalReceiptDraft(detail: DetailData): PersonalReceiptEditableDraft {
+export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptEditableDraft {
+  if (!detail) {
+    return {
+      nomePagante: "",
+      cliente: "",
+      valorTotal: "",
+      dataEmissao: "",
+      metodoPagamento: ""
+    };
+  }
+
   const model = buildPersonalReceiptModel(detail);
   return {
     nomePagante: model.nomePagante,
     cliente: model.cliente,
     valorTotal: model.valorTotal,
-    dataEmissao: model.dataEmissao,
+    dataEmissao: toYmdDateString(model.dataEmissao),
     metodoPagamento: model.metodoPagamento
   };
 }
+

@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import betinhosLogo from "../../Logo Betinhos B.png";
 import carCrashIcon from "../assets/icons/car-crash-svgrepo-com.svg";
 import historyIcon from "../assets/icons/clock.svg";
+import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionButton } from "../components/common/ActionButton";
 import { PullToRefresh } from "../components/common/PullToRefresh";
 import { reportAppError } from "../lib/appErrorLogger";
 import type { AgendaItem } from "../types";
 
-const modules = [
+const baseModules = [
   {
     id: "services",
     label: "Serviços",
@@ -52,7 +53,7 @@ const modules = [
     icon: "collisions",
     tone: "neutral",
     disabled: false,
-  },
+  }
 ];
 
 const screenAliases: Record<string, string[]> = {
@@ -61,6 +62,7 @@ const screenAliases: Record<string, string[]> = {
   maintenancePhoto: ["maintenancePhoto", "maintenance", "MaintenancePhoto", "manutencao", "manutenção"],
   collisions: ["collisions", "colisoes", "Collisions"],
   expenses: ["gastos", "expenses", "Expenses"],
+  personalReceipt: ["reciboPersonalizado", "personalReceipt", "gerarReciboPersonalizado", "recibopersonalizado"],
 };
 
 const moduleHandlers: Record<string, string[]> = {
@@ -103,6 +105,7 @@ const moduleHandlers: Record<string, string[]> = {
   ],
   collisions: ["onOpenCollisions", "onCollisionsClick", "onCollisionsPress", "openCollisions"],
   expenses: ["onOpenExpenses", "onExpensesClick", "onExpensesPress", "openExpenses"],
+  personalReceipt: ["onOpenPersonalReceipt", "onPersonalReceipt", "openPersonalReceipt", "openRecibo", "onOpenRecibo"],
 };
 
 const navigationHandlers = [
@@ -195,6 +198,11 @@ type InitialScreenProps = {
   onExpensesClick?: () => void;
   onExpensesPress?: () => void;
   openExpenses?: () => void;
+  onOpenPersonalReceipt?: () => void;
+  onPersonalReceipt?: () => void;
+  openPersonalReceipt?: () => void;
+  openRecibo?: () => void;
+  onOpenRecibo?: () => void;
   onResetLocal?: () => void;
   onRefresh?: () => void | Promise<void>;
   driverName?: string;
@@ -202,6 +210,7 @@ type InitialScreenProps = {
   nextServiceAt?: string | Date | null;
   proximoServicoEm?: string | Date | null;
   services?: AgendaItem[];
+  canGeneratePersonalReceipt?: boolean;
   [key: string]: unknown;
 };
 
@@ -338,6 +347,10 @@ function ModuleIcon({ name }: { name: string }) {
     return <img src={carCrashIcon} alt="" />;
   }
 
+  if (name === "receipt") {
+    return <img src={invoiceReceiptIcon} alt="" />;
+  }
+
   if (name === "maintenance") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -363,6 +376,24 @@ export function InitialScreen(props: InitialScreenProps) {
   const nextService = useMemo(() => getNextServiceItem(props, now), [now, props.nextServiceAt, props.proximoServicoEm, props.services]);
   const nextServiceDate = nextService?.date ?? null;
   const agendaCount = useMemo(() => getTodayAgendaCount(props.services, now), [now, props.services]);
+  const modules = useMemo(
+    () => baseModules.concat(
+      props.canGeneratePersonalReceipt
+        ? [
+          {
+            id: "personalReceipt",
+            label: "Recibo personalizado",
+            detail: "Gerar recibo sob demanda",
+            action: "Abrir",
+            icon: "receipt",
+            tone: "neutral",
+            disabled: false
+          }
+        ]
+        : []
+    ),
+    [props.canGeneratePersonalReceipt]
+  );
   const buildInfo = useMemo(() => getBuildInfo(), []);
 
   useEffect(() => {

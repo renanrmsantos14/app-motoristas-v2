@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { SearchableSelect } from "../components/common/SearchableSelect";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { buildWhatsAppUrl, openExternalUrl } from "../lib/localWorkflow";
@@ -42,6 +43,7 @@ function focusInvalidField(element: HTMLElement | null) {
 
 function FinalizeActions({ onNone, onConfirm, submitState }: { onNone: () => void; onConfirm: () => void; submitState: ActionButtonState }) {
   const [activeAction, setActiveAction] = useState<"none" | "confirm" | "">("");
+
   useEffect(() => {
     if (submitState === "idle") setActiveAction("");
   }, [submitState]);
@@ -99,7 +101,7 @@ function ServiceFinalize({ onDone, submitState }: { detail: DetailData; onDone: 
       <div className="finalize-title">Digite abaixo sua observação</div>
       <div className="finalize-scroll">
         <div className="finalize-form">
-          <TextAreaBlock label="Observação do Serviço" value={obs} onChange={setObs} />
+          <TextAreaBlock label="Observação do serviço" value={obs} onChange={setObs} />
         </div>
       </div>
       <FinalizeActions
@@ -119,12 +121,12 @@ function ExchangeFinalize({ detail, onDone, submitState }: { detail: DetailData;
       <div className="finalize-title">{detail.id}</div>
       <div className="finalize-scroll">
         <div className="finalize-form">
-          <TextAreaBlock label="Observação da Troca" value={obs} onChange={setObs} />
+          <TextAreaBlock label="Observação da troca" value={obs} onChange={setObs} />
         </div>
       </div>
       <FinalizeActions
-        onNone={() => onDone({ "Observações": "Sem observação." })}
-        onConfirm={() => onDone({ "Observações": obs || "Sem observação." })}
+        onNone={() => onDone({ Observações: "Sem observação." })}
+        onConfirm={() => onDone({ Observações: obs || "Sem observação." })}
         submitState={submitState}
       />
     </article>
@@ -138,7 +140,7 @@ function MaintenancePhotoGrid({
   isInvalid,
   isSubmitting,
   allowMultiple = false,
-  onPreview,
+  onPreview
 }: {
   label: string;
   kinds: MaintenancePhotoKind[];
@@ -156,15 +158,13 @@ function MaintenancePhotoGrid({
       return leftIndex - rightIndex;
     })
     .map(([kind, dataUrl]) => ({ kind: kind as MaintenancePhotoKind, dataUrl: dataUrl as string }));
-  const fixedItems = kinds.map((kind) => ({ kind, dataUrl: photos[kind] })).filter((item): item is { kind: MaintenancePhotoKind; dataUrl: string } => Boolean(item.dataUrl));
+  const fixedItems = kinds
+    .map((kind) => ({ kind, dataUrl: photos[kind] }))
+    .filter((item): item is { kind: MaintenancePhotoKind; dataUrl: string } => Boolean(item.dataUrl));
   const photoItems = allowMultiple ? invoiceItems : fixedItems;
   const nextEmptyKind = allowMultiple
     ? ((invoiceItems.length === 0 ? "NOTAFISCAL" : `NOTAFISCAL_${invoiceItems.length + 1}`) as MaintenancePhotoKind)
     : (kinds.find((kind) => !photos[kind]) ?? kinds[kinds.length - 1]);
-
-  const addPhoto = () => {
-    onPreview(nextEmptyKind);
-  };
 
   return (
     <div className={`finalize-input-block maintenance-photo-block ${isInvalid ? "is-invalid" : ""}`}>
@@ -189,7 +189,13 @@ function MaintenancePhotoGrid({
             )}
           </button>
         ))}
-        <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label={`Adicionar ${label}`}>
+        <button
+          type="button"
+          className="maintenance-photo-add"
+          disabled={isSubmitting}
+          onClick={() => onPreview(nextEmptyKind)}
+          aria-label={`Adicionar ${label}`}
+        >
           <span>+</span>
         </button>
       </div>
@@ -219,7 +225,7 @@ function MaintenanceFinalize({
   const isSubmitting = submitState !== "idle";
   const serviceDoneRef = useRef<HTMLTextAreaElement | null>(null);
   const valueRef = useRef<HTMLInputElement | null>(null);
-  const paymentRef = useRef<HTMLSelectElement | null>(null);
+  const paymentRef = useRef<HTMLButtonElement | null>(null);
   const establishmentRef = useRef<HTMLTextAreaElement | null>(null);
   const [serviceDone, setServiceDone] = useState(draft?.serviceDone ?? "");
   const [value, setValue] = useState(draft?.value ?? "");
@@ -228,15 +234,14 @@ function MaintenanceFinalize({
   const [notes, setNotes] = useState(draft?.notes ?? "");
   const [errors, setErrors] = useState<MaintenanceErrors>({});
 
+  const paymentOptions = [
+    { value: "Pedido de compra", label: "Pedido de compra" },
+    { value: "Cartão de crédito", label: "Cartão de crédito" },
+    { value: "Pix", label: "Pix" }
+  ];
+
   const updateDraft = (updates: Partial<MaintenanceFinalizeDraft>) => {
-    const nextDraft = {
-      serviceDone,
-      value,
-      payment,
-      establishment,
-      notes,
-      ...updates
-    };
+    const nextDraft = { serviceDone, value, payment, establishment, notes, ...updates };
     onDraftChange?.(nextDraft);
   };
 
@@ -247,13 +252,14 @@ function MaintenanceFinalize({
 
   const finish = () => {
     if (isSubmitting) return;
+
     const fields = {
       "Serviço Realizado": serviceDone || "Serviço registrado localmente.",
-      "Valor": value ? `R$ ${value}` : "R$ 0,00",
+      Valor: value ? `R$ ${value}` : "R$ 0,00",
       "Forma de Pagamento": payment || "Não informado",
-      "Estabelecimento": establishment || "Não informado",
+      Estabelecimento: establishment || "Não informado",
       "Comentários do Motorista": notes || "Sem comentários.",
-      "Fotos": confirmedPhotos.length ? `${confirmedPhotos.length} foto(s) confirmada(s)` : "Nenhuma foto confirmada"
+      Fotos: confirmedPhotos.length ? `${confirmedPhotos.length} foto(s) confirmada(s)` : "Nenhuma foto confirmada"
     };
 
     const nextErrors: MaintenanceErrors = {};
@@ -284,27 +290,67 @@ function MaintenanceFinalize({
           {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
           <div className={`finalize-input-block ${errors.serviceDone ? "is-invalid" : ""}`}>
             <label>Manutenção Realizada</label>
-            <textarea ref={serviceDoneRef} aria-invalid={Boolean(errors.serviceDone)} placeholder="Digite aqui" rows={4} value={serviceDone} onChange={(event) => { setServiceDone(event.target.value); updateDraft({ serviceDone: event.target.value }); clearError("serviceDone"); }} />
+            <textarea
+              ref={serviceDoneRef}
+              aria-invalid={Boolean(errors.serviceDone)}
+              placeholder="Digite aqui"
+              rows={4}
+              value={serviceDone}
+              onChange={(event) => {
+                setServiceDone(event.target.value);
+                updateDraft({ serviceDone: event.target.value });
+                clearError("serviceDone");
+              }}
+            />
             {errors.serviceDone ? <div className="field-error">{errors.serviceDone}</div> : null}
           </div>
           <div className={`finalize-input-block ${errors.value ? "is-invalid" : ""}`}>
             <label>Valor (R$)</label>
-            <input ref={valueRef} aria-invalid={Boolean(errors.value)} inputMode="decimal" placeholder="0,00" value={value} onChange={(event) => { setValue(event.target.value); updateDraft({ value: event.target.value }); clearError("value"); }} />
+            <input
+              ref={valueRef}
+              aria-invalid={Boolean(errors.value)}
+              inputMode="decimal"
+              placeholder="0,00"
+              value={value}
+              onChange={(event) => {
+                setValue(event.target.value);
+                updateDraft({ value: event.target.value });
+                clearError("value");
+              }}
+            />
             {errors.value ? <div className="field-error">{errors.value}</div> : null}
           </div>
           <div className={`finalize-input-block ${errors.payment ? "is-invalid" : ""}`}>
             <label>Forma de Pagamento</label>
-            <select ref={paymentRef} aria-invalid={Boolean(errors.payment)} value={payment} onChange={(event) => { setPayment(event.target.value); updateDraft({ payment: event.target.value }); clearError("payment"); }}>
-              <option value="" disabled />
-              <option>Pedido de compra</option>
-              <option>Cartão de crédito</option>
-              <option>Pix</option>
-            </select>
+            <SearchableSelect
+              ref={paymentRef}
+              value={payment}
+              options={paymentOptions}
+              placeholder="Selecione"
+              ariaLabel="Selecionar forma de pagamento"
+              invalid={Boolean(errors.payment)}
+              onChange={(value) => {
+                setPayment(value);
+                updateDraft({ payment: value });
+                clearError("payment");
+              }}
+            />
             {errors.payment ? <div className="field-error">{errors.payment}</div> : null}
           </div>
           <div className={`finalize-input-block ${errors.establishment ? "is-invalid" : ""}`}>
             <label>Estabelecimento</label>
-            <textarea ref={establishmentRef} aria-invalid={Boolean(errors.establishment)} placeholder="Digite aqui" rows={3} value={establishment} onChange={(event) => { setEstablishment(event.target.value); updateDraft({ establishment: event.target.value }); clearError("establishment"); }} />
+            <textarea
+              ref={establishmentRef}
+              aria-invalid={Boolean(errors.establishment)}
+              placeholder="Digite aqui"
+              rows={3}
+              value={establishment}
+              onChange={(event) => {
+                setEstablishment(event.target.value);
+                updateDraft({ establishment: event.target.value });
+                clearError("establishment");
+              }}
+            />
             {errors.establishment ? <div className="field-error">{errors.establishment}</div> : null}
           </div>
           <MaintenancePhotoGrid
@@ -314,7 +360,9 @@ function MaintenanceFinalize({
             isInvalid={Boolean(errors.invoicePhoto)}
             isSubmitting={isSubmitting}
             allowMultiple
-            onPreview={(kind) => { if (!isSubmitting) onPreviewMaintenancePhoto(kind); }}
+            onPreview={(kind) => {
+              if (!isSubmitting) onPreviewMaintenancePhoto(kind);
+            }}
           />
           {errors.invoicePhoto ? <div className="field-error">{errors.invoicePhoto}</div> : null}
           <MaintenancePhotoGrid
@@ -323,12 +371,22 @@ function MaintenanceFinalize({
             photos={maintenancePhotos}
             isInvalid={Boolean(errors.maintenancePhoto)}
             isSubmitting={isSubmitting}
-            onPreview={(kind) => { if (!isSubmitting) onPreviewMaintenancePhoto(kind); }}
+            onPreview={(kind) => {
+              if (!isSubmitting) onPreviewMaintenancePhoto(kind);
+            }}
           />
           {errors.maintenancePhoto ? <div className="field-error">{errors.maintenancePhoto}</div> : null}
           <div className="finalize-input-block">
             <label>Observações da Manutenção</label>
-            <textarea placeholder="Digite aqui" rows={4} value={notes} onChange={(event) => { setNotes(event.target.value); updateDraft({ notes: event.target.value }); }} />
+            <textarea
+              placeholder="Digite aqui"
+              rows={4}
+              value={notes}
+              onChange={(event) => {
+                setNotes(event.target.value);
+                updateDraft({ notes: event.target.value });
+              }}
+            />
           </div>
           <div className="finalize-help">
             <span>Dúvidas?</span>

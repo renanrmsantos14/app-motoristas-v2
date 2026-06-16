@@ -1,0 +1,82 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "impersonation": {},
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cr40f_reservadeveculos",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filterexpression": "createdon gt cr40f_dataehorriodesada"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Send_an_email_(V2)": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "emailMessage/To": "noreply@betinhos.onmicrosoft.com; junior@betinhos.com.br",
+              "emailMessage/Subject": "AVISO: Serviço Retroativo Criado no Sistema! | @{triggerOutputs()?['body/cr40f_id']}",
+              "emailMessage/Body": "<p class=\"editor-paragraph\">O Serviço @{triggerOutputs()?['body/cr40f_id']} foi criado no sistema em @{convertTimeZone(triggerOutputs()?['body/createdon'], 'UTC', 'E. South America Standard Time', 'dd/MM/yyyy HH:mm')} com data de saída para @{convertTimeZone(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'UTC', 'E. South America Standard Time', 'dd/MM/yyyy HH:mm')}!</p>",
+              "emailMessage/From": "noreply@betinhos.com.br",
+              "emailMessage/Importance": "Normal"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+              "connectionName": "shared_office365",
+              "operationId": "SendEmailV2"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,259 @@
+// Command Button JS (Grid) — BLINDADO + DEBUG PESADO NO CONSOLE
+// FlowURL lida de Variável de Ambiente Dataverse (bt_FlowUrlGerarContratoMultas)
+//
+// CONFIG DO BOTÃO (OBRIGATÓRIO):
+// - Library: este Web Resource .js
+// - Function name: NotificarOuGerarContrato_Multas_Debug
+// - Parameter (somente 1): SelectedControlSelectedItemReferences
+
+var TAG = "[BT-MULTAS-DEBUG]";
+
+// ===== LEITURA DA VARIÁVEL DE AMBIENTE =====
+// Busca o valor atual (currentvalue) da env var pelo schema name.
+// Retorna Promise<string|null>
+function getEnvVarValue(schemaName) {
+    var ctx = Xrm.Utility.getGlobalContext();
+    var baseUrl = ctx.getClientUrl();
+
+    // 1ª tentativa: environmentvariabledefinition + expand currentvalue
+    var url =
+        baseUrl +
+        "/api/data/v9.2/environmentvariabledefinitions" +
+        "?$filter=schemaname eq '" + schemaName + "'" +
+        "&$select=defaultvalue,schemaname" +
+        "&$expand=environmentvariabledefinition_environmentvariablevalue($select=value)";
+
+    console.log(TAG, "getEnvVarValue → GET:", url);
+
+    return fetch(url, {
+        headers: {
+            "OData-MaxVersion": "4.0",
+            "OData-Version": "4.0",
+            "Accept": "application/json",
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            console.log(TAG, "EnvVar raw response:", data);
+
+            if (!data || !data.value || !data.value.length) {
+                console.warn(TAG, "Variável de ambiente não encontrada:", schemaName);
+                return null;
+            }
+
+            var def = data.value[0];
+
+            // Prefere o valor definido (currentvalue), cai no defaultvalue
+            var currentValues =
+                def["environmentvariabledefinition_environmentvariablevalue"];
+            if (currentValues && currentValues.length && currentValues[0].value) {
+                console.log(TAG, "EnvVar currentvalue:", currentValues[0].value);
+                return currentValues[0].value;
+            }
+
+            if (def.defaultvalue) {
+                console.log(TAG, "EnvVar defaultvalue:", def.defaultvalue);
+                return def.defaultvalue;
+            }
+
+            console.warn(TAG, "EnvVar encontrada mas sem valor:", def);
+            return null;
+        })
+        .catch(function (e) {
+            console.error(TAG, "Erro ao buscar variável de ambiente:", e);
+            return null;
+        });
+}
+
+// ===== FUNÇÃO PRINCIPAL =====
+function NotificarOuGerarContrato_Multas_Debug(selectedItems) {
+    try {
+        console.log(TAG, "FUNÇÃO CHAMADA ✅");
+        console.log(TAG, "selectedItems (raw):", selectedItems);
+
+        // ===== normaliza selectedItems em array =====
+        var refs = selectedItems;
+
+        if (typeof refs === "string") {
+            try { refs = JSON.parse(refs); }
+            catch (e) { console.warn(TAG, "JSON.parse falhou, tentando split.", e); }
+        }
+
+        if (refs && !Array.isArray(refs) && typeof refs === "object") {
+            if (Array.isArray(refs.value))         refs = refs.value;
+            else if (Array.isArray(refs.items))     refs = refs.items;
+            else if (Array.isArray(refs.selectedItems)) refs = refs.selectedItems;
+        }
+
+        if (typeof refs === "string") {
+            refs = refs.split(/[,\s;]+/).filter(Boolean);
+        }
+
+        if (!refs || !Array.isArray(refs) || refs.length === 0) {
+            console.warn(TAG, "Nenhuma seleção detectada.");
+            Xrm.Navigation.openAlertDialog({ text: "Nenhuma multa selecionada." });
+            return;
+        }
+
+        // ===== extrai GUIDs =====
+        function stripBraces(v) {
+            return v ? String(v).replace(/[{}]/g, "").trim().toLowerCase() : "";
+        }
+        function isUuid(v) {
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+        }
+
+        var ids = [];
+        var invalid = [];
+
+        refs.forEach(function (r, idx) {
+            var raw = null;
+            if (r && typeof r === "object") {
+                raw = r.Id || r.id || r.ID || r.entityId || r.EntityId;
+            } else if (typeof r === "string") {
+                raw = r;
+            }
+            var clean = stripBraces(raw);
+            console.log(TAG, "Item#", idx, "raw:", raw, "clean:", clean);
+            if (isUuid(clean)) ids.push(clean);
+            else invalid.push({ idx: idx, raw: raw, clean: clean });
+        });
+
+        // dedupe
+        var seen = {};
+        ids = ids.filter(function (x) { if (seen[x]) return false; seen[x] = true; return true; });
+
+        console.log(TAG, "IDs válidos:", ids);
+        console.log(TAG, "Inválidos:", invalid);
+
+        if (!ids.length) {
+            Xrm.Navigation.openAlertDialog({
+                text: "IDs inválidos nas seleções.\nAbra o console (F12) e procure por " + TAG
+            });
+            return;
+        }
+
+        Xrm.Utility.showProgressIndicator("Buscando configuração...");
+
+        // ===== busca a URL do Flow na variável de ambiente =====
+        // Schema name da variável: bt_FlowUrlGerarContratoMultas
+        // Altere abaixo se usar outro prefixo/nome
+        getEnvVarValue("new_FlowUrlGerarContratoMultas").then(function (flowUrl) {
+
+            if (!flowUrl) {
+                try { Xrm.Utility.closeProgressIndicator(); } catch (e) {}
+                Xrm.Navigation.openAlertDialog({
+                    text:
+                        "Variável de ambiente 'new_FlowUrlGerarContratoMultas' não encontrada ou sem valor.\n" +
+                        "Configure-a em Power Apps > Soluções > Variáveis de Ambiente."
+                });
+                return;
+            }
+
+            console.log(TAG, "flowUrl resolvida:", flowUrl);
+
+            // ===== dispara os POSTs =====
+            var timeoutMs = 40000;
+            var concurrency = 4;
+            var index = 0;
+            var ok = 0;
+            var fail = 0;
+            var anyShareUrl = null;
+
+            function callOne(guid) {
+                return new Promise(function (resolve) {
+                    var body = JSON.stringify({ GUID_MULTA: guid });
+                    console.log(TAG, "POST Flow → guid:", guid);
+
+                    var req = new XMLHttpRequest();
+                    req.open("POST", flowUrl, true);
+                    req.setRequestHeader("Content-Type", "application/json");
+                    req.timeout = timeoutMs;
+
+                    req.onload = function () {
+                        var status = req.status;
+                        var txt = req.responseText || "";
+                        console.log(TAG, "Response guid:", guid, "status:", status, "txt:", txt.substring(0, 500));
+
+                        var shareUrl = null;
+                        try {
+                            var data = JSON.parse(txt);
+                            if (data && typeof data.shareUrl === "string" && data.shareUrl.length > 10) {
+                                shareUrl = data.shareUrl;
+                            }
+                        } catch (e) { /* sem body JSON — ok */ }
+
+                        if (status >= 200 && status < 300) {
+                            ok++;
+                            if (!anyShareUrl && shareUrl) anyShareUrl = shareUrl;
+                            resolve({ ok: true, guid: guid, shareUrl: shareUrl, status: status });
+                        } else {
+                            fail++;
+                            resolve({ ok: false, guid: guid, status: status, message: txt.substring(0, 300) });
+                        }
+                    };
+
+                    req.ontimeout = function () {
+                        fail++;
+                        console.warn(TAG, "Timeout guid:", guid);
+                        resolve({ ok: false, guid: guid, status: 0, message: "Timeout." });
+                    };
+
+                    req.onerror = function () {
+                        fail++;
+                        console.error(TAG, "Erro de rede/CORS guid:", guid);
+                        resolve({ ok: false, guid: guid, status: 0, message: "Erro de rede/CORS." });
+                    };
+
+                    req.send(body);
+                });
+            }
+
+            function worker() {
+                return new Promise(function (resolve) {
+                    function next() {
+                        var i = index++;
+                        if (i >= ids.length) return resolve();
+                        try { Xrm.Utility.showProgressIndicator("Processando " + (i + 1) + "/" + ids.length + "..."); } catch (e) {}
+                        return callOne(ids[i]).then(next);
+                    }
+                    next();
+                });
+            }
+
+            var workers = [];
+            for (var k = 0; k < Math.min(concurrency, ids.length); k++) workers.push(worker());
+
+            Promise.all(workers).then(function () {
+                try { Xrm.Utility.closeProgressIndicator(); } catch (e) {}
+                console.log(TAG, "FINAL ✅ ok:", ok, "fail:", fail, "shareUrl:", anyShareUrl);
+
+                if (anyShareUrl) {
+                    Xrm.Navigation.openConfirmDialog(
+                        { title: "Concluído", text: "OK: " + ok + " | Falhas: " + fail + "\n\nAbrir um dos arquivos agora?" },
+                        { height: 250, width: 560 }
+                    ).then(function (r) {
+                        if (r && r.confirmed) Xrm.Navigation.openUrl(anyShareUrl);
+                        try { Xrm.Utility.refreshParentGrid(); } catch (e) {}
+                    });
+                } else {
+                    Xrm.Navigation.openAlertDialog({
+                        text: "Concluído.\nOK: " + ok + "\nFalhas: " + fail + "\n\nConsole (F12) → " + TAG
+                    }).then(function () {
+                        try { Xrm.Utility.refreshParentGrid(); } catch (e) {}
+                    });
+                }
+            }).catch(function (e) {
+                try { Xrm.Utility.closeProgressIndicator(); } catch (_) {}
+                console.error(TAG, "Promise.all error:", e);
+                Xrm.Navigation.openAlertDialog({ text: "Erro inesperado. Console (F12): " + (e.message || e) });
+            });
+        });
+
+    } catch (e) {
+        console.error(TAG, "EXCEPTION:", e);
+        try { Xrm.Utility.closeProgressIndicator(); } catch (_) {}
+        Xrm.Navigation.openAlertDialog({ text: "Erro no JS (F12): " + (e.message || e) });
+    }
+}

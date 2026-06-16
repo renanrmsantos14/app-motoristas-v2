@@ -1,0 +1,518 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_8b47d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_de4c0"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "triggerAuthenticationType": "All"
+          },
+          "metadata": {}
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Response-copy_2-copy": {
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "status": "received"
+                }
+              }
+            },
+            "Compose_status": {
+              "type": "Compose",
+              "description": "1 = pendente\n2 = pago\n3 = Negado\n4 = Expirado\n5 = Cancelado\n6 = Não Finalizado\n7 = Autorizado\n10 = Aguardando biometria facial",
+              "inputs": "@triggerFormDataValue('payment_status')\r\n",
+              "runAfter": {
+                "Response-copy_2-copy": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Compose_GUID": {
+              "type": "Compose",
+              "description": "1 = pendente\n2 = pago\n3 = Negado\n4 = Expirado\n5 = Cancelado\n6 = Não Finalizado\n7 = Autorizado\n10 = Aguardando biometria facial",
+              "inputs": "@triggerFormDataValue('order_number')\r\n",
+              "runAfter": {
+                "Compose_status": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Compose_GUID_Format": {
+              "type": "Compose",
+              "inputs": "@if(\r\n    greaterOrEquals(length(replace(replace(replace(replace(outputs('Compose_GUID'),'-',''),' ',''),'{',''),'}','')), 32),\r\n    concat(\r\n        substring(replace(replace(replace(replace(outputs('Compose_GUID'),'-',''),' ',''),'{',''),'}',''), 0, 8), '-',\r\n        substring(replace(replace(replace(replace(outputs('Compose_GUID'),'-',''),' ',''),'{',''),'}',''), 8, 4), '-',\r\n        substring(replace(replace(replace(replace(outputs('Compose_GUID'),'-',''),' ',''),'{',''),'}',''), 12, 4), '-',\r\n        substring(replace(replace(replace(replace(outputs('Compose_GUID'),'-',''),' ',''),'{',''),'}',''), 16, 4), '-',\r\n        substring(replace(replace(replace(replace(outputs('Compose_GUID'),'-',''),' ',''),'{',''),'}',''), 20, 12)\r\n    ),\r\n    outputs('Compose_GUID')\r\n)",
+              "runAfter": {
+                "Compose_GUID": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Compose_data_atual_formato_diferente-copy": {
+              "type": "Compose",
+              "inputs": "@formatDateTime(\r\n  convertTimeZone(utcNow(), 'UTC', 'E. South America Standard Time'),\r\n  'yyyy-MM-dd'\r\n)\r\n",
+              "runAfter": {
+                "Compose_GUID_Format": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_pendente_1": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      1
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')",
+                      "item/cr40f_status": 202410001
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Compose_data_atual_formato_diferente-copy": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_Negado_3": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      3
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row_2": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')",
+                      "item/cr40f_status": 202410003
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Condition_pendente_1": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_Expirado_4": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      4
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row_2_1": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')",
+                      "item/cr40f_status": 202410004
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Condition_Negado_3": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_Cancelado_5": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      5
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row_2_2": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')",
+                      "item/cr40f_status": 202410005
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Condition_Expirado_4": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_Não_Finalizado_6": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      6
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row_2_3": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')",
+                      "item/cr40f_status": 202410006
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Condition_Cancelado_5": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_Autorizado_7": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      7
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row_2_4": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')",
+                      "item/cr40f_status": 202410007
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Condition_Não_Finalizado_6": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_Aguardando_facial_10": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      10
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Update_a_row_2_5": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')",
+                      "item/cr40f_status": 202410010
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Condition_Autorizado_7": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Condition_Pago_2": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@int(outputs('Compose_status'))",
+                      2
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Condition_ja_enviou_recibo": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "not": {
+                          "equals": [
+                            "@coalesce(outputs('Get_a_row_by_ID')?['body/cr40f_statusdorecibo'], 0)",
+                            0
+                          ]
+                        }
+                      },
+                      {
+                        "not": {
+                          "equals": [
+                            "@coalesce(outputs('Get_a_row_by_ID')?['body/cr40f_statusdorecibo'], 0)",
+                            202410000
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Update_a_row_1_1": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr40f_paganteses",
+                          "recordId": "@outputs('Compose_GUID_Format')",
+                          "item/cr40f_status": 202410002
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Update_a_row_1": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr40f_paganteses",
+                            "recordId": "@outputs('Compose_GUID_Format')",
+                            "item/cr40f_status": 202410002,
+                            "item/cr40f_statusdorecibo": 202410000
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "UpdateOnlyRecord",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Get_a_row_by_ID": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Get_a_row_by_ID": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_paganteses",
+                      "recordId": "@outputs('Compose_GUID_Format')"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "Condition_Aguardando_facial_10": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)_1": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; financeiro@betinhos.com..br; junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO NO FLUXO -  Atualizar Status de Pagamento",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">Ocorreu um erro ao Atualizar Status de Pagamento.</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365"
+                }
+              }
+            },
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "400"
+                }
+              },
+              "runAfter": {
+                "Send_an_email_(V2)_1": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Failed",
+              "Skipped"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

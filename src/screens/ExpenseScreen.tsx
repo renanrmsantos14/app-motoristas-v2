@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { SearchableSelect } from "../components/common/SearchableSelect";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
   findExpenseCategory,
-  findExpenseCity,
   getExpenseCategoryRules,
   matchesExpenseCitySearch,
   normalizeExpenseFields,
@@ -55,46 +55,51 @@ export function ExpenseScreen({
   currentVehicleId
 }: ExpenseScreenProps) {
   const isSubmitting = submitState !== "idle";
-  const categoryRef = useRef<HTMLSelectElement | null>(null);
-  const vehicleRef = useRef<HTMLSelectElement | null>(null);
+  const categoryRef = useRef<HTMLButtonElement | null>(null);
+  const vehicleRef = useRef<HTMLButtonElement | null>(null);
   const valueRef = useRef<HTMLInputElement | null>(null);
   const dateRef = useRef<HTMLInputElement | null>(null);
-  const paymentRef = useRef<HTMLSelectElement | null>(null);
-  const cityRef = useRef<HTMLInputElement | null>(null);
+  const paymentRef = useRef<HTMLButtonElement | null>(null);
+  const cityRef = useRef<HTMLButtonElement | null>(null);
   const kmRef = useRef<HTMLInputElement | null>(null);
   const litersRef = useRef<HTMLInputElement | null>(null);
   const photosRef = useRef<HTMLDivElement | null>(null);
   const [errors, setErrors] = useState<ExpenseValidationErrors>({});
-  const [citySearch, setCitySearch] = useState("");
-  const [cityListOpen, setCityListOpen] = useState(false);
 
   const category = findExpenseCategory(referenceData, draft.categoriaId);
-  const selectedCity = findExpenseCity(referenceData, draft.cidadeId);
   const rules = getExpenseCategoryRules(category);
   const categoriesReady = referenceData.categories.length > 0;
   const paymentReady = referenceData.paymentMethods.length > 0;
   const citiesReady = referenceData.cities.length > 0;
-  const normalizedCitySearch = citySearch
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-  const cityMatches = useMemo(() => {
-    const selectedId = draft.cidadeId;
-    const matches = referenceData.cities.filter((city) => {
-      if (!normalizedCitySearch) return city.name.trim().toLowerCase().startsWith("a") || city.id === selectedId;
-      return matchesExpenseCitySearch(city, normalizedCitySearch);
-    });
-    return {
-      total: matches.length,
-      visible: matches.slice(0, 50)
-    };
-  }, [draft.cidadeId, normalizedCitySearch, referenceData.cities]);
 
-  useEffect(() => {
-    if (!selectedCity) return;
-    setCitySearch(selectedCity.name);
-  }, [selectedCity]);
+  const categoryOptions = useMemo(
+    () => referenceData.categories.map((item) => ({ value: item.id, label: item.name })),
+    [referenceData.categories]
+  );
+  const paymentOptions = useMemo(
+    () => referenceData.paymentMethods.map((item) => ({ value: item.id, label: item.name })),
+    [referenceData.paymentMethods]
+  );
+  const cityOptions = useMemo(
+    () => referenceData.cities.map((city) => ({
+      value: city.id,
+      label: city.name,
+      subtitle: city.codigoIbge ? `${city.pais} · ${city.codigoIbge}` : city.pais,
+      searchText: `${city.name} ${city.uf} ${city.pais} ${city.codigoIbge}`
+    })),
+    [referenceData.cities]
+  );
+  const cityById = useMemo(
+    () => new Map(referenceData.cities.map((city) => [city.id, city])),
+    [referenceData.cities]
+  );
+  const vehicleOptions = useMemo(
+    () => vehicles.map((vehicle) => ({
+      value: vehicle.id,
+      label: vehicle.isCurrent ? `${vehicle.label} - atual` : vehicle.label
+    })),
+    [vehicles]
+  );
 
   useEffect(() => {
     if (!currentVehicleId || draft.veiculoId) return;
@@ -102,6 +107,7 @@ export function ExpenseScreen({
   }, [currentVehicleId, draft, onDraftChange, rules.exigeVeiculo]);
 
   const updateDraft = (updates: Partial<ExpenseDraft>) => onDraftChange({ ...draft, ...updates });
+
   const clearError = (key: keyof ExpenseValidationErrors) => {
     if (!errors[key]) return;
     setErrors((current) => ({ ...current, [key]: undefined }));
@@ -131,6 +137,7 @@ export function ExpenseScreen({
 
   const errorCount = Object.values(errors).filter(Boolean).length;
   const isVideo = (photo: ExpensePhoto) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
+
   return (
     <AppShell screenLabel="TelaGastos">
       <FormMenu title="Registrar gasto" onBack={isSubmitting ? undefined : onBack} />
@@ -139,9 +146,7 @@ export function ExpenseScreen({
           <div className="finalize-scroll">
             <div className="finalize-form maintenance maintenance-request-form expense-form">
               {referenceLoading ? <div className="form-error-summary">Carregando regras de despesa.</div> : null}
-              {!referenceLoading && referenceError ? (
-                <div className="form-error-summary">{referenceError}</div>
-              ) : null}
+              {!referenceLoading && referenceError ? <div className="form-error-summary">{referenceError}</div> : null}
               {!referenceLoading && !referenceError && (!categoriesReady || !paymentReady || !citiesReady) ? (
                 <div className="form-error-summary">Categorias, formas de pagamento ou cidades não encontradas no Dataverse.</div>
               ) : null}
@@ -164,26 +169,26 @@ export function ExpenseScreen({
 
               <div className={`finalize-input-block ${errors.categoriaId ? "is-invalid" : ""}`}>
                 <label>Categoria</label>
-                <select
+                <SearchableSelect
                   ref={categoryRef}
-                  aria-invalid={Boolean(errors.categoriaId)}
                   value={draft.categoriaId}
+                  options={categoryOptions}
+                  placeholder="Selecione"
+                  ariaLabel="Selecionar categoria"
+                  invalid={Boolean(errors.categoriaId)}
                   disabled={isSubmitting || referenceLoading}
-                  onChange={(event) => {
-                    const nextCategory = findExpenseCategory(referenceData, event.target.value);
+                  onChange={(value) => {
+                    const nextCategory = findExpenseCategory(referenceData, value);
                     const nextRules = getExpenseCategoryRules(nextCategory);
                     updateDraft({
-                      categoriaId: event.target.value,
+                      categoriaId: value,
                       veiculoId: nextRules.exigeVeiculo ? draft.veiculoId || currentVehicleId : "",
                       kmInformado: nextRules.exigeKm ? draft.kmInformado : "",
                       litros: nextRules.exigeLitros ? draft.litros : ""
                     });
                     clearError("categoriaId");
                   }}
-                >
-                  <option value="" disabled>Selecione</option>
-                  {referenceData.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </select>
+                />
                 {errors.categoriaId ? <div className="field-error">{errors.categoriaId}</div> : null}
               </div>
 
@@ -205,104 +210,62 @@ export function ExpenseScreen({
 
               <div className={`finalize-input-block ${errors.formaPagamentoId ? "is-invalid" : ""}`}>
                 <label>Forma de pagamento</label>
-                <select
+                <SearchableSelect
                   ref={paymentRef}
-                  aria-invalid={Boolean(errors.formaPagamentoId)}
                   value={draft.formaPagamentoId}
+                  options={paymentOptions}
+                  placeholder="Selecione"
+                  ariaLabel="Selecionar forma de pagamento"
+                  invalid={Boolean(errors.formaPagamentoId)}
                   disabled={isSubmitting || referenceLoading}
-                  onChange={(event) => {
-                    updateDraft({ formaPagamentoId: event.target.value });
+                  onChange={(value) => {
+                    updateDraft({ formaPagamentoId: value });
                     clearError("formaPagamentoId");
                   }}
-                >
-                  <option value="" disabled>Selecione</option>
-                  {referenceData.paymentMethods.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </select>
+                />
                 {errors.formaPagamentoId ? <div className="field-error">{errors.formaPagamentoId}</div> : null}
               </div>
 
-              <div className={`finalize-input-block expense-city-field ${selectedCity ? "has-selection" : ""} ${errors.cidadeId ? "is-invalid" : ""}`}>
+              <div className={`finalize-input-block ${errors.cidadeId ? "is-invalid" : ""}`}>
                 <label>Cidade</label>
-                <input
+                <SearchableSelect
                   ref={cityRef}
-                  aria-invalid={Boolean(errors.cidadeId)}
+                  value={draft.cidadeId}
+                  options={cityOptions}
                   placeholder="Digite cidade, UF ou IBGE"
-                  value={citySearch}
+                  ariaLabel="Selecionar cidade"
+                  invalid={Boolean(errors.cidadeId)}
                   disabled={isSubmitting || referenceLoading}
-                  autoComplete="off"
-                  onFocus={() => setCityListOpen(true)}
-                  onBlur={() => window.setTimeout(() => setCityListOpen(false), 120)}
-                  onChange={(event) => {
-                    setCitySearch(event.target.value);
-                    updateDraft({ cidadeId: "" });
+                  emptyLabel="Nenhuma cidade encontrada."
+                  maxVisible={50}
+                  filterOption={(option, normalizedQuery) => {
+                    const city = cityById.get(option.value);
+                    return city ? matchesExpenseCitySearch(city, normalizedQuery) : false;
+                  }}
+                  onChange={(value) => {
+                    updateDraft({ cidadeId: value });
                     clearError("cidadeId");
-                    setCityListOpen(true);
                   }}
                 />
-                {selectedCity ? (
-                  <button
-                    type="button"
-                    className="expense-city-clear"
-                    disabled={isSubmitting}
-                    aria-label="Limpar cidade"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => {
-                      updateDraft({ cidadeId: "" });
-                      setCitySearch("");
-                      setCityListOpen(true);
-                      window.setTimeout(() => cityRef.current?.focus(), 0);
-                    }}
-                  >
-                    x
-                  </button>
-                ) : null}
-                {cityListOpen && (citySearch.trim() || !selectedCity) ? (
-                  <div className="expense-city-results" role="listbox" aria-label="Cidades encontradas">
-                    {cityMatches.visible.map((city) => (
-                      <button
-                        key={city.id}
-                        type="button"
-                        className={`expense-city-option ${city.id === draft.cidadeId ? "is-selected" : ""}`}
-                        disabled={isSubmitting}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => {
-                          updateDraft({ cidadeId: city.id });
-                          setCitySearch(city.name);
-                          clearError("cidadeId");
-                          setCityListOpen(false);
-                        }}
-                      >
-                        <span>{city.name}</span>
-                        <small>{city.codigoIbge ? `${city.pais} · ${city.codigoIbge}` : city.pais}</small>
-                      </button>
-                    ))}
-                    {cityMatches.visible.length && cityMatches.total > cityMatches.visible.length ? (
-                      <div className="expense-city-count">50 de {cityMatches.total}. Digite mais para filtrar.</div>
-                    ) : null}
-                    {!cityMatches.visible.length ? <div className="expense-city-empty">Nenhuma cidade encontrada.</div> : null}
-                  </div>
-                ) : null}
                 {errors.cidadeId ? <div className="field-error">{errors.cidadeId}</div> : null}
               </div>
 
               {rules.exigeVeiculo ? (
                 <div className={`finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`}>
                   <label>Veículo</label>
-                  <select
+                  <SearchableSelect
                     ref={vehicleRef}
-                    aria-invalid={Boolean(errors.veiculoId)}
                     value={draft.veiculoId}
+                    options={vehicleOptions}
+                    placeholder={vehiclesLoading ? "Carregando veículos" : "Selecione"}
+                    ariaLabel="Selecionar veículo"
+                    invalid={Boolean(errors.veiculoId)}
                     disabled={isSubmitting || vehiclesLoading}
-                    onChange={(event) => {
-                      updateDraft({ veiculoId: event.target.value });
+                    onChange={(value) => {
+                      updateDraft({ veiculoId: value });
                       clearError("veiculoId");
                     }}
-                  >
-                    <option value="">{vehiclesLoading ? "Carregando veículos" : "Selecione"}</option>
-                    {vehicles.map((vehicle) => (
-                      <option key={vehicle.id} value={vehicle.id}>{vehicle.isCurrent ? `${vehicle.label} - atual` : vehicle.label}</option>
-                    ))}
-                  </select>
+                  />
                   {errors.veiculoId ? <div className="field-error">{errors.veiculoId}</div> : null}
                 </div>
               ) : null}

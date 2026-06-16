@@ -137,7 +137,7 @@ export const DATAVERSE = {
   clientes: "cr40f_clientes1s",
   veiculos: "cr40f_veiculoses",
   geral: "cr40f_reservadeveculoses",
-  anexosRecebimento: "cr40f_anexorecebimentos",
+  anexosRecebimento: "cr40f_anexorecebimento_v2s",
   funcionarios: "cr40f_funcionarioses",
   bancoDeDados: "cr40f_bancodedadoses",
   manutencoes: "cr40f_manutencoeses",
@@ -146,8 +146,8 @@ export const DATAVERSE = {
   categoriasDespesasOperacionais: "cr40f_categoriadespesaoperacionals",
   formasPagamentoDespesas: "cr40f_formapagamentodespesas",
   cidades: "cr40f_cidades",
-  colisoes: "cr40f_colisaos",
-  anexosColisoes: "cr40f_anexocolisaos",
+  colisoes: "cr40f_colisao_v2s",
+  anexosColisoes: "cr40f_anexocolisao_v2s",
   recibos: "cr40f_reciboses",
   trocas: "cr40f_trocasdecarros",
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
@@ -164,7 +164,7 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.clientes]: "cr40f_clientes1",
   [DATAVERSE.veiculos]: "cr40f_veiculos",
   [DATAVERSE.geral]: "cr40f_reservadeveculos",
-  [DATAVERSE.anexosRecebimento]: "cr40f_anexorecebimento",
+  [DATAVERSE.anexosRecebimento]: "cr40f_anexorecebimento_v2",
   [DATAVERSE.funcionarios]: "cr40f_funcionarios",
   [DATAVERSE.bancoDeDados]: "cr40f_bancodedados",
   [DATAVERSE.manutencoes]: "cr40f_manutencoes",
@@ -173,8 +173,8 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.categoriasDespesasOperacionais]: "cr40f_categoriadespesaoperacional",
   [DATAVERSE.formasPagamentoDespesas]: "cr40f_formapagamentodespesa",
   [DATAVERSE.cidades]: "cr40f_cidade",
-  [DATAVERSE.colisoes]: "cr40f_colisao",
-  [DATAVERSE.anexosColisoes]: "cr40f_anexocolisao",
+  [DATAVERSE.colisoes]: "cr40f_colisao_v2",
+  [DATAVERSE.anexosColisoes]: "cr40f_anexocolisao_v2",
   [DATAVERSE.recibos]: "cr40f_recibos",
   [DATAVERSE.trocas]: "cr40f_trocasdecarro",
   [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
@@ -549,6 +549,10 @@ const EXPENSE_CITY_QUERY =
   "$select=cr40f_cidadeid,cr40f_name,cr40f_nome,cr40f_uf,cr40f_pais,cr40f_codigo_ibge,cr40f_ativa&$filter=cr40f_ativa eq true&$orderby=cr40f_uf asc,cr40f_nome asc";
 const EXPENSE_CITY_ALL_QUERY =
   "$select=cr40f_cidadeid,cr40f_name,cr40f_nome,cr40f_uf,cr40f_pais,cr40f_codigo_ibge,cr40f_ativa&$orderby=cr40f_uf asc,cr40f_nome asc";
+const RECEIPT_CLIENT_QUERY =
+  "$select=cr40f_clientes1id,cr40f_nomedocliente&$filter=statecode eq 0&$orderby=cr40f_nomedocliente asc";
+const RECEIPT_CLIENT_ALL_QUERY =
+  "$select=cr40f_clientes1id,cr40f_nomedocliente&$orderby=cr40f_nomedocliente asc";
 
 async function retrieveExpenseReferenceRecords(entitySetName: string, label: string, activeQuery: string, allQuery: string, minimalQuery: string) {
   let activeError: unknown = null;
@@ -634,6 +638,39 @@ export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReference
       })
       .filter((city) => Boolean(city.id && city.name))
   };
+}
+
+export async function loadReceiptClienteOptionsRemote(): Promise<string[]> {
+  let activeError: unknown = null;
+  let result: { entities: DataverseRecord[] };
+
+  try {
+    const activeClients = await retrieveMultiple(DATAVERSE.clientes, RECEIPT_CLIENT_QUERY);
+    if (activeClients.entities.length) {
+      return activeClients.entities
+        .map((record) => String(record.cr40f_nomedocliente ?? "").trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    }
+    dataverseWarn("Nenhum cliente ativo encontrado para recibo. Tentando consulta sem filtro de ativo.");
+  } catch (error) {
+    activeError = error;
+    dataverseWarn(
+      "Consulta ativa de clientes para recibo falhou. Tentando consulta sem filtro de ativo.",
+      describeDataverseError(error)
+    );
+  }
+
+  try {
+    result = await retrieveMultipleAll(DATAVERSE.clientes, RECEIPT_CLIENT_ALL_QUERY);
+  } catch (error) {
+    throw activeError ?? error;
+  }
+
+  return result.entities
+    .map((record) => String(record.cr40f_nomedocliente ?? "").trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
 export function buildMaintenanceRequestRecord(payload: MaintenanceRequestPayload) {

@@ -1,0 +1,214 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "impersonation": {},
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_office365-1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cr40f_reservadeveculos",
+              "subscriptionRequest/scope": 4
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Scope_1": {
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "noreply@betinhos.onmicrosoft.com; financeiro@betinhos.com.br; junior@betinhos.com.br",
+                  "emailMessage/Subject": "ERRO AO CRIAR / ATUALIZAR CP",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">Ocorreu um erro ao criar ou atualizar a CP.</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "connectionName": "shared_office365-1",
+                  "operationId": "SendEmailV2"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Terminate": {
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "400"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Failed",
+              "Skipped"
+            ]
+          },
+          "type": "Scope"
+        },
+        "Scope": {
+          "actions": {
+            "Condition_Status_Serviço_e_Campo_Lookup_de_CP_é_vazio": {
+              "actions": {
+                "Upsert_a_row_1": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_composicaodeprecoses",
+                      "recordId": "@outputs('Get_a_row_by_ID_(Tabela_Geral)')?['body/cr40f_reservadeveculosid']",
+                      "item/cr40f_ServicoRelacionadoGeral@odata.bind": "@concat('/cr40f_reservadeveculoses(', triggerOutputs()?['body/cr40f_reservadeveculosid'], ')')",
+                      "item/cr40f_id": "@if(empty(triggerOutputs()?['body/cr40f_id']),null,if(startsWith(triggerOutputs()?['body/cr40f_id'],'OS-'),concat('CP-',replace(triggerOutputs()?['body/cr40f_id'],'OS-','')),if(and(greaterOrEquals(int(substring(triggerOutputs()?['body/cr40f_id'],0,1)),0),lessOrEquals(int(substring(triggerOutputs()?['body/cr40f_id'],0,1)),9)),concat('CP-ANTG',triggerOutputs()?['body/cr40f_id']),null)))",
+                      "accept": "application/json;odata.metadata=minimal"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateRecord"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "Update_a_row_1": {
+                  "runAfter": {
+                    "Upsert_a_row_1": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_reservadeveculoses",
+                      "recordId": "@outputs('Get_a_row_by_ID_(Tabela_Geral)')?['body/cr40f_reservadeveculosid']",
+                      "item/new_ComposicaodePreco@odata.bind": "@concat('/cr40f_composicaodeprecoses(', outputs('Upsert_a_row_1')?['body/cr40f_composicaodeprecosid'], ')')",
+                      "accept": "application/json;odata.metadata=minimal"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Get_a_row_by_ID_(Tabela_Geral)": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Terminate_1": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@outputs('Get_a_row_by_ID_(Tabela_Geral)')?['body/cr40f_status']",
+                        202410003
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "equals": [
+                        "@outputs('Get_a_row_by_ID_(Tabela_Geral)')?['body/cr40f_status']",
+                        202410012
+                      ]
+                    }
+                  },
+                  {
+                    "equals": [
+                      "@empty(outputs('Get_a_row_by_ID_(Tabela_Geral)')?['body/_new_composicaodepreco_value'])",
+                      true
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Get_a_row_by_ID_(Tabela_Geral)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_reservadeveculoses",
+                  "recordId": "@triggerOutputs()?['body/cr40f_reservadeveculosid']",
+                  "accept": "application/json;odata.metadata=minimal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {},
+          "type": "Scope"
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

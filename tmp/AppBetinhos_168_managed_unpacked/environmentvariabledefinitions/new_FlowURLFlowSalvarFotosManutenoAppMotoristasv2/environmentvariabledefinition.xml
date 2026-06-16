@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="new_FlowURLFlowSalvarFotosManutenoAppMotoristasv2">
+  <description default="Flow URL - Flow Salvar Fotos Manutenção | App Motoristas v2">
+    <label description="Flow URL - Flow Salvar Fotos Manutenção | App Motoristas v2" languagecode="1046" />
+  </description>
+  <displayname default="Flow URL - Flow Salvar Fotos Manutenção | App Motoristas v2">
+    <label description="Flow URL - Flow Salvar Fotos Manutenção | App Motoristas v2" languagecode="1046" />
+  </displayname>
+  <introducedversion>1.0.0.160</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

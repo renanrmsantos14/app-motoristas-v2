@@ -1,0 +1,352 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_5696d"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_powerappsnotificationv2-1": {
+        "api": {
+          "name": "shared_powerappsnotificationv2"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedpowerappsnotificationv2_e540f"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_f87d5"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "ID App Betinhos Interno (new_IDAppBetinhosInterno)": {
+          "defaultValue": "7c7c8fda-53d0-f011-8543-6045bd3a51ea",
+          "type": "String",
+          "metadata": {
+            "schemaName": "new_IDAppBetinhosInterno"
+          }
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "cr40f_reservadeveculos",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr40f_status",
+              "subscriptionRequest/filterexpression": "cr40f_status eq 202410008 and cr40f_cliente ne null"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          }
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Delay_25_sec": {
+              "type": "Wait",
+              "inputs": {
+                "interval": {
+                  "count": 25,
+                  "unit": "Second"
+                }
+              }
+            },
+            "Condition_é_pra_rodar": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@contains(outputs('Get_a_row_by_ID_Cliente')?['body/cr40f_nomedocliente'], 'Tenaris')",
+                      true
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@outputs('Get_a_row_by_ID_Geral')?['body/new_linkdovoucher']",
+                      "@null"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@empty(triggerOutputs()?['body/_cr40f_motorista_value'])",
+                      false
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "List_rows_funcionários_Notifcação_Operacional": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_funcionarioses",
+                      "$select": "cr40f_emailmicrosoft",
+                      "$filter": "new_notificacoesoperacionais eq true"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  },
+                  "runAfter": {
+                    "Get_a_row_by_ID_Motoristas": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "List_rows_funcionários_Notifcação_Financeiras": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_funcionarioses",
+                      "$select": "cr40f_emailmicrosoft",
+                      "$filter": "new_notificacoesfinanceiras eq true"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  },
+                  "runAfter": {
+                    "List_rows_funcionários_Notifcação_Operacional": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Compose_Todos_Interno": {
+                  "type": "Compose",
+                  "inputs": "@union(\r\n  coalesce(outputs('List_rows_funcionários_Notifcação_Financeiras')?['body/value'], json('[]')),\r\n  coalesce(outputs('List_rows_funcionários_Notifcação_Operacional')?['body/value'], json('[]'))\r\n)",
+                  "runAfter": {
+                    "List_rows_funcionários_Notifcação_Financeiras": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "For_each_Todos_Interno": {
+                  "type": "Foreach",
+                  "foreach": "@outputs('Compose_Todos_Interno')",
+                  "actions": {
+                    "List_rows_systemusers": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "systemusers",
+                          "$filter": "internalemailaddress eq '@{items('For_each_Todos_Interno')?['cr40f_emailmicrosoft']}'"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "ListRecords",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      }
+                    },
+                    "Send_push_notification_V2": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "payload/playerType": "PowerApps",
+                          "payload/app": "{\"appIdentifier\":\"cr40f_ModelDrivenBetinhos\",\"displayName\":\"App Betinhos Interno\",\"type\":\"AppModule\"}",
+                          "payload/recipients": [
+                            "@items('For_each_Todos_Interno')?['cr40f_emailmicrosoft']"
+                          ],
+                          "payload/message": "Um serviço da Tenaris foi finalizado sem Voucher.\n| Data de Saída: @{if(empty(coalesce(triggerOutputs()?['body/cr40f_dataehorriodesada'], '')), 'Não informado', formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'dd/MM/yyyy HH:mm'))}\n| Motorista: @{coalesce(outputs('Get_a_row_by_ID_Motoristas')?['body/new_apelido'], 'Não informado')}\n| ID: @{coalesce(triggerOutputs()?['body/cr40f_id'], 'Não informado')}",
+                          "payload/openApp": true,
+                          "payload/dynamicParams/entityLogicalName": "cr40f_reservadeveculos"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsnotificationv2",
+                          "operationId": "SendPushNotificationV2",
+                          "connectionName": "shared_powerappsnotificationv2-1"
+                        }
+                      },
+                      "runAfter": {
+                        "Add_a_new_row_Notificações_1": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Add_a_new_row_Notificações_1": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "appnotifications",
+                          "item/title": "Serviço Sem Voucher",
+                          "item/AppModuleId@odata.bind": "/appmodules(@{parameters('ID App Betinhos Interno (new_IDAppBetinhosInterno)')})",
+                          "item/body": "Um serviço da Tenaris foi finalizado sem Voucher.\n| Data de Saída: @{if(empty(coalesce(triggerOutputs()?['body/cr40f_dataehorriodesada'], '')), 'Não informado', formatDateTime(convertFromUtc(triggerOutputs()?['body/cr40f_dataehorriodesada'], 'E. South America Standard Time'), 'dd/MM/yyyy HH:mm'))}\n| Motorista: @{coalesce(outputs('Get_a_row_by_ID_Motoristas')?['body/new_apelido'], 'Não informado')}\n| ID: @{coalesce(triggerOutputs()?['body/cr40f_id'], 'Não informado')}",
+                          "item/ttlinseconds": 86400,
+                          "item/icontype": 100000003,
+                          "item/priority": 200000001,
+                          "item/ownerid@odata.bind": "/systemusers(@{first(outputs('List_rows_systemusers')?['body/value'])?['systemuserid']})"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      },
+                      "runAfter": {
+                        "List_rows_systemusers": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Compose_Todos_Interno": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Get_a_row_by_ID_Motoristas": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_funcionarioses",
+                      "recordId": "@triggerOutputs()?['body/_cr40f_motorista_value']"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Terminate": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Get_a_row_by_ID_Cliente": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Get_a_row_by_ID_Cliente": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_clientes1s",
+                  "recordId": "@triggerOutputs()?['body/_cr40f_cliente_value']"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "runAfter": {
+                "Get_a_row_by_ID_Geral": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Get_a_row_by_ID_Geral": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_reservadeveculoses",
+                  "recordId": "@triggerOutputs()?['body/cr40f_reservadeveculosid']",
+                  "$select": "new_linkdovoucher"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "runAfter": {
+                "Delay_25_sec": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Scope_1": {
+          "type": "Scope",
+          "actions": {
+            "Send_an_email_(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "financeiro@betinhos.com.br;junior@betinhos.com.br;noreply@betinhos.onmicrosoft.com",
+                  "emailMessage/Subject": "ERRO NO FLOW - Flow Notificação Serviço Sem Voucher | Interno",
+                  "emailMessage/Body": "<p class=\"editor-paragraph\">ERRO NO FLOW - Flow Notificação Serviço Sem Voucher | Interno</p>",
+                  "emailMessage/From": "noreply@betinhos.com.br",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365"
+                }
+              }
+            },
+            "Terminate_1": {
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              },
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "TimedOut",
+              "Skipped",
+              "Failed"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
