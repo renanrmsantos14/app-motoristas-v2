@@ -65,10 +65,10 @@ export function ActionButton({
         <motion.span
           key={visualState}
           className="action-button-content"
-          initial={{ opacity: 0, y: 5, scale: 0.9 }}
+          initial={{ opacity: 0, y: 4, scale: 0.96, filter: "blur(6px)" }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -5, scale: 0.9 }}
-          transition={{ duration: 0.16, ease: "easeOut" }}
+          exit={{ opacity: 0, y: -4, scale: 0.96, filter: "blur(4px)" }}
+          transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
         >
           {visualState === "loading" ? <span className="action-button-spinner" aria-hidden="true" /> : null}
           {visualState === "success" ? (

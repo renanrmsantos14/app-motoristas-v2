@@ -1,7 +1,6 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { useMemo } from "react";
-import { SearchableSelect } from "../components/common/SearchableSelect";
+import { FieldError, FormField, SelectField, TextAreaField, TextInputControl, TextInputField } from "../components/common/FormFields";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
@@ -69,10 +68,13 @@ export function CollisionScreen({
   const [errors, setErrors] = useState<CollisionValidationErrors>({});
   const isHitByThirdParty = draft.tipoOcorrencia === "bateram_em_mim";
   const hasThirdParty = hasCollisionThirdParty(draft);
-  const whatsappUrl = buildCollisionWhatsAppUrl(draft.terceiroTelefone, buildCollisionWhatsAppMessage({
-    thirdPartyName: draft.terceiroNome,
-    driverName
-  }));
+  const whatsappUrl = buildCollisionWhatsAppUrl(
+    draft.terceiroTelefone,
+    buildCollisionWhatsAppMessage({
+      thirdPartyName: draft.terceiroNome,
+      driverName
+    })
+  );
   const requiredPhotos = getRequiredCollisionPhotos(hasThirdParty);
   const completedRequiredPhotos = requiredPhotos.filter((requiredPhoto) =>
     photos.some((photo) => photo.kind === requiredPhoto.kind && photo.dataUrl)
@@ -135,70 +137,58 @@ export function CollisionScreen({
               </div>
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
 
-              <div className={`finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`}>
-                <label>Veículo da Betinhos</label>
-                <SearchableSelect
-                  ref={vehicleRef}
-                  value={draft.veiculoId}
-                  options={vehicleOptions}
-                  placeholder={vehiclesLoading ? "Carregando veículos" : "Selecione"}
-                  ariaLabel="Selecionar veículo da Betinhos"
-                  invalid={Boolean(errors.veiculoId)}
-                  disabled={isSubmitting || vehiclesLoading}
-                  onChange={(value) => {
-                    updateDraft({ veiculoId: value });
-                    clearError("veiculoId");
-                  }}
-                />
-                {errors.veiculoId ? <div className="field-error">{errors.veiculoId}</div> : null}
-              </div>
+              <SelectField
+                ref={vehicleRef}
+                label="Veículo da Betinhos"
+                error={errors.veiculoId}
+                value={draft.veiculoId}
+                options={vehicleOptions}
+                placeholder={vehiclesLoading ? "Carregando veículos" : "Selecione"}
+                ariaLabel="Selecionar veículo da Betinhos"
+                disabled={isSubmitting || vehiclesLoading}
+                onChange={(value) => {
+                  updateDraft({ veiculoId: value });
+                  clearError("veiculoId");
+                }}
+              />
 
-              <div className="finalize-input-block">
-                <label>Data e hora</label>
-                <input
-                  type="datetime-local"
-                  value={draft.dataHora}
-                  disabled={isSubmitting}
-                  onChange={(event) => updateDraft({ dataHora: event.target.value })}
-                />
-              </div>
+              <TextInputField
+                label="Data e hora"
+                type="datetime-local"
+                value={draft.dataHora}
+                disabled={isSubmitting}
+                onChange={(event) => updateDraft({ dataHora: event.target.value })}
+              />
 
-              <div className={`finalize-input-block ${errors.local ? "is-invalid" : ""}`}>
-                <label>Local</label>
-                <input
-                  ref={localRef}
-                  aria-invalid={Boolean(errors.local)}
-                  placeholder="Ex.: Av. Paulista, 1000"
-                  value={draft.local}
-                  disabled={isSubmitting}
-                  onChange={(event) => {
-                    updateDraft({ local: event.target.value });
-                    clearError("local");
-                  }}
-                />
-                {errors.local ? <div className="field-error">{errors.local}</div> : null}
-              </div>
+              <TextInputField
+                ref={localRef}
+                label="Local"
+                error={errors.local}
+                placeholder="Ex.: Av. Paulista, 1000"
+                value={draft.local}
+                disabled={isSubmitting}
+                onChange={(event) => {
+                  updateDraft({ local: event.target.value });
+                  clearError("local");
+                }}
+              />
 
-              <div className={`finalize-input-block ${errors.descricao ? "is-invalid" : ""}`}>
-                <label>O que aconteceu?</label>
-                <textarea
-                  ref={descriptionRef}
-                  aria-invalid={Boolean(errors.descricao)}
-                  placeholder="Conte em detalhes o que aconteceu"
-                  rows={4}
-                  value={draft.descricao}
-                  disabled={isSubmitting}
-                  onChange={(event) => {
-                    updateDraft({ descricao: event.target.value });
-                    clearError("descricao");
-                  }}
-                />
-                {errors.descricao ? <div className="field-error">{errors.descricao}</div> : null}
-              </div>
+              <TextAreaField
+                ref={descriptionRef}
+                label="O que aconteceu?"
+                error={errors.descricao}
+                placeholder="Conte em detalhes o que aconteceu"
+                rows={4}
+                value={draft.descricao}
+                disabled={isSubmitting}
+                onChange={(event) => {
+                  updateDraft({ descricao: event.target.value });
+                  clearError("descricao");
+                }}
+              />
 
               {!isHitByThirdParty ? (
-                <div className="finalize-input-block">
-                  <label>Houve terceiro?</label>
+                <FormField label="Houve terceiro?">
                   <div className="collision-toggle-row" role="group" aria-label="Houve terceiro?">
                     <button
                       type="button"
@@ -239,30 +229,27 @@ export function CollisionScreen({
                       Não
                     </button>
                   </div>
-                </div>
+                </FormField>
               ) : null}
 
               {hasThirdParty ? (
                 <>
                   <div className="collision-section-title">Terceiro envolvido</div>
-                  <div className={`finalize-input-block ${errors.terceiroNome ? "is-invalid" : ""}`}>
-                    <label>Nome completo</label>
-                    <input
-                      ref={thirdNameRef}
-                      aria-invalid={Boolean(errors.terceiroNome)}
-                      value={draft.terceiroNome}
-                      disabled={isSubmitting}
-                      onChange={(event) => {
-                        updateDraft({ terceiroNome: event.target.value });
-                        clearError("terceiroNome");
-                      }}
-                    />
-                    {errors.terceiroNome ? <div className="field-error">{errors.terceiroNome}</div> : null}
-                  </div>
 
-                  <div className={`finalize-input-block ${errors.terceiroTelefone ? "is-invalid" : ""}`}>
-                    <label>WhatsApp/telefone</label>
-                    <input
+                  <TextInputField
+                    ref={thirdNameRef}
+                    label="Nome completo"
+                    error={errors.terceiroNome}
+                    value={draft.terceiroNome}
+                    disabled={isSubmitting}
+                    onChange={(event) => {
+                      updateDraft({ terceiroNome: event.target.value });
+                      clearError("terceiroNome");
+                    }}
+                  />
+
+                  <FormField label="WhatsApp/telefone" error={errors.terceiroTelefone}>
+                    <TextInputControl
                       ref={thirdPhoneRef}
                       aria-invalid={Boolean(errors.terceiroTelefone)}
                       inputMode="tel"
@@ -274,49 +261,48 @@ export function CollisionScreen({
                         clearError("terceiroTelefone");
                       }}
                     />
-                    {errors.terceiroTelefone ? <div className="field-error">{errors.terceiroTelefone}</div> : null}
                     {whatsappUrl ? (
                       <a className="collision-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer">
                         Abrir WhatsApp
                       </a>
                     ) : null}
-                  </div>
+                  </FormField>
 
-                  <div className={`finalize-input-block ${errors.terceiroPlaca ? "is-invalid" : ""}`}>
-                    <label>Placa</label>
-                    <input
-                      ref={thirdPlateRef}
-                      aria-invalid={Boolean(errors.terceiroPlaca)}
-                      placeholder="Ex.: ABC1D23"
-                      value={draft.terceiroPlaca}
-                      disabled={isSubmitting}
-                      onChange={(event) => {
-                        updateDraft({ terceiroPlaca: event.target.value.toUpperCase() });
-                        clearError("terceiroPlaca");
-                      }}
-                    />
-                    {errors.terceiroPlaca ? <div className="field-error">{errors.terceiroPlaca}</div> : null}
-                  </div>
+                  <TextInputField
+                    ref={thirdPlateRef}
+                    label="Placa"
+                    error={errors.terceiroPlaca}
+                    placeholder="Ex.: ABC1D23"
+                    value={draft.terceiroPlaca}
+                    disabled={isSubmitting}
+                    onChange={(event) => {
+                      updateDraft({ terceiroPlaca: event.target.value.toUpperCase() });
+                      clearError("terceiroPlaca");
+                    }}
+                  />
 
-                  <div className={`finalize-input-block ${errors.terceiroVeiculo ? "is-invalid" : ""}`}>
-                    <label>Modelo/cor do veículo</label>
-                    <input
-                      ref={thirdVehicleRef}
-                      aria-invalid={Boolean(errors.terceiroVeiculo)}
-                      placeholder="Ex.: Corolla prata"
-                      value={draft.terceiroVeiculo}
+                  <TextInputField
+                    ref={thirdVehicleRef}
+                    label="Modelo/cor do veículo"
+                    error={errors.terceiroVeiculo}
+                    placeholder="Ex.: Corolla prata"
+                    value={draft.terceiroVeiculo}
+                    disabled={isSubmitting}
+                    onChange={(event) => {
+                      updateDraft({ terceiroVeiculo: event.target.value });
+                      clearError("terceiroVeiculo");
+                    }}
+                  />
+
+                  {!isHitByThirdParty ? (
+                    <TextAreaField
+                      label="Observação do terceiro"
+                      rows={3}
+                      value={draft.terceiroObservacao}
                       disabled={isSubmitting}
-                      onChange={(event) => {
-                        updateDraft({ terceiroVeiculo: event.target.value });
-                        clearError("terceiroVeiculo");
-                      }}
+                      onChange={(event) => updateDraft({ terceiroObservacao: event.target.value })}
                     />
-                    {errors.terceiroVeiculo ? <div className="field-error">{errors.terceiroVeiculo}</div> : null}
-                  </div>
-                  {!isHitByThirdParty ? <div className="finalize-input-block">
-                    <label>Observação do terceiro</label>
-                    <textarea rows={3} value={draft.terceiroObservacao} disabled={isSubmitting} onChange={(event) => updateDraft({ terceiroObservacao: event.target.value })} />
-                  </div> : null}
+                  ) : null}
                 </>
               ) : null}
 
@@ -378,11 +364,12 @@ export function CollisionScreen({
                             <strong>{isComplete ? "Adicionar" : "Primeira foto"}</strong>
                           </button>
                         </div>
-                        {errors[requiredPhoto.kind] ? <div className="field-error">{errors[requiredPhoto.kind]}</div> : null}
+                        <FieldError error={errors[requiredPhoto.kind]} />
                       </section>
                     );
                   })}
                 </div>
+
                 <section className="collision-evidence-group collision-evidence-group--optional">
                   <div className="collision-evidence-group-head">
                     <div>

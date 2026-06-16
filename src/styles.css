@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Manrope:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800&display=swap");
 @font-face {
   font-family: "Centabel Book Embedded";
   src: url("./assets/fonts/Centabel-Book.ttf") format("truetype");
@@ -227,7 +227,7 @@ svg {
   justify-content: center;
   text-align: center;
   color: rgb(50, 49, 48);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 600;
   line-height: 28px;
@@ -435,7 +435,7 @@ svg {
   padding: 1px 2px;
   background: transparent;
   color: rgb(50, 49, 48);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
 }
 
@@ -477,7 +477,7 @@ svg {
   justify-content: center;
   text-align: center;
   color: rgb(50, 49, 48);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 35px;
   font-weight: 700;
   text-decoration: underline;
@@ -537,7 +537,7 @@ svg {
   min-width: 16px;
   min-height: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 17px;
   font-weight: 900;
   line-height: 23px;
@@ -550,7 +550,7 @@ svg {
   min-width: 16px;
   min-height: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 700;
   line-height: 28px;
@@ -563,7 +563,7 @@ svg {
   min-width: 16px;
   min-height: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
@@ -587,7 +587,7 @@ svg {
   justify-content: center;
   text-align: center;
   color: rgb(255, 255, 255);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 26px;
   font-weight: 700;
   line-height: 34px;
@@ -714,7 +714,7 @@ svg {
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 900;
   line-height: 45px;
@@ -759,7 +759,7 @@ svg {
   min-width: 16px;
   min-height: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 21px;
@@ -767,13 +767,13 @@ svg {
 
 .detail-field-label.lato,
 .details-card.servico .detail-field-label:nth-child(n) {
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 900;
 }
 
 .details-card.manutencao .detail-field-label,
 .details-card.troca .detail-field-label {
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 700;
 }
 
@@ -781,7 +781,7 @@ svg {
   min-width: 16px;
   min-height: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
@@ -818,7 +818,7 @@ svg {
   border: 0;
   border-radius: 12px;
   color: rgb(255, 255, 255);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -841,14 +841,16 @@ svg {
 .receipt-editor-main {
   padding: 8px;
   position: relative;
+  align-items: stretch;
 }
 
 .receipt-editor-layout {
   width: 100%;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-content: start;
 }
 
 .receipt-editor-form-card {
@@ -1073,33 +1075,98 @@ svg {
 
 .receipt-preview-card {
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.receipt-preview-title {
   width: 100%;
-  min-height: 16px;
-  padding: 10px 14px 9px;
-  border-bottom: 1px solid rgba(0, 26, 61, 0.08);
-  background: rgb(242, 242, 242);
-  color: rgb(0, 14, 35);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: "Manrope", Arial, sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1.2;
 }
 
-.receipt-preview-title small {
-  color: rgb(106, 116, 130);
-  font-family: "Manrope", Arial, sans-serif;
-  font-size: 11px;
+.receipt-preview-inline {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: 72px;
+  min-height: 72px;
+  max-height: 72px;
+  width: calc(100% - 12px);
+  max-width: calc(100% - 12px);
+  margin: 0 auto;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: rgb(0, 14, 35);
+  color: rgb(255, 255, 255);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.receipt-preview-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.receipt-preview-copy span {
+  color: rgb(255, 255, 255);
+  font-family: "Manrope", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.receipt-preview-copy small {
+  color: rgba(255, 255, 255, 0.78);
+  font-family: "Manrope", sans-serif;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0;
-  text-transform: none;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.receipt-preview-mini-shell {
+  position: relative;
+  width: 118px;
+  height: 100%;
+  align-self: stretch;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+  display: block;
+  pointer-events: none;
+  flex: 0 0 118px;
+}
+
+.receipt-preview-mini {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 794px;
+  height: 1123px;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  transform-origin: top right;
+  transform: scale(calc(60 / 1123));
+}
+
+.receipt-preview-mini .receipt-document {
+  box-shadow: none !important;
+}
+
+.receipt-preview-inline:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.38);
+  outline-offset: 2px;
 }
 
 .receipt-preview-hint {
@@ -1126,6 +1193,11 @@ svg {
   background: linear-gradient(180deg, rgb(246, 248, 252) 0%, rgb(237, 241, 248) 100%);
   box-shadow: inset 0 0 0 1px rgba(170, 182, 204, 0.22);
   overflow: hidden;
+}
+
+.receipt-card-shell.receipt-preview-inline {
+  background: rgb(0, 14, 35);
+  box-shadow: none;
 }
 
 .receipt-scroll {
@@ -1157,6 +1229,8 @@ svg {
 
 .receipt-fit-frame {
   flex: 0 0 auto;
+  width: 100%;
+  height: 100%;
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -1227,7 +1301,7 @@ svg {
 
 .receipt-preview-overlay-topbar strong {
   display: block;
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 900;
   line-height: 1.1;
@@ -1371,7 +1445,7 @@ svg {
 
 .receipt-document,
 .receipt-document * {
-  font-family: "Montserrat", "Open Sans", Arial, sans-serif !important;
+  font-family: "Montserrat", "Manrope", sans-serif !important;
 }
 
 .receipt-header {
@@ -1388,7 +1462,7 @@ svg {
 
 .receipt-header-title {
   color: rgb(255, 255, 255);
-  font-family: "Centabel Book Embedded", "Centabel Book", "Cormorant Garamond", "Times New Roman", serif !important;
+  font-family: "Centabel Book Embedded", "Centabel Book", "Montserrat", serif !important;
   font-size: 70px;
   font-weight: 400;
   letter-spacing: 1px;
@@ -1727,18 +1801,6 @@ svg {
 }
 
 @media (max-width: 900px) {
-  .receipt-editor-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .receipt-preview-card {
-    order: 1;
-  }
-
-  .receipt-editor-form-card {
-    order: 2;
-  }
-
   .receipt-editor-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1747,10 +1809,20 @@ svg {
     grid-column: auto;
   }
 
-  .receipt-preview-title {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
+  .receipt-preview-inline {
+    height: 72px;
+    min-height: 72px;
+    max-height: 72px;
+    width: calc(100% - 12px);
+    max-width: calc(100% - 12px);
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 6px 10px;
+  }
+
+  .receipt-preview-mini-shell {
+    width: 98px;
+    flex-basis: 98px;
   }
 
   .receipt-success-card {
@@ -1810,7 +1882,7 @@ svg {
 .questions-label {
   text-align: right;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 600;
   line-height: 20px;
@@ -1823,7 +1895,7 @@ svg {
   color: rgb(50, 49, 48);
   text-align: right;
   text-decoration: underline;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: 1;
@@ -1852,7 +1924,7 @@ svg {
   flex: 1 1 0;
   min-width: 16px;
   text-align: center;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 600;
   line-height: 28px;
@@ -1893,7 +1965,7 @@ svg {
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 900;
   line-height: 45px;
@@ -1940,7 +2012,7 @@ svg {
   width: 100%;
   min-width: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 21px;
@@ -1966,7 +2038,7 @@ svg {
   max-width: 140px;
   min-width: 90px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 600;
   line-height: 21px;
@@ -1987,7 +2059,7 @@ svg {
 }
 
 .voucher-time span {
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 18px;
   font-weight: 700;
 }
@@ -2002,7 +2074,7 @@ svg {
   border-radius: 6px;
   background: rgb(232, 232, 232);
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 16px;
   font-weight: 600;
   padding: 0 10px;
@@ -2044,7 +2116,7 @@ svg {
   border: 0;
   border-radius: 12px;
   color: rgb(255, 255, 255);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 700;
   cursor: pointer;
 }
@@ -2157,7 +2229,7 @@ svg {
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 900;
   line-height: 45px;
@@ -2208,7 +2280,7 @@ svg {
 
 .finalize-input-block label {
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 21px;
@@ -2224,7 +2296,7 @@ svg {
   border-radius: 4px;
   background: rgb(232, 232, 232);
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 16px;
   font-weight: 600;
   padding: 10px;
@@ -2243,7 +2315,7 @@ svg {
   border-radius: 8px;
   background: rgba(0, 14, 35, 0.14);
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -2302,7 +2374,7 @@ svg {
   display: grid;
   place-items: center;
   font-size: 34px;
-  font-family: Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   line-height: 1;
   font-weight: 400;
 }
@@ -2313,7 +2385,7 @@ svg {
   border-radius: 8px;
   background: rgba(0, 14, 35, 0.12);
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
@@ -2335,7 +2407,7 @@ svg {
 .finalize-help span {
   text-align: right;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 600;
   line-height: 20px;
@@ -2348,7 +2420,7 @@ svg {
   color: rgb(50, 49, 48);
   text-align: right;
   text-decoration: underline;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: 1;
@@ -2372,7 +2444,7 @@ svg {
   border: 0;
   border-radius: 12px;
   color: rgb(255, 255, 255);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -2394,7 +2466,7 @@ svg {
   min-height: 50px;
   border: 0;
   border-radius: 12px;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -2449,7 +2521,7 @@ svg {
 
 .collision-start-kicker {
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 24px;
   font-weight: 900;
   line-height: 1.15;
@@ -2462,7 +2534,7 @@ svg {
   border-radius: 10px;
   background: rgba(0, 14, 35, 0.07);
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 800;
   line-height: 1.35;
@@ -2498,14 +2570,14 @@ svg {
 }
 
 .collision-choice strong {
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 24px;
   font-weight: 900;
   line-height: 1.05;
 }
 
 .collision-choice span {
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 1.35;
@@ -2527,7 +2599,7 @@ svg {
   background: rgb(0, 14, 35);
   color: #fff;
   padding: 14px;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 .collision-summary {
@@ -2563,7 +2635,7 @@ svg {
   display: grid;
   place-items: center;
   text-decoration: none;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 900;
 }
@@ -2580,7 +2652,7 @@ svg {
   border-radius: 12px;
   background: rgb(255, 255, 255);
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 16px;
   font-weight: 900;
   cursor: pointer;
@@ -2637,7 +2709,7 @@ svg {
   justify-content: space-between;
   gap: 10px;
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 .collision-evidence-group-head div {
@@ -2718,7 +2790,7 @@ svg {
   color: #fff;
   display: grid;
   place-items: center;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 11px;
   font-weight: 900;
 }
@@ -2743,7 +2815,7 @@ svg {
   color: #fff;
   display: grid;
   place-items: center;
-  font-family: Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 27px;
   font-weight: 400;
   line-height: 1;
@@ -2752,7 +2824,7 @@ svg {
 .collision-evidence-add strong {
   max-width: 100%;
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 11px;
   font-weight: 900;
   line-height: 1.1;
@@ -2777,7 +2849,7 @@ svg {
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(0, 14, 35, 0.08);
   color: rgb(0, 14, 35);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 .collision-photos-header div {
@@ -2872,7 +2944,7 @@ svg {
   color: #fff;
   display: grid;
   place-items: center;
-  font-family: Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 32px;
   font-weight: 400;
   line-height: 1;
@@ -2887,7 +2959,7 @@ svg {
   display: grid;
   align-content: center;
   gap: 2px;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 .collision-photo-caption strong {
@@ -2925,7 +2997,7 @@ svg {
 
 .collision-extra-photo-add strong,
 .collision-extra-photo-add small {
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   line-height: 1;
 }
 
@@ -2966,7 +3038,7 @@ svg {
   color: #fff;
   display: grid;
   place-items: center;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 12px;
   font-weight: 900;
 }
@@ -3005,7 +3077,7 @@ svg {
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 900;
   line-height: 45px;
@@ -3074,7 +3146,7 @@ svg {
 .mock-invoice strong {
   margin-top: auto;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 28px;
   font-weight: 800;
   text-align: right;
@@ -3109,7 +3181,7 @@ svg {
 
 .mock-maintenance-photo strong {
   color: rgba(255, 255, 255, 0.88);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: 0;
@@ -3132,7 +3204,7 @@ svg {
   border: 0;
   border-radius: 12px;
   color: rgb(255, 255, 255);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -3440,6 +3512,10 @@ svg {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .loading-overlay-spinner {
+    animation-duration: 1.8s;
+  }
+
   .local-toast,
   .local-toast-close {
     transition: none;
@@ -3534,6 +3610,133 @@ svg {
   justify-content: center;
   pointer-events: none;
   perspective: 900px;
+}
+
+.loading-overlay-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  padding:
+    max(24px, calc(env(safe-area-inset-top) + 20px))
+    max(18px, calc(env(safe-area-inset-right) + 18px))
+    max(24px, calc(env(safe-area-inset-bottom) + 20px))
+    max(18px, calc(env(safe-area-inset-left) + 18px));
+}
+
+.loading-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(251, 251, 250, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.loading-overlay-card {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 240px);
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px 20px;
+  border: 1px solid #eaeaea;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  text-align: center;
+}
+
+.loading-overlay-mark {
+  position: relative;
+  width: 28px;
+  height: 28px;
+}
+
+.loading-overlay-spinner {
+  position: absolute;
+  inset: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2px solid rgba(17, 17, 17, 0.12);
+  border-top-color: #111111;
+  animation: loading-overlay-spin 0.8s linear infinite;
+  transition:
+    opacity 180ms ease,
+    transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.loading-overlay-check {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(0.72) rotate(-8deg);
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.loading-overlay-check-stem,
+.loading-overlay-check-kick {
+  position: absolute;
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background: #111111;
+  transform-origin: left center;
+}
+
+.loading-overlay-check-stem {
+  top: 16px;
+  left: 8px;
+  width: 8px;
+  transform: rotate(45deg);
+}
+
+.loading-overlay-check-kick {
+  top: 17px;
+  left: 13px;
+  width: 12px;
+  transform: rotate(-45deg);
+}
+
+.loading-overlay-card.is-success .loading-overlay-spinner {
+  opacity: 0;
+  transform: scale(0.82);
+  animation: none;
+}
+
+.loading-overlay-card.is-success .loading-overlay-check {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.loading-overlay-copy {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  max-width: 180px;
+}
+
+.loading-overlay-title {
+  color: #111111;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.loading-overlay-copy p {
+  margin: 0;
+  color: #787774;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .flow-progress-overlay::before {
@@ -6000,7 +6203,7 @@ button:disabled {
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 900;
   line-height: 45px;
@@ -6056,7 +6259,7 @@ button:disabled {
   min-width: 16px;
   min-height: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 21px;
@@ -6065,7 +6268,7 @@ button:disabled {
 
 .details-card-v1.servico .detail-field-label:nth-child(n),
 .details-fields-v1 .detail-field-label.lato {
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 900;
 }
 
@@ -6073,7 +6276,7 @@ button:disabled {
   min-width: 16px;
   min-height: 16px;
   color: rgb(0, 0, 0);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
@@ -6111,7 +6314,7 @@ button:disabled {
   border: 0;
   border-radius: 12px;
   color: #ffffff;
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
@@ -6158,7 +6361,7 @@ button:disabled {
 .details-date-v1 {
   min-width: 0;
   color: #ffffff;
-  font-family: "Arial Black", "Lato Black", "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 0.98rem;
   font-weight: 900;
   line-height: 1.1;
@@ -6170,7 +6373,7 @@ button:disabled {
 .details-code-v1 {
   justify-self: end;
   color: rgba(255, 255, 255, 0.78);
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 0.78rem;
   font-weight: 900;
   line-height: 1;
@@ -9952,11 +10155,17 @@ select,
   }
 }
 
+@keyframes loading-overlay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Final action button standardization */
 .action-button {
   min-height: 46px !important;
   padding: 0 16px !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
   font-family: "Manrope", Arial, sans-serif !important;
   font-size: 0.98rem !important;
   font-weight: 900 !important;
@@ -9968,13 +10177,16 @@ select,
   border: 1px solid #e6e7ea !important;
   background: #ffffff !important;
   color: #16171a !important;
-  box-shadow: none !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 10px 24px rgba(15, 23, 42, 0.05) !important;
   transition:
     transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 160ms ease,
     background-color 180ms ease,
     border-color 180ms ease,
-    color 180ms ease !important;
+    color 180ms ease,
+    box-shadow 180ms ease !important;
 }
 
 .action-button::before {
@@ -9982,11 +10194,15 @@ select,
   position: absolute !important;
   inset: 0 !important;
   border-radius: inherit !important;
-  background: rgba(17, 17, 17, 0) !important;
-  opacity: 1 !important;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1)) !important;
+  opacity: 0 !important;
   pointer-events: none !important;
   z-index: 0 !important;
-  transition: background-color 180ms ease !important;
+  transition:
+    background-color 180ms ease,
+    opacity 180ms ease,
+    transform 280ms cubic-bezier(0.23, 1, 0.32, 1) !important;
+  transform: translateX(-16%) !important;
 }
 
 .action-button > * {
@@ -9996,6 +10212,14 @@ select,
 
 .action-button:not(:disabled):hover {
   transform: translateY(-1px) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.78) inset,
+    0 16px 28px rgba(15, 23, 42, 0.08) !important;
+}
+
+.action-button:not(:disabled):hover::before {
+  opacity: 1 !important;
+  transform: translateX(0) !important;
 }
 
 .action-button:not(:disabled):focus-visible {
@@ -10005,25 +10229,25 @@ select,
 }
 
 .action-button--secondary {
-  border-color: #d5d8dd !important;
-  background: #f3f4f2 !important;
+  border-color: #d8dde4 !important;
+  background: linear-gradient(180deg, #f7f8f8, #eff1f3) !important;
   color: #1f2328 !important;
 }
 
 .action-button--secondary:not(:disabled):hover {
-  border-color: #c8ccd2 !important;
-  background: #eeefec !important;
+  border-color: #ccd2d9 !important;
+  background: linear-gradient(180deg, #fafbfb, #eceff2) !important;
 }
 
 .action-button--primary {
   border-color: #16171a !important;
-  background: #16171a !important;
+  background: linear-gradient(180deg, #23262d, #14161b) !important;
   color: #ffffff !important;
 }
 
 .action-button--danger {
   border-color: #c64542 !important;
-  background: #c64542 !important;
+  background: linear-gradient(180deg, #d25551, #bc403d) !important;
   color: #ffffff !important;
 }
 
@@ -10035,6 +10259,7 @@ select,
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
+  will-change: transform, opacity, filter;
 }
 
 .action-button-icon,
@@ -10067,6 +10292,13 @@ select,
 
 .action-button.is-loading {
   opacity: 1 !important;
+  cursor: progress !important;
+}
+
+.action-button.is-loading::before {
+  opacity: 1 !important;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.18)) !important;
+  animation: action-button-loading-sheen 1.25s linear infinite !important;
 }
 
 .action-button.is-success {
@@ -10092,6 +10324,83 @@ select,
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
+  }
+}
+
+.action-button-spinner {
+  position: relative;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px !important;
+  border-width: 1.8px !important;
+  border-color: currentColor !important;
+  border-bottom-color: transparent !important;
+  border-left-color: rgba(255, 255, 255, 0.28) !important;
+  opacity: 0.9 !important;
+  animation: action-button-spin 0.78s linear infinite !important;
+}
+
+.action-button-spinner::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 3px !important;
+  border-radius: 999px !important;
+  border: 1.4px solid rgba(255, 255, 255, 0.22) !important;
+  border-top-color: rgba(255, 255, 255, 0.7) !important;
+  animation: action-button-spin 1.05s linear infinite reverse !important;
+}
+
+@keyframes action-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes action-button-loading-sheen {
+  0% {
+    transform: translateX(-28%) !important;
+  }
+  100% {
+    transform: translateX(28%) !important;
+  }
+}
+
+@keyframes loading-overlay-pulse {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.48;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.86;
+  }
+}
+
+@keyframes loading-overlay-progress-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-overlay-spinner,
+  .loading-overlay-spinner::before,
+  .loading-overlay-spinner-glow,
+  .loading-overlay-progress::before,
+  .action-button-spinner,
+  .action-button-spinner::after,
+  .action-button.is-loading::before,
+  .action-button.is-success {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .loading-overlay-backdrop {
+    backdrop-filter: blur(10px) saturate(1.02);
   }
 }
 
@@ -10211,7 +10520,7 @@ select,
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
-  font-family: "Open Sans", Arial, sans-serif !important;
+  font-family: "Manrope", sans-serif !important;
   font-size: 16px !important;
   font-weight: 600 !important;
   line-height: 1.25 !important;
@@ -10306,7 +10615,7 @@ select,
   border-radius: 10px !important;
   background: rgb(244, 246, 248) !important;
   color: #000e23 !important;
-  font-family: "Open Sans", Arial, sans-serif !important;
+  font-family: "Manrope", sans-serif !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   outline: 0 !important;
@@ -10332,7 +10641,7 @@ select,
   display: grid !important;
   gap: 2px !important;
   text-align: left !important;
-  font-family: "Open Sans", Arial, sans-serif !important;
+  font-family: "Manrope", sans-serif !important;
 }
 
 .searchable-select-option span {
@@ -10361,7 +10670,7 @@ select,
 .searchable-select-empty {
   padding: 10px 11px !important;
   color: #6a7482 !important;
-  font-family: "Open Sans", Arial, sans-serif !important;
+  font-family: "Manrope", sans-serif !important;
   font-size: 12px !important;
   font-weight: 600 !important;
 }
@@ -10369,4 +10678,326 @@ select,
 .finalize-input-block.is-invalid .searchable-select-trigger {
   background: rgb(255, 252, 252) !important;
   box-shadow: 0 0 0 3px rgba(180, 48, 52, 0.14), inset 0 0 0 1px rgba(180, 48, 52, 0.16) !important;
+}
+
+.preview-lab-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  background:
+    radial-gradient(circle at top left, rgba(198, 220, 231, 0.88), transparent 28%),
+    linear-gradient(135deg, #f5f1e8 0%, #eef3f6 52%, #e4eaef 100%);
+}
+
+.preview-lab-nav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 26px 18px;
+  overflow: auto;
+  border-right: 1px solid rgba(0, 14, 35, 0.08);
+  background: rgba(248, 250, 252, 0.78);
+  backdrop-filter: blur(20px);
+}
+
+.preview-lab-brand {
+  margin-bottom: 24px;
+  padding: 18px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #001a3d 0%, #21344d 100%);
+  color: #ffffff;
+  display: grid;
+  gap: 5px;
+}
+
+.preview-lab-brand span,
+.preview-lab-brand small {
+  opacity: 0.76;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-lab-brand strong {
+  font-size: 1.24rem;
+  font-weight: 800;
+}
+
+.preview-lab-nav-group {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.preview-lab-nav-title {
+  padding: 0 6px;
+  color: #51606f;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-lab-nav-item {
+  width: 100%;
+  padding: 14px 14px 13px;
+  border: 1px solid rgba(0, 14, 35, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #001223;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.preview-lab-nav-item strong {
+  font-size: 0.97rem;
+  font-weight: 800;
+}
+
+.preview-lab-nav-item span {
+  color: #687787;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.preview-lab-nav-item:hover,
+.preview-lab-nav-item:focus-visible,
+.preview-lab-nav-item.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(0, 26, 61, 0.18);
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(0, 14, 35, 0.08);
+  outline: 0;
+}
+
+.preview-lab-nav-item.is-active {
+  box-shadow: 0 18px 34px rgba(0, 14, 35, 0.12);
+}
+
+.preview-lab-main {
+  min-width: 0;
+  padding: 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.preview-lab-header,
+.preview-lab-controls {
+  border: 1px solid rgba(0, 14, 35, 0.08);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 24px 64px rgba(0, 14, 35, 0.07);
+  backdrop-filter: blur(20px);
+}
+
+.preview-lab-header {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.preview-lab-kicker {
+  margin-bottom: 8px;
+  color: #51606f;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.preview-lab-header h1 {
+  margin: 0;
+  color: #001223;
+  font-size: clamp(1.7rem, 2vw, 2.3rem);
+  line-height: 1.05;
+}
+
+.preview-lab-header p {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: #5f6d7c;
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
+.preview-lab-header-actions {
+  min-width: 240px;
+  display: grid;
+  gap: 10px;
+}
+
+.preview-lab-header-button {
+  width: 100%;
+}
+
+.preview-lab-controls {
+  padding: 20px 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.preview-lab-control-group {
+  display: grid;
+  gap: 9px;
+}
+
+.preview-lab-control-group > span {
+  color: #51606f;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-lab-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preview-lab-chip {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 14, 35, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #001223;
+  font-size: 0.88rem;
+  font-weight: 700;
+  transition: all 150ms ease;
+}
+
+.preview-lab-chip:hover,
+.preview-lab-chip:focus-visible,
+.preview-lab-chip.is-active {
+  border-color: rgba(0, 26, 61, 0.18);
+  background: #001a3d;
+  color: #ffffff;
+  outline: 0;
+}
+
+.preview-lab-stage {
+  min-height: 780px;
+  border: 1px solid rgba(0, 14, 35, 0.08);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 28px 72px rgba(0, 14, 35, 0.08);
+  overflow: auto;
+}
+
+.preview-lab-stage > * {
+  min-height: 100%;
+}
+
+.preview-lab-section {
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.preview-lab-section-head h2 {
+  margin: 0;
+  color: #001223;
+  font-size: 1.28rem;
+}
+
+.preview-lab-section-head p {
+  margin: 6px 0 0;
+  color: #5f6d7c;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.preview-lab-card {
+  padding: 20px;
+  border: 1px solid rgba(0, 14, 35, 0.08);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 250, 0.94) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.preview-lab-card--narrow {
+  max-width: 520px;
+}
+
+.preview-lab-form-row {
+  display: grid;
+  gap: 8px;
+}
+
+.preview-lab-form-row + .preview-lab-form-row {
+  margin-top: 16px;
+}
+
+.preview-lab-form-row label {
+  color: #001223;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.preview-lab-inline-value {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: #f3f6f8;
+  color: #001223;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+  .preview-lab-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-lab-nav {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(0, 14, 35, 0.08);
+  }
+
+  .preview-lab-main {
+    padding: 18px;
+  }
+
+  .preview-lab-header {
+    flex-direction: column;
+  }
+
+  .preview-lab-header-actions {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .preview-lab-nav,
+  .preview-lab-header,
+  .preview-lab-controls,
+  .preview-lab-section {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .preview-lab-main {
+    padding: 12px;
+  }
+
+  .preview-lab-header-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-lab-stage {
+    min-height: 640px;
+    border-radius: 24px;
+  }
 }

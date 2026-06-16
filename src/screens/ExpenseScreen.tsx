@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { SearchableSelect } from "../components/common/SearchableSelect";
+import { FormField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
@@ -152,210 +152,179 @@ export function ExpenseScreen({
               ) : null}
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
 
-              <div className={`finalize-input-block ${errors.dataGasto ? "is-invalid" : ""}`}>
-                <label>Data do gasto</label>
-                <input
-                  ref={dateRef}
-                  aria-invalid={Boolean(errors.dataGasto)}
-                  type="date"
-                  value={draft.dataGasto}
-                  onChange={(event) => {
-                    updateDraft({ dataGasto: event.target.value });
-                    clearError("dataGasto");
-                  }}
-                />
-                {errors.dataGasto ? <div className="field-error">{errors.dataGasto}</div> : null}
-              </div>
+              <TextInputField
+                ref={dateRef}
+                label="Data do gasto"
+                error={errors.dataGasto}
+                type="date"
+                value={draft.dataGasto}
+                onChange={(event) => {
+                  updateDraft({ dataGasto: event.target.value });
+                  clearError("dataGasto");
+                }}
+              />
 
-              <div className={`finalize-input-block ${errors.categoriaId ? "is-invalid" : ""}`}>
-                <label>Categoria</label>
-                <SearchableSelect
-                  ref={categoryRef}
-                  value={draft.categoriaId}
-                  options={categoryOptions}
-                  placeholder="Selecione"
-                  ariaLabel="Selecionar categoria"
-                  invalid={Boolean(errors.categoriaId)}
-                  disabled={isSubmitting || referenceLoading}
-                  onChange={(value) => {
-                    const nextCategory = findExpenseCategory(referenceData, value);
-                    const nextRules = getExpenseCategoryRules(nextCategory);
-                    updateDraft({
-                      categoriaId: value,
-                      veiculoId: nextRules.exigeVeiculo ? draft.veiculoId || currentVehicleId : "",
-                      kmInformado: nextRules.exigeKm ? draft.kmInformado : "",
-                      litros: nextRules.exigeLitros ? draft.litros : ""
-                    });
-                    clearError("categoriaId");
-                  }}
-                />
-                {errors.categoriaId ? <div className="field-error">{errors.categoriaId}</div> : null}
-              </div>
+              <SelectField
+                ref={categoryRef}
+                label="Categoria"
+                error={errors.categoriaId}
+                value={draft.categoriaId}
+                options={categoryOptions}
+                placeholder="Selecione"
+                ariaLabel="Selecionar categoria"
+                disabled={isSubmitting || referenceLoading}
+                onChange={(value) => {
+                  const nextCategory = findExpenseCategory(referenceData, value);
+                  const nextRules = getExpenseCategoryRules(nextCategory);
+                  updateDraft({
+                    categoriaId: value,
+                    veiculoId: nextRules.exigeVeiculo ? draft.veiculoId || currentVehicleId : "",
+                    kmInformado: nextRules.exigeKm ? draft.kmInformado : "",
+                    litros: nextRules.exigeLitros ? draft.litros : ""
+                  });
+                  clearError("categoriaId");
+                }}
+              />
 
-              <div className={`finalize-input-block ${errors.valor ? "is-invalid" : ""}`}>
-                <label>Valor</label>
-                <input
-                  ref={valueRef}
-                  aria-invalid={Boolean(errors.valor)}
-                  inputMode="decimal"
-                  placeholder="Ex.: R$ 238,70"
-                  value={draft.valor}
-                  onChange={(event) => {
-                    updateDraft({ valor: event.target.value });
-                    clearError("valor");
-                  }}
-                />
-                {errors.valor ? <div className="field-error">{errors.valor}</div> : null}
-              </div>
+              <TextInputField
+                ref={valueRef}
+                label="Valor"
+                error={errors.valor}
+                inputMode="decimal"
+                placeholder="Ex.: R$ 238,70"
+                value={draft.valor}
+                onChange={(event) => {
+                  updateDraft({ valor: event.target.value });
+                  clearError("valor");
+                }}
+              />
 
-              <div className={`finalize-input-block ${errors.formaPagamentoId ? "is-invalid" : ""}`}>
-                <label>Forma de pagamento</label>
-                <SearchableSelect
-                  ref={paymentRef}
-                  value={draft.formaPagamentoId}
-                  options={paymentOptions}
-                  placeholder="Selecione"
-                  ariaLabel="Selecionar forma de pagamento"
-                  invalid={Boolean(errors.formaPagamentoId)}
-                  disabled={isSubmitting || referenceLoading}
-                  onChange={(value) => {
-                    updateDraft({ formaPagamentoId: value });
-                    clearError("formaPagamentoId");
-                  }}
-                />
-                {errors.formaPagamentoId ? <div className="field-error">{errors.formaPagamentoId}</div> : null}
-              </div>
+              <SelectField
+                ref={paymentRef}
+                label="Forma de pagamento"
+                error={errors.formaPagamentoId}
+                value={draft.formaPagamentoId}
+                options={paymentOptions}
+                placeholder="Selecione"
+                ariaLabel="Selecionar forma de pagamento"
+                disabled={isSubmitting || referenceLoading}
+                onChange={(value) => {
+                  updateDraft({ formaPagamentoId: value });
+                  clearError("formaPagamentoId");
+                }}
+              />
 
-              <div className={`finalize-input-block ${errors.cidadeId ? "is-invalid" : ""}`}>
-                <label>Cidade</label>
-                <SearchableSelect
-                  ref={cityRef}
-                  value={draft.cidadeId}
-                  options={cityOptions}
-                  placeholder="Digite cidade, UF ou IBGE"
-                  ariaLabel="Selecionar cidade"
-                  invalid={Boolean(errors.cidadeId)}
-                  disabled={isSubmitting || referenceLoading}
-                  emptyLabel="Nenhuma cidade encontrada."
-                  maxVisible={50}
-                  filterOption={(option, normalizedQuery) => {
-                    const city = cityById.get(option.value);
-                    return city ? matchesExpenseCitySearch(city, normalizedQuery) : false;
-                  }}
-                  onChange={(value) => {
-                    updateDraft({ cidadeId: value });
-                    clearError("cidadeId");
-                  }}
-                />
-                {errors.cidadeId ? <div className="field-error">{errors.cidadeId}</div> : null}
-              </div>
+              <SelectField
+                ref={cityRef}
+                label="Cidade"
+                error={errors.cidadeId}
+                value={draft.cidadeId}
+                options={cityOptions}
+                placeholder="Digite cidade, UF ou IBGE"
+                ariaLabel="Selecionar cidade"
+                disabled={isSubmitting || referenceLoading}
+                emptyLabel="Nenhuma cidade encontrada."
+                maxVisible={50}
+                filterOption={(option, normalizedQuery) => {
+                  const city = cityById.get(option.value);
+                  return city ? matchesExpenseCitySearch(city, normalizedQuery) : false;
+                }}
+                onChange={(value) => {
+                  updateDraft({ cidadeId: value });
+                  clearError("cidadeId");
+                }}
+              />
 
               {rules.exigeVeiculo ? (
-                <div className={`finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`}>
-                  <label>Veículo</label>
-                  <SearchableSelect
-                    ref={vehicleRef}
-                    value={draft.veiculoId}
-                    options={vehicleOptions}
-                    placeholder={vehiclesLoading ? "Carregando veículos" : "Selecione"}
-                    ariaLabel="Selecionar veículo"
-                    invalid={Boolean(errors.veiculoId)}
-                    disabled={isSubmitting || vehiclesLoading}
-                    onChange={(value) => {
-                      updateDraft({ veiculoId: value });
-                      clearError("veiculoId");
-                    }}
-                  />
-                  {errors.veiculoId ? <div className="field-error">{errors.veiculoId}</div> : null}
-                </div>
+                <SelectField
+                  ref={vehicleRef}
+                  label="Veículo"
+                  error={errors.veiculoId}
+                  value={draft.veiculoId}
+                  options={vehicleOptions}
+                  placeholder={vehiclesLoading ? "Carregando veículos" : "Selecione"}
+                  ariaLabel="Selecionar veículo"
+                  disabled={isSubmitting || vehiclesLoading}
+                  onChange={(value) => {
+                    updateDraft({ veiculoId: value });
+                    clearError("veiculoId");
+                  }}
+                />
               ) : null}
 
               {rules.exigeKm ? (
-                <div className={`finalize-input-block ${errors.kmInformado ? "is-invalid" : ""}`}>
-                  <label>KM</label>
-                  <input
-                    ref={kmRef}
-                    aria-invalid={Boolean(errors.kmInformado)}
-                    inputMode="numeric"
-                    placeholder="Ex.: 58230"
-                    value={draft.kmInformado}
-                    onChange={(event) => {
-                      updateDraft({ kmInformado: event.target.value });
-                      clearError("kmInformado");
-                    }}
-                  />
-                  {errors.kmInformado ? <div className="field-error">{errors.kmInformado}</div> : null}
-                </div>
+                <TextInputField
+                  ref={kmRef}
+                  label="KM"
+                  error={errors.kmInformado}
+                  inputMode="numeric"
+                  placeholder="Ex.: 58230"
+                  value={draft.kmInformado}
+                  onChange={(event) => {
+                    updateDraft({ kmInformado: event.target.value });
+                    clearError("kmInformado");
+                  }}
+                />
               ) : null}
 
               {rules.exigeLitros ? (
-                <div className={`finalize-input-block ${errors.litros ? "is-invalid" : ""}`}>
-                  <label>Litros</label>
-                  <input
-                    ref={litersRef}
-                    aria-invalid={Boolean(errors.litros)}
-                    inputMode="decimal"
-                    placeholder="Ex.: 42,5"
-                    value={draft.litros}
-                    onChange={(event) => {
-                      updateDraft({ litros: event.target.value });
-                      clearError("litros");
-                    }}
-                  />
-                  {errors.litros ? <div className="field-error">{errors.litros}</div> : null}
-                </div>
-              ) : null}
-
-              <div className="finalize-input-block">
-                <label>Estabelecimento</label>
-                <input
-                  placeholder="Ex.: Posto, estacionamento, hotel"
-                  value={draft.estabelecimento}
-                  onChange={(event) => updateDraft({ estabelecimento: event.target.value })}
-                />
-              </div>
-
-              <div className="finalize-input-block">
-                <label>Descrição opcional</label>
-                <textarea
-                  placeholder="Opcional"
-                  rows={3}
-                  value={draft.descricao}
+                <TextInputField
+                  ref={litersRef}
+                  label="Litros"
+                  error={errors.litros}
+                  inputMode="decimal"
+                  placeholder="Ex.: 42,5"
+                  value={draft.litros}
                   onChange={(event) => {
-                    updateDraft({ descricao: event.target.value });
+                    updateDraft({ litros: event.target.value });
+                    clearError("litros");
                   }}
                 />
-              </div>
+              ) : null}
 
-              <div ref={photosRef} className={`finalize-input-block ${errors.photos ? "is-invalid" : ""}`} tabIndex={-1}>
-                <label>Comprovantes</label>
-                <div className="maintenance-photo-grid">
-                  {photos.map((photo, index) => (
-                    <button
-                      type="button"
-                      className="maintenance-photo-thumb"
-                      key={photo.id}
-                      disabled={isSubmitting}
-                      onClick={() => onPreviewPhoto(photo.id)}
-                      aria-label={`Ver comprovante ${index + 1}`}
-                    >
-                      {isVideo(photo) ? (
-                        <>
-                          {photo.posterUrl ? <img src={photo.posterUrl} alt={`Vídeo ${index + 1}`} /> : <video src={photo.previewUrl || photo.dataUrl} muted playsInline preload="metadata" />}
-                          <span className="media-video-badge">{photo.durationLabel || "Vídeo"}</span>
-                        </>
-                      ) : (
-                        <img src={photo.dataUrl} alt={`Comprovante ${index + 1}`} />
-                      )}
+              <TextInputField
+                label="Estabelecimento"
+                placeholder="Ex.: Posto, estacionamento, hotel"
+                value={draft.estabelecimento}
+                onChange={(event) => updateDraft({ estabelecimento: event.target.value })}
+              />
+
+              <TextAreaField
+                label="Descrição opcional"
+                placeholder="Opcional"
+                rows={3}
+                value={draft.descricao}
+                onChange={(event) => updateDraft({ descricao: event.target.value })}
+              />
+
+              <FormField label="Comprovantes" error={errors.photos} hint={`${photos.length} comprovante(s)`}>
+                <div ref={photosRef} tabIndex={-1}>
+                  <div className="maintenance-photo-grid">
+                    {photos.map((photo, index) => (
+                      <button
+                        type="button"
+                        className="maintenance-photo-thumb"
+                        key={photo.id}
+                        disabled={isSubmitting}
+                        onClick={() => onPreviewPhoto(photo.id)}
+                        aria-label={`Ver comprovante ${index + 1}`}
+                      >
+                        {isVideo(photo) ? (
+                          <>
+                            {photo.posterUrl ? <img src={photo.posterUrl} alt={`Vídeo ${index + 1}`} /> : <video src={photo.previewUrl || photo.dataUrl} muted playsInline preload="metadata" />}
+                            <span className="media-video-badge">{photo.durationLabel || "Vídeo"}</span>
+                          </>
+                        ) : (
+                          <img src={photo.dataUrl} alt={`Comprovante ${index + 1}`} />
+                        )}
+                      </button>
+                    ))}
+                    <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label="Adicionar comprovante">
+                      <span>+</span>
                     </button>
-                  ))}
-                  <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label="Adicionar comprovante">
-                    <span>+</span>
-                  </button>
+                  </div>
                 </div>
-                <div className="field-hint">{photos.length} comprovante(s)</div>
-                {errors.photos ? <div className="field-error">{errors.photos}</div> : null}
-              </div>
+              </FormField>
             </div>
           </div>
           <ActionBar className="finalize-actions maintenance-actions">

@@ -203,7 +203,7 @@ type InitialScreenProps = {
   openPersonalReceipt?: () => void;
   openRecibo?: () => void;
   onOpenRecibo?: () => void;
-  onResetLocal?: () => void;
+  onResetLocal?: () => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
   driverName?: string;
   motoristaNome?: string;
@@ -434,10 +434,10 @@ export function InitialScreen(props: InitialScreenProps) {
     setResetConfirmOpen(true);
   };
 
-  const confirmResetLocalData = () => {
-    setResetConfirmOpen(false);
+  const confirmResetLocalData = async () => {
     if (props.onResetLocal) {
-      props.onResetLocal();
+      await props.onResetLocal();
+      setResetConfirmOpen(false);
       return;
     }
 
@@ -504,7 +504,7 @@ export function InitialScreen(props: InitialScreenProps) {
             <p>Rascunhos, fotos locais e sessão offline deste app serão removidos deste navegador.</p>
             <div className="maintenance-delete-actions">
               <ActionButton className="maintenance-delete-cancel" label="Cancelar" onClick={() => setResetConfirmOpen(false)} />
-              <ActionButton className="maintenance-delete-confirm" variant="danger" label="Resetar" onClick={confirmResetLocalData} />
+              <ActionButton className="maintenance-delete-confirm" variant="danger" label="Resetar" onClick={() => { void confirmResetLocalData(); }} />
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { TextInputControl } from "../common/FormFields";
 import { SystemIcon } from "../icons/SystemIcon";
 
 type SearchBarProps = {
@@ -18,7 +19,7 @@ export function SearchBar({ query, onQueryChange }: SearchBarProps) {
         layout
         transition={{ type: "spring", bounce: 0.18, duration: 0.38 }}
       >
-        <input
+        <TextInputControl
           aria-label="Buscar serviço"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}

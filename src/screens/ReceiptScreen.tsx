@@ -5,8 +5,8 @@ import nlaLogo from "../../NLA.jpg";
 import qrCodeAvaliacao from "../../QrCode-Avaliação.png";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { SelectField, TextInputField } from "../components/common/FormFields";
 import { LocalToast, type ToastState, type ToastTone } from "../components/common/LocalToast";
-import { SearchableSelect } from "../components/common/SearchableSelect";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
@@ -83,45 +83,47 @@ function ReceiptForm({
             </div>
           ) : null}
           <div className="receipt-editor-grid">
-            <div className={`finalize-input-block receipt-editor-block receipt-editor-block-span-2 ${errors.nomePagante ? "is-invalid" : ""}`}>
-              <label>Pagante</label>
-              <input value={draft.nomePagante} onChange={(event) => onChange("nomePagante", event.target.value)} />
-              {errors.nomePagante ? <div className="field-error">{errors.nomePagante}</div> : null}
-            </div>
-            <div className={`finalize-input-block receipt-editor-block receipt-editor-block-span-2 ${errors.cliente ? "is-invalid" : ""}`}>
-              <label>Cliente</label>
-              <SearchableSelect
-                value={draft.cliente}
-                options={clienteOptions.map((option) => ({ value: option, label: option }))}
-                placeholder="Digite ou escolha um cliente"
-                ariaLabel="Selecionar cliente"
-                invalid={Boolean(errors.cliente)}
-                onChange={(value) => onChange("cliente", value)}
-              />
-              {errors.cliente ? <div className="field-error">{errors.cliente}</div> : null}
-            </div>
-            <div className={`finalize-input-block receipt-editor-block ${errors.valorTotal ? "is-invalid" : ""}`}>
-              <label>Total</label>
-              <input value={draft.valorTotal} onChange={(event) => onChange("valorTotal", event.target.value)} />
-              {errors.valorTotal ? <div className="field-error">{errors.valorTotal}</div> : null}
-            </div>
-            <div className={`finalize-input-block receipt-editor-block ${errors.dataEmissao ? "is-invalid" : ""}`}>
-              <label>Data de emissão</label>
-              <input value={draft.dataEmissao} onChange={(event) => onChange("dataEmissao", event.target.value)} />
-              {errors.dataEmissao ? <div className="field-error">{errors.dataEmissao}</div> : null}
-            </div>
-            <div className={`finalize-input-block receipt-editor-block receipt-editor-block-span-2 ${errors.metodoPagamento ? "is-invalid" : ""}`}>
-              <label>Método de pagamento</label>
-              <SearchableSelect
-                value={draft.metodoPagamento}
-                options={metodoPagamentoOptions.map((option) => ({ value: option, label: option }))}
-                placeholder="Digite ou escolha um método"
-                ariaLabel="Selecionar método de pagamento"
-                invalid={Boolean(errors.metodoPagamento)}
-                onChange={(value) => onChange("metodoPagamento", value)}
-              />
-              {errors.metodoPagamento ? <div className="field-error">{errors.metodoPagamento}</div> : null}
-            </div>
+            <TextInputField
+              fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
+              label="Pagante"
+              error={errors.nomePagante}
+              value={draft.nomePagante}
+              onChange={(event) => onChange("nomePagante", event.target.value)}
+            />
+            <SelectField
+              fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
+              label="Cliente"
+              error={errors.cliente}
+              value={draft.cliente}
+              options={clienteOptions.map((option) => ({ value: option, label: option }))}
+              placeholder="Digite ou escolha um cliente"
+              ariaLabel="Selecionar cliente"
+              onChange={(value) => onChange("cliente", value)}
+            />
+            <TextInputField
+              fieldClassName={`finalize-input-block receipt-editor-block`}
+              label="Total"
+              error={errors.valorTotal}
+              value={draft.valorTotal}
+              onChange={(event) => onChange("valorTotal", event.target.value)}
+            />
+            <TextInputField
+              fieldClassName={`finalize-input-block receipt-editor-block`}
+              label="Data de emissão"
+              error={errors.dataEmissao}
+              value={draft.dataEmissao}
+              onChange={(event) => onChange("dataEmissao", event.target.value)}
+            />
+            <SelectField
+              fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
+              label="Método de pagamento"
+              error={errors.metodoPagamento}
+              value={draft.metodoPagamento}
+              options={metodoPagamentoOptions.map((option) => ({ value: option, label: option }))}
+              placeholder="Digite ou escolha um método"
+              ariaLabel="Selecionar método de pagamento"
+              onChange={(value) => onChange("metodoPagamento", value)}
+            />
           </div>
         </div>
       </div>
@@ -311,12 +313,16 @@ function ReceiptScaledCanvas({
       } : undefined}
       aria-label={interactive ? "Ampliar preview do recibo" : undefined}
     >
-      <div className="receipt-stage">
+      <div
+        className="receipt-stage"
+        style={{
+          width: `${baseWidth * scale}px`,
+          height: `${baseHeight * scale}px`
+        }}
+      >
         <div
           className="receipt-fit-frame"
           style={{
-            width: `${baseWidth * scale}px`,
-            height: `${baseHeight * scale}px`,
             visibility: ready ? "visible" : "hidden"
           }}
         >
@@ -339,13 +345,17 @@ function ReceiptPreview({
   onExpand: () => void;
 }) {
   return (
-    <article className="receipt-card-shell receipt-preview-card">
-      <div className="receipt-preview-title">
+    <button type="button" className="receipt-card-shell receipt-preview-card receipt-preview-inline" onClick={onExpand} aria-label="Visualizar preview do recibo">
+      <div className="receipt-preview-copy">
         <span>Preview do recibo</span>
-        <small>Clique para ampliar</small>
+        <small>Toque aqui para visualizar</small>
       </div>
-      <ReceiptScaledCanvas model={model} documentRef={documentRef} interactive onClick={onExpand} />
-    </article>
+      <div className="receipt-preview-mini-shell">
+        <div className="receipt-preview-mini" aria-hidden="true">
+          <ReceiptDocument model={model} documentRef={documentRef} />
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -499,7 +509,6 @@ function ReceiptZoomCanvas({ model }: { model: PersonalReceiptModel }) {
 }
 
 function ReceiptViewport({
-  detail,
   model,
   draft,
   errors,
@@ -546,6 +555,7 @@ function ReceiptViewport({
       <FormMenu title={title} onBack={onBack} />
       <section className="main-panel receipt-main receipt-editor-main">
         <div className="receipt-editor-layout">
+          <ReceiptPreview model={model} documentRef={documentRef} onExpand={openExpandedPreview} />
           {draft && onDraftChange && onGenerate ? (
             <ReceiptForm
               draft={draft}
@@ -558,7 +568,6 @@ function ReceiptViewport({
               onGenerate={onGenerate}
             />
           ) : null}
-          <ReceiptPreview model={model} documentRef={documentRef} onExpand={openExpandedPreview} />
         </div>
       </section>
       {toast ? <LocalToast toast={toast} onDismiss={onDismissToast ?? (() => undefined)} /> : null}
@@ -691,7 +700,6 @@ export function ReceiptScreen({
 
   return (
     <ReceiptViewport
-      detail={detail}
       model={model}
       draft={draft}
       errors={errors}

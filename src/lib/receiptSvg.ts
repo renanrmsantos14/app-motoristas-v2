@@ -70,7 +70,7 @@ function wrapText(value: unknown, size: number, maxWidth: number, weight = 500) 
 
 function svgText(value: unknown, options: SvgTextOptions) {
   const fill = options.fill ?? "#111d21";
-  const family = options.family ?? "Montserrat, Open Sans, Arial, sans-serif";
+  const family = options.family ?? "Montserrat, Manrope, sans-serif";
   const weight = options.weight ?? 500;
   const lineHeight = options.lineHeight ?? Math.round(options.size * 1.35);
   const maxWidth = options.maxWidth ?? RECEIPT_SVG_WIDTH;
@@ -119,7 +119,7 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
       size: 70,
       weight: 400,
       fill: "#ffffff",
-      family: "Centabel Book, Cormorant Garamond, Times New Roman, serif"
+      family: "Centabel Book Embedded, Centabel Book, Montserrat, serif"
     }),
     image(assets.logoB, right - 74, 25, 74, 74),
     rect(0, 125, RECEIPT_SVG_WIDTH, 45, "#ebf3ff"),

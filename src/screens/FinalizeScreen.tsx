@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { SearchableSelect } from "../components/common/SearchableSelect";
+import { FieldError, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { buildWhatsAppUrl, openExternalUrl } from "../lib/localWorkflow";
@@ -86,10 +86,14 @@ function TextAreaBlock({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="finalize-input-block shadow">
-      <label>{label}</label>
-      <textarea placeholder="Digite aqui" rows={5} value={value} onChange={(event) => onChange(event.target.value)} />
-    </div>
+    <TextAreaField
+      fieldClassName="finalize-input-block shadow"
+      label={label}
+      placeholder="Digite aqui"
+      rows={5}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
   );
 }
 
@@ -288,71 +292,64 @@ function MaintenanceFinalize({
       <div className="finalize-scroll">
         <div className="finalize-form maintenance">
           {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
-          <div className={`finalize-input-block ${errors.serviceDone ? "is-invalid" : ""}`}>
-            <label>Manutenção Realizada</label>
-            <textarea
-              ref={serviceDoneRef}
-              aria-invalid={Boolean(errors.serviceDone)}
-              placeholder="Digite aqui"
-              rows={4}
-              value={serviceDone}
-              onChange={(event) => {
-                setServiceDone(event.target.value);
-                updateDraft({ serviceDone: event.target.value });
-                clearError("serviceDone");
-              }}
-            />
-            {errors.serviceDone ? <div className="field-error">{errors.serviceDone}</div> : null}
-          </div>
-          <div className={`finalize-input-block ${errors.value ? "is-invalid" : ""}`}>
-            <label>Valor (R$)</label>
-            <input
-              ref={valueRef}
-              aria-invalid={Boolean(errors.value)}
-              inputMode="decimal"
-              placeholder="0,00"
-              value={value}
-              onChange={(event) => {
-                setValue(event.target.value);
-                updateDraft({ value: event.target.value });
-                clearError("value");
-              }}
-            />
-            {errors.value ? <div className="field-error">{errors.value}</div> : null}
-          </div>
-          <div className={`finalize-input-block ${errors.payment ? "is-invalid" : ""}`}>
-            <label>Forma de Pagamento</label>
-            <SearchableSelect
-              ref={paymentRef}
-              value={payment}
-              options={paymentOptions}
-              placeholder="Selecione"
-              ariaLabel="Selecionar forma de pagamento"
-              invalid={Boolean(errors.payment)}
-              onChange={(value) => {
-                setPayment(value);
-                updateDraft({ payment: value });
-                clearError("payment");
-              }}
-            />
-            {errors.payment ? <div className="field-error">{errors.payment}</div> : null}
-          </div>
-          <div className={`finalize-input-block ${errors.establishment ? "is-invalid" : ""}`}>
-            <label>Estabelecimento</label>
-            <textarea
-              ref={establishmentRef}
-              aria-invalid={Boolean(errors.establishment)}
-              placeholder="Digite aqui"
-              rows={3}
-              value={establishment}
-              onChange={(event) => {
-                setEstablishment(event.target.value);
-                updateDraft({ establishment: event.target.value });
-                clearError("establishment");
-              }}
-            />
-            {errors.establishment ? <div className="field-error">{errors.establishment}</div> : null}
-          </div>
+
+          <TextAreaField
+            ref={serviceDoneRef}
+            label="Manutenção Realizada"
+            error={errors.serviceDone}
+            placeholder="Digite aqui"
+            rows={4}
+            value={serviceDone}
+            onChange={(event) => {
+              setServiceDone(event.target.value);
+              updateDraft({ serviceDone: event.target.value });
+              clearError("serviceDone");
+            }}
+          />
+
+          <TextInputField
+            ref={valueRef}
+            label="Valor (R$)"
+            error={errors.value}
+            inputMode="decimal"
+            placeholder="0,00"
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+              updateDraft({ value: event.target.value });
+              clearError("value");
+            }}
+          />
+
+          <SelectField
+            ref={paymentRef}
+            label="Forma de Pagamento"
+            error={errors.payment}
+            value={payment}
+            options={paymentOptions}
+            placeholder="Selecione"
+            ariaLabel="Selecionar forma de pagamento"
+            onChange={(nextValue) => {
+              setPayment(nextValue);
+              updateDraft({ payment: nextValue });
+              clearError("payment");
+            }}
+          />
+
+          <TextAreaField
+            ref={establishmentRef}
+            label="Estabelecimento"
+            error={errors.establishment}
+            placeholder="Digite aqui"
+            rows={3}
+            value={establishment}
+            onChange={(event) => {
+              setEstablishment(event.target.value);
+              updateDraft({ establishment: event.target.value });
+              clearError("establishment");
+            }}
+          />
+
           <MaintenancePhotoGrid
             label="Fotos da nota fiscal"
             kinds={["NOTAFISCAL"]}
@@ -364,7 +361,8 @@ function MaintenanceFinalize({
               if (!isSubmitting) onPreviewMaintenancePhoto(kind);
             }}
           />
-          {errors.invoicePhoto ? <div className="field-error">{errors.invoicePhoto}</div> : null}
+          <FieldError error={errors.invoicePhoto} />
+
           <MaintenancePhotoGrid
             label="Fotos da manutenção"
             kinds={["FOTO1", "FOTO2", "FOTO3"]}
@@ -375,19 +373,19 @@ function MaintenanceFinalize({
               if (!isSubmitting) onPreviewMaintenancePhoto(kind);
             }}
           />
-          {errors.maintenancePhoto ? <div className="field-error">{errors.maintenancePhoto}</div> : null}
-          <div className="finalize-input-block">
-            <label>Observações da Manutenção</label>
-            <textarea
-              placeholder="Digite aqui"
-              rows={4}
-              value={notes}
-              onChange={(event) => {
-                setNotes(event.target.value);
-                updateDraft({ notes: event.target.value });
-              }}
-            />
-          </div>
+          <FieldError error={errors.maintenancePhoto} />
+
+          <TextAreaField
+            label="Observações da Manutenção"
+            placeholder="Digite aqui"
+            rows={4}
+            value={notes}
+            onChange={(event) => {
+              setNotes(event.target.value);
+              updateDraft({ notes: event.target.value });
+            }}
+          />
+
           <div className="finalize-help">
             <span>Dúvidas?</span>
             <button

@@ -1,8 +1,7 @@
-import { useMemo, useRef, useState } from "react";
-import type { RefObject } from "react";
+import { useMemo, useRef, useState, type Ref } from "react";
 import { AppShell } from "../components/layout/AppShell";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { SearchableSelect } from "../components/common/SearchableSelect";
+import { CheckboxControl, SelectControl, TextAreaControl, TextInputControl } from "../components/common/FormFields";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { VoucherInputRow } from "../components/voucher/VoucherInputRow";
 import { VoucherSection } from "../components/voucher/VoucherSection";
@@ -26,7 +25,7 @@ type VoucherErrors = Partial<Record<VoucherErrorKey, string>>;
 const hours = ["", "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
 const minutes = ["", "00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
 
-function focusField(ref: RefObject<HTMLElement | null>) {
+function focusField(ref: { current: HTMLElement | null }) {
   window.setTimeout(() => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     ref.current?.focus({ preventScroll: true });
@@ -47,8 +46,8 @@ function TimeSelects({
   hour: string;
   minute: string;
   error?: string;
-  hourRef?: RefObject<HTMLButtonElement | null>;
-  minuteRef?: RefObject<HTMLButtonElement | null>;
+  hourRef?: Ref<HTMLButtonElement>;
+  minuteRef?: Ref<HTMLButtonElement>;
   onHourChange: (value: string) => void;
   onMinuteChange: (value: string) => void;
 }) {
@@ -63,7 +62,7 @@ function TimeSelects({
 
   return (
     <div className={`voucher-time ${error ? "is-invalid" : ""}`}>
-      <SearchableSelect
+      <SelectControl
         ref={hourRef}
         value={hour}
         options={hourOptions}
@@ -74,7 +73,7 @@ function TimeSelects({
         onChange={onHourChange}
       />
       <span>:</span>
-      <SearchableSelect
+      <SelectControl
         ref={minuteRef}
         value={minute}
         options={minuteOptions}
@@ -241,6 +240,7 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
           <div className="voucher-scroll">
             <div className="voucher-form">
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
+
               <VoucherSection>
                 <VoucherInputRow label="Horário Inicial" error={errors.startTime}>
                   <TimeSelects
@@ -263,6 +263,7 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
                   />
                 </VoucherInputRow>
               </VoucherSection>
+
               <VoucherSection title="Espera">
                 <VoucherInputRow label="Início">
                   <TimeSelects
@@ -295,20 +296,87 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
                   />
                 </VoucherInputRow>
               </VoucherSection>
+
               <VoucherSection title="Informações Adicionais">
                 <VoucherInputRow label="Desvio">
-                  <input className="voucher-checkbox" type="checkbox" aria-label="Desvio" checked={deviation} onChange={(event) => { setDeviation(event.target.checked); emitDraft({ Desvio: event.target.checked ? "Sim" : "Não" }); }} />
+                  <CheckboxControl
+                    className="voucher-checkbox"
+                    aria-label="Desvio"
+                    checked={deviation}
+                    onChange={(event) => {
+                      setDeviation(event.target.checked);
+                      emitDraft({ Desvio: event.target.checked ? "Sim" : "Não" });
+                    }}
+                  />
                 </VoucherInputRow>
                 <VoucherInputRow label="Observação">
-                  <textarea rows={3} value={obs} onChange={(event) => { setObs(event.target.value); emitDraft({ "Observação Voucher": event.target.value }); }} />
+                  <TextAreaControl
+                    rows={3}
+                    value={obs}
+                    onChange={(event) => {
+                      setObs(event.target.value);
+                      emitDraft({ "Observação Voucher": event.target.value });
+                    }}
+                  />
                 </VoucherInputRow>
               </VoucherSection>
+
               <VoucherSection title="Despesas">
-                <VoucherInputRow label="Pedágio"><input inputMode="decimal" placeholder="R$ 0,00" value={toll} onChange={(event) => { setToll(event.target.value); emitDraft({ Pedagio: event.target.value }); }} /></VoucherInputRow>
-                <VoucherInputRow label="Estacionamento"><input inputMode="decimal" placeholder="R$ 0,00" value={parking} onChange={(event) => { setParking(event.target.value); emitDraft({ Estacionamento: event.target.value }); }} /></VoucherInputRow>
-                <VoucherInputRow label="Combustível"><input inputMode="decimal" placeholder="R$ 0,00" value={fuel} onChange={(event) => { setFuel(event.target.value); emitDraft({ Combustivel: event.target.value }); }} /></VoucherInputRow>
-                <VoucherInputRow label="Hospedagem"><input inputMode="decimal" placeholder="R$ 0,00" value={hotel} onChange={(event) => { setHotel(event.target.value); emitDraft({ Hospedagem: event.target.value }); }} /></VoucherInputRow>
-                <VoucherInputRow label="Outros"><input inputMode="decimal" placeholder="R$ 0,00" value={others} onChange={(event) => { setOthers(event.target.value); emitDraft({ Outros: event.target.value }); }} /></VoucherInputRow>
+                <VoucherInputRow label="Pedágio">
+                  <TextInputControl
+                    inputMode="decimal"
+                    placeholder="R$ 0,00"
+                    value={toll}
+                    onChange={(event) => {
+                      setToll(event.target.value);
+                      emitDraft({ Pedagio: event.target.value });
+                    }}
+                  />
+                </VoucherInputRow>
+                <VoucherInputRow label="Estacionamento">
+                  <TextInputControl
+                    inputMode="decimal"
+                    placeholder="R$ 0,00"
+                    value={parking}
+                    onChange={(event) => {
+                      setParking(event.target.value);
+                      emitDraft({ Estacionamento: event.target.value });
+                    }}
+                  />
+                </VoucherInputRow>
+                <VoucherInputRow label="Combustível">
+                  <TextInputControl
+                    inputMode="decimal"
+                    placeholder="R$ 0,00"
+                    value={fuel}
+                    onChange={(event) => {
+                      setFuel(event.target.value);
+                      emitDraft({ Combustivel: event.target.value });
+                    }}
+                  />
+                </VoucherInputRow>
+                <VoucherInputRow label="Hospedagem">
+                  <TextInputControl
+                    inputMode="decimal"
+                    placeholder="R$ 0,00"
+                    value={hotel}
+                    onChange={(event) => {
+                      setHotel(event.target.value);
+                      emitDraft({ Hospedagem: event.target.value });
+                    }}
+                  />
+                </VoucherInputRow>
+                <VoucherInputRow label="Outros">
+                  <TextInputControl
+                    inputMode="decimal"
+                    placeholder="R$ 0,00"
+                    value={others}
+                    onChange={(event) => {
+                      setOthers(event.target.value);
+                      emitDraft({ Outros: event.target.value });
+                    }}
+                  />
+                </VoucherInputRow>
               </VoucherSection>
             </div>
           </div>

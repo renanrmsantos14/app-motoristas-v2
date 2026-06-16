@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { SearchableSelect } from "../components/common/SearchableSelect";
+import { FormField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { MaintenanceRequestVehicleOption } from "../lib/dataverse";
@@ -111,7 +111,7 @@ export function MaintenanceRequestScreen({
     const parsedKm = parseKm(draft.kmAtual);
     const nextErrors: MaintenanceRequestErrors = {};
 
-    if (!draft.veiculoId) nextErrors.veiculoId = "Selecione o veiculo.";
+    if (!draft.veiculoId) nextErrors.veiculoId = "Selecione o veículo.";
     if (!Number.isFinite(parsedKm) || parsedKm <= 0) nextErrors.kmAtual = "Informe o km atual.";
     if (!draft.gravidade) nextErrors.gravidade = "Selecione a gravidade.";
     if (!draft.descricao.trim()) nextErrors.descricao = "Descreva o problema.";
@@ -148,72 +148,64 @@ export function MaintenanceRequestScreen({
           <div className="finalize-scroll">
             <div className="finalize-form maintenance maintenance-request-form">
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
-              <div className={`finalize-input-block ${errors.veiculoId ? "is-invalid" : ""}`}>
-                <label>Veículo</label>
-                <SearchableSelect
-                  ref={vehicleRef}
-                  value={draft.veiculoId}
-                  options={vehicleOptions}
-                  placeholder={vehiclesLoading ? "Carregando veiculos" : "Selecione"}
-                  ariaLabel="Selecionar veículo"
-                  invalid={Boolean(errors.veiculoId)}
-                  disabled={vehiclesLoading || isSubmitting}
-                  onChange={(value) => {
-                    updateDraft({ veiculoId: value });
-                    clearError("veiculoId");
-                  }}
-                />
-                {errors.veiculoId ? <div className="field-error">{errors.veiculoId}</div> : null}
-              </div>
-              <div className={`finalize-input-block ${errors.kmAtual ? "is-invalid" : ""}`}>
-                <label>Km atual</label>
-                <input
-                  ref={kmRef}
-                  aria-invalid={Boolean(errors.kmAtual)}
-                  inputMode="numeric"
-                  placeholder="Ex.: 58230"
-                  value={draft.kmAtual}
-                  onChange={(event) => {
-                    updateDraft({ kmAtual: event.target.value });
-                    clearError("kmAtual");
-                  }}
-                />
-                {errors.kmAtual ? <div className="field-error">{errors.kmAtual}</div> : null}
-              </div>
-              <div className={`finalize-input-block ${errors.gravidade ? "is-invalid" : ""}`}>
-                <label>Gravidade</label>
-                <SearchableSelect
-                  ref={severityRef}
-                  value={draft.gravidade}
-                  options={gravityOptions}
-                  placeholder="Selecione"
-                  ariaLabel="Selecionar gravidade"
-                  invalid={Boolean(errors.gravidade)}
-                  disabled={isSubmitting}
-                  onChange={(value) => {
-                    updateDraft({ gravidade: value });
-                    clearError("gravidade");
-                  }}
-                />
-                {errors.gravidade ? <div className="field-error">{errors.gravidade}</div> : null}
-              </div>
-              <div className={`finalize-input-block ${errors.descricao ? "is-invalid" : ""}`}>
-                <label>Descrição</label>
-                <textarea
-                  ref={descricaoRef}
-                  aria-invalid={Boolean(errors.descricao)}
-                  placeholder="Ex.: barulho ao frear, luz acesa no painel, pneu vibrando"
-                  rows={5}
-                  value={draft.descricao}
-                  onChange={(event) => {
-                    updateDraft({ descricao: event.target.value });
-                    clearError("descricao");
-                  }}
-                />
-                {errors.descricao ? <div className="field-error">{errors.descricao}</div> : null}
-              </div>
-              <div className={`finalize-input-block ${errors.photos ? "is-invalid" : ""}`}>
-                <label>Fotos</label>
+
+              <SelectField
+                ref={vehicleRef}
+                label="Veículo"
+                error={errors.veiculoId}
+                value={draft.veiculoId}
+                options={vehicleOptions}
+                placeholder={vehiclesLoading ? "Carregando veículos" : "Selecione"}
+                ariaLabel="Selecionar veículo"
+                disabled={vehiclesLoading || isSubmitting}
+                onChange={(value) => {
+                  updateDraft({ veiculoId: value });
+                  clearError("veiculoId");
+                }}
+              />
+
+              <TextInputField
+                ref={kmRef}
+                label="Km atual"
+                error={errors.kmAtual}
+                inputMode="numeric"
+                placeholder="Ex.: 58230"
+                value={draft.kmAtual}
+                onChange={(event) => {
+                  updateDraft({ kmAtual: event.target.value });
+                  clearError("kmAtual");
+                }}
+              />
+
+              <SelectField
+                ref={severityRef}
+                label="Gravidade"
+                error={errors.gravidade}
+                value={draft.gravidade}
+                options={gravityOptions}
+                placeholder="Selecione"
+                ariaLabel="Selecionar gravidade"
+                disabled={isSubmitting}
+                onChange={(value) => {
+                  updateDraft({ gravidade: value });
+                  clearError("gravidade");
+                }}
+              />
+
+              <TextAreaField
+                ref={descricaoRef}
+                label="Descrição"
+                error={errors.descricao}
+                placeholder="Ex.: barulho ao frear, luz acesa no painel, pneu vibrando"
+                rows={5}
+                value={draft.descricao}
+                onChange={(event) => {
+                  updateDraft({ descricao: event.target.value });
+                  clearError("descricao");
+                }}
+              />
+
+              <FormField label="Fotos" error={errors.photos}>
                 <div className="maintenance-photo-grid">
                   {photos.map((photo, index) => (
                     <button
@@ -246,8 +238,7 @@ export function MaintenanceRequestScreen({
                     <span>+</span>
                   </button>
                 </div>
-                {errors.photos ? <div className="field-error">{errors.photos}</div> : null}
-              </div>
+              </FormField>
             </div>
           </div>
           <ActionBar className="finalize-actions maintenance-actions">

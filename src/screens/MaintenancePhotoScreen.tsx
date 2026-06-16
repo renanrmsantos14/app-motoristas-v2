@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { TextInputControl } from "../components/common/FormFields";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { SystemIcon } from "../components/icons/SystemIcon";
@@ -463,7 +464,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
               {!cameraError && starting ? <div className="camera-loading">Abrindo câmera...</div> : null}
             </div>
 
-            <input
+            <TextInputControl
               ref={fileInputRef}
               className="native-camera-input"
               type="file"

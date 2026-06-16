@@ -18,7 +18,7 @@ export type SearchableSelectOption = {
   disabled?: boolean;
 };
 
-type SearchableSelectProps = {
+export type SearchableSelectProps = {
   value: string;
   options: SearchableSelectOption[];
   placeholder: string;

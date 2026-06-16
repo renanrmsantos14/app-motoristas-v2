@@ -17,7 +17,18 @@ import {
   shouldRequireReceiveStep,
   shouldRouteServiceToVoucher
 } from "./app/detailFlow";
-import { AUTO_REFRESH_INTERVAL_MS, getScreenMotion, shouldAutoRefreshScreen } from "./app/navigation";
+import {
+  AUTO_REFRESH_INTERVAL_MS,
+  buildHashRoute,
+  getHashRouteFallbackScreen,
+  getHashRouteRestoreScreen,
+  getScreenMotion,
+  isHashRoutingEnabled,
+  parseHashRoute,
+  screenNeedsHashDetail,
+  shouldAutoRefreshScreen,
+  type HashRoute
+} from "./app/navigation";
 import {
   cancelServiceRemote,
   assertCollisionSchemaReadyRemote,
@@ -62,6 +73,7 @@ import {
   type LocalStore
 } from "./lib/localWorkflow";
 import { LocalToast, type ToastState, type ToastTone } from "./components/common/LocalToast";
+import { LoadingOverlay, type LoadingOverlayState } from "./components/common/LoadingOverlay";
 import { CollisionScreen } from "./screens/CollisionScreen";
 import { ButtonPreviewScreen } from "./screens/ButtonPreviewScreen";
 import { CollisionStartScreen } from "./screens/CollisionStartScreen";
@@ -129,8 +141,23 @@ function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+const DATA_LOADING_SUCCESS_DURATION_MS = 420;
+
 function isTrueLike(value: unknown) {
   return value === true || value === 1 || value === "true";
+}
+
+function findDetailFromHashRoute(store: LocalStore, route: HashRoute | null) {
+  if (!route?.detailId) return null;
+  return findDetailByParams([...store.agenda, ...store.history], route.detailId, route.detailType ?? "");
+}
+
+function getInitialScreenFromHashRoute(route: HashRoute, detail: DetailData | null): Screen {
+  const restoredScreen = getHashRouteRestoreScreen(route.screen);
+  if (screenNeedsHashDetail(restoredScreen) && !detail) {
+    return getHashRouteFallbackScreen(restoredScreen);
+  }
+  return restoredScreen;
 }
 
 function inferToastTone(message: string): ToastTone {
@@ -178,18 +205,29 @@ function inferToastTone(message: string): ToastTone {
 
 function App() {
   const devMode = useMemo(() => new URLSearchParams(window.location.search).get("dev") ?? "", []);
-  const isButtonPreviewMode = devMode === "preview";
+  const previewHashActive = useMemo(() => /^#\/?preview(?:[/?]|$)/i.test(window.location.hash), []);
+  const isButtonPreviewMode = devMode === "preview" || previewHashActive;
   const isReceiptPreviewMode = devMode === "recibo";
   const isLocalhostRuntime = useMemo(() => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname), []);
+  const hashRoutingActive = useMemo(
+    () => isHashRoutingEnabled() && !isButtonPreviewMode && !isReceiptPreviewMode,
+    [isButtonPreviewMode, isReceiptPreviewMode]
+  );
   const [store, setStore] = useState<LocalStore>(() => loadStore());
-  const initialDetailRef = useRef<DetailData | null>(getInitialDetail(store));
-  const [screen, setScreen] = useState<Screen>(() => (initialDetailRef.current ? "detalhes" : "inicio"));
-  const previousScreenRef = useRef<Screen>(initialDetailRef.current ? "detalhes" : "inicio");
+  const initialHashRouteRef = useRef<HashRoute | null>(hashRoutingActive ? parseHashRoute(window.location.hash) : null);
+  const initialHashDetail = initialHashRouteRef.current ? findDetailFromHashRoute(store, initialHashRouteRef.current) : null;
+  const initialDetailRef = useRef<DetailData | null>(initialHashRouteRef.current ? initialHashDetail : getInitialDetail(store));
+  const initialScreen = initialHashRouteRef.current
+    ? getInitialScreenFromHashRoute(initialHashRouteRef.current, initialHashDetail)
+    : (initialDetailRef.current ? "detalhes" : "inicio");
+  const [screen, setScreen] = useState<Screen>(initialScreen);
+  const previousScreenRef = useRef<Screen>(initialScreen);
   const [selectedDetail, setSelectedDetail] = useState<DetailData | null>(() => initialDetailRef.current);
   const [maintenancePhotoKind, setMaintenancePhotoKind] = useState<MaintenancePhotoKind>("NOTAFISCAL");
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
   const [photoDraftPreviewUrl, setPhotoDraftPreviewUrl] = useState("");
   const [toast, setToastState] = useState<ToastState | null>(null);
+  const [dataLoading, setDataLoading] = useState<LoadingOverlayState | null>(null);
   const [criticalError, setCriticalError] = useState("");
   const [completingDetailKey, setCompletingDetailKey] = useState("");
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
@@ -286,6 +324,21 @@ function App() {
     });
   };
 
+  const setDataLoadingState = (loading: LoadingOverlayState | null) => {
+    if (loading) setToastState(null);
+    setDataLoading(loading);
+  };
+
+  const completeDataLoadingState = async (title: string, message?: string) => {
+    setDataLoadingState({
+      phase: "success",
+      title,
+      message
+    });
+    await wait(DATA_LOADING_SUCCESS_DURATION_MS);
+    setDataLoadingState(null);
+  };
+
   useEffect(() => {
     if (isButtonPreviewMode || isReceiptPreviewMode) return;
     if (remoteMode) return;
@@ -307,17 +360,96 @@ function App() {
     if (!hasDataverseRuntime()) return;
     let alive = true;
     setRemoteMode(true);
-    setToast("Carregando Dataverse.");
+    setDataLoadingState({
+      phase: "loading",
+      title: "Carregando dados",
+      message: "Sincronizando agenda no Dataverse."
+    });
     loadRemoteStore()
       .then((remote) => {
         if (!alive) return;
-        const remoteInitialDetail = getInitialDetail({ ...store, agenda: remote.agenda, history: remote.history });
+        setDataLoadingState(null);
+        const remoteStore = { ...store, agenda: remote.agenda, history: remote.history };
+        const hashRoute = initialHashRouteRef.current;
+        const remoteInitialDetail = hashRoute ? findDetailFromHashRoute(remoteStore, hashRoute) : getInitialDetail(remoteStore);
         setDriverContext(remote.driver);
         setStore((current) => ({
           ...current,
           agenda: remote.agenda,
           history: remote.history
         }));
+        if (hashRoute) {
+          const routedScreen = getInitialScreenFromHashRoute(hashRoute, remoteInitialDetail);
+          if (screenNeedsHashDetail(routedScreen)) {
+            if (remoteInitialDetail) {
+              markDetailViewedRemote(remoteInitialDetail).catch((error) => {
+                reportAppError(error, {
+                  severity: "error",
+                  source: "app",
+                  action: "markDetailViewedRemote",
+                  phase: "hash-route",
+                  screen: routedScreen,
+                  detailId: remoteInitialDetail.id,
+                  detailType: remoteInitialDetail.type
+                });
+                setToast(error instanceof Error ? error.message : "Falha ao marcar visualizaÃ§Ã£o.");
+              });
+              setSelectedDetail(remoteInitialDetail);
+              setScreen(routedScreen);
+              setToast("");
+              return;
+            }
+            if (hashRoute.detailId && hashRoute.detailType) {
+              loadRemoteDetailByParams(hashRoute.detailId, hashRoute.detailType)
+                .then((detail) => {
+                  if (!alive) return;
+                  if (!detail) {
+                    setSelectedDetail(null);
+                    setScreen(getHashRouteFallbackScreen(routedScreen));
+                    setToast("ServiÃ§o do link nÃ£o encontrado.");
+                    return;
+                  }
+                  markDetailViewedRemote(detail).catch((error) => {
+                    reportAppError(error, {
+                      severity: "error",
+                      source: "app",
+                      action: "markDetailViewedRemote",
+                      phase: "hash-route-remote-detail",
+                      screen: routedScreen,
+                      detailId: detail.id,
+                      detailType: detail.type
+                    });
+                    setToast(error instanceof Error ? error.message : "Falha ao marcar visualizaÃ§Ã£o.");
+                  });
+                  setSelectedDetail(detail);
+                  setScreen(routedScreen);
+                  setToast("");
+                })
+                .catch((error) => {
+                  if (!alive) return;
+                  reportAppError(error, {
+                    severity: "error",
+                    source: "app",
+                    action: "loadRemoteDetailByParams",
+                    phase: "hash-route",
+                    screen: routedScreen
+                  });
+                  setSelectedDetail(null);
+                  setScreen(getHashRouteFallbackScreen(routedScreen));
+                  setToast(error instanceof Error ? error.message : "ServiÃ§o do link nÃ£o encontrado.");
+                });
+              return;
+            }
+            setSelectedDetail(null);
+            setScreen(getHashRouteFallbackScreen(routedScreen));
+            setToast("");
+            return;
+          }
+          setSelectedDetail(remoteInitialDetail);
+          setScreen(routedScreen);
+          setToast("");
+          return;
+        }
         if (remoteInitialDetail) {
           markDetailViewedRemote(remoteInitialDetail).catch((error) => {
             reportAppError(error, {
@@ -421,6 +553,13 @@ function App() {
   }, [screen]);
 
   useEffect(() => {
+    if (!hashRoutingActive) return;
+    const nextHash = buildHashRoute(screen, selectedDetail ? { id: selectedDetail.id, type: selectedDetail.type } : null);
+    if (window.location.hash === nextHash) return;
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${nextHash}`);
+  }, [hashRoutingActive, screen, selectedDetail]);
+
+  useEffect(() => {
     if ((screen !== "solicitarManutencao" && screen !== "gastos" && screen !== "colisoes") || !remoteMode) return;
     let alive = true;
     setMaintenanceVehiclesLoading(true);
@@ -505,6 +644,7 @@ function App() {
       })
       .catch((error) => {
         if (!alive) return;
+        setDataLoadingState(null);
         reportAppError(error, {
           severity: "error",
           source: "app",
@@ -535,7 +675,8 @@ function App() {
           {node}
         </motion.div>
       </AnimatePresence>
-      <LocalToast toast={toast} onDismiss={() => setToastState(null)} />
+      <LocalToast toast={dataLoading ? null : toast} onDismiss={() => setToastState(null)} />
+      <LoadingOverlay loading={dataLoading} />
       {remoteOperation ? <FlowProgressOverlay operation={remoteOperation} /> : null}
       {criticalError ? (
         <div className="critical-error-overlay" role="dialog" aria-modal="true" aria-labelledby="critical-error-title">
@@ -564,7 +705,13 @@ function App() {
     const silent = options?.silent === true;
 
     if (remoteMode) {
-      if (!silent) setToast("Atualizando Dataverse.");
+      if (!silent) {
+        setDataLoadingState({
+          phase: "loading",
+          title: "Carregando dados",
+          message: "Atualizando dados do Dataverse."
+        });
+      }
       try {
         const remote = await loadRemoteStore();
         setDriverContext(remote.driver);
@@ -575,8 +722,9 @@ function App() {
             await loadRemoteDetailByParams(detailToRefresh.dataverse?.id ?? detailToRefresh.id, detailToRefresh.type);
           if (refreshedDetail) setSelectedDetail(refreshedDetail);
         }
-        if (!silent) setToast("Atualizado do Dataverse.");
+        if (!silent) await completeDataLoadingState("Dados atualizados", "Dataverse sincronizado.");
       } catch (error) {
+        if (!silent) setDataLoadingState(null);
         logAppError(error, "loadRemoteStore", "refresh");
         if (!silent || error instanceof Error) {
           setToast(error instanceof Error ? error.message : "Falha ao atualizar Dataverse.");
@@ -585,7 +733,6 @@ function App() {
       return;
     }
     setStore((current) => ({ ...current }));
-    if (!silent) setToast("Atualizado localmente.");
   };
 
   useEffect(() => {
@@ -600,14 +747,24 @@ function App() {
     return () => window.clearInterval(timer);
   }, [remoteMode, remoteOperation, screen, selectedDetail]);
 
-  const resetLocal = () => {
-    const next = initialStore();
-    setStore(next);
-    setReceiveProofs({});
-    setReceiveUploadedCounts({});
-    setSelectedDetail(null);
-    setScreen("inicio");
-    setToast("Dados locais reiniciados.");
+  const resetLocal = async () => {
+    try {
+      setDataLoadingState({
+        phase: "loading",
+        title: "Carregando dados",
+        message: "Resetando dados locais."
+      });
+      await wait(2000);
+      const next = initialStore();
+      setStore(next);
+      setReceiveProofs({});
+      setReceiveUploadedCounts({});
+      setSelectedDetail(null);
+      setScreen("inicio");
+      await completeDataLoadingState("Dados reiniciados", "Armazenamento local limpo.");
+    } finally {
+      setDataLoading((current) => (current?.phase === "success" ? current : null));
+    }
   };
 
   const finalizeSelected = async (fields: Record<string, string>) => {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { TextAreaField } from "../components/common/FormFields";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { DetailData } from "../types";
@@ -24,15 +25,14 @@ export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState 
           <div className="cancel-title">Descreva detalhadamente:</div>
           <div className="cancel-scroll">
             <div className="cancel-form">
-              <div className="cancel-input-block">
-                <label>Detalhes do Cancelamento</label>
-                <textarea
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  placeholder="Digite aqui os envolvidos, horários, detalhes, motivos, etc"
-                  rows={6}
-                />
-              </div>
+              <TextAreaField
+                fieldClassName="cancel-input-block"
+                label="Detalhes do Cancelamento"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder="Digite aqui os envolvidos, horários, detalhes, motivos, etc"
+                rows={6}
+              />
             </div>
           </div>
           <ActionBar className="cancel-actions">
