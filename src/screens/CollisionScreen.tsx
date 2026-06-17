@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { FieldError, FormField, SelectField, TextAreaField, TextInputControl, TextInputField } from "../components/common/FormFields";
+import { PhotoAddButton } from "../components/common/PhotoAddButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
@@ -139,6 +140,7 @@ export function CollisionScreen({
 
               <SelectField
                 ref={vehicleRef}
+                required
                 label="Veículo da Betinhos"
                 error={errors.veiculoId}
                 value={draft.veiculoId}
@@ -162,6 +164,7 @@ export function CollisionScreen({
 
               <TextInputField
                 ref={localRef}
+                required
                 label="Local"
                 error={errors.local}
                 placeholder="Ex.: Av. Paulista, 1000"
@@ -175,6 +178,7 @@ export function CollisionScreen({
 
               <TextAreaField
                 ref={descriptionRef}
+                required
                 label="O que aconteceu?"
                 error={errors.descricao}
                 placeholder="Conte em detalhes o que aconteceu"
@@ -238,6 +242,7 @@ export function CollisionScreen({
 
                   <TextInputField
                     ref={thirdNameRef}
+                    required
                     label="Nome completo"
                     error={errors.terceiroNome}
                     value={draft.terceiroNome}
@@ -248,7 +253,7 @@ export function CollisionScreen({
                     }}
                   />
 
-                  <FormField label="WhatsApp/telefone" error={errors.terceiroTelefone}>
+                  <FormField label="WhatsApp/telefone" error={errors.terceiroTelefone} required>
                     <TextInputControl
                       ref={thirdPhoneRef}
                       aria-invalid={Boolean(errors.terceiroTelefone)}
@@ -270,6 +275,7 @@ export function CollisionScreen({
 
                   <TextInputField
                     ref={thirdPlateRef}
+                    required
                     label="Placa"
                     error={errors.terceiroPlaca}
                     placeholder="Ex.: ABC1D23"
@@ -283,6 +289,7 @@ export function CollisionScreen({
 
                   <TextInputField
                     ref={thirdVehicleRef}
+                    required
                     label="Modelo/cor do veículo"
                     error={errors.terceiroVeiculo}
                     placeholder="Ex.: Corolla prata"
@@ -310,7 +317,10 @@ export function CollisionScreen({
                 <div className="collision-photos-header">
                   <div>
                     <span>Evidências</span>
-                    <strong>Fotos obrigatórias</strong>
+                    <strong>
+                      <span>Fotos obrigatórias</span>
+                      <span className="form-field-required" aria-hidden="true">*</span>
+                    </strong>
                   </div>
                   <small>{completedRequiredPhotos}/{requiredPhotos.length}</small>
                 </div>
@@ -353,16 +363,12 @@ export function CollisionScreen({
                               <small>{index + 1}</small>
                             </button>
                           ))}
-                          <button
-                            type="button"
-                            className="collision-evidence-add"
+                          <PhotoAddButton
                             disabled={isSubmitting}
                             onClick={() => addPhoto(requiredPhoto.kind)}
-                            aria-label={`Adicionar foto em ${requiredPhoto.label}`}
-                          >
-                            <span>+</span>
-                            <strong>{isComplete ? "Adicionar" : "Primeira foto"}</strong>
-                          </button>
+                            ariaLabel={`Adicionar foto em ${requiredPhoto.label}`}
+                            label={isComplete ? "Adicionar" : "Primeira foto"}
+                          />
                         </div>
                         <FieldError error={errors[requiredPhoto.kind]} />
                       </section>
@@ -402,13 +408,9 @@ export function CollisionScreen({
                         <small>{index + 1}</small>
                       </button>
                     ))}
-                    <button type="button" className="collision-evidence-add" disabled={isSubmitting} onClick={() => addPhoto("extra")} aria-label="Adicionar complementar">
-                      <span>+</span>
-                      <strong>Adicionar</strong>
-                    </button>
+                    <PhotoAddButton disabled={isSubmitting} onClick={() => addPhoto("extra")} ariaLabel="Adicionar complementar" label="Adicionar" />
                   </div>
                 </section>
-                <div className="field-hint collision-photo-hint">{photos.length} arquivo(s) no total</div>
               </div>
             </div>
           </div>

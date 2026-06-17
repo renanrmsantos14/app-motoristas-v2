@@ -194,7 +194,7 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
       <button
         ref={setTriggerRef}
         type="button"
-        className={`searchable-select-trigger ${!value ? "is-placeholder" : ""}`}
+        className={`searchable-select-trigger form-control-trigger ${!value ? "is-placeholder" : ""}`}
         aria-label={ariaLabel}
         aria-invalid={invalid}
         aria-expanded={isOpen}
@@ -219,7 +219,7 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
           }
         }}
       >
-        <span className="searchable-select-value">{displayValue}</span>
+        <span className="searchable-select-value form-control-value">{displayValue}</span>
         {value ? (
           <span
             role="button"
@@ -241,7 +241,7 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
         <div ref={panelRef} className="searchable-select-panel" style={panelStyle} role="presentation">
           <input
             ref={searchRef}
-            className="searchable-select-search"
+            className="searchable-select-search form-control-input"
             value={query}
             autoComplete="off"
             spellCheck={false}

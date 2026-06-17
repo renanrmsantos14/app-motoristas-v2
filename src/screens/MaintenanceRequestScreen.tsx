@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { FormField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
+import { PhotoAddButton } from "../components/common/PhotoAddButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { MaintenanceRequestVehicleOption } from "../lib/dataverse";
@@ -151,6 +152,7 @@ export function MaintenanceRequestScreen({
 
               <SelectField
                 ref={vehicleRef}
+                required
                 label="Veículo"
                 error={errors.veiculoId}
                 value={draft.veiculoId}
@@ -166,6 +168,7 @@ export function MaintenanceRequestScreen({
 
               <TextInputField
                 ref={kmRef}
+                required
                 label="Km atual"
                 error={errors.kmAtual}
                 inputMode="numeric"
@@ -179,6 +182,7 @@ export function MaintenanceRequestScreen({
 
               <SelectField
                 ref={severityRef}
+                required
                 label="Gravidade"
                 error={errors.gravidade}
                 value={draft.gravidade}
@@ -194,6 +198,7 @@ export function MaintenanceRequestScreen({
 
               <TextAreaField
                 ref={descricaoRef}
+                required
                 label="Descrição"
                 error={errors.descricao}
                 placeholder="Ex.: barulho ao frear, luz acesa no painel, pneu vibrando"
@@ -205,7 +210,7 @@ export function MaintenanceRequestScreen({
                 }}
               />
 
-              <FormField label="Fotos" error={errors.photos}>
+              <FormField label="Fotos" error={errors.photos} required>
                 <div className="maintenance-photo-grid">
                   {photos.map((photo, index) => (
                     <button
@@ -226,17 +231,7 @@ export function MaintenanceRequestScreen({
                       )}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    ref={photoRef}
-                    className="maintenance-photo-add"
-                    disabled={isSubmitting}
-                    onClick={addPhoto}
-                    aria-invalid={Boolean(errors.photos)}
-                    aria-label="Adicionar foto"
-                  >
-                    <span>+</span>
-                  </button>
+                  <PhotoAddButton ref={photoRef} disabled={isSubmitting} onClick={addPhoto} ariaLabel="Adicionar foto" />
                 </div>
               </FormField>
             </div>

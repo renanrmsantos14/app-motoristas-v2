@@ -242,7 +242,7 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
 
               <VoucherSection>
-                <VoucherInputRow label="Horário Inicial" error={errors.startTime}>
+                <VoucherInputRow label="Horário Inicial" error={errors.startTime} required>
                   <TimeSelects
                     prefix="horario-inicial"
                     hour={startHour}

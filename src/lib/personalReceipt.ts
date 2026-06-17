@@ -132,6 +132,33 @@ function toDisplayDateString(value: string) {
   return date.toLocaleDateString("pt-BR");
 }
 
+function parseReceiptTotalInput(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const cleaned = trimmed
+    .replace("R$", "")
+    .replace(/\s/g, "")
+    .trim();
+
+  if (!cleaned) return null;
+  if (cleaned.includes(",")) return Number(cleaned.replace(/\./g, "").replace(",", "."));
+  return Number(cleaned.replace(/,/g, ""));
+}
+
+function formatReceiptTotal(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const amount = parseReceiptTotalInput(trimmed);
+  if (amount !== null && Number.isFinite(amount)) {
+    return amount.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+  }
+  if (/^R\$\s*/i.test(trimmed)) return trimmed.replace(/^R\$\s*/i, "R$ ");
+  return `R$ ${trimmed}`;
+}
+
 export function buildPersonalReceiptModel(
   detail: DetailData | undefined,
   overrides: Partial<PersonalReceiptEditableDraft> = {}
@@ -172,7 +199,8 @@ export function buildPersonalReceiptModel(
   return {
     ...baseModel,
     ...overrides,
-    dataEmissao: toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao)
+    dataEmissao: toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao),
+    valorTotal: overrides.valorTotal !== undefined ? formatReceiptTotal(overrides.valorTotal) : baseModel.valorTotal
   };
 }
 
@@ -188,10 +216,14 @@ export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptE
   }
 
   const model = buildPersonalReceiptModel(detail);
+  const record = (detail.dataverse?.record as Record<string, unknown> | undefined) ?? {};
+  const rawValor = typeof record.cr40f_valor === "number" && Number.isFinite(record.cr40f_valor)
+    ? record.cr40f_valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : model.valorTotal.replace(/^R\$\s*/i, "");
   return {
     nomePagante: model.nomePagante,
     cliente: model.cliente,
-    valorTotal: model.valorTotal,
+    valorTotal: rawValor,
     dataEmissao: toYmdDateString(model.dataEmissao),
     metodoPagamento: model.metodoPagamento
   };

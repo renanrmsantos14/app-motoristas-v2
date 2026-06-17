@@ -511,7 +511,9 @@ function getVehicleLabel(record: DataverseRecord) {
 
 export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext, options: { onlyOwnCategory?: boolean } = {}) {
   const currentVehicleId = getDriverCurrentVehicleId(driver);
-  const categoryFilter = options.onlyOwnCategory ? `&$filter=new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}` : "";
+  const categoryFilter = options.onlyOwnCategory
+    ? `&$filter=(new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio} or new_categoriadoveiculo eq null)`
+    : "";
   const result = await retrieveMultiple(
     DATAVERSE.veiculos,
     `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`

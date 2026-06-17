@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { FormField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
+import { FormField, MoneyInputField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
+import { PhotoAddButton } from "../components/common/PhotoAddButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import {
@@ -154,6 +155,7 @@ export function ExpenseScreen({
 
               <TextInputField
                 ref={dateRef}
+                required
                 label="Data do gasto"
                 error={errors.dataGasto}
                 type="date"
@@ -166,6 +168,7 @@ export function ExpenseScreen({
 
               <SelectField
                 ref={categoryRef}
+                required
                 label="Categoria"
                 error={errors.categoriaId}
                 value={draft.categoriaId}
@@ -186,12 +189,14 @@ export function ExpenseScreen({
                 }}
               />
 
-              <TextInputField
+              <MoneyInputField
                 ref={valueRef}
+                required
                 label="Valor"
                 error={errors.valor}
                 inputMode="decimal"
-                placeholder="Ex.: R$ 238,70"
+                pattern="[0-9.,]*"
+                autoComplete="off"
                 value={draft.valor}
                 onChange={(event) => {
                   updateDraft({ valor: event.target.value });
@@ -201,6 +206,7 @@ export function ExpenseScreen({
 
               <SelectField
                 ref={paymentRef}
+                required
                 label="Forma de pagamento"
                 error={errors.formaPagamentoId}
                 value={draft.formaPagamentoId}
@@ -216,6 +222,7 @@ export function ExpenseScreen({
 
               <SelectField
                 ref={cityRef}
+                required
                 label="Cidade"
                 error={errors.cidadeId}
                 value={draft.cidadeId}
@@ -238,6 +245,7 @@ export function ExpenseScreen({
               {rules.exigeVeiculo ? (
                 <SelectField
                   ref={vehicleRef}
+                  required
                   label="Veículo"
                   error={errors.veiculoId}
                   value={draft.veiculoId}
@@ -255,6 +263,7 @@ export function ExpenseScreen({
               {rules.exigeKm ? (
                 <TextInputField
                   ref={kmRef}
+                  required
                   label="KM"
                   error={errors.kmInformado}
                   inputMode="numeric"
@@ -270,6 +279,7 @@ export function ExpenseScreen({
               {rules.exigeLitros ? (
                 <TextInputField
                   ref={litersRef}
+                  required
                   label="Litros"
                   error={errors.litros}
                   inputMode="decimal"
@@ -297,7 +307,7 @@ export function ExpenseScreen({
                 onChange={(event) => updateDraft({ descricao: event.target.value })}
               />
 
-              <FormField label="Comprovantes" error={errors.photos} hint={`${photos.length} comprovante(s)`}>
+              <FormField label="Comprovantes" error={errors.photos} required>
                 <div ref={photosRef} tabIndex={-1}>
                   <div className="maintenance-photo-grid">
                     {photos.map((photo, index) => (
@@ -319,9 +329,7 @@ export function ExpenseScreen({
                         )}
                       </button>
                     ))}
-                    <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label="Adicionar comprovante">
-                      <span>+</span>
-                    </button>
+                    <PhotoAddButton disabled={isSubmitting} onClick={addPhoto} ariaLabel="Adicionar comprovante" />
                   </div>
                 </div>
               </FormField>

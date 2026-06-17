@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { FieldError, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
+import { FieldError, MoneyInputField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
+import { PhotoAddButton } from "../components/common/PhotoAddButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { buildWhatsAppUrl, openExternalUrl } from "../lib/localWorkflow";
@@ -142,6 +143,7 @@ function MaintenancePhotoGrid({
   kinds,
   photos,
   isInvalid,
+  required = false,
   isSubmitting,
   allowMultiple = false,
   onPreview
@@ -150,6 +152,7 @@ function MaintenancePhotoGrid({
   kinds: MaintenancePhotoKind[];
   photos: Partial<Record<MaintenancePhotoKind, string>>;
   isInvalid?: boolean;
+  required?: boolean;
   isSubmitting: boolean;
   allowMultiple?: boolean;
   onPreview: (kind: MaintenancePhotoKind) => void;
@@ -172,7 +175,10 @@ function MaintenancePhotoGrid({
 
   return (
     <div className={`finalize-input-block maintenance-photo-block ${isInvalid ? "is-invalid" : ""}`}>
-      <label>{label}</label>
+      <label className="form-field-label">
+        <span>{label}</span>
+        {required ? <span className="form-field-required" aria-hidden="true">*</span> : null}
+      </label>
       <div className="maintenance-photo-grid">
         {photoItems.map((photo, index) => (
           <button
@@ -193,15 +199,7 @@ function MaintenancePhotoGrid({
             )}
           </button>
         ))}
-        <button
-          type="button"
-          className="maintenance-photo-add"
-          disabled={isSubmitting}
-          onClick={() => onPreview(nextEmptyKind)}
-          aria-label={`Adicionar ${label}`}
-        >
-          <span>+</span>
-        </button>
+        <PhotoAddButton disabled={isSubmitting} onClick={() => onPreview(nextEmptyKind)} ariaLabel={`Adicionar ${label}`} />
       </div>
     </div>
   );
@@ -295,6 +293,7 @@ function MaintenanceFinalize({
 
           <TextAreaField
             ref={serviceDoneRef}
+            required
             label="Manutenção Realizada"
             error={errors.serviceDone}
             placeholder="Digite aqui"
@@ -307,12 +306,14 @@ function MaintenanceFinalize({
             }}
           />
 
-          <TextInputField
+          <MoneyInputField
             ref={valueRef}
+            required
             label="Valor (R$)"
             error={errors.value}
             inputMode="decimal"
-            placeholder="0,00"
+            pattern="[0-9.,]*"
+            autoComplete="off"
             value={value}
             onChange={(event) => {
               setValue(event.target.value);
@@ -323,6 +324,7 @@ function MaintenanceFinalize({
 
           <SelectField
             ref={paymentRef}
+            required
             label="Forma de Pagamento"
             error={errors.payment}
             value={payment}
@@ -338,6 +340,7 @@ function MaintenanceFinalize({
 
           <TextAreaField
             ref={establishmentRef}
+            required
             label="Estabelecimento"
             error={errors.establishment}
             placeholder="Digite aqui"
@@ -355,6 +358,7 @@ function MaintenanceFinalize({
             kinds={["NOTAFISCAL"]}
             photos={maintenancePhotos}
             isInvalid={Boolean(errors.invoicePhoto)}
+            required
             isSubmitting={isSubmitting}
             allowMultiple
             onPreview={(kind) => {
@@ -368,6 +372,7 @@ function MaintenanceFinalize({
             kinds={["FOTO1", "FOTO2", "FOTO3"]}
             photos={maintenancePhotos}
             isInvalid={Boolean(errors.maintenancePhoto)}
+            required
             isSubmitting={isSubmitting}
             onPreview={(kind) => {
               if (!isSubmitting) onPreviewMaintenancePhoto(kind);

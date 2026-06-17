@@ -5,7 +5,7 @@ import nlaLogo from "../../NLA.jpg";
 import qrCodeAvaliacao from "../../QrCode-Avaliação.png";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { SelectField, TextInputField } from "../components/common/FormFields";
+import { MoneyInputField, SelectField, TextInputField } from "../components/common/FormFields";
 import { LocalToast, type ToastState, type ToastTone } from "../components/common/LocalToast";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
@@ -40,9 +40,31 @@ function validateReceiptDraft(draft: PersonalReceiptEditableDraft) {
   if (!draft.nomePagante.trim()) errors.nomePagante = "Informe o pagante.";
   if (!draft.cliente.trim()) errors.cliente = "Informe o cliente.";
   if (!draft.valorTotal.trim()) errors.valorTotal = "Informe o total.";
+  else if (!/^\d+(?:[.,]\d{1,2})?$/.test(draft.valorTotal.trim())) errors.valorTotal = "Informe um valor numerico valido.";
   if (!draft.dataEmissao.trim()) errors.dataEmissao = "Informe a data de emissão.";
   if (!draft.metodoPagamento.trim()) errors.metodoPagamento = "Informe o método de pagamento.";
   return errors;
+}
+
+function displayReceiptValue(value: string) {
+  const trimmed = value.trim();
+  return trimmed || "—";
+}
+
+function sanitizeReceiptTotalInput(value: string) {
+  const cleaned = value.replace(/[^\d.,]/g, "");
+  const separatorMatches = [...cleaned.matchAll(/[.,]/g)];
+  if (!separatorMatches.length) return cleaned;
+
+  const lastSeparatorIndex = separatorMatches[separatorMatches.length - 1]?.index ?? -1;
+  if (lastSeparatorIndex < 0) return cleaned.replace(/[.,]/g, "");
+
+  const integerPart = cleaned.slice(0, lastSeparatorIndex).replace(/[.,]/g, "");
+  const fractionPart = cleaned.slice(lastSeparatorIndex + 1).replace(/[.,]/g, "").slice(0, 2);
+  const separator = cleaned[lastSeparatorIndex];
+
+  if (!fractionPart && cleaned.endsWith(separator)) return `${integerPart}${separator}`;
+  return fractionPart ? `${integerPart}${separator}${fractionPart}` : integerPart;
 }
 
 function ReceiptForm({
@@ -86,6 +108,7 @@ function ReceiptForm({
             <TextInputField
               fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
               label="Pagante"
+              required
               error={errors.nomePagante}
               value={draft.nomePagante}
               onChange={(event) => onChange("nomePagante", event.target.value)}
@@ -93,6 +116,7 @@ function ReceiptForm({
             <SelectField
               fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
               label="Cliente"
+              required
               error={errors.cliente}
               value={draft.cliente}
               options={clienteOptions.map((option) => ({ value: option, label: option }))}
@@ -100,16 +124,21 @@ function ReceiptForm({
               ariaLabel="Selecionar cliente"
               onChange={(value) => onChange("cliente", value)}
             />
-            <TextInputField
+            <MoneyInputField
               fieldClassName={`finalize-input-block receipt-editor-block`}
               label="Total"
+              required
               error={errors.valorTotal}
+              inputMode="decimal"
+              pattern="[0-9.,]*"
+              autoComplete="off"
               value={draft.valorTotal}
-              onChange={(event) => onChange("valorTotal", event.target.value)}
+              onChange={(event) => onChange("valorTotal", sanitizeReceiptTotalInput(event.target.value))}
             />
             <TextInputField
               fieldClassName={`finalize-input-block receipt-editor-block`}
               label="Data de emissão"
+              required
               error={errors.dataEmissao}
               type="date"
               value={draft.dataEmissao}
@@ -118,6 +147,7 @@ function ReceiptForm({
             <SelectField
               fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
               label="Método de pagamento"
+              required
               error={errors.metodoPagamento}
               value={draft.metodoPagamento}
               options={metodoPagamentoOptions.map((option) => ({ value: option, label: option }))}
@@ -146,7 +176,7 @@ function ReceiptForm({
 
 export function ReceiptDocument({ model, documentRef }: { model: PersonalReceiptModel; documentRef?: RefObject<HTMLElement> }) {
   return (
-    <article ref={documentRef} className="receipt-document" aria-label={`Recibo ${model.idPag}`}>
+    <article ref={documentRef} className="receipt-document" aria-label={`Recibo ${displayReceiptValue(model.idPag)}`}>
       <header className="receipt-header">
         <div className="receipt-header-main">
           <div className="receipt-header-title">INVOICE</div>
@@ -154,14 +184,14 @@ export function ReceiptDocument({ model, documentRef }: { model: PersonalReceipt
         </div>
         <div className="receipt-header-note">
           <div className="receipt-header-note-text">Obrigado por escolher seu recibo digital, você faz parte da solução!</div>
-          <div className="receipt-header-note-id">{model.idOp}</div>
+          <div className="receipt-header-note-id">{displayReceiptValue(model.idOp)}</div>
         </div>
       </header>
 
       <section className="receipt-summary">
         <div className="receipt-summary-main">
-          <div className="receipt-party-name">{model.nomePagante}</div>
-          <div className="receipt-party-client">{model.cliente}</div>
+          <div className="receipt-party-name">{displayReceiptValue(model.nomePagante)}</div>
+          <div className="receipt-party-client">{displayReceiptValue(model.cliente)}</div>
         </div>
         <div className="receipt-summary-meta">
           <div className="receipt-meta-labels">
@@ -170,9 +200,9 @@ export function ReceiptDocument({ model, documentRef }: { model: PersonalReceipt
             <div>Método de Pagamento</div>
           </div>
           <div className="receipt-meta-values">
-            <div>{model.idPag}</div>
-            <div>{model.dataEmissao}</div>
-            <div>{model.metodoPagamento}</div>
+            <div>{displayReceiptValue(model.idPag)}</div>
+            <div>{displayReceiptValue(model.dataEmissao)}</div>
+            <div>{displayReceiptValue(model.metodoPagamento)}</div>
           </div>
         </div>
       </section>
@@ -189,13 +219,13 @@ export function ReceiptDocument({ model, documentRef }: { model: PersonalReceipt
         <div className="receipt-total-row">
           <div className="receipt-total-thanks">Obrigado por viajar com a Betinhos</div>
           <div className="receipt-total-label">Total</div>
-          <div className="receipt-total-value">{model.valorTotal}</div>
+          <div className="receipt-total-value">{displayReceiptValue(model.valorTotal)}</div>
         </div>
 
         <div className="receipt-observations-row">
           <div className="receipt-observations">
             <div className="receipt-observations-label">Observações:</div>
-            <div className="receipt-observations-text">{model.observacoes}</div>
+            <div className="receipt-observations-text">{displayReceiptValue(model.observacoes)}</div>
           </div>
           <div className="receipt-company">
             <div>BETINHOS EXECUTIVE SERVICE LTDA EPP</div>
@@ -655,7 +685,8 @@ export function ReceiptScreen({
   }, [draft, model]);
 
   const updateField = (field: ReceiptDraftKey, value: string) => {
-    setDraft((current) => ({ ...current, [field]: value }));
+    const nextValue = field === "valorTotal" ? sanitizeReceiptTotalInput(value) : value;
+    setDraft((current) => ({ ...current, [field]: nextValue }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setReceiptLink(null);
     receiptUploadCacheRef.current = null;

@@ -948,17 +948,86 @@ svg {
 
 .receipt-editor-block label {
   color: rgb(85, 97, 117);
+  font-family: "Manrope", Arial, sans-serif;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.2;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .receipt-editor-block input {
-  min-height: 48px;
+  min-height: 42px;
   border-radius: 12px;
   background: rgb(255, 255, 255);
   box-shadow: inset 0 0 0 1px rgba(0, 14, 35, 0.08);
+}
+
+.receipt-editor-block input,
+.receipt-editor-block .searchable-select-trigger,
+.receipt-editor-block .searchable-select-value,
+.receipt-editor-block .money-input-prefix {
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.receipt-editor-block input,
+.receipt-editor-block .searchable-select-trigger,
+.receipt-editor-block .searchable-select-value,
+.receipt-editor-block .money-input-prefix {
+  color: #000e23;
+}
+
+.receipt-editor-block input::placeholder,
+.receipt-editor-block .searchable-select-trigger.is-placeholder,
+.receipt-editor-block .searchable-select-trigger.is-placeholder .searchable-select-value {
+  color: rgba(0, 14, 35, 0.42) !important;
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.money-input-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  border: 1px solid rgba(0, 26, 61, 0.07);
+  border-radius: 12px;
+  background: #f6f6f6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  padding: 0 11px;
+  box-sizing: border-box;
+}
+
+.money-input-prefix {
+  color: #000e23;
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  pointer-events: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+}
+
+.money-input-field input {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  flex: 1 1 auto;
+  outline: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .receipt-search-field {
@@ -972,6 +1041,45 @@ svg {
   padding-right: 34px;
   background: rgb(255, 255, 255);
   box-shadow: inset 0 0 0 1px rgba(0, 14, 35, 0.08);
+}
+
+.form-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.form-field-required {
+  color: #c0272d;
+  font-size: 0.95em;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.form-control-input,
+.form-control-textarea,
+.form-control-trigger,
+.form-control-value {
+  font-family: "Manrope", Arial, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  color: #000e23 !important;
+}
+
+.form-control-input::placeholder,
+.form-control-textarea::placeholder,
+.form-control-trigger.is-placeholder,
+.form-control-trigger.is-placeholder .form-control-value {
+  font-family: "Manrope", Arial, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  color: rgba(0, 14, 35, 0.42) !important;
 }
 
 .receipt-search-field::after {
@@ -2042,6 +2150,9 @@ svg {
 }
 
 .voucher-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex: 1 1 0;
   max-width: 140px;
   min-width: 90px;
@@ -2340,8 +2451,7 @@ svg {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.maintenance-photo-thumb,
-.maintenance-photo-add {
+.maintenance-photo-thumb {
   width: 100%;
   aspect-ratio: 4 / 3;
   min-height: 128px;
@@ -2362,29 +2472,6 @@ svg {
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-.maintenance-photo-add {
-  border: 1px dashed rgba(0, 14, 35, 0.36);
-  background: rgba(0, 14, 35, 0.08);
-  color: rgb(0, 14, 35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.maintenance-photo-add span {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgb(0, 14, 35);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 34px;
-  font-family: "Manrope", sans-serif;
-  line-height: 1;
-  font-weight: 400;
 }
 
 .maintenance-photo-clear {
@@ -2689,9 +2776,6 @@ svg {
   padding: 10px;
   border: 1px solid rgba(0, 14, 35, 0.1);
   border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 248, 250, 0.96)),
-    #fff;
   display: grid;
   gap: 10px;
   box-shadow: 0 8px 20px rgba(0, 14, 35, 0.04);
@@ -2708,7 +2792,6 @@ svg {
 
 .collision-evidence-group--optional {
   margin-top: 12px;
-  background: rgb(247, 248, 250);
 }
 
 .collision-evidence-group-head {
@@ -2803,9 +2886,14 @@ svg {
   font-weight: 900;
 }
 
-.collision-evidence-add {
-  border: 1px dashed rgba(0, 14, 35, 0.25);
-  background: #fff;
+.photo-add-button {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 128px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px dashed rgba(0, 26, 61, 0.18);
+  background: #f6f6f6;
   color: rgb(0, 14, 35);
   display: grid;
   place-items: center;
@@ -2813,23 +2901,25 @@ svg {
   gap: 6px;
   padding: 8px;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
 }
 
-.collision-evidence-add span {
-  width: 38px;
-  height: 38px;
+.photo-add-button span {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: rgb(0, 14, 35);
+  background: #000e23;
   color: #fff;
   display: grid;
   place-items: center;
   font-family: "Manrope", sans-serif;
-  font-size: 27px;
+  font-size: 34px;
   font-weight: 400;
   line-height: 1;
+  box-shadow: 0 10px 22px rgba(0, 14, 35, 0.16);
 }
 
-.collision-evidence-add strong {
+.photo-add-button strong {
   max-width: 100%;
   color: rgb(0, 14, 35);
   font-family: "Manrope", sans-serif;
@@ -6683,6 +6773,28 @@ button:disabled {
   font-weight: 700;
 }
 
+.finalize-input-block .money-input-field input,
+.finalize-input-block .money-input-field input:focus {
+  min-height: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  outline: 0 !important;
+}
+
+.finalize-input-block .money-input-field:focus-within {
+  outline: 0;
+  box-shadow: 0 0 0 2px rgba(0, 26, 61, 0.12), inset 0 0 0 1px rgba(0, 14, 35, 0.08);
+}
+
+.finalize-input-block.is-invalid .money-input-field {
+  border-color: rgba(180,48,52,.58) !important;
+  box-shadow: 0 0 0 3px rgba(180,48,52,.14), inset 0 0 0 1px rgba(180,48,52,.16) !important;
+  background: rgb(255,252,252) !important;
+}
+
 .voucher-row input:focus,
 .voucher-row select:focus,
 .voucher-row textarea:focus,
@@ -6692,7 +6804,7 @@ button:disabled {
 .cancel-input-block textarea:focus,
 .searchable-select-search:focus {
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(0, 26, 61, 0.09), inset 0 0 0 1px rgba(0, 14, 35, 0.08);
+  box-shadow: 0 0 0 2px rgba(0, 26, 61, 0.12), inset 0 0 0 1px rgba(0, 14, 35, 0.08);
 }
 
 .voucher-row input[type="date"],
@@ -6985,11 +7097,6 @@ button:disabled {
   gap: 9px;
 }
 
-.maintenance-photo-thumb,
-.maintenance-photo-add {
-  border-radius: 14px;
-}
-
 .maintenance-photo-thumb {
   position: relative;
   box-shadow: inset 0 0 0 1px rgba(0, 26, 61, 0.06);
@@ -6997,19 +7104,6 @@ button:disabled {
 
 .maintenance-photo-thumb::after {
   display: none;
-}
-
-.maintenance-photo-add {
-  border: 1px dashed rgba(0, 26, 61, 0.18);
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
-}
-
-.maintenance-photo-add span {
-  width: 48px;
-  height: 48px;
-  background: #000e23;
-  box-shadow: 0 10px 22px rgba(0, 14, 35, 0.16);
 }
 
 /* Photo framing rule: never crop camera or captured images. */
@@ -10121,7 +10215,7 @@ select,
   min-width: 48px !important;
   min-height: 24px !important;
   padding: 0 8px !important;
-  background: #eef3f8 !important;
+  background: #f6f6f6 !important;
   color: #001a3d !important;
   font-family: "Manrope", Arial, sans-serif !important;
   font-size: 0.66rem !important;
@@ -10131,18 +10225,16 @@ select,
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
 
-.collision-evidence-add strong {
+.photo-add-button strong {
   display: none !important;
 }
 
-.collision-evidence-add span,
-.maintenance-photo-add span {
+.photo-add-button span {
   transform-origin: center;
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
-.collision-evidence-add:not(:disabled):active span,
-.maintenance-photo-add:not(:disabled):active span {
+.photo-add-button:not(:disabled):active span {
   transform: scale(0.9);
 }
 
@@ -10548,8 +10640,8 @@ select,
 .searchable-select-trigger {
   position: relative !important;
   width: 100% !important;
-  min-height: 46px !important;
-  padding: 11px 42px 11px 12px !important;
+  height: 42px !important;
+  padding: 9px 42px 9px 12px !important;
   border: 0 !important;
   border-radius: 12px !important;
   background: #f6f6f6 !important;
@@ -10567,7 +10659,6 @@ select,
 }
 
 .receipt-editor-block .searchable-select-trigger {
-  min-height: 48px !important;
   background: #f6f6f6 !important;
   box-shadow: inset 0 0 0 1px rgba(0, 14, 35, 0.08) !important;
 }
@@ -10628,19 +10719,24 @@ select,
 }
 
 .searchable-select-panel {
-  position: relative !important;
-  left: auto !important;
+  position: absolute !important;
+  left: 0 !important;
   right: auto !important;
-  top: auto !important;
+  top: calc(100% + 6px) !important;
   width: 100% !important;
-  margin-top: 6px !important;
+  margin-top: 0 !important;
   z-index: 60 !important;
   padding: 8px !important;
   border: 1px solid rgba(0, 14, 35, 0.11) !important;
   border-radius: 14px !important;
   background: rgba(255, 255, 255, 0.98) !important;
-  box-shadow: 0 18px 40px rgba(0, 14, 35, 0.16) !important;
+  box-shadow: 0 15px 20px rgba(0, 14, 35, 0.16) !important;
   backdrop-filter: blur(8px) !important;
+}
+
+.searchable-select.is-open-up .searchable-select-panel {
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
 }
 
 .searchable-select-search {

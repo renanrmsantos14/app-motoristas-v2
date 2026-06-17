@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
+import { PhotoAddButton } from "../components/common/PhotoAddButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import type { DetailData } from "../types";
@@ -69,7 +70,10 @@ export function ReceiveScreen({
             <div className="finalize-form maintenance maintenance-request-form expense-form receive-form">
 
               <div ref={photosRef} className={`finalize-input-block ${photosError ? "is-invalid" : ""}`} tabIndex={-1}>
-                <label>Comprrovante(s) de pagamento</label>
+                <label className="form-field-label">
+                  <span>Comprovante(s) de pagamento</span>
+                  <span className="form-field-required" aria-hidden="true">*</span>
+                </label>
                 <div className="maintenance-photo-grid">
                   {photos.map((photo, index) => (
                     <button
@@ -90,11 +94,8 @@ export function ReceiveScreen({
                       )}
                     </button>
                   ))}
-                  <button type="button" className="maintenance-photo-add" disabled={isSubmitting} onClick={addPhoto} aria-label="Adicionar comprovante">
-                    <span>+</span>
-                  </button>
+                  <PhotoAddButton disabled={isSubmitting} onClick={addPhoto} ariaLabel="Adicionar comprovante" />
                 </div>
-                <div className="field-hint">{photos.length} comprovante(s)</div>
                 {photosError ? <div className="field-error">{photosError}</div> : null}
               </div>
             </div>
