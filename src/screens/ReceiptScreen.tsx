@@ -5,13 +5,14 @@ import nlaLogo from "../../NLA.jpg";
 import qrCodeAvaliacao from "../../QrCode-Avaliação.png";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { MoneyInputField, SelectField, TextInputField } from "../components/common/FormFields";
+import { MoneyInputField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
 import { LocalToast, type ToastState, type ToastTone } from "../components/common/LocalToast";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
-import { uploadReceiptPdfRemote, type ReceiptPdfUploadResult } from "../lib/dataverse";
+import { createReceiptRecordRemote, uploadReceiptPdfRemote, type PreparedReceiptUpload, type ReceiptPdfUploadResult } from "../lib/dataverse";
 import { buildPersonalReceiptDraft, buildPersonalReceiptModel, type PersonalReceiptEditableDraft, type PersonalReceiptModel } from "../lib/personalReceipt";
+import { getReceiptCopy, getReceiptDisplayClient, RECEIPT_LANGUAGE_OPTIONS } from "../lib/receiptLanguage";
 import { generateReceiptPdfBlob } from "../lib/receiptPdf";
 import type { DetailData } from "../types";
 
@@ -30,11 +31,6 @@ function nextToast(message: string, tone: ToastTone): ToastState {
   return { id: Date.now() + Math.random(), message, tone };
 }
 
-function buildReceiptPdfFileName(model: PersonalReceiptModel) {
-  const safeId = (model.idPag || "recibo").replace(/[^\w-]+/g, "-");
-  return `${safeId}.pdf`;
-}
-
 function validateReceiptDraft(draft: PersonalReceiptEditableDraft) {
   const errors: ReceiptDraftErrors = {};
   if (!draft.nomePagante.trim()) errors.nomePagante = "Informe o pagante.";
@@ -48,7 +44,7 @@ function validateReceiptDraft(draft: PersonalReceiptEditableDraft) {
 
 function displayReceiptValue(value: string) {
   const trimmed = value.trim();
-  return trimmed || "—";
+  return trimmed || "-";
 }
 
 function sanitizeReceiptTotalInput(value: string) {
@@ -124,6 +120,15 @@ function ReceiptForm({
               ariaLabel="Selecionar cliente"
               onChange={(value) => onChange("cliente", value)}
             />
+            <SelectField
+              fieldClassName={`finalize-input-block receipt-editor-block`}
+              label="Idioma"
+              value={draft.idioma}
+              options={RECEIPT_LANGUAGE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+              placeholder="Selecionar idioma"
+              ariaLabel="Selecionar idioma"
+              onChange={(value) => onChange("idioma", value)}
+            />
             <MoneyInputField
               fieldClassName={`finalize-input-block receipt-editor-block`}
               label="Total"
@@ -155,6 +160,13 @@ function ReceiptForm({
               ariaLabel="Selecionar método de pagamento"
               onChange={(value) => onChange("metodoPagamento", value)}
             />
+            <TextAreaField
+              fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
+              label="Observações"
+              rows={4}
+              value={draft.observacoes}
+              onChange={(event) => onChange("observacoes", event.target.value)}
+            />
           </div>
         </div>
       </div>
@@ -175,29 +187,30 @@ function ReceiptForm({
 }
 
 export function ReceiptDocument({ model, documentRef }: { model: PersonalReceiptModel; documentRef?: RefObject<HTMLElement> }) {
+  const copy = getReceiptCopy(model.idioma);
+
   return (
     <article ref={documentRef} className="receipt-document" aria-label={`Recibo ${displayReceiptValue(model.idPag)}`}>
       <header className="receipt-header">
         <div className="receipt-header-main">
-          <div className="receipt-header-title">INVOICE</div>
+          <div className="receipt-header-title">{copy.title}</div>
           <img className="receipt-header-logo" src={logoBetinhosB} alt="Betinhos B" />
         </div>
         <div className="receipt-header-note">
-          <div className="receipt-header-note-text">Obrigado por escolher seu recibo digital, você faz parte da solução!</div>
-          <div className="receipt-header-note-id">{displayReceiptValue(model.idOp)}</div>
+          <div className="receipt-header-note-text">{copy.note}</div>
         </div>
       </header>
 
       <section className="receipt-summary">
         <div className="receipt-summary-main">
           <div className="receipt-party-name">{displayReceiptValue(model.nomePagante)}</div>
-          <div className="receipt-party-client">{displayReceiptValue(model.cliente)}</div>
+          <div className="receipt-party-client">{displayReceiptValue(getReceiptDisplayClient(model.cliente, model.idioma))}</div>
         </div>
         <div className="receipt-summary-meta">
           <div className="receipt-meta-labels">
-            <div>Identificação</div>
-            <div>Data de Emissão</div>
-            <div>Método de Pagamento</div>
+            <div>{copy.identificationLabel}</div>
+            <div>{copy.issueDateLabel}</div>
+            <div>{copy.paymentMethodLabel}</div>
           </div>
           <div className="receipt-meta-values">
             <div>{displayReceiptValue(model.idPag)}</div>
@@ -209,22 +222,22 @@ export function ReceiptDocument({ model, documentRef }: { model: PersonalReceipt
 
       <section className="receipt-body">
         <div className="receipt-block receipt-description-head">
-          <div className="receipt-description-title">Descrição</div>
+          <div className="receipt-description-title">{copy.descriptionTitle}</div>
         </div>
 
         <div className="receipt-block receipt-description-body">
-          <p>Serviços prestados de transporte executivo terrestre no brasil</p>
+          <p>{copy.descriptionBody}</p>
         </div>
 
         <div className="receipt-total-row">
-          <div className="receipt-total-thanks">Obrigado por viajar com a Betinhos</div>
-          <div className="receipt-total-label">Total</div>
+          <div className="receipt-total-thanks">{copy.thanksForTravel}</div>
+          <div className="receipt-total-label">{copy.totalLabel}</div>
           <div className="receipt-total-value">{displayReceiptValue(model.valorTotal)}</div>
         </div>
 
         <div className="receipt-observations-row">
           <div className="receipt-observations">
-            <div className="receipt-observations-label">Observações:</div>
+            <div className="receipt-observations-label">{copy.observationsLabel}</div>
             <div className="receipt-observations-text">{displayReceiptValue(model.observacoes)}</div>
           </div>
           <div className="receipt-company">
@@ -248,7 +261,7 @@ export function ReceiptDocument({ model, documentRef }: { model: PersonalReceipt
           <div className="receipt-footer-logo-box bmark">
             <div className="receipt-qr-box">
               <img className="receipt-qr-image" src={qrCodeAvaliacao} alt="QR code para avaliação" />
-              <div className="receipt-qr-caption">Avalie sua experiência</div>
+              <div className="receipt-qr-caption">{copy.qrCaption}</div>
             </div>
           </div>
         </div>
@@ -258,19 +271,19 @@ export function ReceiptDocument({ model, documentRef }: { model: PersonalReceipt
         <div className="receipt-footer-contacts">
           <div className="receipt-contact-row">
             <div className="receipt-contact-name">Junior de Paula</div>
-            <div className="receipt-contact-role">Concierge (Bilingual)</div>
+            <div className="receipt-contact-role">{copy.conciergeRole}</div>
             <div className="receipt-contact-phone">+55 12 99723 6961</div>
             <div className="receipt-contact-email">junior@betinhos.com.br</div>
           </div>
           <div className="receipt-contact-row">
             <div className="receipt-contact-name">Deborah Keila</div>
-            <div className="receipt-contact-role">Operations Manager</div>
+            <div className="receipt-contact-role">{copy.operationsManagerRole}</div>
             <div className="receipt-contact-phone">+55 12 99615 9093</div>
             <div className="receipt-contact-email">deborah.keila@betinhos.com.br</div>
           </div>
           <div className="receipt-contact-row">
             <div className="receipt-contact-name">Juliana Rodrigues</div>
-            <div className="receipt-contact-role">Finance Manager</div>
+            <div className="receipt-contact-role">{copy.financeManagerRole}</div>
             <div className="receipt-contact-phone">+55 12 99615 9085</div>
             <div className="receipt-contact-email">financeiro@betinhos.com.br</div>
           </div>
@@ -365,24 +378,62 @@ function ReceiptScaledCanvas({
 function ReceiptPreview({
   model,
   documentRef,
-  onExpand
+  onExpand,
+  receiptLink
 }: {
   model: PersonalReceiptModel;
   documentRef?: RefObject<HTMLElement>;
   onExpand: () => void;
+  receiptLink?: string | null;
 }) {
+  const copy = getReceiptCopy(model.idioma);
+  const isGenerated = Boolean(receiptLink);
+
   return (
-    <button type="button" className="receipt-card-shell receipt-preview-card receipt-preview-inline" onClick={onExpand} aria-label="Visualizar preview do recibo">
-      <div className="receipt-preview-copy">
-        <span>Preview do recibo</span>
-        <small>Toque aqui para visualizar</small>
-      </div>
-      <div className="receipt-preview-mini-shell">
-        <div className="receipt-preview-mini" aria-hidden="true">
-          <ReceiptDocument model={model} documentRef={documentRef} />
+    <article className={`receipt-preview-card-shell ${isGenerated ? "is-generated" : ""}`.trim()}>
+      <button
+        type="button"
+        className={`receipt-card-shell receipt-preview-card receipt-preview-inline ${isGenerated ? "is-generated" : ""}`.trim()}
+        onClick={onExpand}
+        aria-label={copy.expandPreviewAria}
+      >
+        <div className="receipt-preview-copy">
+          <span>Preview do recibo</span>
+          <small>Toque aqui para visualizar</small>
+        </div>
+        <div className="receipt-preview-mini-shell">
+          <div className="receipt-preview-mini" aria-hidden="true">
+            <ReceiptDocument model={model} documentRef={documentRef} />
+          </div>
+        </div>
+      </button>
+
+      <div className={`receipt-preview-expanded-panel ${isGenerated ? "is-visible" : ""}`.trim()} aria-hidden={!isGenerated}>
+        <div className="receipt-preview-expanded-copy">
+          <span>Recibo gerado</span>
+          <strong>{displayReceiptValue(model.idPag)}</strong>
+        </div>
+
+        <div className="receipt-preview-expanded-stage-shell">
+          <ReceiptScaledCanvas
+            model={model}
+            documentRef={documentRef}
+            className="receipt-preview-expanded-stage"
+            interactive
+            onClick={onExpand}
+          />
+        </div>
+
+        <div className="receipt-preview-generated-actions">
+          <a className="receipt-preview-generated-action is-primary" href={receiptLink ?? "#"} target="_blank" rel="noreferrer">
+            Abrir link
+          </a>
+          <button type="button" className="receipt-preview-generated-action is-secondary">
+            Enviar por email
+          </button>
         </div>
       </div>
-    </button>
+    </article>
   );
 }
 
@@ -393,6 +444,8 @@ function ReceiptExpandedPreview({
   model: PersonalReceiptModel;
   onClose: () => void;
 }) {
+  const copy = getReceiptCopy(model.idioma);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -403,11 +456,11 @@ function ReceiptExpandedPreview({
   }, [onClose]);
 
   return (
-    <div className="receipt-preview-overlay" role="dialog" aria-modal="true" aria-label="Preview ampliado do recibo" onClick={onClose}>
+    <div className="receipt-preview-overlay" role="dialog" aria-modal="true" aria-label={copy.expandedPreviewAria} onClick={onClose}>
       <div className="receipt-preview-overlay-shell" onClick={(event) => event.stopPropagation()}>
         <div className="receipt-preview-overlay-topbar">
-          <strong>Preview ampliado</strong>
-          <button type="button" className="receipt-preview-overlay-close" onClick={onClose} aria-label="Fechar preview ampliado">
+          <strong>{copy.expandedPreviewTitle}</strong>
+          <button type="button" className="receipt-preview-overlay-close" onClick={onClose} aria-label={copy.closeExpandedPreviewAria}>
             X
           </button>
         </div>
@@ -430,6 +483,7 @@ function getPointerDistance(points: PointerEvent[]) {
 }
 
 function ReceiptZoomCanvas({ model }: { model: PersonalReceiptModel }) {
+  const copy = getReceiptCopy(model.idioma);
   const baseWidth = 794;
   const baseHeight = 1123;
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -528,7 +582,7 @@ function ReceiptZoomCanvas({ model }: { model: PersonalReceiptModel }) {
 
   return (
     <div className="receipt-zoom-shell">
-      <div className="receipt-zoom-controls" aria-label="Controle de zoom do recibo">
+      <div className="receipt-zoom-controls" aria-label={copy.zoomControlsAria}>
         <button type="button" onClick={() => setZoom((current) => clampZoom(current - 0.25))} disabled={zoom <= 1.01}>
           -
         </button>
@@ -582,7 +636,6 @@ function ReceiptViewport({
   title,
   screenLabel
 }: {
-  detail?: DetailData;
   model: PersonalReceiptModel;
   draft?: PersonalReceiptEditableDraft;
   errors?: ReceiptDraftErrors;
@@ -611,9 +664,9 @@ function ReceiptViewport({
     <AppShell screenLabel={screenLabel}>
       <FormMenu title={title} onBack={onBack} />
       <section className="main-panel receipt-main receipt-editor-main">
-        <div className="receipt-editor-layout">
-          <ReceiptPreview model={model} documentRef={documentRef} onExpand={openExpandedPreview} />
-          {draft && onDraftChange && onGenerate ? (
+        <div className={`receipt-editor-layout ${receiptLink ? "is-generated" : ""}`.trim()}>
+          <ReceiptPreview model={model} documentRef={documentRef} onExpand={openExpandedPreview} receiptLink={receiptLink} />
+          {draft && onDraftChange && onGenerate && !receiptLink ? (
             <ReceiptForm
               draft={draft}
               errors={errors ?? {}}
@@ -644,20 +697,23 @@ export function ReceiptScreen({
   const [errors, setErrors] = useState<ReceiptDraftErrors>({});
   const [toast, setToast] = useState<ToastState | null>(null);
   const [receiptLink, setReceiptLink] = useState<string | null>(null);
+  const [generatedIdentifier, setGeneratedIdentifier] = useState("");
   const [generateState, setGenerateState] = useState<ActionButtonState>("idle");
   const receiptDocumentRef = useRef<HTMLElement | null>(null);
   const receiptPdfCacheRef = useRef<{ key: string; blob: Blob } | null>(null);
-  const receiptUploadCacheRef = useRef<{ key: string; result: ReceiptPdfUploadResult } | null>(null);
-  const model = useMemo(() => buildPersonalReceiptModel(detail, draft), [detail, draft]);
+  const model = useMemo(
+    () => buildPersonalReceiptModel(detail, draft, generatedIdentifier ? { receiptIdentifier: generatedIdentifier } : {}),
+    [detail, draft, generatedIdentifier]
+  );
 
   useEffect(() => {
     setDraft(buildPersonalReceiptDraft(detail));
     setErrors({});
     setToast(null);
     setReceiptLink(null);
+    setGeneratedIdentifier("");
     setGenerateState("idle");
     receiptPdfCacheRef.current = null;
-    receiptUploadCacheRef.current = null;
   }, [detail]);
 
   useEffect(() => {
@@ -689,7 +745,7 @@ export function ReceiptScreen({
     setDraft((current) => ({ ...current, [field]: nextValue }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setReceiptLink(null);
-    receiptUploadCacheRef.current = null;
+    setGeneratedIdentifier("");
   };
 
   const ensureValidDraft = () => {
@@ -708,12 +764,18 @@ export function ReceiptScreen({
     onProgress?.({ message: "Gerando recibo personalizado", phase: "loading" });
 
     void (async () => {
-      const cacheKey = JSON.stringify(model);
-      const cachedPdf = receiptPdfCacheRef.current;
-      const blob = cachedPdf?.key === cacheKey ? cachedPdf.blob : await generateReceiptPdfBlob(model);
-      receiptPdfCacheRef.current = { key: cacheKey, blob };
-      const fileName = buildReceiptPdfFileName(model);
-      const result = await ensureReceiptUploaded(blob, fileName, cacheKey);
+      const prepared = await createReceiptRecordRemote({
+        detail,
+        model,
+        onProgress: (message) => {
+          onProgress?.({ message, phase: "loading" });
+        }
+      });
+      setGeneratedIdentifier(prepared.identifier);
+      onProgress?.({ message: `Montando recibo ${prepared.identifier}`, phase: "loading" });
+      const blob = await generateReceiptPdfBlob(prepared.model);
+      receiptPdfCacheRef.current = { key: JSON.stringify(prepared.model), blob };
+      const result = await ensureReceiptUploaded(prepared, blob);
       setReceiptLink(result.link);
       setGenerateState("success");
       onProgress?.({ message: "Recibo pronto para abertura.", phase: "success" });
@@ -736,24 +798,14 @@ export function ReceiptScreen({
     });
   };
 
-  const ensureReceiptUploaded = async (blob: Blob, fileName: string, cacheKey: string) => {
-    if (!detail) {
-      throw new Error("Selecione um serviço para registrar o recibo personalizado.");
-    }
-    const cachedUpload = receiptUploadCacheRef.current;
-    if (cachedUpload?.key === cacheKey) return cachedUpload.result;
-
-    const result = await uploadReceiptPdfRemote({
-      detail,
-      model,
+  const ensureReceiptUploaded = async (prepared: PreparedReceiptUpload, blob: Blob): Promise<ReceiptPdfUploadResult> => {
+    return uploadReceiptPdfRemote({
+      prepared,
       pdfBlob: blob,
-      fileName,
       onProgress: (message) => {
         onProgress?.({ message, phase: "loading" });
       }
     });
-    receiptUploadCacheRef.current = { key: cacheKey, result };
-    return result;
   };
 
   return (
@@ -781,7 +833,8 @@ const PREVIEW_MODEL: PersonalReceiptModel = {
   idOp: "OP-301",
   nomePagante: "Renan Batista de Souza",
   cliente: "Tenaris",
-  idPag: "PAG-0012",
+  idioma: "pt-BR",
+  idPag: "R-0012",
   dataEmissao: "15/06/2026",
   metodoPagamento: "Pedido de Compra",
   periodo: "15/06/2026 08:30",

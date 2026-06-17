@@ -3,6 +3,7 @@
 import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
 import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
 import type { PersonalReceiptModel } from "./personalReceipt";
+import { RECEIPT_LANGUAGE } from "./receiptLanguage";
 
 import { getFieldValue } from "./fieldLookup.ts";
 
@@ -93,6 +94,12 @@ const RECEIPT_STATUS = {
   salvoNoOneDrive: 100000001,
   falha: 100000002
 } as const;
+
+const RECEIPT_LANGUAGE_VALUE: Record<string, number> = {
+  [RECEIPT_LANGUAGE.portuguese]: 100000000,
+  [RECEIPT_LANGUAGE.english]: 100000001,
+  [RECEIPT_LANGUAGE.spanish]: 100000002
+};
 
 const DRIVER_LINK_TYPE = {
   colaborador: 0,
@@ -1154,93 +1161,165 @@ function getReceiptMotoristaId(detail: DetailData) {
   return cleanODataGuid(record._cr40f_motorista_value);
 }
 
-function buildReceiptRecordName(model: PersonalReceiptModel) {
-  return truncateDataverseText([model.idPag, model.cliente].filter(Boolean).join(" - ") || "Recibo", 100);
+async function resolveReceiptMotoristaId(detail?: DetailData) {
+  const motoristaFromDetail = detail ? getReceiptMotoristaId(detail) : "";
+  if (motoristaFromDetail) return motoristaFromDetail;
+  const driver = await getDriverContext();
+  return cleanGuid(driver.id || driver.funcionario?.cr40f_funcionariosid || "");
 }
 
-export async function uploadReceiptPdfRemote({
+function buildReceiptRecordName(model: PersonalReceiptModel) {
+  return truncateDataverseText(model.idPag || "Recibo", 100);
+}
+
+function buildReceiptPendingRecordName(model: PersonalReceiptModel) {
+  return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em geracao", 100);
+}
+
+function normalizeReceiptIdentifier(value: unknown) {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return "";
+  return /^R-/i.test(trimmed) ? trimmed.replace(/^r-/i, "R-") : `R-${trimmed.replace(/^[-\s]+/, "")}`;
+}
+
+export type PreparedReceiptUpload = {
+  recordId: string;
+  identifier: string;
+  fileName: string;
+  fileNameBase: string;
+  path: string;
+  model: PersonalReceiptModel;
+  motoristaId: string;
+  reservaId: string;
+};
+
+export async function createReceiptRecordRemote({
   detail,
   model,
-  pdfBlob,
-  fileName,
   onProgress
 }: {
-  detail: DetailData;
+  detail?: DetailData;
   model: PersonalReceiptModel;
-  pdfBlob: Blob;
-  fileName: string;
   onProgress?: (message: string) => void;
-}): Promise<ReceiptPdfUploadResult> {
-  const reservaId = cleanGuid(detail.dataverse?.id ?? "");
-  if (!reservaId) throw new Error("Serviço sem referência Dataverse. Nao e possivel registrar o recibo.");
-
-  const motoristaId = getReceiptMotoristaId(detail);
+}): Promise<PreparedReceiptUpload> {
+  const reservaId = cleanGuid(detail?.dataverse?.id ?? "");
+  const motoristaId = await resolveReceiptMotoristaId(detail);
+  if (!motoristaId) throw new Error("Motorista atual nao foi encontrado para registrar o recibo.");
   const lookupNavigationNames = await loadReceiptLookupNavigationNamesRemote();
-  const fileNameBase = sanitizePathSegment(fileName.replace(/\.pdf$/i, ""), model.idPag || "recibo");
-  const storedFileName = `${fileNameBase}.pdf`;
-  const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
-  const path = `Recibos/${devPrefix}${sanitizePathSegment(model.cliente, "Sem cliente")}/${sanitizePathSegment(model.idPag, "Sem identificacao")}`;
   const emittedAt = new Date().toISOString();
   const numericValue = parseCurrencyNumber(model.valorTotal);
   const dataEmissao = parseReceiptDate(model.dataEmissao);
   const baseRecord: Record<string, unknown> = {
-    cr40f_name: buildReceiptRecordName(model),
-    cr40f_id_pagamento: truncateDataverseText(model.idPag, 1000),
+    cr40f_name: buildReceiptPendingRecordName(model),
     cr40f_id_operacao: truncateDataverseText(model.idOp, 1000),
     cr40f_pagante: truncateDataverseText(model.nomePagante, 1000),
     cr40f_cliente: truncateDataverseText(model.cliente, 1000),
+    new_idioma: RECEIPT_LANGUAGE_VALUE[model.idioma] ?? RECEIPT_LANGUAGE_VALUE[RECEIPT_LANGUAGE.portuguese],
     cr40f_valor_total_texto: truncateDataverseText(model.valorTotal, 1000),
     cr40f_metodo_pagamento: truncateDataverseText(model.metodoPagamento, 1000),
     cr40f_periodo: truncateDataverseText(model.periodo, 1000),
     cr40f_trajetos: model.trajetos,
     cr40f_observacoes: model.observacoes,
-    cr40f_nome_arquivo: storedFileName,
-    cr40f_caminho_onedrive: path,
     cr40f_mime_type: "application/pdf",
-    cr40f_tamanho_bytes: Math.max(0, Math.trunc(pdfBlob.size)),
     cr40f_status_geracao: RECEIPT_STATUS.gerado,
     cr40f_modelo_json: JSON.stringify(model),
-    cr40f_gerado_em: emittedAt,
-    [`${lookupNavigationNames.reserva}@odata.bind`]: bind(DATAVERSE.geral, reservaId)
+    cr40f_gerado_em: emittedAt
   };
-  if (motoristaId) baseRecord[`${lookupNavigationNames.motorista}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+  if (reservaId) baseRecord[`${lookupNavigationNames.reserva}@odata.bind`] = bind(DATAVERSE.geral, reservaId);
+  baseRecord[`${lookupNavigationNames.motorista}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
   if (Number.isFinite(numericValue) && numericValue > 0) baseRecord.cr40f_valor_total = numericValue;
   if (dataEmissao) baseRecord.cr40f_data_emissao = dataEmissao;
 
   onProgress?.("Registrando recibo no Dataverse.");
   const created = await createOne(DATAVERSE.recibos, baseRecord);
   const receiptId = cleanGuid(created.id);
+  try {
+    const createdRecord = await retrieveOne(DATAVERSE.recibos, receiptId, "$select=new_id");
+    const identifier = normalizeReceiptIdentifier(createdRecord.new_id);
+    if (!identifier) {
+      throw new Error("Recibo criado, mas o Dataverse nao retornou new_id. Confirme o identificador automatico da tabela.");
+    }
+    const finalModel: PersonalReceiptModel = { ...model, idPag: identifier };
+    const fileNameBase = sanitizePathSegment(identifier, "recibo");
+    const storedFileName = `${fileNameBase}.pdf`;
+    const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+    const path = `Recibos/${devPrefix}${sanitizePathSegment(finalModel.cliente, "Sem cliente")}/${sanitizePathSegment(identifier, "Sem identificacao")}`;
+    await updateOne(DATAVERSE.recibos, receiptId, {
+      cr40f_name: buildReceiptRecordName(finalModel),
+      cr40f_id_pagamento: truncateDataverseText(identifier, 1000),
+      cr40f_nome_arquivo: storedFileName,
+      cr40f_caminho_onedrive: path,
+      cr40f_modelo_json: JSON.stringify(finalModel)
+    });
 
+    return {
+      recordId: receiptId,
+      identifier,
+      fileName: storedFileName,
+      fileNameBase,
+      path,
+      model: finalModel,
+      motoristaId,
+      reservaId
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await updateOne(DATAVERSE.recibos, receiptId, {
+      cr40f_status_geracao: RECEIPT_STATUS.falha,
+      cr40f_erro: message
+    }).catch((updateError) => {
+      dataverseWarn("Falha ao marcar recibo como Falha na preparacao.", {
+        receiptId,
+        originalError: message,
+        updateError: describeDataverseError(updateError)
+      });
+    });
+    throw error;
+  }
+}
+
+export async function uploadReceiptPdfRemote({
+  prepared,
+  pdfBlob,
+  onProgress
+}: {
+  prepared: PreparedReceiptUpload;
+  pdfBlob: Blob;
+  onProgress?: (message: string) => void;
+}): Promise<ReceiptPdfUploadResult> {
+  const { recordId, fileName, fileNameBase, path, model, motoristaId, reservaId } = prepared;
   try {
     onProgress?.("Enviando PDF para o Flow.");
     const dataUrl = await blobToDataUrl(pdfBlob);
-    const link = await uploadMaintenancePhoto(path, dataUrl, fileNameBase, {
-      reciboGuid: receiptId,
-      reservaGuid: reservaId,
+    const uploadMetadata: Record<string, unknown> = {
+      reciboGuid: recordId,
       motoristaGuid: motoristaId,
       idPagamento: model.idPag,
       idOperacao: model.idOp,
       tipo: "RECIBO",
       mimeType: "application/pdf"
-    });
+    };
+    if (reservaId) uploadMetadata.reservaGuid = reservaId;
+    const link = await uploadMaintenancePhoto(path, dataUrl, fileNameBase, uploadMetadata);
 
     onProgress?.("Gravando link do PDF em Recibos.");
-    await updateOne(DATAVERSE.recibos, receiptId, {
+    await updateOne(DATAVERSE.recibos, recordId, {
       cr40f_link_pdf: link,
       cr40f_share_link: link,
       cr40f_status_geracao: RECEIPT_STATUS.salvoNoOneDrive,
+      cr40f_tamanho_bytes: Math.max(0, Math.trunc(pdfBlob.size)),
       cr40f_erro: null
     });
 
     const verified = await retrieveOne(
       DATAVERSE.recibos,
-      receiptId,
+      recordId,
       "$select=cr40f_link_pdf,cr40f_share_link,cr40f_status_geracao"
     );
     const verifiedLink = String(verified.cr40f_link_pdf ?? verified.cr40f_share_link ?? "").trim();
     if (verifiedLink !== link || Number(verified.cr40f_status_geracao) !== RECEIPT_STATUS.salvoNoOneDrive) {
       dataverseError("Recibo salvo no Flow, mas link/status nao foram confirmados no Dataverse.", {
-        receiptId,
+        receiptId: recordId,
         expectedLink: link,
         verifiedLink,
         verifiedStatus: verified.cr40f_status_geracao
@@ -1249,19 +1328,19 @@ export async function uploadReceiptPdfRemote({
     }
 
     return {
-      recordId: receiptId,
+      recordId,
       link,
-      fileName: storedFileName,
+      fileName,
       path
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await updateOne(DATAVERSE.recibos, receiptId, {
+    await updateOne(DATAVERSE.recibos, recordId, {
       cr40f_status_geracao: RECEIPT_STATUS.falha,
       cr40f_erro: message
     }).catch((updateError) => {
       dataverseWarn("Falha ao marcar recibo como Falha.", {
-        receiptId,
+        receiptId: recordId,
         originalError: message,
         updateError: describeDataverseError(updateError)
       });

@@ -500,7 +500,7 @@ export function ButtonPreviewScreen({ onShowToast }: ButtonPreviewScreenProps) {
 
       <div className="preview-lab-card">
         <ActionBar className="button-preview-action-bar receive-actions has-personal-receipt">
-          <ActionButton className="button-preview-button receive-receipt" label="Gerar recibo personalizado" loadingLabel="Gerando recibo" successLabel="Recibo pronto" icon={<img src={invoiceReceiptIcon} alt="" />} state={states.receipt} onClick={() => runDemo("receipt")} />
+          <ActionButton className="button-preview-button receive-receipt" label="Abrir recibo personalizado" loadingLabel="Abrindo recibo" successLabel="Recibo aberto" icon={<img src={invoiceReceiptIcon} alt="" />} state={states.receipt} onClick={() => runDemo("receipt")} />
           <ActionButton className="button-preview-button receive-secondary" label="Voltar" loadingLabel="Voltando" successLabel="Voltou" icon={<SystemIcon name="arrowLeft" />} onClick={() => runDemo("receipt-secondary")} state={states["receipt-secondary"]} />
           <ActionButton className="button-preview-button receive-primary" variant="primary" idleLabel="FINALIZAR" loadingLabel="ENVIANDO" successLabel="FINALIZADO" state={states["receipt-primary"]} onClick={() => runDemo("receipt-primary")} />
         </ActionBar>

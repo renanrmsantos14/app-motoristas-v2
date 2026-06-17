@@ -106,7 +106,7 @@ export function ReceiveScreen({
             {canGeneratePersonalReceipt ? (
               <ActionButton
                 className="finalize-secondary receive-receipt"
-                label="Gerar recibo personalizado"
+                label="Abrir recibo personalizado"
                 disabled={isSubmitting}
                 onClick={generatePersonalReceipt}
                 icon={<img src={invoiceReceiptIcon} alt="" />}

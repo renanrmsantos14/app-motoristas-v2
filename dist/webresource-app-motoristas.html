@@ -779,6 +779,9 @@ svg {
   gap: 10px;
   align-content: start;
 }
+.receipt-editor-layout.is-generated {
+  min-height: 100%;
+}
 .receipt-editor-form-card {
   min-height: 0;
 }
@@ -1114,6 +1117,30 @@ svg {
   min-height: 0;
   width: 100%;
 }
+.receipt-preview-card-shell {
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  transition:
+    border-radius 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 260ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.receipt-preview-card-shell.is-generated {
+  min-height: calc(100dvh - 132px);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(241, 245, 251) 0%,
+      rgb(232, 238, 247) 100%);
+  box-shadow: 0 28px 64px rgba(0, 14, 35, 0.12), inset 0 0 0 1px rgba(170, 182, 204, 0.2);
+}
 .receipt-preview-inline {
   position: sticky;
   top: 0;
@@ -1138,6 +1165,25 @@ svg {
   cursor: pointer;
   box-shadow: none;
   overflow: hidden;
+  transition:
+    width 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    max-width 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    min-height 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    height 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-radius 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 280ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.receipt-preview-inline.is-generated {
+  position: relative;
+  top: auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  height: 88px;
+  min-height: 88px;
+  max-height: 88px;
+  padding: 10px 18px;
+  border-radius: 0;
 }
 .receipt-preview-copy {
   min-width: 0;
@@ -1145,6 +1191,7 @@ svg {
   gap: 4px;
   padding-left: 2px;
   padding-right: 2px;
+  align-content: center;
 }
 .receipt-preview-copy span {
   color: rgb(255, 255, 255);
@@ -1177,6 +1224,11 @@ svg {
   display: block;
   pointer-events: none;
   flex: 0 0 118px;
+  transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1), transform 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.receipt-preview-inline.is-generated .receipt-preview-mini-shell {
+  opacity: 0;
+  transform: translateX(12px) scale(0.94);
 }
 .receipt-preview-mini {
   position: absolute;
@@ -1228,6 +1280,108 @@ svg {
   background: rgb(0, 14, 35);
   box-shadow: none;
 }
+.receipt-preview-expanded-panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateY(-18px) scale(0.985);
+  transform-origin: top center;
+  transition:
+    max-height 420ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 320ms cubic-bezier(0.23, 1, 0.32, 1),
+    padding 320ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.receipt-preview-expanded-panel.is-visible {
+  max-height: calc(100dvh - 220px);
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  padding: 18px 18px 20px;
+}
+.receipt-preview-expanded-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px 14px;
+}
+.receipt-preview-expanded-copy span {
+  color: rgba(0, 14, 35, 0.58);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.receipt-preview-expanded-copy strong {
+  color: rgb(0, 14, 35);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+}
+.receipt-preview-expanded-stage-shell {
+  min-height: calc(100dvh - 340px);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: inset 0 0 0 1px rgba(170, 182, 204, 0.2), 0 18px 40px rgba(0, 14, 35, 0.08);
+  overflow: hidden;
+}
+.receipt-preview-expanded-stage {
+  padding: 22px 18px 14px;
+}
+.receipt-preview-expanded-panel.is-visible .receipt-preview-expanded-stage-shell {
+  animation: receiptGeneratedStageIn 420ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.receipt-preview-generated-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 14px;
+}
+.receipt-preview-generated-action {
+  min-height: 52px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border: 1px solid rgba(0, 14, 35, 0.12);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.receipt-preview-generated-action:active {
+  transform: scale(0.98);
+}
+.receipt-preview-generated-action.is-primary {
+  background: rgb(0, 14, 35);
+  border-color: rgb(0, 14, 35);
+  color: rgb(255, 255, 255);
+}
+.receipt-preview-generated-action.is-secondary {
+  background: rgba(255, 255, 255, 0.82);
+  color: rgb(0, 14, 35);
+}
 .receipt-scroll {
   width: 100%;
   height: 100%;
@@ -1242,6 +1396,9 @@ svg {
 }
 .receipt-scroll-fit.is-clickable {
   cursor: zoom-in;
+}
+.receipt-preview-expanded-stage.is-clickable {
+  cursor: pointer;
 }
 .receipt-stage {
   width: 100%;
@@ -1511,23 +1668,14 @@ svg {
   height: 45px;
   padding: 0 var(--receipt-page-margin);
   background: rgb(235, 243, 255);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  column-gap: 24px;
 }
 .receipt-header-note-text {
   color: rgb(89, 89, 89);
   font-size: 15px;
   font-weight: 500;
   line-height: 1.35;
-}
-.receipt-header-note-id {
-  color: rgb(0, 14, 35);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
 }
 .receipt-summary {
   padding: 28px var(--receipt-page-margin) 0;
@@ -1818,6 +1966,34 @@ svg {
     width: 98px;
     flex-basis: 98px;
   }
+  .receipt-preview-card-shell.is-generated {
+    min-height: calc(100dvh - 118px);
+  }
+  .receipt-preview-inline.is-generated {
+    height: 82px;
+    min-height: 82px;
+    max-height: 82px;
+    padding: 10px 14px;
+  }
+  .receipt-preview-expanded-panel.is-visible {
+    max-height: calc(100dvh - 198px);
+    padding: 14px 14px 16px;
+  }
+  .receipt-preview-expanded-copy {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .receipt-preview-expanded-stage-shell {
+    min-height: calc(100dvh - 320px);
+    border-radius: 16px;
+  }
+  .receipt-preview-expanded-stage {
+    padding: 16px 10px 8px;
+  }
+  .receipt-preview-generated-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .receipt-success-card {
     padding: 12px;
   }
@@ -1830,6 +2006,22 @@ svg {
   }
   .receipt-scroll {
     padding: 12px 8px 18px;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .receipt-preview-generated-action.is-primary:hover,
+  .receipt-preview-generated-action.is-secondary:hover {
+    transform: translateY(-1px);
+  }
+}
+@keyframes receiptGeneratedStageIn {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 .detail-action.voucher {
@@ -11216,7 +11408,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.339","builtAt":"2026-06-17T13:31:46.866Z","builtAtLabel":"17/06/2026, 10:31"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.352","builtAt":"2026-06-17T15:04:52.425Z","builtAtLabel":"17/06/2026, 12:04"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -35189,6 +35381,120 @@ select,
     };
   }
 
+  // src/lib/receiptLanguage.ts
+  var RECEIPT_LANGUAGE = {
+    portuguese: "pt-BR",
+    english: "en-US",
+    spanish: "es-ES"
+  };
+  var RECEIPT_LANGUAGE_OPTIONS = [
+    { value: RECEIPT_LANGUAGE.portuguese, label: "Portugu\xEAs" },
+    { value: RECEIPT_LANGUAGE.english, label: "Ingl\xEAs" },
+    { value: RECEIPT_LANGUAGE.spanish, label: "Espanhol" }
+  ];
+  var RECEIPT_COPY = {
+    "pt-BR": {
+      title: "INVOICE",
+      note: "Obrigado por escolher seu recibo digital, voc\xEA faz parte da solu\xE7\xE3o!",
+      identificationLabel: "Identifica\xE7\xE3o",
+      issueDateLabel: "Data de Emiss\xE3o",
+      paymentMethodLabel: "M\xE9todo de Pagamento",
+      descriptionTitle: "Descri\xE7\xE3o",
+      descriptionBody: "Servi\xE7os prestados de transporte executivo terrestre no Brasil",
+      thanksForTravel: "Obrigado por viajar com a Betinhos",
+      totalLabel: "Total",
+      observationsLabel: "Observa\xE7\xF5es:",
+      qrCaption: "Avalie sua experi\xEAncia",
+      previewTitle: "Preview do recibo",
+      previewHint: "Toque aqui para visualizar",
+      expandedPreviewTitle: "Preview ampliado",
+      expandedPreviewAria: "Preview ampliado do recibo",
+      zoomControlsAria: "Controle de zoom do recibo",
+      expandPreviewAria: "Visualizar preview do recibo",
+      closeExpandedPreviewAria: "Fechar preview ampliado",
+      conciergeRole: "Concierge Bil\xEDngue",
+      operationsManagerRole: "Gerente de Opera\xE7\xF5es",
+      financeManagerRole: "Gerente Financeira"
+    },
+    "en-US": {
+      title: "INVOICE",
+      note: "Thank you for choosing your digital receipt. You are part of the solution!",
+      identificationLabel: "Identification",
+      issueDateLabel: "Issue Date",
+      paymentMethodLabel: "Payment Method",
+      descriptionTitle: "Description",
+      descriptionBody: "Executive ground transportation services rendered in Brazil",
+      thanksForTravel: "Thank you for traveling with Betinhos",
+      totalLabel: "Total",
+      observationsLabel: "Notes:",
+      qrCaption: "Rate your experience",
+      previewTitle: "Receipt preview",
+      previewHint: "Tap here to view",
+      expandedPreviewTitle: "Expanded preview",
+      expandedPreviewAria: "Expanded receipt preview",
+      zoomControlsAria: "Receipt zoom controls",
+      expandPreviewAria: "View receipt preview",
+      closeExpandedPreviewAria: "Close expanded preview",
+      conciergeRole: "Bilingual Concierge",
+      operationsManagerRole: "Operations Manager",
+      financeManagerRole: "Finance Manager"
+    },
+    "es-ES": {
+      title: "INVOICE",
+      note: "Gracias por elegir su recibo digital. Usted forma parte de la soluci\xF3n.",
+      identificationLabel: "Identificaci\xF3n",
+      issueDateLabel: "Fecha de Emisi\xF3n",
+      paymentMethodLabel: "M\xE9todo de Pago",
+      descriptionTitle: "Descripci\xF3n",
+      descriptionBody: "Servicios de transporte ejecutivo terrestre prestados en Brasil",
+      thanksForTravel: "Gracias por viajar con Betinhos",
+      totalLabel: "Total",
+      observationsLabel: "Observaciones:",
+      qrCaption: "Califique su experiencia",
+      previewTitle: "Vista previa del recibo",
+      previewHint: "Toque aqu\xED para visualizar",
+      expandedPreviewTitle: "Vista ampliada",
+      expandedPreviewAria: "Vista ampliada del recibo",
+      zoomControlsAria: "Controles de zoom del recibo",
+      expandPreviewAria: "Visualizar vista previa del recibo",
+      closeExpandedPreviewAria: "Cerrar vista ampliada",
+      conciergeRole: "Concierge Biling\xFCe",
+      operationsManagerRole: "Gerente de Operaciones",
+      financeManagerRole: "Gerente Financiera"
+    }
+  };
+  function normalizeReceiptLanguage(value) {
+    if (value === RECEIPT_LANGUAGE.english) return RECEIPT_LANGUAGE.english;
+    if (value === RECEIPT_LANGUAGE.spanish) return RECEIPT_LANGUAGE.spanish;
+    return RECEIPT_LANGUAGE.portuguese;
+  }
+  function getReceiptCopy(language) {
+    return RECEIPT_COPY[normalizeReceiptLanguage(language)];
+  }
+  function getReceiptDisplayClient(cliente, language) {
+    const trimmed = cliente.trim();
+    if (!trimmed) return "";
+    if (trimmed.toLowerCase() !== "particular") return trimmed;
+    const normalizedLanguage = normalizeReceiptLanguage(language);
+    if (normalizedLanguage === RECEIPT_LANGUAGE.english) return "Private";
+    return "Particular";
+  }
+  function formatReceiptDateByLanguage(value, language) {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+    const brMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(trimmed);
+    const date = isoMatch ? /* @__PURE__ */ new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T12:00:00`) : brMatch ? /* @__PURE__ */ new Date(`${brMatch[3]}-${brMatch[2]}-${brMatch[1]}T12:00:00`) : new Date(trimmed);
+    if (Number.isNaN(date.getTime())) return trimmed;
+    return date.toLocaleDateString(normalizeReceiptLanguage(language));
+  }
+  function formatReceiptCurrencyByLanguage(amount, language) {
+    return amount.toLocaleString(normalizeReceiptLanguage(language), {
+      style: "currency",
+      currency: "BRL"
+    });
+  }
+
   // src/lib/dataverse.ts
   var CATEGORY = {
     servico: 1e8,
@@ -35211,6 +35517,11 @@ select,
     gerado: 1e8,
     salvoNoOneDrive: 100000001,
     falha: 100000002
+  };
+  var RECEIPT_LANGUAGE_VALUE = {
+    [RECEIPT_LANGUAGE.portuguese]: 1e8,
+    [RECEIPT_LANGUAGE.english]: 100000001,
+    [RECEIPT_LANGUAGE.spanish]: 100000002
   };
   var DRIVER_LINK_TYPE = {
     colaborador: 0,
@@ -36097,92 +36408,85 @@ select,
     const record = detail.dataverse?.record ?? {};
     return cleanODataGuid(record._cr40f_motorista_value);
   }
-  function buildReceiptRecordName(model) {
-    return truncateDataverseText([model.idPag, model.cliente].filter(Boolean).join(" - ") || "Recibo", 100);
+  async function resolveReceiptMotoristaId(detail) {
+    const motoristaFromDetail = detail ? getReceiptMotoristaId(detail) : "";
+    if (motoristaFromDetail) return motoristaFromDetail;
+    const driver = await getDriverContext();
+    return cleanGuid2(driver.id || driver.funcionario?.cr40f_funcionariosid || "");
   }
-  async function uploadReceiptPdfRemote({
+  function buildReceiptRecordName(model) {
+    return truncateDataverseText(model.idPag || "Recibo", 100);
+  }
+  function buildReceiptPendingRecordName(model) {
+    return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em geracao", 100);
+  }
+  function normalizeReceiptIdentifier(value) {
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) return "";
+    return /^R-/i.test(trimmed) ? trimmed.replace(/^r-/i, "R-") : `R-${trimmed.replace(/^[-\s]+/, "")}`;
+  }
+  async function createReceiptRecordRemote({
     detail,
     model,
-    pdfBlob,
-    fileName,
     onProgress
   }) {
-    const reservaId = cleanGuid2(detail.dataverse?.id ?? "");
-    if (!reservaId) throw new Error("Servi\xE7o sem refer\xEAncia Dataverse. Nao e possivel registrar o recibo.");
-    const motoristaId = getReceiptMotoristaId(detail);
+    const reservaId = cleanGuid2(detail?.dataverse?.id ?? "");
+    const motoristaId = await resolveReceiptMotoristaId(detail);
+    if (!motoristaId) throw new Error("Motorista atual nao foi encontrado para registrar o recibo.");
     const lookupNavigationNames = await loadReceiptLookupNavigationNamesRemote();
-    const fileNameBase = sanitizePathSegment(fileName.replace(/\.pdf$/i, ""), model.idPag || "recibo");
-    const storedFileName = `${fileNameBase}.pdf`;
-    const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
-    const path = `Recibos/${devPrefix}${sanitizePathSegment(model.cliente, "Sem cliente")}/${sanitizePathSegment(model.idPag, "Sem identificacao")}`;
     const emittedAt = (/* @__PURE__ */ new Date()).toISOString();
     const numericValue = parseCurrencyNumber(model.valorTotal);
     const dataEmissao = parseReceiptDate(model.dataEmissao);
     const baseRecord = {
-      cr40f_name: buildReceiptRecordName(model),
-      cr40f_id_pagamento: truncateDataverseText(model.idPag, 1e3),
+      cr40f_name: buildReceiptPendingRecordName(model),
       cr40f_id_operacao: truncateDataverseText(model.idOp, 1e3),
       cr40f_pagante: truncateDataverseText(model.nomePagante, 1e3),
       cr40f_cliente: truncateDataverseText(model.cliente, 1e3),
+      new_idioma: RECEIPT_LANGUAGE_VALUE[model.idioma] ?? RECEIPT_LANGUAGE_VALUE[RECEIPT_LANGUAGE.portuguese],
       cr40f_valor_total_texto: truncateDataverseText(model.valorTotal, 1e3),
       cr40f_metodo_pagamento: truncateDataverseText(model.metodoPagamento, 1e3),
       cr40f_periodo: truncateDataverseText(model.periodo, 1e3),
       cr40f_trajetos: model.trajetos,
       cr40f_observacoes: model.observacoes,
-      cr40f_nome_arquivo: storedFileName,
-      cr40f_caminho_onedrive: path,
       cr40f_mime_type: "application/pdf",
-      cr40f_tamanho_bytes: Math.max(0, Math.trunc(pdfBlob.size)),
       cr40f_status_geracao: RECEIPT_STATUS.gerado,
       cr40f_modelo_json: JSON.stringify(model),
-      cr40f_gerado_em: emittedAt,
-      [`${lookupNavigationNames.reserva}@odata.bind`]: bind(DATAVERSE.geral, reservaId)
+      cr40f_gerado_em: emittedAt
     };
-    if (motoristaId) baseRecord[`${lookupNavigationNames.motorista}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
+    if (reservaId) baseRecord[`${lookupNavigationNames.reserva}@odata.bind`] = bind(DATAVERSE.geral, reservaId);
+    baseRecord[`${lookupNavigationNames.motorista}@odata.bind`] = bind(DATAVERSE.funcionarios, motoristaId);
     if (Number.isFinite(numericValue) && numericValue > 0) baseRecord.cr40f_valor_total = numericValue;
     if (dataEmissao) baseRecord.cr40f_data_emissao = dataEmissao;
     onProgress?.("Registrando recibo no Dataverse.");
     const created = await createOne(DATAVERSE.recibos, baseRecord);
     const receiptId = cleanGuid2(created.id);
     try {
-      onProgress?.("Enviando PDF para o Flow.");
-      const dataUrl = await blobToDataUrl(pdfBlob);
-      const link = await uploadMaintenancePhoto(path, dataUrl, fileNameBase, {
-        reciboGuid: receiptId,
-        reservaGuid: reservaId,
-        motoristaGuid: motoristaId,
-        idPagamento: model.idPag,
-        idOperacao: model.idOp,
-        tipo: "RECIBO",
-        mimeType: "application/pdf"
-      });
-      onProgress?.("Gravando link do PDF em Recibos.");
-      await updateOne(DATAVERSE.recibos, receiptId, {
-        cr40f_link_pdf: link,
-        cr40f_share_link: link,
-        cr40f_status_geracao: RECEIPT_STATUS.salvoNoOneDrive,
-        cr40f_erro: null
-      });
-      const verified = await retrieveOne(
-        DATAVERSE.recibos,
-        receiptId,
-        "$select=cr40f_link_pdf,cr40f_share_link,cr40f_status_geracao"
-      );
-      const verifiedLink = String(verified.cr40f_link_pdf ?? verified.cr40f_share_link ?? "").trim();
-      if (verifiedLink !== link || Number(verified.cr40f_status_geracao) !== RECEIPT_STATUS.salvoNoOneDrive) {
-        dataverseError("Recibo salvo no Flow, mas link/status nao foram confirmados no Dataverse.", {
-          receiptId,
-          expectedLink: link,
-          verifiedLink,
-          verifiedStatus: verified.cr40f_status_geracao
-        });
-        throw new Error("PDF salvo no OneDrive, mas o registro em Recibos nao confirmou link/status.");
+      const createdRecord = await retrieveOne(DATAVERSE.recibos, receiptId, "$select=new_id");
+      const identifier = normalizeReceiptIdentifier(createdRecord.new_id);
+      if (!identifier) {
+        throw new Error("Recibo criado, mas o Dataverse nao retornou new_id. Confirme o identificador automatico da tabela.");
       }
+      const finalModel = { ...model, idPag: identifier };
+      const fileNameBase = sanitizePathSegment(identifier, "recibo");
+      const storedFileName = `${fileNameBase}.pdf`;
+      const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
+      const path = `Recibos/${devPrefix}${sanitizePathSegment(finalModel.cliente, "Sem cliente")}/${sanitizePathSegment(identifier, "Sem identificacao")}`;
+      await updateOne(DATAVERSE.recibos, receiptId, {
+        cr40f_name: buildReceiptRecordName(finalModel),
+        cr40f_id_pagamento: truncateDataverseText(identifier, 1e3),
+        cr40f_nome_arquivo: storedFileName,
+        cr40f_caminho_onedrive: path,
+        cr40f_modelo_json: JSON.stringify(finalModel)
+      });
       return {
         recordId: receiptId,
-        link,
+        identifier,
         fileName: storedFileName,
-        path
+        fileNameBase,
+        path,
+        model: finalModel,
+        motoristaId,
+        reservaId
       };
     } catch (error2) {
       const message = error2 instanceof Error ? error2.message : String(error2);
@@ -36190,8 +36494,71 @@ select,
         cr40f_status_geracao: RECEIPT_STATUS.falha,
         cr40f_erro: message
       }).catch((updateError) => {
-        dataverseWarn("Falha ao marcar recibo como Falha.", {
+        dataverseWarn("Falha ao marcar recibo como Falha na preparacao.", {
           receiptId,
+          originalError: message,
+          updateError: describeDataverseError(updateError)
+        });
+      });
+      throw error2;
+    }
+  }
+  async function uploadReceiptPdfRemote({
+    prepared,
+    pdfBlob,
+    onProgress
+  }) {
+    const { recordId, fileName, fileNameBase, path, model, motoristaId, reservaId } = prepared;
+    try {
+      onProgress?.("Enviando PDF para o Flow.");
+      const dataUrl = await blobToDataUrl(pdfBlob);
+      const uploadMetadata = {
+        reciboGuid: recordId,
+        motoristaGuid: motoristaId,
+        idPagamento: model.idPag,
+        idOperacao: model.idOp,
+        tipo: "RECIBO",
+        mimeType: "application/pdf"
+      };
+      if (reservaId) uploadMetadata.reservaGuid = reservaId;
+      const link = await uploadMaintenancePhoto(path, dataUrl, fileNameBase, uploadMetadata);
+      onProgress?.("Gravando link do PDF em Recibos.");
+      await updateOne(DATAVERSE.recibos, recordId, {
+        cr40f_link_pdf: link,
+        cr40f_share_link: link,
+        cr40f_status_geracao: RECEIPT_STATUS.salvoNoOneDrive,
+        cr40f_tamanho_bytes: Math.max(0, Math.trunc(pdfBlob.size)),
+        cr40f_erro: null
+      });
+      const verified = await retrieveOne(
+        DATAVERSE.recibos,
+        recordId,
+        "$select=cr40f_link_pdf,cr40f_share_link,cr40f_status_geracao"
+      );
+      const verifiedLink = String(verified.cr40f_link_pdf ?? verified.cr40f_share_link ?? "").trim();
+      if (verifiedLink !== link || Number(verified.cr40f_status_geracao) !== RECEIPT_STATUS.salvoNoOneDrive) {
+        dataverseError("Recibo salvo no Flow, mas link/status nao foram confirmados no Dataverse.", {
+          receiptId: recordId,
+          expectedLink: link,
+          verifiedLink,
+          verifiedStatus: verified.cr40f_status_geracao
+        });
+        throw new Error("PDF salvo no OneDrive, mas o registro em Recibos nao confirmou link/status.");
+      }
+      return {
+        recordId,
+        link,
+        fileName,
+        path
+      };
+    } catch (error2) {
+      const message = error2 instanceof Error ? error2.message : String(error2);
+      await updateOne(DATAVERSE.recibos, recordId, {
+        cr40f_status_geracao: RECEIPT_STATUS.falha,
+        cr40f_erro: message
+      }).catch((updateError) => {
+        dataverseWarn("Falha ao marcar recibo como Falha.", {
+          receiptId: recordId,
           originalError: message,
           updateError: describeDataverseError(updateError)
         });
@@ -38149,6 +38516,13 @@ ${text}`);
   function normalizeSearchableValue(value) {
     return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
+  function shouldAutoFocusSearchOnOpen() {
+    if (typeof window === "undefined" || typeof navigator === "undefined") return true;
+    const userAgent = navigator.userAgent ?? "";
+    const isMobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(userAgent);
+    const coarsePointer = window.matchMedia?.("(hover: none) and (pointer: coarse)").matches ?? false;
+    return !(isMobileUserAgent || coarsePointer);
+  }
   var SearchableSelect = (0, import_react28.forwardRef)(function SearchableSelect2({
     value,
     options,
@@ -38174,6 +38548,7 @@ ${text}`);
     const triggerRef = (0, import_react28.useRef)(null);
     const panelRef = (0, import_react28.useRef)(null);
     const searchRef = (0, import_react28.useRef)(null);
+    const autoFocusSearchOnOpen = (0, import_react28.useMemo)(() => shouldAutoFocusSearchOnOpen(), []);
     const setTriggerRef = (node) => {
       triggerRef.current = node;
       if (typeof ref === "function") {
@@ -38235,7 +38610,7 @@ ${text}`);
       setFocusedIndex(selectedIndex >= 0 ? selectedIndex : 0);
       window.setTimeout(() => {
         updatePanelPosition();
-        if (focusSearch) searchRef.current?.focus();
+        if (focusSearch && autoFocusSearchOnOpen) searchRef.current?.focus();
       }, 0);
     };
     const selectOption = (option) => {
@@ -41673,7 +42048,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             ActionButton,
             {
               className: "finalize-secondary receive-receipt",
-              label: "Gerar recibo personalizado",
+              label: "Abrir recibo personalizado",
               disabled: isSubmitting,
               onClick: generatePersonalReceipt,
               icon: /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("img", { src: invoice_receipt_default, alt: "" })
@@ -41711,7 +42086,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function formatDate(value) {
     const date = value ? new Date(String(value)) : null;
     if (!date || Number.isNaN(date.getTime())) return "";
-    return date.toLocaleDateString("pt-BR");
+    return date.toLocaleDateString(RECEIPT_LANGUAGE.portuguese);
   }
   function formatDateTime(value) {
     const date = value ? new Date(String(value)) : null;
@@ -41724,15 +42099,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       minute: "2-digit"
     });
   }
-  function buildReceiptId(operationId) {
-    const digits = operationId.replace(/\D+/g, "");
-    if (!digits) return `PAG-${operationId}`;
-    return `PAG-${digits.padStart(4, "0").slice(-4)}`;
+  function getPendingReceiptIdentifier() {
+    return "A definir";
   }
   function buildPeriodText(detail, record) {
     const dateTime = formatDateTime(record.cr40f_dataehorriodesada);
     if (dateTime) return dateTime;
-    return getField(detail, "Data e Hor\xE1rio de Sa\xEDda") || "N\xE3o informado";
+    return getField(detail, "Data e Hor\xE1rio de Sa\xEDda");
   }
   function buildTrajetos(detail) {
     const parts = [
@@ -41740,11 +42113,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       getField(detail, "Endere\xE7o de Sa\xEDda") || getField(detail, "Endereco de Saida"),
       getField(detail, "Destino")
     ].filter(Boolean);
-    if (!parts.length) return "N\xE3o informado";
+    if (!parts.length) return "";
     return parts.join("\n");
   }
-  function buildObservations(detail) {
-    return getField(detail, "Obs de Opera\xE7\xE3o") || getField(detail, "Obs de Operacao") || getField(detail, "Perfil do Passageiro") || "Sem observa\xE7\xF5es.";
+  function buildObservations() {
+    return "-";
   }
   function getFallbackOperationId() {
     return `OP-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10).replace(/-/g, "")}`;
@@ -41785,45 +42158,45 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (cleaned.includes(",")) return Number(cleaned.replace(/\./g, "").replace(",", "."));
     return Number(cleaned.replace(/,/g, ""));
   }
-  function formatReceiptTotal(value) {
+  function formatReceiptTotalByLanguage(value, language) {
     const trimmed = value.trim();
     if (!trimmed) return "";
     const amount = parseReceiptTotalInput(trimmed);
     if (amount !== null && Number.isFinite(amount)) {
-      return amount.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      });
+      return formatReceiptCurrencyByLanguage(amount, language);
     }
     if (/^R\$\s*/i.test(trimmed)) return trimmed.replace(/^R\$\s*/i, "R$ ");
     return `R$ ${trimmed}`;
   }
-  function buildPersonalReceiptModel(detail, overrides = {}) {
+  function buildPersonalReceiptModel(detail, overrides = {}, options = {}) {
     const hasDetail = Boolean(detail);
     const record = detail?.dataverse?.record ?? {};
     const operationId = detail?.id?.trim() || getFallbackOperationId();
     const passengersRaw = getField(detail, "Passageiros e Telefones de Contato");
-    const nomePagante = hasDetail ? firstPassengerName(passengersRaw) || getField(detail, "Solicitante") || getField(detail, "Cliente") || "Passageiro n\xE3o informado" : "";
-    const cliente = hasDetail ? getField(detail, "Cliente") || "N\xE3o informado" : "";
+    const nomePagante = hasDetail ? firstPassengerName(passengersRaw) || getField(detail, "Solicitante") || getField(detail, "Cliente") || "" : "";
+    const cliente = hasDetail ? getField(detail, "Cliente") : "";
+    const idioma = normalizeReceiptLanguage(overrides.idioma);
     const valorFromRecord = typeof record.cr40f_valor === "number" ? record.cr40f_valor : null;
-    const valorTotal = hasDetail ? valorFromRecord !== null ? valorFromRecord.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "N\xE3o informado" : "";
+    const valorTotal = hasDetail ? valorFromRecord !== null ? formatReceiptCurrencyByLanguage(valorFromRecord, idioma) : "" : "";
     const baseModel = {
       idOp: operationId,
       nomePagante,
       cliente,
-      idPag: buildReceiptId(operationId),
-      dataEmissao: hasDetail ? formatDate((/* @__PURE__ */ new Date()).toISOString()) || "N\xE3o informado" : "",
-      metodoPagamento: hasDetail ? "N\xE3o informado" : "",
-      periodo: hasDetail ? buildPeriodText(detail, record) : "N\xE3o informado",
+      idioma,
+      idPag: options.receiptIdentifier?.trim() || getPendingReceiptIdentifier(),
+      dataEmissao: hasDetail ? formatReceiptDateByLanguage(formatDate((/* @__PURE__ */ new Date()).toISOString()), idioma) : "",
+      metodoPagamento: "",
+      periodo: hasDetail ? buildPeriodText(detail, record) : "",
       trajetos: hasDetail ? buildTrajetos(detail) : "",
       valorTotal,
-      observacoes: hasDetail ? buildObservations(detail) : ""
+      observacoes: buildObservations()
     };
     return {
       ...baseModel,
       ...overrides,
-      dataEmissao: toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao),
-      valorTotal: overrides.valorTotal !== void 0 ? formatReceiptTotal(overrides.valorTotal) : baseModel.valorTotal
+      idioma,
+      dataEmissao: formatReceiptDateByLanguage(toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao), idioma),
+      valorTotal: overrides.valorTotal !== void 0 ? formatReceiptTotalByLanguage(overrides.valorTotal, idioma) : baseModel.valorTotal
     };
   }
   function buildPersonalReceiptDraft(detail) {
@@ -41831,9 +42204,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return {
         nomePagante: "",
         cliente: "",
+        idioma: RECEIPT_LANGUAGE.portuguese,
         valorTotal: "",
         dataEmissao: "",
-        metodoPagamento: ""
+        metodoPagamento: "",
+        observacoes: "-"
       };
     }
     const model = buildPersonalReceiptModel(detail);
@@ -41842,9 +42217,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return {
       nomePagante: model.nomePagante,
       cliente: model.cliente,
+      idioma: model.idioma,
       valorTotal: rawValor,
       dataEmissao: toYmdDateString(model.dataEmissao),
-      metodoPagamento: model.metodoPagamento
+      metodoPagamento: model.metodoPagamento,
+      observacoes: model.observacoes || "-"
     };
   }
 
@@ -57246,6 +57623,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function normalizeText4(value) {
     return String(value ?? "").normalize("NFKC").replace(/\u00a0/g, " ").trim();
   }
+  function displayReceiptValue(value) {
+    const normalized = normalizeText4(value);
+    return normalized || "-";
+  }
   function estimateTextWidth(text, size, weight = 500) {
     const weightFactor = weight >= 700 ? 0.58 : 0.52;
     return Array.from(text).reduce((width, char) => {
@@ -57307,11 +57688,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const right = RECEIPT_SVG_WIDTH - MARGIN;
     const contentWidth = RECEIPT_SVG_WIDTH - MARGIN * 2;
     const colWidth = contentWidth / 3;
+    const copy = getReceiptCopy(model.idioma);
     return [
       `<svg xmlns="http://www.w3.org/2000/svg" width="${RECEIPT_SVG_WIDTH}" height="${RECEIPT_SVG_HEIGHT}" viewBox="0 0 ${RECEIPT_SVG_WIDTH} ${RECEIPT_SVG_HEIGHT}">`,
       rect(0, 0, RECEIPT_SVG_WIDTH, RECEIPT_SVG_HEIGHT, "#ffffff"),
       rect(0, 0, RECEIPT_SVG_WIDTH, 125, "#000e23"),
-      svgText("INVOICE", {
+      svgText(copy.title, {
         x: MARGIN,
         y: 86,
         size: 70,
@@ -57321,7 +57703,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }),
       image(assets.logoB, right - 74, 25, 74, 74),
       rect(0, 125, RECEIPT_SVG_WIDTH, 45, "#ebf3ff"),
-      svgText("Obrigado por escolher seu recibo digital, voc\xEA faz parte da solu\xE7\xE3o!", {
+      svgText(copy.note, {
         x: MARGIN,
         y: 153,
         size: 15,
@@ -57329,21 +57711,20 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         maxWidth: 520,
         maxLines: 1
       }),
-      svgText(model.idOp, { x: right, y: 153, size: 16, weight: 700, anchor: "end", fill: "#000e23", maxWidth: 180 }),
-      svgText(model.nomePagante, { x: MARGIN, y: 224, size: 22, weight: 700, maxWidth: 360, maxLines: 2, lineHeight: 26 }),
-      svgText(model.cliente, { x: MARGIN, y: 263, size: 15, fill: "#595959", maxWidth: 360, maxLines: 2, lineHeight: 20 }),
-      svgText("Identifica\xE7\xE3o", { x: 565, y: 222, size: 14, fill: "#747474", anchor: "end" }),
-      svgText("Data de Emiss\xE3o", { x: 565, y: 244, size: 14, fill: "#747474", anchor: "end" }),
-      svgText("M\xE9todo de Pagamento", { x: 565, y: 266, size: 14, fill: "#747474", anchor: "end" }),
-      svgText(model.idPag, { x: right, y: 222, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
-      svgText(model.dataEmissao, { x: right, y: 244, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
-      svgText(model.metodoPagamento, { x: right, y: 266, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+      svgText(displayReceiptValue(model.nomePagante), { x: MARGIN, y: 224, size: 22, weight: 700, maxWidth: 360, maxLines: 2, lineHeight: 26 }),
+      svgText(displayReceiptValue(getReceiptDisplayClient(model.cliente, model.idioma)), { x: MARGIN, y: 263, size: 15, fill: "#595959", maxWidth: 360, maxLines: 2, lineHeight: 20 }),
+      svgText(copy.identificationLabel, { x: 565, y: 222, size: 14, fill: "#747474", anchor: "end" }),
+      svgText(copy.issueDateLabel, { x: 565, y: 244, size: 14, fill: "#747474", anchor: "end" }),
+      svgText(copy.paymentMethodLabel, { x: 565, y: 266, size: 14, fill: "#747474", anchor: "end" }),
+      svgText(displayReceiptValue(model.idPag), { x: right, y: 222, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+      svgText(displayReceiptValue(model.dataEmissao), { x: right, y: 244, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
+      svgText(displayReceiptValue(model.metodoPagamento), { x: right, y: 266, size: 14, weight: 700, anchor: "end", maxWidth: 170 }),
       line(MARGIN, 348, right),
       line(MARGIN, 383, right),
-      svgText("Descri\xE7\xE3o", { x: MARGIN + 16, y: 371, size: 18, weight: 800 }),
+      svgText(copy.descriptionTitle, { x: MARGIN + 16, y: 371, size: 18, weight: 800 }),
       line(MARGIN, 383, right),
       line(MARGIN, 548, right),
-      svgText("Servi\xE7os prestados de transporte executivo terrestre no brasil", {
+      svgText(copy.descriptionBody, {
         x: MARGIN + 16,
         y: 423,
         size: 15,
@@ -57355,11 +57736,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       rect(right - 260, 548, 110, 40, "#cde1ff"),
       rect(right - 150, 548, 150, 40, "#cde1ff"),
       line(MARGIN, 548, right),
-      svgText("Obrigado por viajar com a Betinhos", { x: MARGIN + 16, y: 574, size: 16, weight: 700, maxWidth: contentWidth - 290 }),
-      svgText("Total", { x: right - 205, y: 574, size: 16, weight: 700, anchor: "middle" }),
-      svgText(model.valorTotal, { x: right - 16, y: 574, size: 16, weight: 700, anchor: "end", maxWidth: 135 }),
-      svgText("Observa\xE7\xF5es:", { x: MARGIN, y: 645, size: 13, weight: 700, fill: "#747474" }),
-      svgText(model.observacoes, { x: MARGIN, y: 673, size: 13, fill: "#747474", maxWidth: 340, lineHeight: 18, maxLines: 6 }),
+      svgText(copy.thanksForTravel, { x: MARGIN + 16, y: 574, size: 16, weight: 700, maxWidth: contentWidth - 290 }),
+      svgText(copy.totalLabel, { x: right - 205, y: 574, size: 16, weight: 700, anchor: "middle" }),
+      svgText(displayReceiptValue(model.valorTotal), { x: right - 16, y: 574, size: 16, weight: 700, anchor: "end", maxWidth: 135 }),
+      svgText(copy.observationsLabel, { x: MARGIN, y: 645, size: 13, weight: 700, fill: "#747474" }),
+      svgText(displayReceiptValue(model.observacoes), { x: MARGIN, y: 673, size: 13, fill: "#747474", maxWidth: 340, lineHeight: 18, maxLines: 6 }),
       svgText("BETINHOS EXECUTIVE SERVICE LTDA EPP", { x: right, y: 645, size: 11, weight: 700, fill: "#747474", anchor: "end", maxWidth: 320 }),
       svgText("CNPJ: 07.108.241/0001-06", { x: right, y: 663, size: 11, fill: "#747474", anchor: "end" }),
       svgText("CNPJ: 24.484.228/0001-62", { x: right, y: 681, size: 11, fill: "#747474", anchor: "end" }),
@@ -57368,18 +57749,18 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       image(assets.nlaLogo, MARGIN + 4, 835, colWidth - 18, 78),
       image(assets.logoPreta, MARGIN + colWidth + 4, 820, colWidth - 8, 100),
       image(assets.qrCode, MARGIN + colWidth * 2 + 48, 842, 72, 72),
-      svgText("Avalie sua experi\xEAncia", { x: MARGIN + colWidth * 2 + 84, y: 933, size: 11, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: colWidth - 30 }),
+      svgText(copy.qrCaption, { x: MARGIN + colWidth * 2 + 84, y: 933, size: 11, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: colWidth - 30 }),
       line(MARGIN + 24, 963, right - 24, "#00398e", 2),
       svgText("Junior de Paula", { x: 76, y: 1001, size: 11, weight: 700 }),
-      svgText("Concierge (Bilingual)", { x: 184, y: 1001, size: 11, fill: "#00398e" }),
+      svgText(copy.conciergeRole, { x: 184, y: 1001, size: 11, fill: "#00398e" }),
       svgText("+55 12 99723 6961", { x: 314, y: 1001, size: 11, fill: "#747474" }),
       svgText("junior@betinhos.com.br", { x: 426, y: 1001, size: 11, fill: "#747474" }),
       svgText("Deborah Keila", { x: 76, y: 1022, size: 11, weight: 700 }),
-      svgText("Operations Manager", { x: 184, y: 1022, size: 11, fill: "#00398e" }),
+      svgText(copy.operationsManagerRole, { x: 184, y: 1022, size: 11, fill: "#00398e" }),
       svgText("+55 12 99615 9093", { x: 314, y: 1022, size: 11, fill: "#747474" }),
       svgText("deborah.keila@betinhos.com.br", { x: 426, y: 1022, size: 11, fill: "#747474" }),
       svgText("Juliana Rodrigues", { x: 76, y: 1043, size: 11, weight: 700 }),
-      svgText("Finance Manager", { x: 184, y: 1043, size: 11, fill: "#00398e" }),
+      svgText(copy.financeManagerRole, { x: 184, y: 1043, size: 11, fill: "#00398e" }),
       svgText("+55 12 99615 9085", { x: 314, y: 1043, size: 11, fill: "#747474" }),
       svgText("financeiro@betinhos.com.br", { x: 426, y: 1043, size: 11, fill: "#747474" }),
       "</svg>"
@@ -57476,10 +57857,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function nextToast(message, tone) {
     return { id: Date.now() + Math.random(), message, tone };
   }
-  function buildReceiptPdfFileName(model) {
-    const safeId = (model.idPag || "recibo").replace(/[^\w-]+/g, "-");
-    return `${safeId}.pdf`;
-  }
   function validateReceiptDraft(draft) {
     const errors = {};
     if (!draft.nomePagante.trim()) errors.nomePagante = "Informe o pagante.";
@@ -57490,9 +57867,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (!draft.metodoPagamento.trim()) errors.metodoPagamento = "Informe o m\xE9todo de pagamento.";
     return errors;
   }
-  function displayReceiptValue(value) {
+  function displayReceiptValue2(value) {
     const trimmed = value.trim();
-    return trimmed || "\u2014";
+    return trimmed || "-";
   }
   function sanitizeReceiptTotalInput(value) {
     const cleaned = value.replace(/[^\d.,]/g, "");
@@ -57560,6 +57937,18 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+            SelectField,
+            {
+              fieldClassName: `finalize-input-block receipt-editor-block`,
+              label: "Idioma",
+              value: draft.idioma,
+              options: RECEIPT_LANGUAGE_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+              placeholder: "Selecionar idioma",
+              ariaLabel: "Selecionar idioma",
+              onChange: (value) => onChange("idioma", value)
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
             MoneyInputField,
             {
               fieldClassName: `finalize-input-block receipt-editor-block`,
@@ -57598,6 +57987,16 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               ariaLabel: "Selecionar m\xE9todo de pagamento",
               onChange: (value) => onChange("metodoPagamento", value)
             }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+            TextAreaField,
+            {
+              fieldClassName: `finalize-input-block receipt-editor-block receipt-editor-block-span-2`,
+              label: "Observa\xE7\xF5es",
+              rows: 4,
+              value: draft.observacoes,
+              onChange: (event) => onChange("observacoes", event.target.value)
+            }
           )
         ] })
       ] }) }),
@@ -57617,47 +58016,45 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     ] });
   }
   function ReceiptDocument({ model, documentRef }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("article", { ref: documentRef, className: "receipt-document", "aria-label": `Recibo ${displayReceiptValue(model.idPag)}`, children: [
+    const copy = getReceiptCopy(model.idioma);
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("article", { ref: documentRef, className: "receipt-document", "aria-label": `Recibo ${displayReceiptValue2(model.idPag)}`, children: [
       /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("header", { className: "receipt-header", children: [
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-header-main", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-header-title", children: "INVOICE" }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-header-title", children: copy.title }),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("img", { className: "receipt-header-logo", src: Logo_Betinhos_B_default, alt: "Betinhos B" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-header-note", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-header-note-text", children: "Obrigado por escolher seu recibo digital, voc\xEA faz parte da solu\xE7\xE3o!" }),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-header-note-id", children: displayReceiptValue(model.idOp) })
-        ] })
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-header-note", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-header-note-text", children: copy.note }) })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("section", { className: "receipt-summary", children: [
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-summary-main", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-party-name", children: displayReceiptValue(model.nomePagante) }),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-party-client", children: displayReceiptValue(model.cliente) })
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-party-name", children: displayReceiptValue2(model.nomePagante) }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-party-client", children: displayReceiptValue2(getReceiptDisplayClient(model.cliente, model.idioma)) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-summary-meta", children: [
           /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-meta-labels", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: "Identifica\xE7\xE3o" }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: "Data de Emiss\xE3o" }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: "M\xE9todo de Pagamento" })
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: copy.identificationLabel }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: copy.issueDateLabel }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: copy.paymentMethodLabel })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-meta-values", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: displayReceiptValue(model.idPag) }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: displayReceiptValue(model.dataEmissao) }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: displayReceiptValue(model.metodoPagamento) })
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: displayReceiptValue2(model.idPag) }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: displayReceiptValue2(model.dataEmissao) }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: displayReceiptValue2(model.metodoPagamento) })
           ] })
         ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("section", { className: "receipt-body", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-block receipt-description-head", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-description-title", children: "Descri\xE7\xE3o" }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-block receipt-description-body", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { children: "Servi\xE7os prestados de transporte executivo terrestre no brasil" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-block receipt-description-head", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-description-title", children: copy.descriptionTitle }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-block receipt-description-body", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { children: copy.descriptionBody }) }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-total-row", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-total-thanks", children: "Obrigado por viajar com a Betinhos" }),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-total-label", children: "Total" }),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-total-value", children: displayReceiptValue(model.valorTotal) })
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-total-thanks", children: copy.thanksForTravel }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-total-label", children: copy.totalLabel }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-total-value", children: displayReceiptValue2(model.valorTotal) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-observations-row", children: [
           /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-observations", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-observations-label", children: "Observa\xE7\xF5es:" }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-observations-text", children: displayReceiptValue(model.observacoes) })
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-observations-label", children: copy.observationsLabel }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-observations-text", children: displayReceiptValue2(model.observacoes) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-company", children: [
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { children: "BETINHOS EXECUTIVE SERVICE LTDA EPP" }),
@@ -57674,26 +58071,26 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-footer-logo-box preta", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("img", { src: Logo_Betinhos_Preta_default, alt: "Betinhos Preta" }) }),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-footer-logo-box bmark", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-qr-box", children: [
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("img", { className: "receipt-qr-image", src: QrCode_Avalia_o_default, alt: "QR code para avalia\xE7\xE3o" }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-qr-caption", children: "Avalie sua experi\xEAncia" })
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-qr-caption", children: copy.qrCaption })
           ] }) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-footer-separator" }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-footer-contacts", children: [
           /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-contact-row", children: [
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-name", children: "Junior de Paula" }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-role", children: "Concierge (Bilingual)" }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-role", children: copy.conciergeRole }),
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-phone", children: "+55 12 99723 6961" }),
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-email", children: "junior@betinhos.com.br" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-contact-row", children: [
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-name", children: "Deborah Keila" }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-role", children: "Operations Manager" }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-role", children: copy.operationsManagerRole }),
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-phone", children: "+55 12 99615 9093" }),
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-email", children: "deborah.keila@betinhos.com.br" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-contact-row", children: [
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-name", children: "Juliana Rodrigues" }),
-            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-role", children: "Finance Manager" }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-role", children: copy.financeManagerRole }),
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-phone", children: "+55 12 99615 9085" }),
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-contact-email", children: "financeiro@betinhos.com.br" })
           ] })
@@ -57701,23 +58098,128 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       ] })
     ] });
   }
+  function ReceiptScaledCanvas({
+    model,
+    documentRef,
+    className = "",
+    interactive = false,
+    onClick
+  }) {
+    const baseWidth = 794;
+    const baseHeight = 1123;
+    const viewportRef = (0, import_react51.useRef)(null);
+    const [scale3, setScale] = (0, import_react51.useState)(1);
+    const [ready, setReady] = (0, import_react51.useState)(false);
+    (0, import_react51.useLayoutEffect)(() => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      const updateScale = () => {
+        const availableWidth = Math.max(0, viewport.clientWidth - 24);
+        const availableHeight = Math.max(0, viewport.clientHeight - 24);
+        if (!availableWidth || !availableHeight) return;
+        const nextScale = Math.min(1, availableWidth / baseWidth, availableHeight / baseHeight);
+        setScale(nextScale);
+        setReady(true);
+      };
+      updateScale();
+      const resizeObserver = new ResizeObserver(() => updateScale());
+      resizeObserver.observe(viewport);
+      window.addEventListener("resize", updateScale);
+      return () => {
+        resizeObserver.disconnect();
+        window.removeEventListener("resize", updateScale);
+      };
+    }, []);
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+      "div",
+      {
+        ref: viewportRef,
+        className: `receipt-scroll receipt-scroll-fit ${className} ${interactive ? "is-clickable" : ""}`.trim(),
+        onClick,
+        role: interactive ? "button" : void 0,
+        tabIndex: interactive ? 0 : void 0,
+        onKeyDown: interactive ? (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onClick?.();
+          }
+        } : void 0,
+        "aria-label": interactive ? "Ampliar preview do recibo" : void 0,
+        children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          "div",
+          {
+            className: "receipt-stage",
+            style: {
+              width: `${baseWidth * scale3}px`,
+              height: `${baseHeight * scale3}px`
+            },
+            children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+              "div",
+              {
+                className: "receipt-fit-frame",
+                style: {
+                  visibility: ready ? "visible" : "hidden"
+                },
+                children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-fit-scale", style: { transform: `scale(${scale3})` }, children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptDocument, { model, documentRef }) })
+              }
+            )
+          }
+        )
+      }
+    );
+  }
   function ReceiptPreview({
     model,
     documentRef,
-    onExpand
+    onExpand,
+    receiptLink
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("button", { type: "button", className: "receipt-card-shell receipt-preview-card receipt-preview-inline", onClick: onExpand, "aria-label": "Visualizar preview do recibo", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-copy", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { children: "Preview do recibo" }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("small", { children: "Toque aqui para visualizar" })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-mini-shell", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-mini", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptDocument, { model, documentRef }) }) })
+    const copy = getReceiptCopy(model.idioma);
+    const isGenerated = Boolean(receiptLink);
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("article", { className: `receipt-preview-card-shell ${isGenerated ? "is-generated" : ""}`.trim(), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(
+        "button",
+        {
+          type: "button",
+          className: `receipt-card-shell receipt-preview-card receipt-preview-inline ${isGenerated ? "is-generated" : ""}`.trim(),
+          onClick: onExpand,
+          "aria-label": copy.expandPreviewAria,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-copy", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { children: "Preview do recibo" }),
+              /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("small", { children: "Toque aqui para visualizar" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-mini-shell", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-mini", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptDocument, { model, documentRef }) }) })
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: `receipt-preview-expanded-panel ${isGenerated ? "is-visible" : ""}`.trim(), "aria-hidden": !isGenerated, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-expanded-copy", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { children: "Recibo gerado" }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("strong", { children: displayReceiptValue2(model.idPag) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-expanded-stage-shell", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          ReceiptScaledCanvas,
+          {
+            model,
+            documentRef,
+            className: "receipt-preview-expanded-stage",
+            interactive: true,
+            onClick: onExpand
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-generated-actions", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("a", { className: "receipt-preview-generated-action is-primary", href: receiptLink ?? "#", target: "_blank", rel: "noreferrer", children: "Abrir link" }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("button", { type: "button", className: "receipt-preview-generated-action is-secondary", children: "Enviar por email" })
+        ] })
+      ] })
     ] });
   }
   function ReceiptExpandedPreview({
     model,
     onClose
   }) {
+    const copy = getReceiptCopy(model.idioma);
     (0, import_react51.useEffect)(() => {
       const handleKeyDown = (event) => {
         if (event.key === "Escape") onClose();
@@ -57725,10 +58227,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
     }, [onClose]);
-    return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-overlay", role: "dialog", "aria-modal": "true", "aria-label": "Preview ampliado do recibo", onClick: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-overlay-shell", onClick: (event) => event.stopPropagation(), children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-overlay", role: "dialog", "aria-modal": "true", "aria-label": copy.expandedPreviewAria, onClick: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-overlay-shell", onClick: (event) => event.stopPropagation(), children: [
       /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-overlay-topbar", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("strong", { children: "Preview ampliado" }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("button", { type: "button", className: "receipt-preview-overlay-close", onClick: onClose, "aria-label": "Fechar preview ampliado", children: "X" })
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("strong", { children: copy.expandedPreviewTitle }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("button", { type: "button", className: "receipt-preview-overlay-close", onClick: onClose, "aria-label": copy.closeExpandedPreviewAria, children: "X" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-overlay-body", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptZoomCanvas, { model }) })
     ] }) });
@@ -57742,6 +58244,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
   }
   function ReceiptZoomCanvas({ model }) {
+    const copy = getReceiptCopy(model.idioma);
     const baseWidth = 794;
     const baseHeight = 1123;
     const viewportRef = (0, import_react51.useRef)(null);
@@ -57827,7 +58330,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
     };
     return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-zoom-shell", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-zoom-controls", "aria-label": "Controle de zoom do recibo", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-zoom-controls", "aria-label": copy.zoomControlsAria, children: [
         /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("button", { type: "button", onClick: () => setZoom((current) => clampZoom(current - 0.25)), disabled: zoom <= 1.01, children: "-" }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("span", { children: [
           Math.round(zoom * 100),
@@ -57885,9 +58388,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     };
     return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(AppShell, { screenLabel, children: [
       /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(FormMenu, { title, onBack }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("section", { className: "main-panel receipt-main receipt-editor-main", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-editor-layout", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptPreview, { model, documentRef, onExpand: openExpandedPreview }),
-        draft && onDraftChange && onGenerate ? /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("section", { className: "main-panel receipt-main receipt-editor-main", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: `receipt-editor-layout ${receiptLink ? "is-generated" : ""}`.trim(), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptPreview, { model, documentRef, onExpand: openExpandedPreview, receiptLink }),
+        draft && onDraftChange && onGenerate && !receiptLink ? /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
           ReceiptForm,
           {
             draft,
@@ -57916,19 +58419,22 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [errors, setErrors] = (0, import_react51.useState)({});
     const [toast, setToast] = (0, import_react51.useState)(null);
     const [receiptLink, setReceiptLink] = (0, import_react51.useState)(null);
+    const [generatedIdentifier, setGeneratedIdentifier] = (0, import_react51.useState)("");
     const [generateState, setGenerateState] = (0, import_react51.useState)("idle");
     const receiptDocumentRef = (0, import_react51.useRef)(null);
     const receiptPdfCacheRef = (0, import_react51.useRef)(null);
-    const receiptUploadCacheRef = (0, import_react51.useRef)(null);
-    const model = (0, import_react51.useMemo)(() => buildPersonalReceiptModel(detail, draft), [detail, draft]);
+    const model = (0, import_react51.useMemo)(
+      () => buildPersonalReceiptModel(detail, draft, generatedIdentifier ? { receiptIdentifier: generatedIdentifier } : {}),
+      [detail, draft, generatedIdentifier]
+    );
     (0, import_react51.useEffect)(() => {
       setDraft(buildPersonalReceiptDraft(detail));
       setErrors({});
       setToast(null);
       setReceiptLink(null);
+      setGeneratedIdentifier("");
       setGenerateState("idle");
       receiptPdfCacheRef.current = null;
-      receiptUploadCacheRef.current = null;
     }, [detail]);
     (0, import_react51.useEffect)(() => {
       if (Object.keys(validateReceiptDraft(draft)).length > 0) {
@@ -57954,7 +58460,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setDraft((current) => ({ ...current, [field]: nextValue }));
       setErrors((current) => ({ ...current, [field]: void 0 }));
       setReceiptLink(null);
-      receiptUploadCacheRef.current = null;
+      setGeneratedIdentifier("");
     };
     const ensureValidDraft = () => {
       const nextErrors = validateReceiptDraft(draft);
@@ -57969,12 +58475,18 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setGenerateState("loading");
       onProgress?.({ message: "Gerando recibo personalizado", phase: "loading" });
       void (async () => {
-        const cacheKey = JSON.stringify(model);
-        const cachedPdf = receiptPdfCacheRef.current;
-        const blob = cachedPdf?.key === cacheKey ? cachedPdf.blob : await generateReceiptPdfBlob(model);
-        receiptPdfCacheRef.current = { key: cacheKey, blob };
-        const fileName = buildReceiptPdfFileName(model);
-        const result = await ensureReceiptUploaded(blob, fileName, cacheKey);
+        const prepared = await createReceiptRecordRemote({
+          detail,
+          model,
+          onProgress: (message) => {
+            onProgress?.({ message, phase: "loading" });
+          }
+        });
+        setGeneratedIdentifier(prepared.identifier);
+        onProgress?.({ message: `Montando recibo ${prepared.identifier}`, phase: "loading" });
+        const blob = await generateReceiptPdfBlob(prepared.model);
+        receiptPdfCacheRef.current = { key: JSON.stringify(prepared.model), blob };
+        const result = await ensureReceiptUploaded(prepared, blob);
         setReceiptLink(result.link);
         setGenerateState("success");
         onProgress?.({ message: "Recibo pronto para abertura.", phase: "success" });
@@ -57996,23 +58508,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setToast(nextToast(message, "error"));
       });
     };
-    const ensureReceiptUploaded = async (blob, fileName, cacheKey) => {
-      if (!detail) {
-        throw new Error("Selecione um servi\xE7o para registrar o recibo personalizado.");
-      }
-      const cachedUpload = receiptUploadCacheRef.current;
-      if (cachedUpload?.key === cacheKey) return cachedUpload.result;
-      const result = await uploadReceiptPdfRemote({
-        detail,
-        model,
+    const ensureReceiptUploaded = async (prepared, blob) => {
+      return uploadReceiptPdfRemote({
+        prepared,
         pdfBlob: blob,
-        fileName,
         onProgress: (message) => {
           onProgress?.({ message, phase: "loading" });
         }
       });
-      receiptUploadCacheRef.current = { key: cacheKey, result };
-      return result;
     };
     return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
       ReceiptViewport,
@@ -58039,7 +58542,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     idOp: "OP-301",
     nomePagante: "Renan Batista de Souza",
     cliente: "Tenaris",
-    idPag: "PAG-0012",
+    idioma: "pt-BR",
+    idPag: "R-0012",
     dataEmissao: "15/06/2026",
     metodoPagamento: "Pedido de Compra",
     periodo: "15/06/2026 08:30",
@@ -59021,7 +59525,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ActionButton, { className: "button-preview-button", variant: "primary", idleLabel: "FINALIZAR", loadingLabel: "ENVIANDO", successLabel: "FINALIZADO", state: states["bar-primary"], onClick: () => runDemo("bar-primary") })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("div", { className: "preview-lab-card", children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(ActionBar, { className: "button-preview-action-bar receive-actions has-personal-receipt", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ActionButton, { className: "button-preview-button receive-receipt", label: "Gerar recibo personalizado", loadingLabel: "Gerando recibo", successLabel: "Recibo pronto", icon: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("img", { src: invoice_receipt_default, alt: "" }), state: states.receipt, onClick: () => runDemo("receipt") }),
+        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ActionButton, { className: "button-preview-button receive-receipt", label: "Abrir recibo personalizado", loadingLabel: "Abrindo recibo", successLabel: "Recibo aberto", icon: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("img", { src: invoice_receipt_default, alt: "" }), state: states.receipt, onClick: () => runDemo("receipt") }),
         /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ActionButton, { className: "button-preview-button receive-secondary", label: "Voltar", loadingLabel: "Voltando", successLabel: "Voltou", icon: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(SystemIcon, { name: "arrowLeft" }), onClick: () => runDemo("receipt-secondary"), state: states["receipt-secondary"] }),
         /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ActionButton, { className: "button-preview-button receive-primary", variant: "primary", idleLabel: "FINALIZAR", loadingLabel: "ENVIANDO", successLabel: "FINALIZADO", state: states["receipt-primary"], onClick: () => runDemo("receipt-primary") })
       ] }) }),
@@ -59841,6 +60345,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [screen, setScreen] = (0, import_react58.useState)(initialScreen);
     const previousScreenRef = (0, import_react58.useRef)(initialScreen);
     const [selectedDetail, setSelectedDetail] = (0, import_react58.useState)(() => initialDetailRef.current);
+    const [receiptEntrySource, setReceiptEntrySource] = (0, import_react58.useState)(
+      () => initialScreen === "reciboPersonalizado" && initialHashDetail ? "service" : "home"
+    );
     const [maintenancePhotoKind, setMaintenancePhotoKind] = (0, import_react58.useState)("NOTAFISCAL");
     const [photoDraft, setPhotoDraft] = (0, import_react58.useState)(null);
     const [photoDraftPreviewUrl, setPhotoDraftPreviewUrl] = (0, import_react58.useState)("");
@@ -60270,6 +60777,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (!selectedDetail) return [];
       return Object.keys(store.photos[selectedDetail.id] ?? {});
     }, [selectedDetail, store.photos]);
+    const receiptDetail = receiptEntrySource === "service" ? selectedDetail ?? void 0 : void 0;
     const screenMotion = getScreenMotion(screen, previousScreenRef.current);
     const canGeneratePersonalReceipt = isTrueLike3(driverContext?.funcionario?.cr40f_gerarrecibopersonalizado) || isLocalhostRuntime;
     (0, import_react58.useEffect)(() => {
@@ -60277,10 +60785,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     }, [screen]);
     (0, import_react58.useEffect)(() => {
       if (!hashRoutingActive) return;
-      const nextHash = buildHashRoute(screen, selectedDetail ? { id: selectedDetail.id, type: selectedDetail.type } : null);
+      const hashDetail = screen === "reciboPersonalizado" ? receiptDetail : selectedDetail;
+      const nextHash = buildHashRoute(screen, hashDetail ? { id: hashDetail.id, type: hashDetail.type } : null);
       if (window.location.hash === nextHash) return;
       window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${nextHash}`);
-    }, [hashRoutingActive, screen, selectedDetail]);
+    }, [hashRoutingActive, receiptDetail, screen, selectedDetail]);
     (0, import_react58.useEffect)(() => {
       if (screen !== "solicitarManutencao" && screen !== "gastos" && screen !== "colisoes" || !remoteMode) return;
       let alive = true;
@@ -61285,6 +61794,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     };
     const openPersonalReceipt = () => {
       if (!selectedDetail) return;
+      setReceiptEntrySource("service");
       setScreen("reciboPersonalizado");
     };
     const openPersonalReceiptFromHome = () => {
@@ -61292,6 +61802,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setToast("Voc\xEA n\xE3o tem permiss\xE3o para gerar recibo personalizado.");
         return;
       }
+      setReceiptEntrySource("home");
       setScreen("reciboPersonalizado");
     };
     const startCollision = (type) => {
@@ -61691,8 +62202,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
           ReceiptScreen,
           {
-            detail: selectedDetail ?? void 0,
-            onBack: () => setScreen(selectedDetail ? "receber" : "inicio"),
+            detail: receiptDetail,
+            onBack: () => setScreen(receiptEntrySource === "service" && selectedDetail ? "receber" : "inicio"),
             clienteOptions: receiptClienteOptions,
             metodoPagamentoOptions: expenseReferenceData.paymentMethods.map((method) => method.name),
             onProgress: (progress2) => {
@@ -61704,7 +62215,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               setRemoteOperation({
                 title: "Gerando recibo personalizado",
                 message: progress2.message,
-                detailId: selectedDetail?.id,
+                detailId: receiptDetail?.id,
                 phase: flowPhase
               });
             }

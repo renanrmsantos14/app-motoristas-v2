@@ -1,9 +1,11 @@
 import type { DetailData } from "../types";
+import { formatReceiptCurrencyByLanguage, formatReceiptDateByLanguage, normalizeReceiptLanguage, RECEIPT_LANGUAGE, type ReceiptLanguage } from "./receiptLanguage";
 
 export type PersonalReceiptModel = {
   idOp: string;
   nomePagante: string;
   cliente: string;
+  idioma: ReceiptLanguage;
   idPag: string;
   dataEmissao: string;
   metodoPagamento: string;
@@ -15,8 +17,12 @@ export type PersonalReceiptModel = {
 
 export type PersonalReceiptEditableDraft = Pick<
   PersonalReceiptModel,
-  "nomePagante" | "cliente" | "valorTotal" | "dataEmissao" | "metodoPagamento"
+  "nomePagante" | "cliente" | "idioma" | "valorTotal" | "dataEmissao" | "metodoPagamento" | "observacoes"
 >;
+
+type BuildPersonalReceiptModelOptions = {
+  receiptIdentifier?: string;
+};
 
 function getField(detail: DetailData | undefined, label: string) {
   return detail?.fields?.find((field) => field.label === label)?.value?.trim() ?? "";
@@ -45,7 +51,7 @@ function firstPassengerName(rawValue: string) {
 function formatDate(value: unknown) {
   const date = value ? new Date(String(value)) : null;
   if (!date || Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("pt-BR");
+  return date.toLocaleDateString(RECEIPT_LANGUAGE.portuguese);
 }
 
 function formatDateTime(value: unknown) {
@@ -60,16 +66,14 @@ function formatDateTime(value: unknown) {
   });
 }
 
-function buildReceiptId(operationId: string) {
-  const digits = operationId.replace(/\D+/g, "");
-  if (!digits) return `PAG-${operationId}`;
-  return `PAG-${digits.padStart(4, "0").slice(-4)}`;
+function getPendingReceiptIdentifier() {
+  return "A definir";
 }
 
 function buildPeriodText(detail: DetailData | undefined, record: Record<string, unknown>) {
   const dateTime = formatDateTime(record.cr40f_dataehorriodesada);
   if (dateTime) return dateTime;
-  return getField(detail, "Data e Horário de Saída") || "Não informado";
+  return getField(detail, "Data e Horário de Saída");
 }
 
 function buildTrajetos(detail: DetailData | undefined) {
@@ -79,17 +83,12 @@ function buildTrajetos(detail: DetailData | undefined) {
     getField(detail, "Destino")
   ].filter(Boolean);
 
-  if (!parts.length) return "Não informado";
+  if (!parts.length) return "";
   return parts.join("\n");
 }
 
-function buildObservations(detail: DetailData | undefined) {
-  return (
-    getField(detail, "Obs de Operação") ||
-    getField(detail, "Obs de Operacao") ||
-    getField(detail, "Perfil do Passageiro") ||
-    "Sem observações."
-  );
+function buildObservations() {
+  return "-";
 }
 
 function getFallbackOperationId() {
@@ -145,15 +144,12 @@ function parseReceiptTotalInput(value: string) {
   return Number(cleaned.replace(/,/g, ""));
 }
 
-function formatReceiptTotal(value: string) {
+function formatReceiptTotalByLanguage(value: string, language: ReceiptLanguage) {
   const trimmed = value.trim();
   if (!trimmed) return "";
   const amount = parseReceiptTotalInput(trimmed);
   if (amount !== null && Number.isFinite(amount)) {
-    return amount.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    });
+    return formatReceiptCurrencyByLanguage(amount, language);
   }
   if (/^R\$\s*/i.test(trimmed)) return trimmed.replace(/^R\$\s*/i, "R$ ");
   return `R$ ${trimmed}`;
@@ -161,7 +157,8 @@ function formatReceiptTotal(value: string) {
 
 export function buildPersonalReceiptModel(
   detail: DetailData | undefined,
-  overrides: Partial<PersonalReceiptEditableDraft> = {}
+  overrides: Partial<PersonalReceiptEditableDraft> = {},
+  options: BuildPersonalReceiptModelOptions = {}
 ): PersonalReceiptModel {
   const hasDetail = Boolean(detail);
   const record = (detail?.dataverse?.record as Record<string, unknown> | undefined) ?? {};
@@ -172,35 +169,38 @@ export function buildPersonalReceiptModel(
       ? firstPassengerName(passengersRaw) ||
         getField(detail, "Solicitante") ||
         getField(detail, "Cliente") ||
-        "Passageiro não informado"
+        ""
       : "";
 
-  const cliente = hasDetail ? (getField(detail, "Cliente") || "Não informado") : "";
+  const cliente = hasDetail ? getField(detail, "Cliente") : "";
+  const idioma = normalizeReceiptLanguage(overrides.idioma);
   const valorFromRecord = typeof record.cr40f_valor === "number" ? record.cr40f_valor : null;
   const valorTotal = hasDetail
     ? (valorFromRecord !== null
-      ? valorFromRecord.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-      : "Não informado")
+      ? formatReceiptCurrencyByLanguage(valorFromRecord, idioma)
+      : "")
     : "";
 
   const baseModel: PersonalReceiptModel = {
     idOp: operationId,
     nomePagante,
     cliente,
-    idPag: buildReceiptId(operationId),
-    dataEmissao: hasDetail ? (formatDate(new Date().toISOString()) || "Não informado") : "",
-    metodoPagamento: hasDetail ? "Não informado" : "",
-    periodo: hasDetail ? buildPeriodText(detail, record) : "Não informado",
+    idioma,
+    idPag: options.receiptIdentifier?.trim() || getPendingReceiptIdentifier(),
+    dataEmissao: hasDetail ? formatReceiptDateByLanguage(formatDate(new Date().toISOString()), idioma) : "",
+    metodoPagamento: "",
+    periodo: hasDetail ? buildPeriodText(detail, record) : "",
     trajetos: hasDetail ? buildTrajetos(detail) : "",
     valorTotal,
-    observacoes: hasDetail ? buildObservations(detail) : ""
+    observacoes: buildObservations()
   };
 
   return {
     ...baseModel,
     ...overrides,
-    dataEmissao: toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao),
-    valorTotal: overrides.valorTotal !== undefined ? formatReceiptTotal(overrides.valorTotal) : baseModel.valorTotal
+    idioma,
+    dataEmissao: formatReceiptDateByLanguage(toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao), idioma),
+    valorTotal: overrides.valorTotal !== undefined ? formatReceiptTotalByLanguage(overrides.valorTotal, idioma) : baseModel.valorTotal
   };
 }
 
@@ -209,9 +209,11 @@ export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptE
     return {
       nomePagante: "",
       cliente: "",
+      idioma: RECEIPT_LANGUAGE.portuguese,
       valorTotal: "",
       dataEmissao: "",
-      metodoPagamento: ""
+      metodoPagamento: "",
+      observacoes: "-"
     };
   }
 
@@ -223,9 +225,10 @@ export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptE
   return {
     nomePagante: model.nomePagante,
     cliente: model.cliente,
+    idioma: model.idioma,
     valorTotal: rawValor,
     dataEmissao: toYmdDateString(model.dataEmissao),
-    metodoPagamento: model.metodoPagamento
+    metodoPagamento: model.metodoPagamento,
+    observacoes: model.observacoes || "-"
   };
 }
-

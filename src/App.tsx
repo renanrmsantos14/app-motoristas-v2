@@ -129,6 +129,8 @@ type RefreshOptions = {
   silent?: boolean;
 };
 
+type ReceiptEntrySource = "home" | "service";
+
 type NativeCaptureTarget =
   | { flow: "maintenanceRequest" }
   | { flow: "expense" }
@@ -247,6 +249,9 @@ function App() {
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const previousScreenRef = useRef<Screen>(initialScreen);
   const [selectedDetail, setSelectedDetail] = useState<DetailData | null>(() => initialDetailRef.current);
+  const [receiptEntrySource, setReceiptEntrySource] = useState<ReceiptEntrySource>(
+    () => initialScreen === "reciboPersonalizado" && initialHashDetail ? "service" : "home"
+  );
   const [maintenancePhotoKind, setMaintenancePhotoKind] = useState<MaintenancePhotoKind>("NOTAFISCAL");
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
   const [photoDraftPreviewUrl, setPhotoDraftPreviewUrl] = useState("");
@@ -699,6 +704,7 @@ function App() {
     return Object.keys(store.photos[selectedDetail.id] ?? {}) as MaintenancePhotoKind[];
   }, [selectedDetail, store.photos]);
 
+  const receiptDetail = receiptEntrySource === "service" ? selectedDetail ?? undefined : undefined;
   const screenMotion = getScreenMotion(screen, previousScreenRef.current);
   const canGeneratePersonalReceipt =
     isTrueLike(driverContext?.funcionario?.cr40f_gerarrecibopersonalizado) ||
@@ -710,10 +716,11 @@ function App() {
 
   useEffect(() => {
     if (!hashRoutingActive) return;
-    const nextHash = buildHashRoute(screen, selectedDetail ? { id: selectedDetail.id, type: selectedDetail.type } : null);
+    const hashDetail = screen === "reciboPersonalizado" ? receiptDetail : selectedDetail;
+    const nextHash = buildHashRoute(screen, hashDetail ? { id: hashDetail.id, type: hashDetail.type } : null);
     if (window.location.hash === nextHash) return;
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${nextHash}`);
-  }, [hashRoutingActive, screen, selectedDetail]);
+  }, [hashRoutingActive, receiptDetail, screen, selectedDetail]);
 
   useEffect(() => {
     if ((screen !== "solicitarManutencao" && screen !== "gastos" && screen !== "colisoes") || !remoteMode) return;
@@ -1818,6 +1825,7 @@ function App() {
 
   const openPersonalReceipt = () => {
     if (!selectedDetail) return;
+    setReceiptEntrySource("service");
     setScreen("reciboPersonalizado");
   };
 
@@ -1826,6 +1834,7 @@ function App() {
       setToast("Você não tem permissão para gerar recibo personalizado.");
       return;
     }
+    setReceiptEntrySource("home");
     setScreen("reciboPersonalizado");
   };
 
@@ -2203,8 +2212,8 @@ function App() {
   if (screen === "reciboPersonalizado") {
     return show(
       <ReceiptScreen
-        detail={selectedDetail ?? undefined}
-        onBack={() => setScreen(selectedDetail ? "receber" : "inicio")}
+        detail={receiptDetail}
+        onBack={() => setScreen(receiptEntrySource === "service" && selectedDetail ? "receber" : "inicio")}
         clienteOptions={receiptClienteOptions}
         metodoPagamentoOptions={expenseReferenceData.paymentMethods.map((method) => method.name)}
         onProgress={(progress) => {
@@ -2216,7 +2225,7 @@ function App() {
           setRemoteOperation({
             title: "Gerando recibo personalizado",
             message: progress.message,
-            detailId: selectedDetail?.id,
+            detailId: receiptDetail?.id,
             phase: flowPhase
           });
         }}
