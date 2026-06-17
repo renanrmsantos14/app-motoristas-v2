@@ -11408,7 +11408,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.352","builtAt":"2026-06-17T15:04:52.425Z","builtAtLabel":"17/06/2026, 12:04"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.354","builtAt":"2026-06-17T15:12:28.901Z","builtAtLabel":"17/06/2026, 12:12"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -60279,6 +60279,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
 
   // src/App.tsx
   var import_jsx_runtime44 = __toESM(require_jsx_runtime(), 1);
+  var LOCAL_RECEIPT_CLIENT_MOCKS = [
+    "Particular",
+    "Tenaris",
+    "Embraer",
+    "Johnson & Johnson",
+    "Bayer",
+    "Volkswagen",
+    "Natura"
+  ];
   function FlowProgressOverlay({ operation }) {
     return /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "flow-progress-overlay", role: "status", "aria-live": "polite", "aria-label": operation.title, children: /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)("div", { className: `flow-progress-card is-${operation.phase}`, children: [
       /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "flow-progress-track", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("span", {}) }),
@@ -60850,14 +60859,18 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       };
     }, [screen, remoteMode]);
     (0, import_react58.useEffect)(() => {
-      if (screen !== "reciboPersonalizado" || !remoteMode) {
+      if (screen !== "reciboPersonalizado") {
         setReceiptClienteOptions([]);
+        return;
+      }
+      if (!remoteMode) {
+        setReceiptClienteOptions(isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
         return;
       }
       let alive = true;
       loadReceiptClienteOptionsRemote().then((clientes) => {
         if (!alive) return;
-        setReceiptClienteOptions(clientes);
+        setReceiptClienteOptions(clientes.length ? clientes : isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
       }).catch((error2) => {
         if (!alive) return;
         setDataLoadingState(null);
@@ -60868,12 +60881,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           phase: "receipt-form",
           screen
         });
-        setReceiptClienteOptions([]);
+        setReceiptClienteOptions(isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
       });
       return () => {
         alive = false;
       };
-    }, [screen, remoteMode]);
+    }, [isLocalhostRuntime, remoteMode, screen]);
     const show = (node) => /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)(import_jsx_runtime44.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(AnimatePresence, { mode: "wait", children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
         motion.div,

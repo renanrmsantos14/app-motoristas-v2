@@ -138,6 +138,16 @@ type NativeCaptureTarget =
   | { flow: "collision"; photoKind: CollisionPhotoKind }
   | { flow: "maintenanceFinalize"; photoKind: MaintenancePhotoKind };
 
+const LOCAL_RECEIPT_CLIENT_MOCKS = [
+  "Particular",
+  "Tenaris",
+  "Embraer",
+  "Johnson & Johnson",
+  "Bayer",
+  "Volkswagen",
+  "Natura"
+];
+
 function FlowProgressOverlay({ operation }: { operation: RemoteOperation }) {
   return (
     <div className="flow-progress-overlay" role="status" aria-live="polite" aria-label={operation.title}>
@@ -794,8 +804,13 @@ function App() {
   }, [screen, remoteMode]);
 
   useEffect(() => {
-    if (screen !== "reciboPersonalizado" || !remoteMode) {
+    if (screen !== "reciboPersonalizado") {
       setReceiptClienteOptions([]);
+      return;
+    }
+
+    if (!remoteMode) {
+      setReceiptClienteOptions(isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
       return;
     }
 
@@ -803,7 +818,7 @@ function App() {
     loadReceiptClienteOptionsRemote()
       .then((clientes) => {
         if (!alive) return;
-        setReceiptClienteOptions(clientes);
+        setReceiptClienteOptions(clientes.length ? clientes : (isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []));
       })
       .catch((error) => {
         if (!alive) return;
@@ -815,13 +830,13 @@ function App() {
           phase: "receipt-form",
           screen
         });
-        setReceiptClienteOptions([]);
+        setReceiptClienteOptions(isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
       });
 
     return () => {
       alive = false;
     };
-  }, [screen, remoteMode]);
+  }, [isLocalhostRuntime, remoteMode, screen]);
 
   const show = (node: React.ReactNode) => (
     <>
