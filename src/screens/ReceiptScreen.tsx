@@ -111,6 +111,7 @@ function ReceiptForm({
               fieldClassName={`finalize-input-block receipt-editor-block`}
               label="Data de emissão"
               error={errors.dataEmissao}
+              type="date"
               value={draft.dataEmissao}
               onChange={(event) => onChange("dataEmissao", event.target.value)}
             />
@@ -182,11 +183,7 @@ export function ReceiptDocument({ model, documentRef }: { model: PersonalReceipt
         </div>
 
         <div className="receipt-block receipt-description-body">
-          <p>
-            Serviço(s) de transporte terrestre executivo prestado(s) no período de <strong>{model.periodo}</strong>.
-          </p>
-          <p className="receipt-trajetos-title">Viagens percorridas nos seguintes trajetos:</p>
-          <div className="receipt-trajetos-text">{model.trajetos}</div>
+          <p>Serviços prestados de transporte executivo terrestre no brasil</p>
         </div>
 
         <div className="receipt-total-row">
@@ -379,11 +376,9 @@ function ReceiptExpandedPreview({
     <div className="receipt-preview-overlay" role="dialog" aria-modal="true" aria-label="Preview ampliado do recibo" onClick={onClose}>
       <div className="receipt-preview-overlay-shell" onClick={(event) => event.stopPropagation()}>
         <div className="receipt-preview-overlay-topbar">
-          <div>
-            <strong>Preview ampliado</strong>
-          </div>
-          <button type="button" className="receipt-preview-overlay-close" onClick={onClose}>
-            Fechar
+          <strong>Preview ampliado</strong>
+          <button type="button" className="receipt-preview-overlay-close" onClick={onClose} aria-label="Fechar preview ampliado">
+            X
           </button>
         </div>
         <div className="receipt-preview-overlay-body">
@@ -410,6 +405,7 @@ function ReceiptZoomCanvas({ model }: { model: PersonalReceiptModel }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const pointersRef = useRef<Map<number, PointerEvent>>(new Map());
   const lastPinchDistanceRef = useRef(0);
+  const panSessionRef = useRef<{ pointerId: number; lastX: number; lastY: number } | null>(null);
   const [fitScale, setFitScale] = useState(1);
   const [zoom, setZoom] = useState(1);
   const [ready, setReady] = useState(false);
@@ -442,31 +438,62 @@ function ReceiptZoomCanvas({ model }: { model: PersonalReceiptModel }) {
   const resetPinch = () => {
     lastPinchDistanceRef.current = 0;
     pointersRef.current.clear();
+    panSessionRef.current = null;
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== "touch") return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    pointersRef.current.set(event.pointerId, event.nativeEvent);
+    if (event.pointerType === "touch") {
+      pointersRef.current.set(event.pointerId, event.nativeEvent);
+      if (pointersRef.current.size > 1) {
+        panSessionRef.current = null;
+        return;
+      }
+    }
+    panSessionRef.current = {
+      pointerId: event.pointerId,
+      lastX: event.clientX,
+      lastY: event.clientY
+    };
   };
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== "touch" || !pointersRef.current.has(event.pointerId)) return;
-    pointersRef.current.set(event.pointerId, event.nativeEvent);
-    const points = Array.from(pointersRef.current.values());
-    if (points.length < 2) return;
+    if (event.pointerType === "touch" && pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, event.nativeEvent);
+      const points = Array.from(pointersRef.current.values());
+      if (points.length >= 2) {
+        panSessionRef.current = null;
+        event.preventDefault();
+        const distance = getPointerDistance(points);
+        const lastDistance = lastPinchDistanceRef.current;
+        lastPinchDistanceRef.current = distance;
+        if (!lastDistance || !distance) return;
+        setZoom((current) => clampZoom(current * (distance / lastDistance)));
+        return;
+      }
+    }
+
+    const viewport = viewportRef.current;
+    const panSession = panSessionRef.current;
+    if (!viewport || !panSession || panSession.pointerId !== event.pointerId || zoom <= 1.01) return;
 
     event.preventDefault();
-    const distance = getPointerDistance(points);
-    const lastDistance = lastPinchDistanceRef.current;
-    lastPinchDistanceRef.current = distance;
-    if (!lastDistance || !distance) return;
-    setZoom((current) => clampZoom(current * (distance / lastDistance)));
+    viewport.scrollLeft -= event.clientX - panSession.lastX;
+    viewport.scrollTop -= event.clientY - panSession.lastY;
+    panSessionRef.current = {
+      pointerId: event.pointerId,
+      lastX: event.clientX,
+      lastY: event.clientY
+    };
   };
 
   const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     pointersRef.current.delete(event.pointerId);
     if (pointersRef.current.size < 2) lastPinchDistanceRef.current = 0;
+    if (panSessionRef.current?.pointerId === event.pointerId) panSessionRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
 
   return (

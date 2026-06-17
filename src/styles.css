@@ -1289,13 +1289,17 @@ svg {
 }
 
 .receipt-preview-overlay-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
   min-height: 52px;
   padding: 8px 12px;
   background: rgb(0, 14, 35);
   color: rgb(255, 255, 255);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -1304,7 +1308,26 @@ svg {
   font-family: "Manrope", sans-serif;
   font-size: 20px;
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1;
+}
+
+.receipt-preview-overlay-close {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgb(255, 255, 255);
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .receipt-preview-overlay-topbar span {
@@ -1315,21 +1338,6 @@ svg {
   font-size: 11px;
   font-weight: 700;
   line-height: 1.3;
-}
-
-.receipt-preview-overlay-close {
-  min-width: 86px;
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
-  background: rgb(238, 243, 248);
-  color: rgb(0, 26, 61);
-  font-family: "Manrope", Arial, sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: none;
 }
 
 .receipt-preview-overlay-body {
@@ -1397,7 +1405,7 @@ svg {
 
 .receipt-zoom-viewport {
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: none;
@@ -2294,7 +2302,7 @@ svg {
   min-height: 42px;
   border: 0;
   border-radius: 4px;
-  background: rgb(232, 232, 232);
+  background: #f6f6f6;
   color: rgb(0, 0, 0);
   font-family: "Manrope", sans-serif;
   font-size: 16px;
@@ -6655,14 +6663,43 @@ button:disabled {
   min-height: 42px;
   border: 1px solid rgba(0, 26, 61, 0.07);
   border-radius: 12px;
-  background: #f7f9fb;
+  background: #f6f6f6;
   color: #000e23;
   font-family: "Manrope", Arial, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.25;
   padding: 9px 11px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.voucher-row input::placeholder,
+.voucher-row textarea::placeholder,
+.finalize-input-block input::placeholder,
+.finalize-input-block textarea::placeholder,
+.cancel-input-block textarea::placeholder,
+.searchable-select-search::placeholder {
+  color: #7f8894;
+  font-weight: 700;
+}
+
+.voucher-row input:focus,
+.voucher-row select:focus,
+.voucher-row textarea:focus,
+.finalize-input-block input:focus,
+.finalize-input-block select:focus,
+.finalize-input-block textarea:focus,
+.cancel-input-block textarea:focus,
+.searchable-select-search:focus {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(0, 26, 61, 0.09), inset 0 0 0 1px rgba(0, 14, 35, 0.08);
+}
+
+.voucher-row input[type="date"],
+.finalize-input-block input[type="date"],
+.cancel-input-block input[type="date"] {
+  background: #f6f6f6;
+  color-scheme: light;
 }
 
 .voucher-row textarea {
@@ -9962,7 +9999,7 @@ select,
 }
 
 .camera-capture-card .real-camera-video {
-  object-fit: cover !important;
+  object-fit: contain !important;
   background: #05070a !important;
 }
 
@@ -10515,12 +10552,12 @@ select,
   padding: 11px 42px 11px 12px !important;
   border: 0 !important;
   border-radius: 12px !important;
-  background: rgb(232, 232, 232) !important;
+  background: #f6f6f6 !important;
   color: rgb(0, 0, 0) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
-  font-family: "Manrope", sans-serif !important;
+  font-family: "Manrope", Arial, sans-serif !important;
   font-size: 16px !important;
   font-weight: 600 !important;
   line-height: 1.25 !important;
@@ -10531,7 +10568,7 @@ select,
 
 .receipt-editor-block .searchable-select-trigger {
   min-height: 48px !important;
-  background: rgb(255, 255, 255) !important;
+  background: #f6f6f6 !important;
   box-shadow: inset 0 0 0 1px rgba(0, 14, 35, 0.08) !important;
 }
 
@@ -10544,14 +10581,14 @@ select,
 .searchable-select-trigger:hover,
 .searchable-select.is-open .searchable-select-trigger {
   outline: 0 !important;
-  background: rgb(245, 247, 249) !important;
+  background: #f6f6f6 !important;
   box-shadow: 0 0 0 2px rgba(0, 26, 61, 0.12), inset 0 0 0 1px rgba(0, 14, 35, 0.08) !important;
 }
 
 .receipt-editor-block .searchable-select-trigger:focus,
 .receipt-editor-block .searchable-select-trigger:hover,
 .receipt-editor-block .searchable-select.is-open .searchable-select-trigger {
-  background: rgb(255, 255, 255) !important;
+  background: #f6f6f6 !important;
 }
 
 .searchable-select-value {
@@ -10612,11 +10649,11 @@ select,
   margin: 0 0 8px !important;
   padding: 10px 12px !important;
   border: 0 !important;
-  border-radius: 10px !important;
-  background: rgb(244, 246, 248) !important;
+  border-radius: 12px !important;
+  background: #f6f6f6 !important;
   color: #000e23 !important;
-  font-family: "Manrope", sans-serif !important;
-  font-size: 14px !important;
+  font-family: "Manrope", Arial, sans-serif !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   outline: 0 !important;
   box-shadow: inset 0 0 0 1px rgba(0, 14, 35, 0.06) !important;

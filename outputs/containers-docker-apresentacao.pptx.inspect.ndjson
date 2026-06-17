@@ -1,0 +1,161 @@
+{"kind":"deck","id":"pr/b8dfzr","name":"Deck"}
+{"kind":"layout","layoutId":"601526f1-4aaf-400a-bc19-00f94731a4f3","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"36781b9d-bddd-43f2-94ec-c64faa1485a1","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/i3dmtz","slide":1,"title":"Containers / Docker","textShapes":5}
+{"kind":"textbox","id":"sh/94fu18jq","slide":1,"text":"Containers / Docker","textPreview":"Containers / Docker","textChars":19,"textLines":1,"bbox":[72,118,900,84]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":1,"text":"Criacao, gerenciamento e deploy de aplicacoes","textPreview":"Criacao, gerenciamento e deploy de aplicacoes","textChars":45,"textLines":1,"bbox":[76,216,870,42]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":1,"text":"Conclusao: 29 de maio de 2026, 23:59","textPreview":"Conclusao: 29 de maio de 2026, 23:59","textChars":36,"textLines":1,"bbox":[76,294,560,32]}
+{"kind":"shape","id":"sh/gvy90je9","slide":1,"bbox":[850,122,250,250]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":1,"text":"Docker","textPreview":"Docker","textChars":6,"textLines":1,"bbox":[884,214,180,48]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":1,"text":"Containers/Docker | 01","textPreview":"Containers/Docker | 01","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/ra5gbq1o","slide":1,"bbox":[64,642,1152,1]}
+{"kind":"notes","id":"nt/i3dmtz","slide":1,"text":""}
+{"kind":"slide","id":"sl/qndpg4","slide":2,"title":"Agenda","textShapes":15}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":2,"text":"Agenda","textPreview":"Agenda","textChars":6,"textLines":1,"bbox":[64,54,960,66]}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":2,"text":"Quatro pontos para entender e apresentar Docker sem complicar.","textPreview":"Quatro pontos para entender e apresentar Docker sem complicar.","textChars":62,"textLines":1,"bbox":[66,124,920,38]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":2,"text":"Containers/Docker | 02","textPreview":"Containers/Docker | 02","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/zqtcj6to","slide":2,"bbox":[64,642,1152,1]}
+{"kind":"shape","id":"sh/65wjudg7","slide":2,"bbox":[96,207,34,34]}
+{"kind":"textbox","id":"sh/hwfyxobm","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[96,212,34,20]}
+{"kind":"textbox","id":"sh/obm58z25","slide":2,"text":"O que e","textPreview":"O que e","textChars":7,"textLines":1,"bbox":[150,202,1010,28]}
+{"kind":"textbox","id":"sh/zupwb2hw","slide":2,"text":"A ideia por tras de containers e imagens.","textPreview":"A ideia por tras de containers e imagens.","textChars":41,"textLines":1,"bbox":[150,236,1010,42]}
+{"kind":"shape","id":"sh/a9w3m94f","slide":2,"bbox":[96,293,34,34]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[96,298,34,20]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":2,"text":"Como funciona","textPreview":"Como funciona","textChars":13,"textLines":1,"bbox":[150,288,1010,28]}
+{"kind":"textbox","id":"sh/q5o7qpg3","slide":2,"text":"Dockerfile, imagem, container, registry e volumes.","textPreview":"Dockerfile, imagem, container, registry e volumes.","textChars":50,"textLines":1,"bbox":[150,322,1010,42]}
+{"kind":"shape","id":"sh/jqh0fepk","slide":2,"bbox":[96,379,34,34]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[96,384,34,20]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":2,"text":"Como instalar","textPreview":"Como instalar","textChars":13,"textLines":1,"bbox":[150,374,1010,28]}
+{"kind":"textbox","id":"sh/qh0fepkz","slide":2,"text":"Passos principais para Windows e Linux.","textPreview":"Passos principais para Windows e Linux.","textChars":39,"textLines":1,"bbox":[150,408,1010,42]}
+{"kind":"shape","id":"sh/j2t83itg","slide":2,"bbox":[96,465,34,34]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":2,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[96,470,34,20]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":2,"text":"Deploy","textPreview":"Deploy","textChars":6,"textLines":1,"bbox":[150,460,1010,28]}
+{"kind":"textbox","id":"sh/5wjudg7a","slide":2,"text":"Fluxo simples para levar uma aplicacao ao ar.","textPreview":"Fluxo simples para levar uma aplicacao ao ar.","textChars":45,"textLines":1,"bbox":[150,494,1010,42]}
+{"kind":"notes","id":"nt/qndpg4","slide":2,"text":""}
+{"kind":"slide","id":"sl/06qyz4","slide":3,"title":"O Que E","textShapes":10}
+{"kind":"textbox","id":"sh/sfil0rqd","slide":3,"text":"O Que E","textPreview":"O Que E","textChars":7,"textLines":1,"bbox":[64,54,960,66]}
+{"kind":"textbox","id":"sh/zupwb2hw","slide":3,"text":"Container empacota aplicacao e dependencias em um ambiente isolado.","textPreview":"Container empacota aplicacao e dependencias em um ambiente isolado.","textChars":67,"textLines":1,"bbox":[66,124,920,38]}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":3,"text":"Containers/Docker | 03","textPreview":"Containers/Docker | 03","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/hcrmhk3q","slide":3,"bbox":[64,642,1152,1]}
+{"kind":"shape","id":"sh/orytsvu9","slide":3,"bbox":[82,204,334,210]}
+{"kind":"textbox","id":"sh/z61032ls","slide":3,"text":"Container","textPreview":"Container","textChars":9,"textLines":1,"bbox":[106,226,286,30]}
+{"kind":"textbox","id":"sh/al87ed8b","slide":3,"text":"Processo isolado que roda com suas bibliotecas e configuracoes.","textPreview":"Processo isolado que roda com suas bibliotecas e configuracoes.","textChars":63,"textLines":1,"bbox":[106,266,286,126]}
+{"kind":"shape","id":"sh/hk3q5o7q","slide":3,"bbox":[472,204,334,210]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":3,"text":"Imagem","textPreview":"Imagem","textChars":6,"textLines":1,"bbox":[496,226,286,30]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":3,"text":"Modelo imutavel usado para criar containers iguais em qualquer ambiente.","textPreview":"Modelo imutavel usado para criar containers iguais em qualquer ambiente.","textChars":72,"textLines":1,"bbox":[496,266,286,126]}
+{"kind":"shape","id":"sh/vu9knih4","slide":3,"bbox":[862,204,334,210]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":3,"text":"Docker","textPreview":"Docker","textChars":6,"textLines":1,"bbox":[886,226,286,30]}
+{"kind":"textbox","id":"sh/d0z61032","slide":3,"text":"Plataforma que cria, executa, publica e gerencia containers.","textPreview":"Plataforma que cria, executa, publica e gerencia containers.","textChars":60,"textLines":1,"bbox":[886,266,286,126]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":3,"text":"Ideia central: menos diferenca entre maquina do desenvolvedor, teste e producao.","textPreview":"Ideia central: menos diferenca entre maquina do desenvolvedor, teste e producao.","textChars":80,"textLines":1,"bbox":[96,488,1050,42]}
+{"kind":"notes","id":"nt/06qyz4","slide":3,"text":""}
+{"kind":"slide","id":"sl/092nar","slide":4,"title":"Como Funciona","textShapes":18}
+{"kind":"textbox","id":"sh/ap4r65wj","slide":4,"text":"Como Funciona","textPreview":"Como Funciona","textChars":13,"textLines":1,"bbox":[64,54,960,66]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":4,"text":"O fluxo basico transforma codigo em imagem, imagem em container.","textPreview":"O fluxo basico transforma codigo em imagem, imagem em container.","textChars":64,"textLines":1,"bbox":[66,124,920,38]}
+{"kind":"textbox","id":"sh/svu9knih","slide":4,"text":"Containers/Docker | 04","textPreview":"Containers/Docker | 04","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/zidonyd0","slide":4,"bbox":[64,642,1152,1]}
+{"kind":"shape","id":"sh/a1gvy90j","slide":4,"bbox":[78,248,180,132]}
+{"kind":"textbox","id":"sh/hoza1gvy","slide":4,"text":"Codigo","textPreview":"Codigo","textChars":6,"textLines":1,"bbox":[102,270,132,30]}
+{"kind":"textbox","id":"sh/s36hcrmh","slide":4,"text":"app + dependencias","textPreview":"app + dependencias","textChars":18,"textLines":1,"bbox":[102,310,132,48]}
+{"kind":"textbox","id":"sh/3m94fu18","slide":4,"text":"->","textPreview":"->","textChars":2,"textLines":1,"bbox":[262,294,36,28]}
+{"kind":"shape","id":"sh/a5gbq1or","slide":4,"bbox":[310,248,180,132]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":4,"text":"Dockerfile","textPreview":"Dockerfile","textChars":10,"textLines":1,"bbox":[334,270,132,30]}
+{"kind":"textbox","id":"sh/d0z61032","slide":4,"text":"receita de build","textPreview":"receita de build","textChars":16,"textLines":1,"bbox":[334,310,132,48]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":4,"text":"->","textPreview":"->","textChars":2,"textLines":1,"bbox":[494,294,36,28]}
+{"kind":"shape","id":"sh/vu9knih4","slide":4,"bbox":[542,248,180,132]}
+{"kind":"textbox","id":"sh/knih4byh","slide":4,"text":"Imagem","textPreview":"Imagem","textChars":6,"textLines":1,"bbox":[566,270,132,30]}
+{"kind":"textbox","id":"sh/d8bat47y","slide":4,"text":"pacote versionado","textPreview":"pacote versionado","textChars":17,"textLines":1,"bbox":[566,310,132,48]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":4,"text":"->","textPreview":"->","textChars":2,"textLines":1,"bbox":[726,294,36,28]}
+{"kind":"shape","id":"sh/v6psfil0","slide":4,"bbox":[774,248,180,132]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":4,"text":"Container","textPreview":"Container","textChars":9,"textLines":1,"bbox":[798,270,132,30]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":4,"text":"execucao isolada","textPreview":"execucao isolada","textChars":16,"textLines":1,"bbox":[798,310,132,48]}
+{"kind":"textbox","id":"sh/h0fepkzu","slide":4,"text":"->","textPreview":"->","textChars":2,"textLines":1,"bbox":[958,294,36,28]}
+{"kind":"shape","id":"sh/sfil0rqd","slide":4,"bbox":[1006,248,180,132]}
+{"kind":"textbox","id":"sh/zupwb2hw","slide":4,"text":"Registry","textPreview":"Registry","textChars":8,"textLines":1,"bbox":[1030,270,132,30]}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":4,"text":"publicacao","textPreview":"publicacao","textChars":10,"textLines":1,"bbox":[1030,310,132,48]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":4,"text":"Comandos comuns: docker build, docker run, docker ps, docker logs, docker compose up.","textPreview":"Comandos comuns: docker build, docker run, docker ps, docker logs, docker compose up.","textChars":85,"textLines":1,"bbox":[92,470,1030,38]}
+{"kind":"notes","id":"nt/092nar","slide":4,"text":""}
+{"kind":"slide","id":"sl/7ikrpc","slide":5,"title":"Instalacao No Windows","textShapes":15}
+{"kind":"textbox","id":"sh/q1orytsv","slide":5,"text":"Instalacao No Windows","textPreview":"Instalacao No Windows","textChars":21,"textLines":1,"bbox":[64,54,960,66]}
+{"kind":"textbox","id":"sh/xs72x4na","slide":5,"text":"Caminho recomendado: Docker Desktop com WSL 2.","textPreview":"Caminho recomendado: Docker Desktop com WSL 2.","textChars":46,"textLines":1,"bbox":[66,124,920,38]}
+{"kind":"textbox","id":"sh/87ed8bat","slide":5,"text":"Containers/Docker | 05","textPreview":"Containers/Docker | 05","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/je9cvixc","slide":5,"bbox":[64,642,1152,1]}
+{"kind":"shape","id":"sh/qtcj6tov","slide":5,"bbox":[96,207,34,34]}
+{"kind":"textbox","id":"sh/1gvy90je","slide":5,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[96,212,34,20]}
+{"kind":"textbox","id":"sh/8z25kb6x","slide":5,"text":"Ativar virtualizacao","textPreview":"Ativar virtualizacao","textChars":20,"textLines":1,"bbox":[150,202,1010,28]}
+{"kind":"textbox","id":"sh/fa9w3m94","slide":5,"text":"Confirmar no BIOS/UEFI e habilitar recursos de virtualizacao no Windows.","textPreview":"Confirmar no BIOS/UEFI e habilitar recursos de virtualizacao no Windows.","textChars":72,"textLines":1,"bbox":[150,236,1010,42]}
+{"kind":"shape","id":"sh/qpg3ex0n","slide":5,"bbox":[96,293,34,34]}
+{"kind":"textbox","id":"sh/wjudg7ad","slide":5,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[96,298,34,20]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":5,"text":"Instalar WSL 2","textPreview":"Instalar WSL 2","textChars":14,"textLines":1,"bbox":[150,288,1010,28]}
+{"kind":"textbox","id":"sh/ed8v6psf","slide":5,"text":"Executar wsl --install e reiniciar se o Windows solicitar.","textPreview":"Executar wsl --install e reiniciar se o Windows solicitar.","textChars":58,"textLines":1,"bbox":[150,322,1010,42]}
+{"kind":"shape","id":"sh/7y1kre1w","slide":5,"bbox":[96,379,34,34]}
+{"kind":"textbox","id":"sh/0bi9s36h","slide":5,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[96,384,34,20]}
+{"kind":"textbox","id":"sh/pwb2hwfy","slide":5,"text":"Instalar Docker Desktop","textPreview":"Instalar Docker Desktop","textChars":23,"textLines":1,"bbox":[150,374,1010,28]}
+{"kind":"textbox","id":"sh/i5sneloj","slide":5,"text":"Baixar o instalador oficial, habilitar backend WSL 2 e abrir o Docker.","textPreview":"Baixar o instalador oficial, habilitar backend WSL 2 e abrir o Docker.","textChars":70,"textLines":1,"bbox":[150,408,1010,42]}
+{"kind":"shape","id":"sh/7qpg3ex0","slide":5,"bbox":[96,465,34,34]}
+{"kind":"textbox","id":"sh/0z61032l","slide":5,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[96,470,34,20]}
+{"kind":"textbox","id":"sh/pkzupwb2","slide":5,"text":"Validar","textPreview":"Validar","textChars":7,"textLines":1,"bbox":[150,460,1010,28]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":5,"text":"Rodar docker --version e docker run hello-world no terminal.","textPreview":"Rodar docker --version e docker run hello-world no terminal.","textChars":60,"textLines":1,"bbox":[150,494,1010,42]}
+{"kind":"notes","id":"nt/7ikrpc","slide":5,"text":""}
+{"kind":"slide","id":"sl/qb8oy6","slide":6,"title":"Instalacao No Linux","textShapes":15}
+{"kind":"textbox","id":"sh/x4nap4r6","slide":6,"text":"Instalacao No Linux","textPreview":"Instalacao No Linux","textChars":19,"textLines":1,"bbox":[64,54,960,66]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":6,"text":"Em servidores Linux, normalmente se instala Docker Engine.","textPreview":"Em servidores Linux, normalmente se instala Docker Engine.","textChars":58,"textLines":1,"bbox":[66,124,920,38]}
+{"kind":"textbox","id":"sh/fyxobm58","slide":6,"text":"Containers/Docker | 06","textPreview":"Containers/Docker | 06","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/8v6psfil","slide":6,"bbox":[64,642,1152,1]}
+{"kind":"shape","id":"sh/xczed8v6","slide":6,"bbox":[96,207,34,34]}
+{"kind":"textbox","id":"sh/qpg3ex0n","slide":6,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[96,212,34,20]}
+{"kind":"textbox","id":"sh/fa9w3m94","slide":6,"text":"Atualizar pacotes","textPreview":"Atualizar pacotes","textChars":17,"textLines":1,"bbox":[150,202,1010,28]}
+{"kind":"textbox","id":"sh/8z25kb6x","slide":6,"text":"Usar o gerenciador da distro, como apt, dnf ou yum.","textPreview":"Usar o gerenciador da distro, como apt, dnf ou yum.","textChars":51,"textLines":1,"bbox":[150,236,1010,42]}
+{"kind":"shape","id":"sh/1gvy90je","slide":6,"bbox":[96,293,34,34]}
+{"kind":"textbox","id":"sh/pg3ex0nu","slide":6,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[96,298,34,20]}
+{"kind":"textbox","id":"sh/wval87ed","slide":6,"text":"Adicionar repositorio","textPreview":"Adicionar repositorio","textChars":21,"textLines":1,"bbox":[150,288,1010,28]}
+{"kind":"textbox","id":"sh/7adsji5s","slide":6,"text":"Configurar o repositorio oficial do Docker para receber versoes atuais.","textPreview":"Configurar o repositorio oficial do Docker para receber versoes atuais.","textChars":71,"textLines":1,"bbox":[150,322,1010,42]}
+{"kind":"shape","id":"sh/epkzupwb","slide":6,"bbox":[96,379,34,34]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":6,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[96,384,34,20]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":6,"text":"Instalar engine","textPreview":"Instalar engine","textChars":15,"textLines":1,"bbox":[150,374,1010,28]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":6,"text":"Instalar docker-ce, docker-ce-cli, containerd e plugins compose/buildx.","textPreview":"Instalar docker-ce, docker-ce-cli, containerd e plugins compose/buildx.","textChars":71,"textLines":1,"bbox":[150,408,1010,42]}
+{"kind":"shape","id":"sh/e1w7mp0b","slide":6,"bbox":[96,465,34,34]}
+{"kind":"textbox","id":"sh/l0rqd4vm","slide":6,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[96,470,34,20]}
+{"kind":"textbox","id":"sh/wfyxobm5","slide":6,"text":"Validar servico","textPreview":"Validar servico","textChars":15,"textLines":1,"bbox":[150,460,1010,28]}
+{"kind":"textbox","id":"sh/svu9knih","slide":6,"text":"Checar systemctl status docker e executar docker run hello-world.","textPreview":"Checar systemctl status docker e executar docker run hello-world.","textChars":65,"textLines":1,"bbox":[150,494,1010,42]}
+{"kind":"notes","id":"nt/qb8oy6","slide":6,"text":""}
+{"kind":"slide","id":"sl/r9qpaz","slide":7,"title":"Gerenciamento E Deploy","textShapes":12}
+{"kind":"textbox","id":"sh/fyxobm58","slide":7,"text":"Gerenciamento E Deploy","textPreview":"Gerenciamento E Deploy","textChars":22,"textLines":1,"bbox":[64,54,960,66]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":7,"text":"Deploy simples precisa de build, variaveis, registry e observabilidade.","textPreview":"Deploy simples precisa de build, variaveis, registry e observabilidade.","textChars":71,"textLines":1,"bbox":[66,124,920,38]}
+{"kind":"textbox","id":"sh/x4nap4r6","slide":7,"text":"Containers/Docker | 07","textPreview":"Containers/Docker | 07","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/qpg3ex0n","slide":7,"bbox":[64,642,1152,1]}
+{"kind":"shape","id":"sh/fa9w3m94","slide":7,"bbox":[82,200,240,170]}
+{"kind":"textbox","id":"sh/8v6psfil","slide":7,"text":"Build","textPreview":"Build","textChars":5,"textLines":1,"bbox":[106,222,192,30]}
+{"kind":"textbox","id":"sh/xczed8v6","slide":7,"text":"Criar imagem com tag clara: app:1.0.0.","textPreview":"Criar imagem com tag clara: app:1.0.0.","textChars":38,"textLines":1,"bbox":[106,262,192,86]}
+{"kind":"shape","id":"sh/qtcj6tov","slide":7,"bbox":[374,200,240,170]}
+{"kind":"textbox","id":"sh/je9cvixc","slide":7,"text":"Config","textPreview":"Config","textChars":6,"textLines":1,"bbox":[398,222,192,30]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":7,"text":"Usar variaveis de ambiente e secrets fora da imagem.","textPreview":"Usar variaveis de ambiente e secrets fora da imagem.","textChars":52,"textLines":1,"bbox":[398,262,192,86]}
+{"kind":"shape","id":"sh/yxobm58z","slide":7,"bbox":[666,200,240,170]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":7,"text":"Publish","textPreview":"Publish","textChars":7,"textLines":1,"bbox":[690,222,192,30]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":7,"text":"Enviar imagem para Docker Hub, GHCR, ECR, ACR ou registry privado.","textPreview":"Enviar imagem para Docker Hub, GHCR, ECR, ACR ou registry privado.","textChars":66,"textLines":1,"bbox":[690,262,192,86]}
+{"kind":"shape","id":"sh/r65wjudg","slide":7,"bbox":[958,200,240,170]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":7,"text":"Run","textPreview":"Run","textChars":3,"textLines":1,"bbox":[982,222,192,30]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":7,"text":"Subir com Docker Compose, servidor, Kubernetes ou plataforma cloud.","textPreview":"Subir com Docker Compose, servidor, Kubernetes ou plataforma cloud.","textChars":67,"textLines":1,"bbox":[982,262,192,86]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":7,"text":"Operacao minima: logs, healthcheck, backup de dados e rollback por tag.","textPreview":"Operacao minima: logs, healthcheck, backup de dados e rollback por tag.","textChars":71,"textLines":1,"bbox":[92,462,1030,38]}
+{"kind":"notes","id":"nt/r9qpaz","slide":7,"text":""}
+{"kind":"slide","id":"sl/fr6lcz","slide":8,"title":"Resumo Para Apresentacao","textShapes":15}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":8,"text":"Resumo Para Apresentacao","textPreview":"Resumo Para Apresentacao","textChars":24,"textLines":1,"bbox":[64,54,960,66]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":8,"text":"Docker resolve padronizacao, portabilidade e deploy repetivel.","textPreview":"Docker resolve padronizacao, portabilidade e deploy repetivel.","textChars":62,"textLines":1,"bbox":[66,124,920,38]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":8,"text":"Containers/Docker | 08","textPreview":"Containers/Docker | 08","textChars":22,"textLines":1,"bbox":[64,668,360,24]}
+{"kind":"shape","id":"sh/2t83itgf","slide":8,"bbox":[64,642,1152,1]}
+{"kind":"shape","id":"sh/re1w7mp0","slide":8,"bbox":[96,207,34,34]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":8,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[96,212,34,20]}
+{"kind":"textbox","id":"sh/9knih4by","slide":8,"text":"Use containers para empacotar aplicacoes","textPreview":"Use containers para empacotar aplicacoes","textChars":40,"textLines":1,"bbox":[150,202,1010,28]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":8,"text":"O ambiente fica previsivel e mais facil de mover.","textPreview":"O ambiente fica previsivel e mais facil de mover.","textChars":49,"textLines":1,"bbox":[150,236,1010,42]}
+{"kind":"shape","id":"sh/ra5gbq1o","slide":8,"bbox":[96,293,34,34]}
+{"kind":"textbox","id":"sh/3m94fu18","slide":8,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[96,298,34,20]}
+{"kind":"textbox","id":"sh/a5gbq1or","slide":8,"text":"Use imagens versionadas","textPreview":"Use imagens versionadas","textChars":23,"textLines":1,"bbox":[150,288,1010,28]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":8,"text":"Cada release pode ser rastreada, publicada e revertida.","textPreview":"Cada release pode ser rastreada, publicada e revertida.","textChars":55,"textLines":1,"bbox":[150,322,1010,42]}
+{"kind":"shape","id":"sh/s72x4nap","slide":8,"bbox":[96,379,34,34]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":8,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[96,384,34,20]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":8,"text":"Separe codigo de configuracao","textPreview":"Separe codigo de configuracao","textChars":29,"textLines":1,"bbox":[150,374,1010,28]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":8,"text":"Variaveis, secrets e volumes nao devem ficar presos na imagem.","textPreview":"Variaveis, secrets e volumes nao devem ficar presos na imagem.","textChars":62,"textLines":1,"bbox":[150,408,1010,42]}
+{"kind":"shape","id":"sh/sji5snel","slide":8,"bbox":[96,465,34,34]}
+{"kind":"textbox","id":"sh/za1gvy90","slide":8,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[96,470,34,20]}
+{"kind":"textbox","id":"sh/ap4r65wj","slide":8,"text":"Valide antes de publicar","textPreview":"Valide antes de publicar","textChars":24,"textLines":1,"bbox":[150,460,1010,28]}
+{"kind":"textbox","id":"sh/yd0z6103","slide":8,"text":"Teste local, verifique logs e monitore o container em producao.","textPreview":"Teste local, verifique logs e monitore o container em producao.","textChars":63,"textLines":1,"bbox":[150,494,1010,42]}
+{"kind":"notes","id":"nt/fr6lcz","slide":8,"text":""}

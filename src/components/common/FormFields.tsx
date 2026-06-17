@@ -1,4 +1,4 @@
-import { forwardRef, type ComponentPropsWithoutRef, type ReactNode } from "react";
+import { forwardRef, useEffect, useState, type ComponentPropsWithoutRef, type FocusEvent, type ReactNode } from "react";
 import { SearchableSelect, type SearchableSelectProps } from "./SearchableSelect";
 
 type FormFieldProps = {
@@ -42,7 +42,27 @@ export function FormField({
 }
 
 export const TextInputControl = forwardRef<HTMLInputElement, ComponentPropsWithoutRef<"input">>(function TextInputControl(props, ref) {
-  return <input ref={ref} {...props} />;
+  const { type, value, defaultValue, onFocus, onBlur, ...inputProps } = props;
+  const isDateInput = type === "date";
+  const hasValue = String(value ?? defaultValue ?? "").trim().length > 0;
+  const [renderType, setRenderType] = useState(isDateInput && !hasValue ? "text" : type);
+
+  useEffect(() => {
+    if (!isDateInput) return;
+    setRenderType(hasValue ? "date" : "text");
+  }, [hasValue, isDateInput]);
+
+  const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+    if (isDateInput) setRenderType("date");
+    onFocus?.(event);
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+    if (isDateInput && !event.currentTarget.value) setRenderType("text");
+    onBlur?.(event);
+  };
+
+  return <input ref={ref} type={renderType} value={value} defaultValue={defaultValue} onFocus={handleFocus} onBlur={handleBlur} {...inputProps} />;
 });
 
 export const TextAreaControl = forwardRef<HTMLTextAreaElement, ComponentPropsWithoutRef<"textarea">>(function TextAreaControl(props, ref) {
@@ -61,17 +81,57 @@ type TextInputFieldProps = FieldComponentProps & ComponentPropsWithoutRef<"input
 type TextAreaFieldProps = FieldComponentProps & ComponentPropsWithoutRef<"textarea">;
 type SelectFieldProps = FieldComponentProps & SearchableSelectProps;
 
+function labelToText(label?: ReactNode) {
+  return typeof label === "string" ? label.trim() : "";
+}
+
+function compactLabel(label?: ReactNode) {
+  return labelToText(label)
+    .replace(/\s*\(.+?\)\s*/g, " ")
+    .replace(/\s*[:/]\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function getInputPlaceholder(label?: ReactNode, type?: string, inputMode?: string) {
+  const normalizedLabel = compactLabel(label);
+
+  if (type === "date") return "Selecionar data";
+  if (type === "email") return "Digite e-mail";
+  if (type === "tel" || inputMode === "tel") return "Digite telefone";
+  if (type === "search") return "Buscar";
+  if (type === "number" || inputMode === "numeric" || inputMode === "decimal") return "Digite valor";
+  if (!normalizedLabel) return "Digite aqui";
+  return `Digite ${normalizedLabel}`;
+}
+
+function getTextareaPlaceholder(label?: ReactNode) {
+  const normalizedLabel = compactLabel(label);
+  if (!normalizedLabel) return "Digite aqui";
+  return `Digite ${normalizedLabel}`;
+}
+
+function getSelectPlaceholder(label?: ReactNode) {
+  const normalizedLabel = compactLabel(label);
+  if (!normalizedLabel) return "Selecionar";
+  return `Selecionar ${normalizedLabel}`;
+}
+
 export const TextInputField = forwardRef<HTMLInputElement, TextInputFieldProps>(function TextInputField({
   label,
   error,
   hint,
   fieldClassName,
   labelClassName,
+  placeholder,
   ...inputProps
 }, ref) {
+  const resolvedPlaceholder = placeholder ?? getInputPlaceholder(label, inputProps.type, inputProps.inputMode);
+
   return (
     <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName}>
-      <TextInputControl ref={ref} aria-invalid={Boolean(error)} {...inputProps} />
+      <TextInputControl ref={ref} aria-invalid={Boolean(error)} placeholder={resolvedPlaceholder} {...inputProps} />
     </FormField>
   );
 });
@@ -82,11 +142,14 @@ export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaFieldProps>
   hint,
   fieldClassName,
   labelClassName,
+  placeholder,
   ...textareaProps
 }, ref) {
+  const resolvedPlaceholder = placeholder ?? getTextareaPlaceholder(label);
+
   return (
     <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName}>
-      <TextAreaControl ref={ref} aria-invalid={Boolean(error)} {...textareaProps} />
+      <TextAreaControl ref={ref} aria-invalid={Boolean(error)} placeholder={resolvedPlaceholder} {...textareaProps} />
     </FormField>
   );
 });
@@ -97,11 +160,14 @@ export const SelectField = forwardRef<HTMLButtonElement, SelectFieldProps>(funct
   hint,
   fieldClassName,
   labelClassName,
+  placeholder,
   ...selectProps
 }, ref) {
+  const resolvedPlaceholder = placeholder ?? getSelectPlaceholder(label);
+
   return (
     <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName}>
-      <SelectControl ref={ref} invalid={Boolean(error)} {...selectProps} />
+      <SelectControl ref={ref} invalid={Boolean(error)} placeholder={resolvedPlaceholder} {...selectProps} />
     </FormField>
   );
 });

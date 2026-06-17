@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import betinhosLogo from "../../Logo Betinhos B.png";
 import carCrashIcon from "../assets/icons/car-crash-svgrepo-com.svg";
+import carIcon from "../assets/icons/car.svg";
 import historyIcon from "../assets/icons/clock.svg";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { ActionButton } from "../components/common/ActionButton";
@@ -330,13 +331,7 @@ function getTodayAgendaCount(services: AgendaItem[] | undefined, now: number) {
 
 function ModuleIcon({ name }: { name: string }) {
   if (name === "services") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M6.5 7.5h11l1.5 4v6a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-.5h-6v.5A1.5 1.5 0 0 1 7 19h-1a1.5 1.5 0 0 1-1.5-1.5v-6l2-4Z" />
-        <path d="M7.5 7.5 8.4 5h7.2l.9 2.5" />
-        <path d="M7 13h2.2M14.8 13H17" />
-      </svg>
-    );
+    return <img src={carIcon} alt="" />;
   }
 
   if (name === "history") {

@@ -312,6 +312,7 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
                 <VoucherInputRow label="Observação">
                   <TextAreaControl
                     rows={3}
+                    placeholder="Digite observação"
                     value={obs}
                     onChange={(event) => {
                       setObs(event.target.value);

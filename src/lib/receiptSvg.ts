@@ -145,7 +145,7 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
     svgText("Descrição", { x: MARGIN + 16, y: 371, size: 18, weight: 800 }),
     line(MARGIN, 383, right),
     line(MARGIN, 548, right),
-    svgText(`Serviço(s) de transporte terrestre executivo prestado(s) no período de ${model.periodo}.`, {
+    svgText("Serviços prestados de transporte executivo terrestre no brasil", {
       x: MARGIN + 16,
       y: 423,
       size: 15,
@@ -153,8 +153,6 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
       lineHeight: 23,
       maxLines: 3
     }),
-    svgText("Viagens percorridas nos seguintes trajetos:", { x: MARGIN + 16, y: 488, size: 15, weight: 700 }),
-    svgText(model.trajetos, { x: MARGIN + 16, y: 516, size: 15, maxWidth: contentWidth - 32, lineHeight: 22, maxLines: 5 }),
     rect(MARGIN, 548, contentWidth - 260, 40, "#ebf3ff"),
     rect(right - 260, 548, 110, 40, "#cde1ff"),
     rect(right - 150, 548, 150, 40, "#cde1ff"),

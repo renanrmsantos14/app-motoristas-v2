@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   findFirstPendingDetail,
@@ -61,6 +61,14 @@ import {
 } from "./lib/dataverse";
 import { reportAppError } from "./lib/appErrorLogger";
 import {
+  createVideoPosterDataUrl,
+  getVideoDurationLabelFromUrl,
+  getViewportOrientationAngle,
+  normalizeAngle,
+  readBlobAsDataUrl,
+  readPhotoFileAsDataUrl
+} from "./lib/photoOrientation";
+import {
   cancelDetailLocally,
   clearMaintenancePhotos,
   deleteMaintenancePhoto as deleteFinalizationMaintenancePhoto,
@@ -121,6 +129,13 @@ type RefreshOptions = {
   silent?: boolean;
 };
 
+type NativeCaptureTarget =
+  | { flow: "maintenanceRequest" }
+  | { flow: "expense" }
+  | { flow: "receive" }
+  | { flow: "collision"; photoKind: CollisionPhotoKind }
+  | { flow: "maintenanceFinalize"; photoKind: MaintenancePhotoKind };
+
 function FlowProgressOverlay({ operation }: { operation: RemoteOperation }) {
   return (
     <div className="flow-progress-overlay" role="status" aria-live="polite" aria-label={operation.title}>
@@ -139,6 +154,10 @@ function FlowProgressOverlay({ operation }: { operation: RemoteOperation }) {
 
 function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function isVideoCaptureFile(file: File) {
+  return file.type.startsWith("video/") || /\.(mov|mp4|webm|m4v)$/i.test(file.name);
 }
 
 const DATA_LOADING_SUCCESS_DURATION_MS = 420;
@@ -209,6 +228,11 @@ function App() {
   const isButtonPreviewMode = devMode === "preview" || previewHashActive;
   const isReceiptPreviewMode = devMode === "recibo";
   const isLocalhostRuntime = useMemo(() => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname), []);
+  const isIosRuntime = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    const userAgent = navigator.userAgent ?? "";
+    return /iPad|iPhone|iPod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }, []);
   const hashRoutingActive = useMemo(
     () => isHashRoutingEnabled() && !isButtonPreviewMode && !isReceiptPreviewMode,
     [isButtonPreviewMode, isReceiptPreviewMode]
@@ -297,6 +321,8 @@ function App() {
   const finalizeTimerRef = useRef<number | null>(null);
   const completingClearTimerRef = useRef<number | null>(null);
   const voucherDraftTimerRef = useRef<number | null>(null);
+  const nativeCaptureInputRef = useRef<HTMLInputElement | null>(null);
+  const nativeCaptureTargetRef = useRef<NativeCaptureTarget | null>(null);
 
   const logAppError = (error: unknown, action: string, phase = "") => {
     reportAppError(error, {
@@ -337,6 +363,136 @@ function App() {
     });
     await wait(DATA_LOADING_SUCCESS_DURATION_MS);
     setDataLoadingState(null);
+  };
+
+  const openIosNativeCapture = (target: NativeCaptureTarget) => {
+    if (!isIosRuntime || !nativeCaptureInputRef.current) return false;
+    nativeCaptureTargetRef.current = target;
+    nativeCaptureInputRef.current.click();
+    return true;
+  };
+
+  const handleAppNativeCapture = async (event: ChangeEvent<HTMLInputElement>) => {
+    const target = nativeCaptureTargetRef.current;
+    const file = event.target.files?.[0];
+    if (!target || !file) {
+      event.target.value = "";
+      return;
+    }
+
+    const isVideo = isVideoCaptureFile(file);
+    const previewUrl = isVideo ? URL.createObjectURL(file) : "";
+
+    try {
+      if (isVideo) {
+        const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
+          readBlobAsDataUrl(file),
+          createVideoPosterDataUrl(previewUrl),
+          getVideoDurationLabelFromUrl(previewUrl)
+        ]);
+
+        switch (target.flow) {
+          case "maintenanceRequest":
+            setMaintenanceRequestPhotoDraft(videoDataUrl);
+            setMaintenanceRequestPhotoPreviewUrl("");
+            setMaintenanceRequestPhotoPosterUrl(posterUrl);
+            setMaintenanceRequestPhotoDurationLabel(durationLabel);
+            setMaintenanceRequestPreviewPhotoId("");
+            setScreen("previewFotoSolicitacaoManutencao");
+            break;
+          case "expense":
+            setExpensePhotoDraft(videoDataUrl);
+            setExpensePhotoPreviewUrl("");
+            setExpensePhotoPosterUrl(posterUrl);
+            setExpensePhotoDurationLabel(durationLabel);
+            setExpensePreviewPhotoId("");
+            setScreen("previewFotoGasto");
+            break;
+          case "receive":
+            setReceivePhotoDraft(videoDataUrl);
+            setReceivePhotoPreviewUrl("");
+            setReceivePhotoPosterUrl(posterUrl);
+            setReceivePhotoDurationLabel(durationLabel);
+            setReceivePreviewPhotoId("");
+            setScreen("previewFotoReceber");
+            break;
+          case "collision":
+            setCollisionPhotoKind(target.photoKind);
+            setCollisionPhotoDraft(videoDataUrl);
+            setCollisionPhotoPreviewUrl("");
+            setCollisionPhotoPosterUrl(posterUrl);
+            setCollisionPhotoDurationLabel(durationLabel);
+            setCollisionPreviewPhotoId("");
+            setScreen("previewFotoColisao");
+            break;
+          case "maintenanceFinalize":
+            setMaintenancePhotoKind(target.photoKind);
+            setPhotoDraft(videoDataUrl);
+            setPhotoDraftPreviewUrl("");
+            setMaintenanceExistingPreview(false);
+            setScreen("previewFotoManutencao");
+            break;
+        }
+      } else {
+        const dataUrl = await readPhotoFileAsDataUrl(file, normalizeAngle(getViewportOrientationAngle()));
+
+        switch (target.flow) {
+          case "maintenanceRequest":
+            setMaintenanceRequestPhotoDraft(dataUrl);
+            setMaintenanceRequestPhotoPreviewUrl("");
+            setMaintenanceRequestPhotoPosterUrl("");
+            setMaintenanceRequestPhotoDurationLabel("");
+            setMaintenanceRequestPreviewPhotoId("");
+            setScreen("previewFotoSolicitacaoManutencao");
+            break;
+          case "expense":
+            setExpensePhotoDraft(dataUrl);
+            setExpensePhotoPreviewUrl("");
+            setExpensePhotoPosterUrl("");
+            setExpensePhotoDurationLabel("");
+            setExpensePreviewPhotoId("");
+            setScreen("previewFotoGasto");
+            break;
+          case "receive":
+            setReceivePhotoDraft(dataUrl);
+            setReceivePhotoPreviewUrl("");
+            setReceivePhotoPosterUrl("");
+            setReceivePhotoDurationLabel("");
+            setReceivePreviewPhotoId("");
+            setScreen("previewFotoReceber");
+            break;
+          case "collision":
+            setCollisionPhotoKind(target.photoKind);
+            setCollisionPhotoDraft(dataUrl);
+            setCollisionPhotoPreviewUrl("");
+            setCollisionPhotoPosterUrl("");
+            setCollisionPhotoDurationLabel("");
+            setCollisionPreviewPhotoId("");
+            setScreen("previewFotoColisao");
+            break;
+          case "maintenanceFinalize":
+            setMaintenancePhotoKind(target.photoKind);
+            setPhotoDraft(dataUrl);
+            setPhotoDraftPreviewUrl("");
+            setMaintenanceExistingPreview(false);
+            setScreen("previewFotoManutencao");
+            break;
+        }
+      }
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "app",
+        action: "handle-app-native-capture",
+        phase: target.flow,
+        screen
+      });
+      setToast(error instanceof Error ? error.message : "Nao foi possivel preparar a captura.");
+    } finally {
+      nativeCaptureTargetRef.current = null;
+      if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+      event.target.value = "";
+    }
   };
 
   useEffect(() => {
@@ -678,6 +834,14 @@ function App() {
       <LocalToast toast={dataLoading ? null : toast} onDismiss={() => setToastState(null)} />
       <LoadingOverlay loading={dataLoading} />
       {remoteOperation ? <FlowProgressOverlay operation={remoteOperation} /> : null}
+      <input
+        ref={nativeCaptureInputRef}
+        className="native-camera-input"
+        type="file"
+        accept="image/*,video/*,.mov,video/quicktime"
+        capture="environment"
+        onChange={handleAppNativeCapture}
+      />
       {criticalError ? (
         <div className="critical-error-overlay" role="dialog" aria-modal="true" aria-labelledby="critical-error-title">
           <div className="critical-error-card">
@@ -1312,6 +1476,7 @@ function App() {
   };
 
   const openMaintenanceRequestCamera = () => {
+    if (openIosNativeCapture({ flow: "maintenanceRequest" })) return;
     setMaintenanceRequestPhotoDraft("");
     setMaintenanceRequestPhotoPreviewUrl("");
     setMaintenanceRequestPhotoPosterUrl("");
@@ -1387,6 +1552,7 @@ function App() {
   };
 
   const openExpenseCamera = () => {
+    if (openIosNativeCapture({ flow: "expense" })) return;
     setExpensePhotoDraft("");
     setExpensePhotoPreviewUrl("");
     setExpensePhotoPosterUrl("");
@@ -1462,6 +1628,7 @@ function App() {
   };
 
   const openReceiveCamera = () => {
+    if (openIosNativeCapture({ flow: "receive" })) return;
     setReceivePhotoDraft("");
     setReceivePhotoPreviewUrl("");
     setReceivePhotoPosterUrl("");
@@ -1673,6 +1840,7 @@ function App() {
   };
 
   const openCollisionCamera = (kind: CollisionPhotoKind) => {
+    if (openIosNativeCapture({ flow: "collision", photoKind: kind })) return;
     setCollisionPhotoKind(kind);
     setCollisionPhotoDraft("");
     setCollisionPhotoPreviewUrl("");
@@ -1680,6 +1848,15 @@ function App() {
     setCollisionPhotoDurationLabel("");
     setCollisionPreviewPhotoId("");
     setScreen("fotoColisao");
+  };
+
+  const openMaintenanceFinalizeCamera = (kind: MaintenancePhotoKind) => {
+    if (openIosNativeCapture({ flow: "maintenanceFinalize", photoKind: kind })) return;
+    setMaintenancePhotoKind(kind);
+    setPhotoDraft(null);
+    setPhotoDraftPreviewUrl("");
+    setMaintenanceExistingPreview(false);
+    setScreen("fotoManutencao");
   };
 
   const openCollisionVideoPreview = (videoDataUrl: string, _previewUrl: string, posterUrl: string, durationLabel = "") => {
@@ -1792,7 +1969,7 @@ function App() {
         photoDataUrl={maintenanceRequestPhotoDraft}
         videoPreviewUrl={maintenanceRequestPhotoPreviewUrl}
         onBack={() => setScreen("solicitarManutencao")}
-        onRetake={() => setScreen("fotoSolicitacaoManutencao")}
+        onRetake={openMaintenanceRequestCamera}
         onDelete={maintenanceRequestPreviewPhotoId ? deleteMaintenanceRequestPhoto : undefined}
         onConfirm={confirmMaintenanceRequestPhoto}
         confirmLabel={maintenanceRequestPreviewPhotoId ? "Voltar" : "Confirmar"}
@@ -1837,14 +2014,7 @@ function App() {
           setCollisionPreviewPhotoId("");
           setScreen("colisoes");
         }}
-        onRetake={() => {
-          setCollisionPhotoDraft("");
-          setCollisionPhotoPreviewUrl("");
-          setCollisionPhotoPosterUrl("");
-          setCollisionPhotoDurationLabel("");
-          setCollisionPreviewPhotoId("");
-          setScreen("fotoColisao");
-        }}
+        onRetake={() => openCollisionCamera(collisionPhotoKind)}
         onDelete={collisionPreviewPhotoId ? deleteCollisionPhoto : undefined}
         onConfirm={confirmCollisionPhoto}
         confirmLabel={collisionPreviewPhotoId ? "Voltar" : "Confirmar"}
@@ -1888,14 +2058,7 @@ function App() {
           setExpensePreviewPhotoId("");
           setScreen("gastos");
         }}
-        onRetake={() => {
-          setExpensePhotoDraft("");
-          setExpensePhotoPreviewUrl("");
-          setExpensePhotoPosterUrl("");
-          setExpensePhotoDurationLabel("");
-          setExpensePreviewPhotoId("");
-          setScreen("fotoGasto");
-        }}
+        onRetake={openExpenseCamera}
         onDelete={expensePreviewPhotoId ? deleteExpensePhoto : undefined}
         onConfirm={confirmExpensePhoto}
         confirmLabel={expensePreviewPhotoId ? "Voltar" : "Confirmar"}
@@ -2000,7 +2163,7 @@ function App() {
         photoDataUrl={photoDraft}
         videoPreviewUrl={photoDraftPreviewUrl}
         onBack={() => setScreen("finalizar")}
-        onRetake={() => setScreen("fotoManutencao")}
+        onRetake={() => openMaintenanceFinalizeCamera(maintenancePhotoKind)}
         onConfirm={() => {
           setStore((current) => saveMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind, photoDraft ?? ""));
           setToast("Foto salva localmente.");
@@ -2097,14 +2260,7 @@ function App() {
           setReceivePreviewPhotoId("");
           setScreen("receber");
         }}
-        onRetake={() => {
-          setReceivePhotoDraft("");
-          setReceivePhotoPreviewUrl("");
-          setReceivePhotoPosterUrl("");
-          setReceivePhotoDurationLabel("");
-          setReceivePreviewPhotoId("");
-          setScreen("fotoReceber");
-        }}
+        onRetake={openReceiveCamera}
         onDelete={receivePreviewPhotoId ? deleteReceivePhoto : undefined}
         onConfirm={confirmReceivePhoto}
         confirmLabel={receivePreviewPhotoId ? "Voltar" : "Confirmar"}
@@ -2156,10 +2312,7 @@ function App() {
             setScreen("previewFotoManutencao");
             return;
           }
-          setPhotoDraft(null);
-          setPhotoDraftPreviewUrl("");
-          setMaintenanceExistingPreview(false);
-          setScreen("fotoManutencao");
+          openMaintenanceFinalizeCamera(kind);
         }}
       />
     );
