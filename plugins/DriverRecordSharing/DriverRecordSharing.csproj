@@ -7,7 +7,15 @@
     <RootNamespace>Betinhos.DriverRecordSharing</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>DriverRecordSharing.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+
+  <Target Name="ValidateStrongNameKey" BeforeTargets="BeforeBuild">
+    <Error
+      Condition="!Exists('$(MSBuildProjectDirectory)\DriverRecordSharing.snk')"
+      Text="Strong-name key not found. Run .\generate-strong-name-key.ps1 inside plugins\DriverRecordSharing before building." />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.59" />
