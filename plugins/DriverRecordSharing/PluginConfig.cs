@@ -37,6 +37,24 @@ namespace Betinhos.DriverRecordSharing
         public const string ServicePassengerServiceLookup = "cr40f_geral";
         public const string ServicePassengerPassengerLookup = "cr40f_bancodedados";
 
+        public const string ReceiptTable = "cr40f_recibos_v2";
+        public const string ReceiptPrimaryId = "cr40f_recibos_v2id";
+        public const string ReceiptDriverLookup = "cr40f_motorista";
+        public const string ReceiptServiceLookup = "cr40f_reserva";
+
+        public const string ExchangeTable = "cr40f_trocasdecarro";
+        public const string ExchangePrimaryId = "cr40f_trocasdecarroid";
+        public const string ExchangeDriver1Lookup = "cr40f_motorista1";
+        public const string ExchangeDriver2Lookup = "cr40f_motorista2";
+
+        public const string VehiclePossessionTable = "new_possedeveiculo";
+        public const string VehiclePossessionPrimaryId = "new_possedeveiculoid";
+        public const string VehiclePossessionDriverLookup = "new_motorista";
+
+        public const string CollisionTable = "cr40f_colisao_v2";
+        public const string CollisionPrimaryId = "cr40f_colisao_v2id";
+        public const string CollisionDriverLookup = "cr40f_motorista";
+
         public const string PassengerTable = "cr40f_bancodedados";
         public const string PassengerPrimaryId = "cr40f_bancodedadosid";
         public const string PassengerName = "cr40f_nomedopassageiro";
@@ -52,6 +70,7 @@ namespace Betinhos.DriverRecordSharing
             AccessRights.AppendAccess |
             AccessRights.AppendToAccess;
 
+        public static readonly AccessRights AssignedRecordAccessRights = ServiceAccessRights;
         public static readonly AccessRights ServicePassengerAccessRights = AccessRights.ReadAccess;
         public static readonly AccessRights PassengerAccessRights = AccessRights.ReadAccess;
     }

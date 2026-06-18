@@ -15,7 +15,7 @@ namespace Betinhos.DriverRecordSharing
             _tracing = tracing ?? throw new ArgumentNullException(nameof(tracing));
         }
 
-        public ResolvedDriver Resolve(EntityReference employeeReference, bool throwIfUserMissing)
+        public ResolvedDriver Resolve(EntityReference employeeReference)
         {
             if (employeeReference == null)
             {
@@ -31,7 +31,9 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.EmployeeMicrosoftEmail,
                     PluginConfig.EmployeeDismissalDate));
 
-            var employeeName = employee.GetAttributeValue<string>(PluginConfig.EmployeeName) ?? employeeReference.Name ?? employeeReference.Id.ToString("D");
+            var employeeName = employee.GetAttributeValue<string>(PluginConfig.EmployeeName)
+                ?? employeeReference.Name
+                ?? employeeReference.Id.ToString("D");
             var email = NormalizeEmail(employee.GetAttributeValue<string>(PluginConfig.EmployeeMicrosoftEmail));
             var dismissalDate = employee.GetAttributeValue<DateTime?>(PluginConfig.EmployeeDismissalDate);
 
@@ -44,8 +46,12 @@ namespace Betinhos.DriverRecordSharing
 
             if (string.IsNullOrWhiteSpace(email))
             {
-                throw new InvalidPluginExecutionException(
-                    $"Funcionário '{employeeName}' ({employeeReference.Id}) sem valor em {PluginConfig.EmployeeMicrosoftEmail}.");
+                _tracing.Trace(
+                    "DriverResolver.Resolve skip employeeId={0} employeeName={1} because {2} is empty.",
+                    employeeReference.Id,
+                    employeeName,
+                    PluginConfig.EmployeeMicrosoftEmail);
+                return null;
             }
 
             var query = new QueryExpression(PluginConfig.UserTable)
@@ -63,20 +69,14 @@ namespace Betinhos.DriverRecordSharing
             var results = _service.RetrieveMultiple(query);
             if (results.Entities.Count == 0)
             {
-                if (throwIfUserMissing)
-                {
-                    throw new InvalidPluginExecutionException(
-                        $"Nenhum systemuser ativo encontrado para email '{email}' do funcionário '{employeeName}'.");
-                }
-
-                _tracing.Trace("DriverResolver.Resolve no active user for email={0}.", email);
-                return null;
+                throw new InvalidPluginExecutionException(
+                    $"Existe email Microsoft '{email}' no funcionario '{employeeName}', mas nao existe systemuser ativo correspondente.");
             }
 
             if (results.Entities.Count > 1)
             {
                 throw new InvalidPluginExecutionException(
-                    $"Mais de um systemuser ativo encontrado para email '{email}' do funcionário '{employeeName}'.");
+                    $"Existe mais de um systemuser ativo para o email Microsoft '{email}' do funcionario '{employeeName}'.");
             }
 
             var user = results.Entities[0];

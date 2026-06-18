@@ -22,6 +22,7 @@ namespace Betinhos.DriverRecordSharing
             {
                 ColumnSet = new ColumnSet(
                     PluginConfig.ServicePassengerPrimaryId,
+                    PluginConfig.ServicePassengerServiceLookup,
                     PluginConfig.ServicePassengerPassengerLookup),
                 NoLock = true
             };
@@ -33,9 +34,8 @@ namespace Betinhos.DriverRecordSharing
             foreach (var entity in result.Entities)
             {
                 items.Add(new ServicePassengerLink(
-                    new EntityReference(
-                        PluginConfig.ServicePassengerTable,
-                        entity.Id),
+                    new EntityReference(PluginConfig.ServicePassengerTable, entity.Id),
+                    entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerServiceLookup),
                     entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerPassengerLookup)));
             }
 
@@ -43,51 +43,46 @@ namespace Betinhos.DriverRecordSharing
             return items;
         }
 
-        public bool HasOtherActiveOrFutureServiceForPassenger(Guid employeeId, Guid passengerId, Guid excludedServiceId)
+        public ServicePassengerLink Load(Guid servicePassengerId)
         {
-            var query = new QueryExpression(PluginConfig.ServicePassengerTable)
-            {
-                ColumnSet = new ColumnSet(PluginConfig.ServicePassengerPrimaryId),
-                TopCount = 1,
-                NoLock = true
-            };
-            query.Criteria.AddCondition(PluginConfig.ServicePassengerPassengerLookup, ConditionOperator.Equal, passengerId);
-            query.Criteria.AddCondition(PluginConfig.ServicePassengerServiceLookup, ConditionOperator.NotEqual, excludedServiceId);
+            var entity = _service.Retrieve(
+                PluginConfig.ServicePassengerTable,
+                servicePassengerId,
+                new ColumnSet(
+                    PluginConfig.ServicePassengerPrimaryId,
+                    PluginConfig.ServicePassengerServiceLookup,
+                    PluginConfig.ServicePassengerPassengerLookup));
 
-            var serviceLink = query.AddLink(
-                PluginConfig.ServiceTable,
-                PluginConfig.ServicePassengerServiceLookup,
-                PluginConfig.ServicePrimaryId);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceDriverLookup, ConditionOperator.Equal, employeeId);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceCategoryField, ConditionOperator.Equal, PluginConfig.ServiceCategoryService);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceScheduledField, ConditionOperator.Equal, true);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceCompletionDate, ConditionOperator.Null);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceMaintenanceLookup, ConditionOperator.Null);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceExchangeLookup, ConditionOperator.Null);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.StateCode, ConditionOperator.Equal, PluginConfig.ActiveStateCode);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceStatus, ConditionOperator.NotEqual, PluginConfig.ServiceStatusCompleted);
-            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceStatus, ConditionOperator.NotEqual, PluginConfig.ServiceStatusNeedsAnalysis);
+            var item = new ServicePassengerLink(
+                new EntityReference(PluginConfig.ServicePassengerTable, entity.Id),
+                entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerServiceLookup),
+                entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerPassengerLookup));
 
-            var exists = _service.RetrieveMultiple(query).Entities.Count > 0;
             _tracing.Trace(
-                "HasOtherActiveOrFutureServiceForPassenger employeeId={0} passengerId={1} excludedServiceId={2} exists={3}",
-                employeeId,
-                passengerId,
-                excludedServiceId,
-                exists);
-            return exists;
+                "Load servicePassengerId={0} serviceId={1} passengerId={2}",
+                servicePassengerId,
+                item.ServiceReference?.Id,
+                item.PassengerReference?.Id);
+
+            return item;
         }
     }
 
     internal sealed class ServicePassengerLink
     {
-        public ServicePassengerLink(EntityReference servicePassengerReference, EntityReference passengerReference)
+        public ServicePassengerLink(
+            EntityReference servicePassengerReference,
+            EntityReference serviceReference,
+            EntityReference passengerReference)
         {
             ServicePassengerReference = servicePassengerReference;
+            ServiceReference = serviceReference;
             PassengerReference = passengerReference;
         }
 
         public EntityReference ServicePassengerReference { get; }
+
+        public EntityReference ServiceReference { get; }
 
         public EntityReference PassengerReference { get; }
     }
