@@ -15,7 +15,7 @@ namespace Betinhos.DriverRecordSharing
             _tracing = tracing ?? throw new ArgumentNullException(nameof(tracing));
         }
 
-        public ResolvedDriver Resolve(EntityReference employeeReference)
+        public ResolvedDriver Resolve(EntityReference employeeReference, DriverResolutionMode mode)
         {
             if (employeeReference == null)
             {
@@ -38,11 +38,12 @@ namespace Betinhos.DriverRecordSharing
             var dismissalDate = employee.GetAttributeValue<DateTime?>(PluginConfig.EmployeeDismissalDate);
 
             _tracing.Trace(
-                "DriverResolver.Resolve employeeId={0} employeeName={1} email={2} dismissedOn={3}",
+                "DriverResolver.Resolve employeeId={0} employeeName={1} email={2} dismissedOn={3} mode={4}",
                 employeeReference.Id,
                 employeeName,
                 email ?? "<null>",
-                dismissalDate.HasValue ? dismissalDate.Value.ToString("O") : "<null>");
+                dismissalDate.HasValue ? dismissalDate.Value.ToString("O") : "<null>",
+                mode);
 
             if (string.IsNullOrWhiteSpace(email))
             {
@@ -69,14 +70,12 @@ namespace Betinhos.DriverRecordSharing
             var results = _service.RetrieveMultiple(query);
             if (results.Entities.Count == 0)
             {
-                throw new InvalidPluginExecutionException(
-                    $"Existe email Microsoft '{email}' no funcionario '{employeeName}', mas nao existe systemuser ativo correspondente.");
+                return HandleMissingUser(mode, employeeReference, employeeName, email);
             }
 
             if (results.Entities.Count > 1)
             {
-                throw new InvalidPluginExecutionException(
-                    $"Existe mais de um systemuser ativo para o email Microsoft '{email}' do funcionario '{employeeName}'.");
+                return HandleDuplicateUsers(mode, employeeReference, employeeName, email);
             }
 
             var user = results.Entities[0];
@@ -91,10 +90,56 @@ namespace Betinhos.DriverRecordSharing
                 userReference);
         }
 
+        private ResolvedDriver HandleMissingUser(
+            DriverResolutionMode mode,
+            EntityReference employeeReference,
+            string employeeName,
+            string email)
+        {
+            if (mode == DriverResolutionMode.StrictForGrant)
+            {
+                throw new InvalidPluginExecutionException(
+                    $"Existe email Microsoft '{email}' no funcionario '{employeeName}', mas nao existe systemuser ativo correspondente.");
+            }
+
+            _tracing.Trace(
+                "DriverResolver.Resolve best-effort skip employeeId={0} employeeName={1} email={2} because no active systemuser was found.",
+                employeeReference.Id,
+                employeeName,
+                email);
+            return null;
+        }
+
+        private ResolvedDriver HandleDuplicateUsers(
+            DriverResolutionMode mode,
+            EntityReference employeeReference,
+            string employeeName,
+            string email)
+        {
+            if (mode == DriverResolutionMode.StrictForGrant)
+            {
+                throw new InvalidPluginExecutionException(
+                    $"Existe mais de um systemuser ativo para o email Microsoft '{email}' do funcionario '{employeeName}'.");
+            }
+
+            _tracing.Trace(
+                "DriverResolver.Resolve best-effort skip employeeId={0} employeeName={1} email={2} because multiple active systemuser records were found.",
+                employeeReference.Id,
+                employeeName,
+                email);
+            return null;
+        }
+
         private static string NormalizeEmail(string email)
         {
             return string.IsNullOrWhiteSpace(email) ? null : email.Trim().ToLowerInvariant();
         }
+    }
+
+    internal enum DriverResolutionMode
+    {
+        StrictForGrant = 0,
+        BestEffortForRevoke = 1
     }
 
     internal sealed class ResolvedDriver

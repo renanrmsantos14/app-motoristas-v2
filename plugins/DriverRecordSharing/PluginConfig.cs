@@ -7,18 +7,11 @@ namespace Betinhos.DriverRecordSharing
         public const string CreateMessage = "Create";
         public const string UpdateMessage = "Update";
         public const string PreImageAlias = "pre";
+        public const string TargetParameterName = "Target";
 
         public const string ServiceTable = "cr40f_reservadeveculos";
         public const string ServicePrimaryId = "cr40f_reservadeveculosid";
         public const string ServiceDriverLookup = "cr40f_motorista";
-        public const string ServiceStatus = "cr40f_status";
-        public const string ServiceDate = "cr40f_dataehorriodesada";
-        public const string ServiceCompletionDate = "new_datadefinalizacao";
-        public const string ServiceScheduledField = "new_foiprogramado";
-        public const string ServiceCategoryField = "new_categoriadoitem";
-        public const string ServiceMaintenanceLookup = "cr40f_om";
-        public const string ServiceExchangeLookup = "cr40f_ot";
-        public const string StateCode = "statecode";
 
         public const string EmployeeTable = "cr40f_funcionarios";
         public const string EmployeePrimaryId = "cr40f_funcionariosid";
@@ -58,11 +51,6 @@ namespace Betinhos.DriverRecordSharing
         public const string PassengerTable = "cr40f_bancodedados";
         public const string PassengerPrimaryId = "cr40f_bancodedadosid";
         public const string PassengerName = "cr40f_nomedopassageiro";
-
-        public const int ServiceCategoryService = 100000000;
-        public const int ServiceStatusNeedsAnalysis = 100000001;
-        public const int ServiceStatusCompleted = 202410008;
-        public const int ActiveStateCode = 0;
 
         public static readonly AccessRights ServiceAccessRights =
             AccessRights.ReadAccess |

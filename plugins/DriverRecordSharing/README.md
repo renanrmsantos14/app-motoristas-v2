@@ -2,16 +2,29 @@
 
 ## Objetivo
 
-Voce ja tem o plugin registrado.
+Esta versao esta preparada para:
 
-Agora o que voce precisa fazer e:
+- conceder acesso quando o motorista entra
+- manter acesso quando o motorista continua igual
+- retirar acesso quando o motorista sai ou e trocado
 
-1. compilar a DLL nova
-2. atualizar o assembly no Plugin Registration Tool
-3. deixar os steps do jeito certo
-4. testar
+Para isso, agora existe uma exigencia nova:
 
-## Decisao recomendada agora
+- todo step `Update` precisa de `Pre Image`
+
+Sem `Pre Image`, o plugin nao consegue saber quem era o motorista antigo e nao consegue revogar acesso com seguranca.
+
+## Como a versao de producao funciona
+
+Regras:
+
+- se nao houver motorista, nao da erro
+- se o funcionario estiver sem `cr40f_emailmicrosoft`, nao da erro e nao compartilha
+- se houver email Microsoft preenchido e nao existir um `systemuser` ativo correspondente, da erro
+- se houver mais de um `systemuser` ativo com o mesmo email, da erro
+- se o motorista mudar, o plugin concede acesso ao novo e revoga do antigo
+
+## Decisao recomendada de execucao
 
 Use assim:
 
@@ -22,28 +35,14 @@ Use assim:
 - `cr40f_colisao_v2`: `Asynchronous`
 - `cr40f_recibos_v2`: `Asynchronous`
 
-E nao crie `Image`.
+Padrao:
 
-Resumo:
-
-- `Stage`: `PostOperation`
-- `Deployment`: `Server`
-- `Image`: `nenhuma`
-
-## Regra do plugin
-
-O plugin hoje funciona assim:
-
-- se nao houver motorista, nao da erro
-- se o funcionario estiver sem `cr40f_emailmicrosoft`, nao da erro e nao compartilha
-- se existir email Microsoft preenchido e nao existir um `systemuser` ativo correspondente, da erro
-- se existir mais de um `systemuser` ativo com o mesmo email, da erro
-- ele so concede acesso
-- ele nao remove acesso antigo por enquanto
+- Stage: `PostOperation`
+- Deployment: `Server`
+- `Create`: sem image
+- `Update`: com `Pre Image`
 
 ## Onde esta a DLL
-
-DLL compilada:
 
 - [Betinhos.DriverRecordSharing.dll](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll)
 
@@ -75,11 +74,7 @@ cd "C:\Users\mendo\Desktop\vscode\App Motoristas"
 dotnet build .\plugins\DriverRecordSharing\DriverRecordSharing.csproj -c Release
 ```
 
-Se der certo, use esta DLL:
-
-- [Betinhos.DriverRecordSharing.dll](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll)
-
-## Parte 2: atualizar o assembly no PRT
+## Parte 2: atualizar o assembly existente
 
 ### Passo 5. Abrir o Plugin Registration Tool
 
@@ -87,17 +82,17 @@ Abra o `Plugin Registration Tool`.
 
 ### Passo 6. Conectar no ambiente certo
 
-Antes de mexer em qualquer coisa:
+Antes de mexer:
 
 1. confirme o ambiente
-2. confirme que e o mesmo ambiente em que voce testou os registros
+2. confirme que e exatamente o ambiente onde os servicos estao sendo usados
 
-### Passo 7. Atualizar o assembly existente
+### Passo 7. Atualizar o assembly
 
-Como voce ja registrou esse plugin antes, faca exatamente assim:
+Como o assembly ja existe:
 
-1. localize o assembly `Betinhos.DriverRecordSharing`
-2. clique com o botao direito em cima dele
+1. localize `Betinhos.DriverRecordSharing`
+2. clique com o botao direito
 3. clique em `Update`
 4. selecione a DLL nova
 5. confirme
@@ -105,22 +100,15 @@ Como voce ja registrou esse plugin antes, faca exatamente assim:
 Importante:
 
 - nao precisa criar outro assembly
-- isso substitui o codigo do assembly atual
+- isso atualiza o codigo do assembly atual
 
-## Parte 3: arrumar os steps
+## Parte 3: ajustar os steps
 
-## Regra importante
+Se seus steps atuais estiverem errados ou incompletos, o caminho mais limpo e:
 
-Voce pode:
-
-- editar os steps existentes
-- ou apagar e recriar
-
-Se os seus steps atuais estiverem confusos, o mais limpo para voce e:
-
-1. anotar quais steps existem
-2. apagar os que estiverem errados
-3. recriar exatamente como abaixo
+1. revisar os steps existentes
+2. apagar os errados
+3. recriar igual a este README
 
 ## Configuracao base
 
@@ -129,223 +117,233 @@ Para todos os steps:
 - Event Pipeline Stage of Execution: `PostOperation`
 - Deployment: `Server`
 - Run in User's Context: usuario tecnico
-- Image: nao criar
 
-### Importante sobre o campo Execution Mode
+## Parte 4: criar ou corrigir os steps
 
-Use:
-
-- `Synchronous` so para `cr40f_reservadeveculos`
-- `Asynchronous` para o resto
-
-## Parte 4: criar ou corrigir cada step
-
-### Step 1. Servicos - Create
-
-Preencha:
+### 1. Servicos - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_reservadeveculos`
 - Filtering Attributes: deixar vazio
 - Execution Mode: `Synchronous`
+- Image: nao criar
 
-Depois clique em `Register New Step`.
-
-### Step 2. Servicos - Update
-
-Preencha:
+### 2. Servicos - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_reservadeveculos`
 - Filtering Attributes: `cr40f_motorista`
 - Execution Mode: `Synchronous`
+- Image: criar `Pre Image`
 
-Depois clique em `Register New Step`.
-
-### Step 3. Servicos por passageiro - Create
-
-Preencha:
+### 3. Servicos por passageiro - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_servicosporpassageiro`
 - Filtering Attributes: deixar vazio
 - Execution Mode: `Asynchronous`
+- Image: nao criar
 
-Depois clique em `Register New Step`.
-
-### Step 4. Servicos por passageiro - Update
-
-Preencha:
+### 4. Servicos por passageiro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_servicosporpassageiro`
 - Filtering Attributes: `cr40f_geral,cr40f_bancodedados`
 - Execution Mode: `Asynchronous`
+- Image: criar `Pre Image`
 
-Depois clique em `Register New Step`.
-
-### Step 5. Trocas de carro - Create
-
-Preencha:
+### 5. Trocas de carro - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_trocasdecarro`
 - Filtering Attributes: deixar vazio
 - Execution Mode: `Asynchronous`
+- Image: nao criar
 
-Depois clique em `Register New Step`.
-
-### Step 6. Trocas de carro - Update
-
-Preencha:
+### 6. Trocas de carro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_trocasdecarro`
 - Filtering Attributes: `cr40f_motorista1,cr40f_motorista2`
 - Execution Mode: `Asynchronous`
+- Image: criar `Pre Image`
 
-Depois clique em `Register New Step`.
-
-### Step 7. Posse de veiculo - Create
-
-Preencha:
+### 7. Posse de veiculo - Create
 
 - Message: `Create`
 - Primary Entity: `new_possedeveiculo`
 - Filtering Attributes: deixar vazio
 - Execution Mode: `Asynchronous`
+- Image: nao criar
 
-Depois clique em `Register New Step`.
-
-### Step 8. Posse de veiculo - Update
-
-Preencha:
+### 8. Posse de veiculo - Update
 
 - Message: `Update`
 - Primary Entity: `new_possedeveiculo`
 - Filtering Attributes: `new_motorista`
 - Execution Mode: `Asynchronous`
+- Image: criar `Pre Image`
 
-Depois clique em `Register New Step`.
-
-### Step 9. Colisoes - Create
-
-Preencha:
+### 9. Colisoes - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_colisao_v2`
 - Filtering Attributes: deixar vazio
 - Execution Mode: `Asynchronous`
+- Image: nao criar
 
-Depois clique em `Register New Step`.
-
-### Step 10. Colisoes - Update
-
-Preencha:
+### 10. Colisoes - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_colisao_v2`
 - Filtering Attributes: `cr40f_motorista`
 - Execution Mode: `Asynchronous`
+- Image: criar `Pre Image`
 
-Depois clique em `Register New Step`.
-
-### Step 11. Recibos - Create
-
-Preencha:
+### 11. Recibos - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_recibos_v2`
 - Filtering Attributes: deixar vazio
 - Execution Mode: `Asynchronous`
+- Image: nao criar
 
-Depois clique em `Register New Step`.
-
-### Step 12. Recibos - Update
-
-Preencha:
+### 12. Recibos - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_recibos_v2`
 - Filtering Attributes: `cr40f_motorista`
 - Execution Mode: `Asynchronous`
+- Image: criar `Pre Image`
 
-Depois clique em `Register New Step`.
+## Parte 5: como criar a Pre Image
 
-## Parte 5: precisa criar Image?
+Isto agora e obrigatorio em todo step `Update`.
 
-Nao.
+### Para adicionar a image:
 
-Nao crie:
+1. localize o step `Update`
+2. clique com o botao direito nele
+3. clique em `Register New Image`
 
-- `Pre Image`
-- `Post Image`
+### Preencha assim:
 
-Motivo:
+- Image Type: `Pre Image`
+- Name: `pre`
+- Entity Alias: `pre`
 
-- o plugin atual nao precisa
-- ele pega o valor atual do proprio registro
-- adicionar image aqui so complica sua configuracao
+Depois, no campo de atributos, use exatamente os atributos abaixo.
+
+### Update de Servicos
+
+- `cr40f_motorista`
+
+### Update de Servicos por passageiro
+
+- `cr40f_geral`
+- `cr40f_bancodedados`
+
+### Update de Trocas de carro
+
+- `cr40f_motorista1`
+- `cr40f_motorista2`
+
+### Update de Posse de veiculo
+
+- `new_motorista`
+
+### Update de Colisoes
+
+- `cr40f_motorista`
+
+### Update de Recibos
+
+- `cr40f_motorista`
+
+Importante:
+
+- o alias tem que ser exatamente `pre`
+- os nomes dos atributos tem que estar exatamente iguais
 
 ## Parte 6: o que revisar antes de fechar o PRT
 
-Confira se ficou assim:
+Confira:
 
-1. assembly atualizado
-2. `cr40f_reservadeveculos Create` em `Synchronous`
-3. `cr40f_reservadeveculos Update` em `Synchronous`
-4. todos os outros steps em `Asynchronous`
-5. todos em `PostOperation`
-6. todos com `Deployment = Server`
-7. nenhum com image
-8. `Update` com os filtros certos
+1. o assembly foi atualizado
+2. `cr40f_reservadeveculos Create` esta em `Synchronous`
+3. `cr40f_reservadeveculos Update` esta em `Synchronous`
+4. os outros steps estao em `Asynchronous`
+5. todos estao em `PostOperation`
+6. todos estao com `Deployment = Server`
+7. todos os `Create` estao sem image
+8. todos os `Update` estao com `Pre Image`
+9. toda `Pre Image` usa alias `pre`
+10. os filtros de `Update` estao corretos
 
-## Parte 7: como testar agora
+## Parte 7: permissoes do usuario tecnico
 
-### Teste 1. Servico novo com motorista
+Esse usuario precisa conseguir:
 
-1. abra o sistema
-2. crie um `cr40f_reservadeveculos`
-3. preencha `cr40f_motorista`
-4. salve
+- ler `cr40f_reservadeveculos`
+- ler `cr40f_servicosporpassageiro`
+- ler `cr40f_bancodedados`
+- ler `cr40f_trocasdecarro`
+- ler `new_possedeveiculo`
+- ler `cr40f_colisao_v2`
+- ler `cr40f_recibos_v2`
+- ler `cr40f_funcionarios`
+- ler `systemuser`
+- compartilhar registros
+- revogar compartilhamento
 
-Esperado:
+Na pratica, precisa ter capacidade de `GrantAccess`, `ModifyAccess` e `RevokeAccess`.
 
-- se houver problema de email Microsoft ou `systemuser`, o save do servico pode acusar erro porque este step esta `Synchronous`
-- se estiver tudo certo, o servico salva e o acesso e concedido
+## Parte 8: como testar agora
 
-### Teste 2. Servico existente sem motorista
+### Teste 1. Criar servico ja com motorista
 
-1. abra um servico existente
+1. crie um `cr40f_reservadeveculos`
 2. preencha `cr40f_motorista`
 3. salve
 
 Esperado:
 
-- se estiver tudo certo, o motorista ganha acesso ao servico
+- se existir problema de email Microsoft ou `systemuser`, o save pode falhar na hora
+- se estiver tudo certo, o motorista recebe acesso
+
+### Teste 2. Pegar servico sem motorista e atribuir
+
+1. abra um servico existente sem motorista
+2. preencha `cr40f_motorista`
+3. salve
+
+Esperado:
+
+- o motorista ganha acesso ao servico
 
 ### Teste 3. Trocar motorista do servico
 
-1. abra um servico que ja tenha motorista
-2. troque o `cr40f_motorista`
+1. abra um servico com motorista
+2. troque `cr40f_motorista`
 3. salve
 
 Esperado:
 
 - o novo motorista ganha acesso
-- o antigo continua com acesso por enquanto
+- o antigo perde acesso
 
-### Teste 4. Validar filhos do servico
+### Teste 4. Confirmar filhos do servico
 
-Depois do teste do servico, confirme se o motorista tambem ganhou acesso a:
+No mesmo teste do servico, confirme tambem:
 
-- `cr40f_servicosporpassageiro`
-- passageiros relacionados em `cr40f_bancodedados`
+- o novo motorista recebeu acesso aos `cr40f_servicosporpassageiro`
+- o novo motorista recebeu acesso aos passageiros relacionados
+- o antigo perdeu esses acessos quando deixou de ser o motorista
 
 ### Teste 5. Funcionario sem email Microsoft
 
-1. escolha um funcionario sem `cr40f_emailmicrosoft`
-2. preencha no servico
+1. escolha um funcionario com `cr40f_emailmicrosoft` vazio
+2. coloque no servico
 3. salve
 
 Esperado:
@@ -363,33 +361,38 @@ Esperado:
 Esperado:
 
 - o plugin falha
-- o servico principal acusa o problema na hora, porque esta `Synchronous`
+- o servico principal acusa o problema na hora
 
-## Parte 8: como validar o compartilhamento real
+## Parte 9: como validar o compartilhamento real
 
 Validacao forte:
 
 1. abra o registro
 2. rode o script de consulta do `principalobjectaccess`
-3. confirme se existe uma linha para o `systemuser` do motorista
+3. confirme se existe linha para o `systemuser` do motorista atual
 
-Se aparecer `poaCount: 1` ou mais no registro certo, o compartilhamento real aconteceu.
+No teste de troca:
 
-## Parte 9: se der erro
+1. valide que o novo motorista aparece
+2. valide que o antigo deixou de aparecer
+
+## Parte 10: se der erro
 
 Cheque nesta ordem:
 
 1. a DLL certa foi compilada?
 2. o assembly certo foi atualizado?
-3. os dois steps de `cr40f_reservadeveculos` ficaram `Synchronous`?
-4. os demais ficaram `Asynchronous`?
-5. todos ficaram `PostOperation`?
-6. voce nao criou image sem precisar?
-7. os filtros de `Update` estao corretos?
-8. o usuario tecnico tem permissao?
-9. o funcionario tem `cr40f_emailmicrosoft`?
-10. existe um `systemuser` ativo com exatamente esse email?
-11. existe mais de um `systemuser` ativo com esse email?
+3. os steps de `cr40f_reservadeveculos` estao `Synchronous`?
+4. os demais estao `Asynchronous`?
+5. todos estao em `PostOperation`?
+6. todos os `Update` receberam `Pre Image`?
+7. o alias da image esta exatamente `pre`?
+8. os atributos da image estao corretos?
+9. os filtros de `Update` estao corretos?
+10. o usuario tecnico tem permissao?
+11. o funcionario tem `cr40f_emailmicrosoft`?
+12. existe um `systemuser` ativo com exatamente esse email?
+13. existe mais de um `systemuser` ativo com esse email?
 
 ## Arquivos principais
 

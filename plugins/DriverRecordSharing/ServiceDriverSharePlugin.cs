@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -12,23 +13,28 @@ namespace Betinhos.DriverRecordSharing
             new EntityShareDefinition(
                 PluginConfig.ServiceTable,
                 true,
+                PluginConfig.ServiceAccessRights,
                 PluginConfig.ServiceDriverLookup),
             new EntityShareDefinition(
                 PluginConfig.ExchangeTable,
                 false,
+                PluginConfig.AssignedRecordAccessRights,
                 PluginConfig.ExchangeDriver1Lookup,
                 PluginConfig.ExchangeDriver2Lookup),
             new EntityShareDefinition(
                 PluginConfig.VehiclePossessionTable,
                 false,
+                PluginConfig.AssignedRecordAccessRights,
                 PluginConfig.VehiclePossessionDriverLookup),
             new EntityShareDefinition(
                 PluginConfig.CollisionTable,
                 false,
+                PluginConfig.AssignedRecordAccessRights,
                 PluginConfig.CollisionDriverLookup),
             new EntityShareDefinition(
                 PluginConfig.ReceiptTable,
                 false,
+                PluginConfig.AssignedRecordAccessRights,
                 PluginConfig.ReceiptDriverLookup)
         };
 
@@ -42,12 +48,13 @@ namespace Betinhos.DriverRecordSharing
             try
             {
                 tracing.Trace(
-                    "ServiceDriverSharePlugin start correlationId={0} message={1} entity={2} stage={3} mode={4}",
+                    "ServiceDriverSharePlugin start correlationId={0} message={1} entity={2} stage={3} mode={4} depth={5}",
                     context.CorrelationId,
                     context.MessageName,
                     context.PrimaryEntityName,
                     context.Stage,
-                    context.Mode);
+                    context.Mode,
+                    context.Depth);
 
                 if (!IsSupported(context))
                 {
@@ -55,7 +62,7 @@ namespace Betinhos.DriverRecordSharing
                     return;
                 }
 
-                var target = (Entity)context.InputParameters["Target"];
+                var target = (Entity)context.InputParameters[PluginConfig.TargetParameterName];
                 var preImage = context.PreEntityImages.Contains(PluginConfig.PreImageAlias)
                     ? context.PreEntityImages[PluginConfig.PreImageAlias]
                     : null;
@@ -119,70 +126,74 @@ namespace Betinhos.DriverRecordSharing
             ServicePassengerRepository servicePassengerRepository,
             ITracingService tracing)
         {
-            if (context.MessageName == PluginConfig.UpdateMessage &&
-                !ContainsAnyAttribute(target, definition.DriverLookupAttributes))
+            if (context.MessageName == PluginConfig.UpdateMessage)
             {
-                tracing.Trace("HandleDirectEntity skip because no tracked driver attribute changed.");
-                return;
+                EnsurePreImage(context, preImage, definition.DriverLookupAttributes);
+
+                if (!ContainsAnyAttribute(target, definition.DriverLookupAttributes))
+                {
+                    tracing.Trace("HandleDirectEntity skip because no tracked driver attribute changed.");
+                    return;
+                }
             }
 
-            var targetReference = new EntityReference(context.PrimaryEntityName, context.PrimaryEntityId);
-            var grantedUsers = new HashSet<Guid>();
-            var resolvedDrivers = 0;
+            var currentEntity = service.Retrieve(
+                definition.EntityName,
+                context.PrimaryEntityId,
+                new ColumnSet(definition.DriverLookupAttributes));
 
-            foreach (var attributeName in definition.DriverLookupAttributes)
+            var currentDrivers = ResolveDriverSet(
+                LoadLookupReferences(currentEntity, definition.DriverLookupAttributes),
+                resolver,
+                DriverResolutionMode.StrictForGrant);
+            var previousDrivers = context.MessageName == PluginConfig.UpdateMessage
+                ? ResolveDriverSet(
+                    LoadLookupReferences(preImage, definition.DriverLookupAttributes),
+                    resolver,
+                    DriverResolutionMode.BestEffortForRevoke)
+                : new Dictionary<Guid, ResolvedDriver>();
+
+            var targetReference = new EntityReference(definition.EntityName, context.PrimaryEntityId);
+
+            foreach (var driver in currentDrivers.Values)
             {
-                var employeeReference = GetEffectiveLookupValue(
-                    service,
-                    context.PrimaryEntityName,
-                    context.PrimaryEntityId,
-                    target,
-                    preImage,
-                    attributeName,
-                    context.MessageName == PluginConfig.UpdateMessage);
-
-                if (employeeReference == null)
-                {
-                    tracing.Trace("HandleDirectEntity skip attribute={0} because employee lookup is empty.", attributeName);
-                    continue;
-                }
-
-                var driver = resolver.Resolve(employeeReference);
-                if (driver == null)
-                {
-                    tracing.Trace(
-                        "HandleDirectEntity skip attribute={0} employeeId={1} because no Microsoft email was configured.",
-                        attributeName,
-                        employeeReference.Id);
-                    continue;
-                }
-
-                if (!grantedUsers.Add(driver.UserReference.Id))
-                {
-                    tracing.Trace(
-                        "HandleDirectEntity skip duplicate principal userId={0} attribute={1}.",
-                        driver.UserReference.Id,
-                        attributeName);
-                    continue;
-                }
-
-                resolvedDrivers++;
-
                 if (definition.IncludeServiceHierarchy)
                 {
-                    var links = servicePassengerRepository.ListByService(context.PrimaryEntityId);
-                    GrantServiceHierarchy(targetReference, driver.UserReference, links, accessHelper, tracing);
+                    GrantServiceHierarchy(
+                        targetReference,
+                        driver.UserReference,
+                        servicePassengerRepository.ListByService(context.PrimaryEntityId),
+                        accessHelper,
+                        tracing);
                     continue;
                 }
 
-                accessHelper.EnsureAccess(targetReference, driver.UserReference, PluginConfig.AssignedRecordAccessRights);
+                accessHelper.EnsureAccess(targetReference, driver.UserReference, definition.AccessRights);
+            }
+
+            foreach (var driver in FindRemovedDrivers(previousDrivers, currentDrivers))
+            {
+                if (definition.IncludeServiceHierarchy)
+                {
+                    RevokeServiceHierarchy(
+                        targetReference,
+                        driver,
+                        servicePassengerRepository.ListByService(context.PrimaryEntityId),
+                        accessHelper,
+                        servicePassengerRepository,
+                        tracing);
+                    continue;
+                }
+
+                accessHelper.RevokeAccess(targetReference, driver.UserReference);
             }
 
             tracing.Trace(
-                "HandleDirectEntity done entity={0} id={1} resolvedDrivers={2}",
-                context.PrimaryEntityName,
+                "HandleDirectEntity done entity={0} id={1} currentDrivers={2} previousDrivers={3}",
+                definition.EntityName,
                 context.PrimaryEntityId,
-                resolvedDrivers);
+                currentDrivers.Count,
+                previousDrivers.Count);
         }
 
         private static void HandleServicePassenger(
@@ -195,192 +206,190 @@ namespace Betinhos.DriverRecordSharing
             ServicePassengerRepository servicePassengerRepository,
             ITracingService tracing)
         {
-            if (context.MessageName == PluginConfig.UpdateMessage &&
-                !ContainsAnyAttribute(
+            if (context.MessageName == PluginConfig.UpdateMessage)
+            {
+                EnsurePreImage(
+                    context,
+                    preImage,
+                    PluginConfig.ServicePassengerServiceLookup,
+                    PluginConfig.ServicePassengerPassengerLookup);
+
+                if (!ContainsAnyAttribute(
                     target,
                     PluginConfig.ServicePassengerServiceLookup,
                     PluginConfig.ServicePassengerPassengerLookup))
-            {
-                tracing.Trace("HandleServicePassenger skip because service/passenger link did not change.");
-                return;
-            }
-
-            var link = BuildServicePassengerLink(
-                context.MessageName,
-                context.PrimaryEntityId,
-                target,
-                preImage,
-                servicePassengerRepository);
-
-            if (link?.ServiceReference == null)
-            {
-                tracing.Trace("HandleServicePassenger skip because parent service is empty.");
-                return;
-            }
-
-            var serviceDrivers = LoadServiceDriverReferences(service, link.ServiceReference.Id);
-            if (serviceDrivers.Count == 0)
-            {
-                tracing.Trace("HandleServicePassenger skip because parent service has no driver.");
-                return;
-            }
-
-            var grantedUsers = new HashSet<Guid>();
-            var resolvedDrivers = 0;
-
-            foreach (var employeeReference in serviceDrivers)
-            {
-                var driver = resolver.Resolve(employeeReference);
-                if (driver == null)
                 {
-                    tracing.Trace(
-                        "HandleServicePassenger skip employeeId={0} because no Microsoft email was configured.",
-                        employeeReference.Id);
-                    continue;
+                    tracing.Trace("HandleServicePassenger skip because service/passenger link did not change.");
+                    return;
                 }
+            }
 
-                if (!grantedUsers.Add(driver.UserReference.Id))
+            var currentLink = servicePassengerRepository.Load(context.PrimaryEntityId);
+            var previousLink = context.MessageName == PluginConfig.UpdateMessage
+                ? BuildPreImageLink(preImage, context.PrimaryEntityId)
+                : null;
+
+            var currentDrivers = ResolveDriversForService(
+                service,
+                currentLink?.ServiceReference,
+                resolver,
+                DriverResolutionMode.StrictForGrant);
+            var previousDrivers = previousLink?.ServiceReference != null
+                ? ResolveDriversForService(
+                    service,
+                    previousLink.ServiceReference,
+                    resolver,
+                    DriverResolutionMode.BestEffortForRevoke)
+                : new Dictionary<Guid, ResolvedDriver>();
+
+            foreach (var driver in currentDrivers.Values)
+            {
+                accessHelper.EnsureAccess(
+                    currentLink.ServicePassengerReference,
+                    driver.UserReference,
+                    PluginConfig.ServicePassengerAccessRights);
+
+                if (currentLink.PassengerReference != null)
                 {
-                    continue;
+                    accessHelper.EnsureAccess(
+                        currentLink.PassengerReference,
+                        driver.UserReference,
+                        PluginConfig.PassengerAccessRights);
                 }
+            }
 
-                resolvedDrivers++;
-                GrantServiceHierarchy(link.ServiceReference, driver.UserReference, new[] { link }, accessHelper, tracing);
+            foreach (var driver in FindRemovedDrivers(previousDrivers, currentDrivers))
+            {
+                accessHelper.RevokeAccess(
+                    currentLink.ServicePassengerReference,
+                    driver.UserReference);
+            }
+
+            if (previousLink?.PassengerReference != null)
+            {
+                foreach (var driver in previousDrivers.Values)
+                {
+                    var stillNeedsPreviousPassenger =
+                        currentLink?.PassengerReference != null &&
+                        currentLink.PassengerReference.Id == previousLink.PassengerReference.Id &&
+                        currentDrivers.ContainsKey(driver.UserReference.Id);
+
+                    if (stillNeedsPreviousPassenger)
+                    {
+                        continue;
+                    }
+
+                    if (servicePassengerRepository.HasOtherPassengerLinkForEmployee(
+                        driver.EmployeeReference.Id,
+                        previousLink.PassengerReference.Id,
+                        context.PrimaryEntityId))
+                    {
+                        continue;
+                    }
+
+                    accessHelper.RevokeAccess(
+                        previousLink.PassengerReference,
+                        driver.UserReference);
+                }
             }
 
             tracing.Trace(
-                "HandleServicePassenger done id={0} resolvedDrivers={1}",
+                "HandleServicePassenger done id={0} currentDrivers={1} previousDrivers={2}",
                 context.PrimaryEntityId,
-                resolvedDrivers);
+                currentDrivers.Count,
+                previousDrivers.Count);
         }
 
-        private static ServicePassengerLink BuildServicePassengerLink(
-            string messageName,
-            Guid servicePassengerId,
-            Entity target,
-            Entity preImage,
-            ServicePassengerRepository repository)
+        private static ServicePassengerLink BuildPreImageLink(Entity preImage, Guid servicePassengerId)
         {
-            var loaded = messageName == PluginConfig.UpdateMessage
-                ? repository.Load(servicePassengerId)
-                : null;
-            var serviceReference = GetEffectiveLookupValue(
-                loaded?.ServiceReference,
-                target,
-                preImage,
-                PluginConfig.ServicePassengerServiceLookup);
-            var passengerReference = GetEffectiveLookupValue(
-                loaded?.PassengerReference,
-                target,
-                preImage,
-                PluginConfig.ServicePassengerPassengerLookup);
-
             return new ServicePassengerLink(
                 new EntityReference(PluginConfig.ServicePassengerTable, servicePassengerId),
-                serviceReference,
-                passengerReference);
+                preImage.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerServiceLookup),
+                preImage.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerPassengerLookup));
         }
 
-        private static IReadOnlyList<EntityReference> LoadServiceDriverReferences(IOrganizationService service, Guid serviceId)
+        private static Dictionary<Guid, ResolvedDriver> ResolveDriversForService(
+            IOrganizationService service,
+            EntityReference serviceReference,
+            DriverResolver resolver,
+            DriverResolutionMode mode)
         {
+            if (serviceReference == null)
+            {
+                return new Dictionary<Guid, ResolvedDriver>();
+            }
+
             var entity = service.Retrieve(
                 PluginConfig.ServiceTable,
-                serviceId,
+                serviceReference.Id,
                 new ColumnSet(PluginConfig.ServiceDriverLookup));
 
-            var drivers = new List<EntityReference>(1);
-            var driverReference = entity.GetAttributeValue<EntityReference>(PluginConfig.ServiceDriverLookup);
-            if (driverReference != null)
-            {
-                drivers.Add(driverReference);
-            }
-
-            return drivers;
+            return ResolveDriverSet(
+                LoadLookupReferences(entity, PluginConfig.ServiceDriverLookup),
+                resolver,
+                mode);
         }
 
-        private static EntityReference GetEffectiveLookupValue(
-            IOrganizationService service,
-            string entityName,
-            Guid entityId,
-            Entity target,
-            Entity preImage,
-            string attributeName,
-            bool allowRetrieveCurrent)
+        private static Dictionary<Guid, ResolvedDriver> ResolveDriverSet(
+            IReadOnlyList<EntityReference> employeeReferences,
+            DriverResolver resolver,
+            DriverResolutionMode mode)
         {
-            if (target != null && target.Contains(attributeName))
+            var results = new Dictionary<Guid, ResolvedDriver>();
+
+            foreach (var employeeReference in employeeReferences)
             {
-                return target.GetAttributeValue<EntityReference>(attributeName);
-            }
-
-            if (preImage != null && preImage.Contains(attributeName))
-            {
-                return preImage.GetAttributeValue<EntityReference>(attributeName);
-            }
-
-            if (!allowRetrieveCurrent)
-            {
-                return null;
-            }
-
-            var current = service.Retrieve(entityName, entityId, new ColumnSet(attributeName));
-            return current.GetAttributeValue<EntityReference>(attributeName);
-        }
-
-        private static EntityReference GetEffectiveLookupValue(
-            EntityReference currentValue,
-            Entity target,
-            Entity preImage,
-            string attributeName)
-        {
-            if (target != null && target.Contains(attributeName))
-            {
-                return target.GetAttributeValue<EntityReference>(attributeName);
-            }
-
-            if (preImage != null && preImage.Contains(attributeName))
-            {
-                return preImage.GetAttributeValue<EntityReference>(attributeName);
-            }
-
-            return currentValue;
-        }
-
-        private static EntityShareDefinition GetDirectEntityDefinition(string entityName)
-        {
-            foreach (var definition in DirectEntityDefinitions)
-            {
-                if (definition.EntityName == entityName)
+                var resolved = resolver.Resolve(employeeReference, mode);
+                if (resolved == null)
                 {
-                    return definition;
+                    continue;
+                }
+
+                results[resolved.UserReference.Id] = resolved;
+            }
+
+            return results;
+        }
+
+        private static IReadOnlyList<ResolvedDriver> FindRemovedDrivers(
+            IReadOnlyDictionary<Guid, ResolvedDriver> previousDrivers,
+            IReadOnlyDictionary<Guid, ResolvedDriver> currentDrivers)
+        {
+            var removed = new List<ResolvedDriver>();
+
+            foreach (var pair in previousDrivers)
+            {
+                if (!currentDrivers.ContainsKey(pair.Key))
+                {
+                    removed.Add(pair.Value);
                 }
             }
 
-            return null;
+            return removed;
         }
 
-        private static bool IsSupported(IPluginExecutionContext context)
+        private static IReadOnlyList<EntityReference> LoadLookupReferences(Entity entity, params string[] attributeNames)
         {
-            if (context == null)
+            var results = new List<EntityReference>();
+            var seen = new HashSet<Guid>();
+
+            if (entity == null || attributeNames == null)
             {
-                return false;
+                return results;
             }
 
-            if (!context.InputParameters.Contains("Target") || !(context.InputParameters["Target"] is Entity))
+            foreach (var attributeName in attributeNames)
             {
-                return false;
+                var reference = entity.GetAttributeValue<EntityReference>(attributeName);
+                if (reference == null || !seen.Add(reference.Id))
+                {
+                    continue;
+                }
+
+                results.Add(reference);
             }
 
-            if (context.MessageName != PluginConfig.CreateMessage && context.MessageName != PluginConfig.UpdateMessage)
-            {
-                return false;
-            }
-
-            if (context.PrimaryEntityName == PluginConfig.ServicePassengerTable)
-            {
-                return true;
-            }
-
-            return GetDirectEntityDefinition(context.PrimaryEntityName) != null;
+            return results;
         }
 
         private static void GrantServiceHierarchy(
@@ -419,6 +428,111 @@ namespace Betinhos.DriverRecordSharing
             }
         }
 
+        private static void RevokeServiceHierarchy(
+            EntityReference serviceReference,
+            ResolvedDriver driver,
+            IReadOnlyList<ServicePassengerLink> servicePassengerLinks,
+            DataverseAccessHelper accessHelper,
+            ServicePassengerRepository servicePassengerRepository,
+            ITracingService tracing)
+        {
+            accessHelper.RevokeAccess(serviceReference, driver.UserReference);
+
+            var revokedPassengers = new HashSet<Guid>();
+            foreach (var item in servicePassengerLinks)
+            {
+                accessHelper.RevokeAccess(
+                    item.ServicePassengerReference,
+                    driver.UserReference);
+
+                if (item.PassengerReference == null || !revokedPassengers.Add(item.PassengerReference.Id))
+                {
+                    continue;
+                }
+
+                if (servicePassengerRepository.HasOtherPassengerServiceForEmployee(
+                    driver.EmployeeReference.Id,
+                    item.PassengerReference.Id,
+                    serviceReference.Id))
+                {
+                    tracing.Trace(
+                        "RevokeServiceHierarchy keep passenger target={0}:{1} for employeeId={2} because another service still uses it.",
+                        item.PassengerReference.LogicalName,
+                        item.PassengerReference.Id,
+                        driver.EmployeeReference.Id);
+                    continue;
+                }
+
+                accessHelper.RevokeAccess(item.PassengerReference, driver.UserReference);
+            }
+        }
+
+        private static void EnsurePreImage(
+            IPluginExecutionContext context,
+            Entity preImage,
+            params string[] requiredAttributes)
+        {
+            if (context.MessageName != PluginConfig.UpdateMessage)
+            {
+                return;
+            }
+
+            if (preImage == null)
+            {
+                throw new InvalidPluginExecutionException(
+                    $"O step Update de '{context.PrimaryEntityName}' precisa de Pre Image com alias '{PluginConfig.PreImageAlias}' para remover acesso do motorista antigo.");
+            }
+
+            foreach (var attributeName in requiredAttributes)
+            {
+                if (!preImage.Attributes.Contains(attributeName))
+                {
+                    throw new InvalidPluginExecutionException(
+                        $"A Pre Image '{PluginConfig.PreImageAlias}' do step Update de '{context.PrimaryEntityName}' precisa incluir o atributo '{attributeName}'.");
+                }
+            }
+        }
+
+        private static EntityShareDefinition GetDirectEntityDefinition(string entityName)
+        {
+            foreach (var definition in DirectEntityDefinitions)
+            {
+                if (definition.EntityName == entityName)
+                {
+                    return definition;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsSupported(IPluginExecutionContext context)
+        {
+            if (context == null)
+            {
+                return false;
+            }
+
+            if (!context.InputParameters.Contains(PluginConfig.TargetParameterName) ||
+                !(context.InputParameters[PluginConfig.TargetParameterName] is Entity))
+            {
+                return false;
+            }
+
+            if (context.MessageName != PluginConfig.CreateMessage &&
+                context.MessageName != PluginConfig.UpdateMessage)
+            {
+                return false;
+            }
+
+            if (context.PrimaryEntityName == PluginConfig.ServicePassengerTable)
+            {
+                return true;
+            }
+
+            return GetDirectEntityDefinition(context.PrimaryEntityName) != null;
+        }
+
         private static bool ContainsAnyAttribute(Entity entity, params string[] attributeNames)
         {
             if (entity == null || attributeNames == null)
@@ -440,16 +554,23 @@ namespace Betinhos.DriverRecordSharing
 
     internal sealed class EntityShareDefinition
     {
-        public EntityShareDefinition(string entityName, bool includeServiceHierarchy, params string[] driverLookupAttributes)
+        public EntityShareDefinition(
+            string entityName,
+            bool includeServiceHierarchy,
+            AccessRights accessRights,
+            params string[] driverLookupAttributes)
         {
             EntityName = entityName;
             IncludeServiceHierarchy = includeServiceHierarchy;
+            AccessRights = accessRights;
             DriverLookupAttributes = driverLookupAttributes ?? Array.Empty<string>();
         }
 
         public string EntityName { get; }
 
         public bool IncludeServiceHierarchy { get; }
+
+        public AccessRights AccessRights { get; }
 
         public string[] DriverLookupAttributes { get; }
     }

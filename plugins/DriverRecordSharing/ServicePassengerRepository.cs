@@ -33,10 +33,7 @@ namespace Betinhos.DriverRecordSharing
 
             foreach (var entity in result.Entities)
             {
-                items.Add(new ServicePassengerLink(
-                    new EntityReference(PluginConfig.ServicePassengerTable, entity.Id),
-                    entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerServiceLookup),
-                    entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerPassengerLookup)));
+                items.Add(Map(entity));
             }
 
             _tracing.Trace("ListByService serviceId={0} count={1}", serviceId, items.Count);
@@ -53,11 +50,7 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.ServicePassengerServiceLookup,
                     PluginConfig.ServicePassengerPassengerLookup));
 
-            var item = new ServicePassengerLink(
-                new EntityReference(PluginConfig.ServicePassengerTable, entity.Id),
-                entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerServiceLookup),
-                entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerPassengerLookup));
-
+            var item = Map(entity);
             _tracing.Trace(
                 "Load servicePassengerId={0} serviceId={1} passengerId={2}",
                 servicePassengerId,
@@ -65,6 +58,68 @@ namespace Betinhos.DriverRecordSharing
                 item.PassengerReference?.Id);
 
             return item;
+        }
+
+        public bool HasOtherPassengerServiceForEmployee(Guid employeeId, Guid passengerId, Guid excludedServiceId)
+        {
+            var query = new QueryExpression(PluginConfig.ServicePassengerTable)
+            {
+                ColumnSet = new ColumnSet(PluginConfig.ServicePassengerPrimaryId),
+                TopCount = 1,
+                NoLock = true
+            };
+            query.Criteria.AddCondition(PluginConfig.ServicePassengerPassengerLookup, ConditionOperator.Equal, passengerId);
+            query.Criteria.AddCondition(PluginConfig.ServicePassengerServiceLookup, ConditionOperator.NotEqual, excludedServiceId);
+
+            var serviceLink = query.AddLink(
+                PluginConfig.ServiceTable,
+                PluginConfig.ServicePassengerServiceLookup,
+                PluginConfig.ServicePrimaryId);
+            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceDriverLookup, ConditionOperator.Equal, employeeId);
+
+            var exists = _service.RetrieveMultiple(query).Entities.Count > 0;
+            _tracing.Trace(
+                "HasOtherPassengerServiceForEmployee employeeId={0} passengerId={1} excludedServiceId={2} exists={3}",
+                employeeId,
+                passengerId,
+                excludedServiceId,
+                exists);
+            return exists;
+        }
+
+        public bool HasOtherPassengerLinkForEmployee(Guid employeeId, Guid passengerId, Guid excludedServicePassengerId)
+        {
+            var query = new QueryExpression(PluginConfig.ServicePassengerTable)
+            {
+                ColumnSet = new ColumnSet(PluginConfig.ServicePassengerPrimaryId),
+                TopCount = 1,
+                NoLock = true
+            };
+            query.Criteria.AddCondition(PluginConfig.ServicePassengerPassengerLookup, ConditionOperator.Equal, passengerId);
+            query.Criteria.AddCondition(PluginConfig.ServicePassengerPrimaryId, ConditionOperator.NotEqual, excludedServicePassengerId);
+
+            var serviceLink = query.AddLink(
+                PluginConfig.ServiceTable,
+                PluginConfig.ServicePassengerServiceLookup,
+                PluginConfig.ServicePrimaryId);
+            serviceLink.LinkCriteria.AddCondition(PluginConfig.ServiceDriverLookup, ConditionOperator.Equal, employeeId);
+
+            var exists = _service.RetrieveMultiple(query).Entities.Count > 0;
+            _tracing.Trace(
+                "HasOtherPassengerLinkForEmployee employeeId={0} passengerId={1} excludedServicePassengerId={2} exists={3}",
+                employeeId,
+                passengerId,
+                excludedServicePassengerId,
+                exists);
+            return exists;
+        }
+
+        private static ServicePassengerLink Map(Entity entity)
+        {
+            return new ServicePassengerLink(
+                new EntityReference(PluginConfig.ServicePassengerTable, entity.Id),
+                entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerServiceLookup),
+                entity.GetAttributeValue<EntityReference>(PluginConfig.ServicePassengerPassengerLookup));
         }
     }
 
