@@ -1,0 +1,58 @@
+using Microsoft.Crm.Sdk.Messages;
+
+namespace Betinhos.DriverRecordSharing
+{
+    internal static class PluginConfig
+    {
+        public const string CreateMessage = "Create";
+        public const string UpdateMessage = "Update";
+        public const string PreImageAlias = "pre";
+
+        public const string ServiceTable = "cr40f_reservadeveculos";
+        public const string ServicePrimaryId = "cr40f_reservadeveculosid";
+        public const string ServiceDriverLookup = "cr40f_motorista";
+        public const string ServiceStatus = "cr40f_status";
+        public const string ServiceDate = "cr40f_dataehorriodesada";
+        public const string ServiceCompletionDate = "new_datadefinalizacao";
+        public const string ServiceScheduledField = "new_foiprogramado";
+        public const string ServiceCategoryField = "new_categoriadoitem";
+        public const string ServiceMaintenanceLookup = "cr40f_om";
+        public const string ServiceExchangeLookup = "cr40f_ot";
+        public const string StateCode = "statecode";
+
+        public const string EmployeeTable = "cr40f_funcionarios";
+        public const string EmployeePrimaryId = "cr40f_funcionariosid";
+        public const string EmployeeName = "cr40f_nomecompleto";
+        public const string EmployeeMicrosoftEmail = "cr40f_emailmicrosoft";
+        public const string EmployeeDismissalDate = "cr40f_datadedemissao";
+
+        public const string UserTable = "systemuser";
+        public const string UserPrimaryId = "systemuserid";
+        public const string UserFullName = "fullname";
+        public const string UserInternalEmail = "internalemailaddress";
+        public const string UserIsDisabled = "isdisabled";
+
+        public const string ServicePassengerTable = "cr40f_servicosporpassageiro";
+        public const string ServicePassengerPrimaryId = "cr40f_servicosporpassageiroid";
+        public const string ServicePassengerServiceLookup = "cr40f_geral";
+        public const string ServicePassengerPassengerLookup = "cr40f_bancodedados";
+
+        public const string PassengerTable = "cr40f_bancodedados";
+        public const string PassengerPrimaryId = "cr40f_bancodedadosid";
+        public const string PassengerName = "cr40f_nomedopassageiro";
+
+        public const int ServiceCategoryService = 100000000;
+        public const int ServiceStatusNeedsAnalysis = 100000001;
+        public const int ServiceStatusCompleted = 202410008;
+        public const int ActiveStateCode = 0;
+
+        public static readonly AccessRights ServiceAccessRights =
+            AccessRights.ReadAccess |
+            AccessRights.WriteAccess |
+            AccessRights.AppendAccess |
+            AccessRights.AppendToAccess;
+
+        public static readonly AccessRights ServicePassengerAccessRights = AccessRights.ReadAccess;
+        public static readonly AccessRights PassengerAccessRights = AccessRights.ReadAccess;
+    }
+}
