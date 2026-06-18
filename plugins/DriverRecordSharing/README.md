@@ -1,42 +1,44 @@
 # DriverRecordSharing
 
-README para quem nunca criou plugin Dataverse.
+## Resposta curta
 
-## O que este plugin faz
+Sim: use `Asynchronous`.
 
-Ele compartilha registros com o `systemuser` do motorista.
+Nao: com a versao atual do plugin, nao precisa criar `Image`.
 
-Hoje ele cobre:
+Configuracao recomendada para todos os steps:
+
+- Stage: `PostOperation`
+- Execution Mode: `Asynchronous`
+- Deployment: `Server`
+- Image: `nenhuma`
+
+## O que o plugin faz
+
+O plugin compartilha registros com o `systemuser` do motorista.
+
+Hoje ele atende:
 
 - `cr40f_reservadeveculos`
 - `cr40f_servicosporpassageiro`
-- `cr40f_bancodedados` indiretamente, via servico por passageiro
+- `cr40f_bancodedados` via servico por passageiro
 - `cr40f_trocasdecarro`
 - `new_possedeveiculo`
 - `cr40f_colisao_v2`
 - `cr40f_recibos_v2`
 
-Regra atual:
+Regras:
 
-- se nao houver motorista: nao da erro
-- se houver motorista mas o funcionario estiver sem `cr40f_emailmicrosoft`: nao da erro e nao compartilha
-- se houver email Microsoft preenchido e nao existir `systemuser` ativo correspondente: da erro
-- se houver mais de um `systemuser` ativo com o mesmo email: da erro
-- o plugin so cria ou reforca acesso
+- se nao houver motorista, nao da erro
+- se o funcionario estiver sem `cr40f_emailmicrosoft`, nao da erro e nao compartilha
+- se existir `cr40f_emailmicrosoft` preenchido e nao existir um `systemuser` ativo correspondente, da erro
+- se existir mais de um `systemuser` ativo com o mesmo email, da erro
+- o plugin so concede acesso
 - ele nao remove acesso antigo por enquanto
 
-## O que voce precisa
+## Onde esta a DLL
 
-Voce precisa de:
-
-1. `dotnet`
-2. a DLL compilada
-3. o `Plugin Registration Tool`
-4. permissao para registrar plugin no ambiente certo
-
-## Onde fica a DLL
-
-Depois do build:
+Arquivo compilado:
 
 - [Betinhos.DriverRecordSharing.dll](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll)
 
@@ -49,126 +51,162 @@ cd "C:\Users\mendo\Desktop\vscode\App Motoristas"
 dotnet build .\plugins\DriverRecordSharing\DriverRecordSharing.csproj -c Release
 ```
 
-Se der erro de assinatura, rode antes:
+Se der erro de assinatura:
 
 ```powershell
 cd "C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing"
 .\generate-strong-name-key.ps1
+dotnet build .\DriverRecordSharing.csproj -c Release
 ```
 
-## Passo 2: abrir o Plugin Registration Tool
+## Passo 2: abrir o PRT
 
-No PRT:
+No `Plugin Registration Tool`:
 
-1. conecte no ambiente correto
-2. confirme se esta no ambiente certo antes de registrar
+1. conecte no ambiente certo
+2. confirme o ambiente antes de continuar
 
-## Passo 3: registrar a DLL
+## Passo 3: se o assembly ja existe
+
+Se voce ja registrou esse plugin antes, faca assim:
+
+1. localize o assembly `Betinhos.DriverRecordSharing`
+2. clique com o botao direito
+3. clique em `Update`
+4. selecione a DLL nova
+5. confirme
+
+Isso atualiza o codigo sem criar outro assembly.
+
+## Passo 4: se o assembly ainda nao existe
 
 1. clique em `Register`
 2. clique em `Register New Assembly`
 3. selecione a DLL
-4. preencha:
+4. use:
 
 - Registration Mode: `Sandbox`
 - Location: `Database`
 
 5. confirme
 
-Depois voce deve enxergar:
+## Passo 5: criar os steps
 
-- `Betinhos.DriverRecordSharing.ServiceDriverSharePlugin`
-
-## Passo 4: registrar os steps
-
-Use sempre este padrao:
+Padrao para todos:
 
 - Stage: `PostOperation`
 - Execution Mode: `Asynchronous`
 - Deployment: `Server`
 - Run in User's Context: usuario tecnico
+- Image: nao criar
 
-### Step 1. Servicos - Create
+### 1. Servicos - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_reservadeveculos`
 - Filtering Attributes: vazio
 
-### Step 2. Servicos - Update
+### 2. Servicos - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_reservadeveculos`
 - Filtering Attributes: `cr40f_motorista`
 
-### Step 3. Servicos por passageiro - Create
+### 3. Servicos por passageiro - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_servicosporpassageiro`
 - Filtering Attributes: vazio
 
-### Step 4. Servicos por passageiro - Update
+### 4. Servicos por passageiro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_servicosporpassageiro`
 - Filtering Attributes: `cr40f_geral,cr40f_bancodedados`
 
-### Step 5. Trocas de carro - Create
+### 5. Trocas de carro - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_trocasdecarro`
 - Filtering Attributes: vazio
 
-### Step 6. Trocas de carro - Update
+### 6. Trocas de carro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_trocasdecarro`
 - Filtering Attributes: `cr40f_motorista1,cr40f_motorista2`
 
-### Step 7. Posse de veiculo - Create
+### 7. Posse de veiculo - Create
 
 - Message: `Create`
 - Primary Entity: `new_possedeveiculo`
 - Filtering Attributes: vazio
 
-### Step 8. Posse de veiculo - Update
+### 8. Posse de veiculo - Update
 
 - Message: `Update`
 - Primary Entity: `new_possedeveiculo`
 - Filtering Attributes: `new_motorista`
 
-### Step 9. Colisoes - Create
+### 9. Colisoes - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_colisao_v2`
 - Filtering Attributes: vazio
 
-### Step 10. Colisoes - Update
+### 10. Colisoes - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_colisao_v2`
 - Filtering Attributes: `cr40f_motorista`
 
-### Step 11. Recibos - Create
+### 11. Recibos - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_recibos_v2`
 - Filtering Attributes: vazio
 
-### Step 12. Recibos - Update
+### 12. Recibos - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_recibos_v2`
 - Filtering Attributes: `cr40f_motorista`
 
-## Passo 5: precisa de Pre Image?
+## Precisa de Image?
 
-Com esta configuracao recomendada, `PostOperation + Asynchronous`, o plugin nao depende de `Pre Image` para funcionar.
+Nao.
 
-Se quiser manter `Pre Image`, nao atrapalha.
+Motivo:
 
-## Passo 6: permissoes do usuario tecnico
+- o plugin atual roda em `PostOperation`
+- ele busca o valor atual no proprio registro quando precisa
+- ele nao depende de comparar valor antigo x novo para funcionar
 
-O usuario tecnico que executa o plugin precisa conseguir:
+Entao:
+
+- `Pre Image`: nao precisa
+- `Post Image`: nao precisa
+
+Se voce criar image por engano, nao costuma quebrar. So nao e necessario.
+
+## Por que Asynchronous?
+
+Porque e mais seguro operacionalmente para esse caso.
+
+Vantagens:
+
+- nao trava a tela do usuario esperando o compartilhamento
+- reduz risco de lentidao no salvar
+- o acesso entra alguns segundos depois
+
+Tradeoff:
+
+- o motorista nao recebe acesso no exato milissegundo do save
+- normalmente entra logo depois
+
+## Permissoes do usuario tecnico
+
+Esse usuario precisa:
 
 - ler `cr40f_reservadeveculos`
 - ler `cr40f_servicosporpassageiro`
@@ -181,94 +219,95 @@ O usuario tecnico que executa o plugin precisa conseguir:
 - ler `systemuser`
 - compartilhar registros
 
-Na pratica, ele precisa de `GrantAccess` e `ModifyAccess`.
+Na pratica, ele precisa conseguir `GrantAccess` e `ModifyAccess`.
 
-## Passo 7: como testar
+## Como testar
 
-### Cenario 1. Servico novo ja com motorista
+### Teste 1. Servico novo com motorista
 
 1. crie um `cr40f_reservadeveculos`
 2. preencha `cr40f_motorista`
 3. salve
 4. espere alguns segundos
 
-Resultado esperado:
+Esperado:
 
 - o motorista recebe acesso ao servico
-- o motorista recebe acesso aos itens de `cr40f_servicosporpassageiro`
-- o motorista recebe acesso aos passageiros ligados
+- recebe acesso aos `cr40f_servicosporpassageiro`
+- recebe acesso aos passageiros relacionados
 
-### Cenario 2. Servico existente sem motorista, depois com motorista
+### Teste 2. Servico existente sem motorista
 
-1. abra um servico existente
+1. abra o servico
 2. preencha `cr40f_motorista`
 3. salve
 4. espere alguns segundos
 
-Resultado esperado:
+Esperado:
 
-- o motorista passa a enxergar o servico
+- o motorista passa a ver o servico
 
-### Cenario 3. Troca de motorista
+### Teste 3. Troca de motorista
 
 1. abra um servico que ja tenha motorista
 2. troque o `cr40f_motorista`
 3. salve
 4. espere alguns segundos
 
-Resultado esperado:
+Esperado:
 
 - o novo motorista recebe acesso
 - o antigo continua com acesso por enquanto
 
-### Cenario 4. Funcionario sem email Microsoft
+### Teste 4. Funcionario sem email Microsoft
 
-1. preencha um motorista cujo `cr40f_emailmicrosoft` esteja vazio
+1. selecione um funcionario com `cr40f_emailmicrosoft` vazio
 2. salve
 
-Resultado esperado:
+Esperado:
 
 - salva normal
 - nao compartilha
-- nao bloqueia o usuario
+- nao bloqueia
 
-### Cenario 5. Email Microsoft invalido
+### Teste 5. Email Microsoft inconsistente
 
-1. preencha um motorista cujo `cr40f_emailmicrosoft` exista
-2. garanta que nao exista `systemuser` ativo com esse email
+1. use um funcionario com `cr40f_emailmicrosoft` preenchido
+2. garanta que nao exista `systemuser` ativo correspondente
 3. salve
 
-Resultado esperado:
+Esperado:
 
-- o plugin da erro
-- isso serve para avisar que o cadastro esta inconsistente
+- o plugin falha
+- isso avisa que o cadastro esta inconsistente
 
-## Como validar acesso real
+## Como validar o compartilhamento real
 
 Validacao forte:
 
-1. abra o registro como admin
-2. rode o script de `principalobjectaccess`
+1. abra o registro
+2. rode o script de consulta do `principalobjectaccess`
 3. confirme que existe linha para o `systemuser` do motorista
 
-Se existir `poaCount: 1` ou mais para o item certo, o compartilhamento real aconteceu.
+Se aparecer `poaCount: 1` ou mais no registro certo, o compartilhamento aconteceu de verdade.
 
 ## Se der erro
 
-Confira nesta ordem:
+Confira:
 
-1. a DLL compilou?
-2. o assembly registrado e o mais novo?
+1. a DLL foi compilada?
+2. o assembly foi atualizado no PRT?
 3. os steps estao em `PostOperation`?
 4. os steps estao `Asynchronous`?
-5. o ambiente do PRT e o certo?
-6. o usuario tecnico tem permissao de compartilhar?
+5. voce nao colocou filtro errado no `Update`?
+6. o usuario tecnico tem permissao?
 7. o funcionario tem `cr40f_emailmicrosoft`?
-8. existe `systemuser` ativo com exatamente esse email?
+8. existe um `systemuser` ativo com exatamente esse email?
 9. existe mais de um `systemuser` ativo com esse email?
 
 ## Arquivos principais
 
+- [README.md](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\README.md)
 - [ServiceDriverSharePlugin.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\ServiceDriverSharePlugin.cs)
 - [DriverResolver.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\DriverResolver.cs)
 - [PluginConfig.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\PluginConfig.cs)
