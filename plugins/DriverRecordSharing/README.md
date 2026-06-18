@@ -1,55 +1,123 @@
 # DriverRecordSharing
 
-Plugin Dataverse em C# para compartilhar:
-- `cr40f_reservadeveculos`
-- `cr40f_servicosporpassageiro`
-- `cr40f_bancodedados`
+Este README foi escrito para quem:
 
-Versão atual:
-- cria acesso para motorista novo
-- não remove acesso antigo ainda
+- nunca criou plugin Dataverse
+- nunca usou Plugin Registration Tool
+- quer um passo a passo sem assumir experiência prévia
 
-## O que este plugin faz
+## Primeiro: o que é esse Plugin Registration Tool?
 
-Quando um serviço (`cr40f_reservadeveculos`) recebe um motorista em `cr40f_motorista`, o plugin:
+O `Plugin Registration Tool`:
 
-1. lê o funcionário escolhido
-2. pega `cr40f_emailmicrosoft`
-3. procura um `systemuser` com mesmo `internalemailaddress`
+- é um programa do Windows
+- não fica dentro da tela normal do Power Apps / Dataverse
+- serve para enviar sua DLL para o Dataverse
+- serve para cadastrar os steps do plugin
+
+Ou seja:
+
+- você compila o código aqui na sua máquina
+- depois abre esse programa
+- depois manda a DLL para o ambiente
+
+## Onde fica esse Plugin Registration Tool?
+
+Na sua máquina, neste momento, eu **não encontrei** a ferramenta instalada.
+
+Eu também **não encontrei** o comando `pac`, que é uma das formas de abrir ferramentas do Power Platform.
+
+Então, para você, hoje, a resposta prática é:
+
+- o Plugin Registration Tool **não está instalado ou não está acessível no PATH**
+
+## Então como conseguir essa ferramenta?
+
+Você tem 3 caminhos possíveis. Use nesta ordem:
+
+### Opção 1. Pedir para quem administra o Dataverse da empresa
+
+Peça exatamente isto:
+
+> Preciso do Plugin Registration Tool do Dataverse para registrar um assembly/plugin C# no ambiente.
+
+Se a pessoa já trabalha com Dynamics / Dataverse, ela provavelmente já tem.
+
+### Opção 2. Instalar pelo Power Platform CLI / SDK Tools
+
+Se sua TI permitir, normalmente essa ferramenta vem por um destes caminhos:
+
+1. Power Platform CLI
+2. SDK / ferramentas de desenvolvimento do Dataverse
+3. extensão/ferramentas do Power Platform para Visual Studio
+
+Se você não sabe qual usar, o mais seguro para você é:
+
+- pedir para a TI ou para quem já publica plugin no ambiente
+- ou me pedir depois um passo a passo só de instalação da ferramenta
+
+### Opção 3. Alguém registrar para você
+
+Se você conseguir compilar a DLL, outra pessoa com a ferramenta pode:
+
+- abrir o Plugin Registration Tool
+- conectar no ambiente
+- registrar seu plugin
+
+## O que este plugin faz?
+
+Quando um serviço `cr40f_reservadeveculos` recebe um motorista no campo `cr40f_motorista`, o plugin:
+
+1. lê o funcionário
+2. pega o email Microsoft do funcionário
+3. localiza o `systemuser` correspondente
 4. compartilha o serviço com esse usuário
 5. compartilha os registros filhos de `cr40f_servicosporpassageiro`
-6. compartilha os passageiros ligados em `cr40f_bancodedados`
+6. compartilha os passageiros em `cr40f_bancodedados`
 
-## Antes de começar
+Versão atual:
 
-Você vai precisar de:
+- cria acesso
+- não remove acesso antigo ainda
 
-1. acesso ao ambiente Dataverse
-2. permissão para abrir o Plugin Registration Tool
-3. um usuário técnico no Dataverse para rodar o plugin
-4. .NET instalado na máquina
-5. este projeto aberto na pasta:
-   - [plugins/DriverRecordSharing](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing)
+## O que você precisa antes de publicar
+
+Você precisa de 4 coisas:
+
+1. o código do plugin
+2. o .NET funcionando
+3. a DLL compilada
+4. o Plugin Registration Tool
+
+Hoje você já tem:
+
+- o código do plugin
+- o projeto C#
+
+Você ainda precisa garantir:
+
+- acesso ao Plugin Registration Tool
+- acesso ao ambiente Dataverse correto
 
 ## Parte 1: gerar a DLL
 
-### Passo 1. Abrir terminal na pasta do projeto
+### Passo 1. Abrir PowerShell
 
-Use PowerShell na raiz do repositório:
+Abra o PowerShell.
+
+### Passo 2. Ir para a pasta do repositório
 
 ```powershell
 cd "C:\Users\mendo\Desktop\vscode\App Motoristas"
 ```
 
-### Passo 2. Restaurar pacotes
+### Passo 3. Restaurar pacotes
 
 ```powershell
 dotnet restore .\plugins\DriverRecordSharing\DriverRecordSharing.csproj
 ```
 
-Se der certo, ele baixa os pacotes necessários.
-
-### Passo 3. Compilar
+### Passo 4. Compilar
 
 ```powershell
 dotnet build .\plugins\DriverRecordSharing\DriverRecordSharing.csproj -c Release
@@ -59,55 +127,67 @@ Se der certo, a DLL fica aqui:
 
 - [Betinhos.DriverRecordSharing.dll](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll)
 
-## Parte 2: abrir o Plugin Registration Tool
+## Parte 2: entender o que acontece depois
 
-Você precisa do Plugin Registration Tool conectado no ambiente correto do Dataverse.
+Depois de gerar a DLL, você **não publica pelo maker portal comum**.
 
-Se você já tem a ferramenta:
-1. abra a ferramenta
+Você precisa abrir o `Plugin Registration Tool`.
+
+Dentro dele, você vai:
+
+1. conectar no ambiente Dataverse
+2. registrar a DLL
+3. registrar os steps
+4. salvar
+
+## Parte 3: quando você tiver o Plugin Registration Tool
+
+Quando alguém te passar a ferramenta ou instalar na sua máquina, faça assim.
+
+## Parte 4: abrir o Plugin Registration Tool
+
+1. abra o programa `Plugin Registration Tool`
 2. faça login
-3. escolha o ambiente correto
+3. escolha o ambiente Dataverse correto
 
-Se você não tem a ferramenta:
-1. peça para quem administra o ambiente ou a solution te passar o Plugin Registration Tool
-2. normalmente ele vem no pacote `Power Platform Tools` / `SDK Tools`
+Importante:
 
-## Parte 3: registrar a DLL
+- confirme se é DEV, TESTE ou PRODUÇÃO
+- não publique no ambiente errado
 
-### Passo 1. Registrar assembly
+## Parte 5: registrar a DLL
+
+### Passo 1. Abrir cadastro de assembly
 
 No Plugin Registration Tool:
 
 1. clique em `Register`
 2. clique em `Register New Assembly`
-3. selecione a DLL:
-   - [Betinhos.DriverRecordSharing.dll](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll)
 
-### Passo 2. Preencher dados do assembly
+### Passo 2. Selecionar a DLL
 
-Na tela de cadastro do assembly, deixe assim:
+Escolha este arquivo:
+
+- [Betinhos.DriverRecordSharing.dll](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll)
+
+### Passo 3. Preencher os dados
+
+Preencha assim:
 
 - Registration Mode: `Sandbox`
-- Data Source: `Database`
+- Data Source / Location: `Database`
 
 Depois confirme.
 
-Se der certo, vai aparecer a classe:
+Se deu certo, você verá a classe:
 
 - `Betinhos.DriverRecordSharing.ServiceDriverSharePlugin`
 
-## Parte 4: registrar o step de Create
+## Parte 6: registrar o step de Create
 
 Esse step serve para quando o serviço já nasce com motorista preenchido.
 
-### Passo 1. Criar step
-
-1. selecione a classe `Betinhos.DriverRecordSharing.ServiceDriverSharePlugin`
-2. clique em `Register New Step`
-
-### Passo 2. Preencher o step
-
-Preencha assim:
+### Preencha assim:
 
 - Message: `Create`
 - Primary Entity: `cr40f_reservadeveculos`
@@ -118,18 +198,11 @@ Preencha assim:
 
 Depois salve.
 
-## Parte 5: registrar o step de Update
+## Parte 7: registrar o step de Update
 
-Esse step serve para quando o motorista muda depois que o serviço já existe.
+Esse step serve para quando o motorista muda em um serviço já existente.
 
-### Passo 1. Criar step
-
-1. selecione a mesma classe `Betinhos.DriverRecordSharing.ServiceDriverSharePlugin`
-2. clique em `Register New Step`
-
-### Passo 2. Preencher o step
-
-Preencha assim:
+### Preencha assim:
 
 - Message: `Update`
 - Primary Entity: `cr40f_reservadeveculos`
@@ -140,33 +213,27 @@ Preencha assim:
 
 Depois salve.
 
-## Parte 6: adicionar a Pre Image no step de Update
+## Parte 8: adicionar a Pre Image no step de Update
 
-A Pre Image serve para o plugin saber qual era o motorista antigo.
+Isso é obrigatório para o plugin saber qual era o motorista antes.
 
-### Passo 1. Abrir o step de Update
-
-1. localize o step `Update` que você acabou de criar
-2. abra o cadastro dele
-
-### Passo 2. Adicionar imagem
-
-Adicione uma Pre Image com:
+No step `Update`, adicione:
 
 - Image Type: `Pre Image`
-- Name / Alias: `pre`
+- Alias / Name: `pre`
 - Attributes:
   - `cr40f_motorista`
 
-Depois salve.
-
 Importante:
-- o alias tem que ser exatamente `pre`
-- o campo tem que ser exatamente `cr40f_motorista`
 
-## Parte 7: preparar o usuário técnico
+- `pre` tem que ser exatamente `pre`
+- `cr40f_motorista` tem que ser exatamente esse nome
 
-O plugin deve rodar com um usuário técnico. Não use usuário pessoal de administrador.
+## Parte 9: usuário técnico
+
+O plugin não deve rodar com seu usuário pessoal.
+
+Ele deve rodar com um usuário técnico.
 
 Esse usuário técnico precisa conseguir:
 
@@ -175,112 +242,81 @@ Esse usuário técnico precisa conseguir:
 - ler `cr40f_servicosporpassageiro`
 - ler `cr40f_bancodedados`
 - ler `systemuser`
-- compartilhar registros necessários
+- compartilhar registros
 
-Na prática, quem administra segurança no ambiente precisa garantir que esse usuário consiga executar:
+Como esta versão só cria acesso, o mais importante aqui é:
 
 - `GrantAccess`
 - `ModifyAccess`
 
-Observação:
-- a versão atual não usa revogação
-- então `RevokeAccess` não é necessário agora
+## Parte 10: conferir os dados antes do teste
 
-## Parte 8: conferir o motorista de teste
+Antes de testar, confira se existe correspondência entre:
 
-Antes de testar, confira se existe um funcionário correto.
+- `cr40f_funcionarios.cr40f_emailmicrosoft`
+- `systemuser.internalemailaddress`
 
-Você precisa de um registro em `cr40f_funcionarios` com:
-
-- `cr40f_emailmicrosoft` preenchido
-
-E precisa existir um `systemuser` com:
-
-- `internalemailaddress` exatamente igual
+Eles precisam ser iguais.
 
 Exemplo:
 
-- `cr40f_funcionarios.cr40f_emailmicrosoft = fabio.souza@betinhos.onmicrosoft.com`
-- `systemuser.internalemailaddress = fabio.souza@betinhos.onmicrosoft.com`
+- `fabio.souza@betinhos.onmicrosoft.com`
+- `fabio.souza@betinhos.onmicrosoft.com`
 
-Se os dois forem diferentes, o plugin falha.
+Se forem diferentes:
 
-## Parte 9: testar na prática
+- o plugin não encontra o usuário
+- o compartilhamento falha
 
-### Teste 1. Motorista sem acesso inicial
+## Parte 11: teste simples
 
-1. entre com o usuário do motorista
-2. confirme que ele não vê todos os serviços e passageiros livremente
+### Teste 1. Serviço com motorista
 
-### Teste 2. Compartilhar um serviço
+1. abra um registro de `cr40f_reservadeveculos`
+2. preencha `cr40f_motorista`
+3. salve
 
-1. entre com usuário administrativo/operacional
-2. abra um registro de `cr40f_reservadeveculos`
-3. preencha `cr40f_motorista`
-4. salve
+Como o plugin é assíncrono:
 
-Como o step é assíncrono:
-- o plugin não roda exatamente no mesmo segundo
-- espere alguns segundos
+- ele pode demorar alguns segundos
 
-### Teste 3. Validar acesso
+### Teste 2. Validar acesso
 
-Depois:
+Depois, entre como o motorista e confira se ele vê:
 
-1. entre como motorista
-2. veja se ele passou a enxergar:
-   - o serviço
-   - os registros de `cr40f_servicosporpassageiro`
-   - os passageiros ligados
+- o serviço
+- os itens de `cr40f_servicosporpassageiro`
+- os passageiros ligados
 
-### Teste 4. Trocar motorista
+### Teste 3. Trocar motorista
 
-1. troque o `cr40f_motorista` para outro funcionário
+1. troque o motorista
 2. salve
 3. espere alguns segundos
-4. valide se o novo motorista ganhou acesso
+4. confira se o novo motorista ganhou acesso
 
-Importante:
-- o motorista antigo ainda continua com acesso
-- isso é esperado nesta versão
+Nesta versão:
 
-## Parte 10: como saber se deu erro
+- o motorista antigo continua com acesso
 
-Se não funcionar, olhe:
+Isso é esperado.
 
-1. se o step está `Enabled`
-2. se está no ambiente certo
-3. se o `Primary Entity` está certo:
-   - `cr40f_reservadeveculos`
-4. se o `Filtering Attributes` do Update está certo:
-   - `cr40f_motorista`
-5. se a Pre Image existe com alias:
-   - `pre`
-6. se o usuário técnico tem permissão suficiente
-7. se `cr40f_emailmicrosoft` bate exatamente com `systemuser.internalemailaddress`
+## Parte 12: se der erro
 
-## Parte 11: segurança recomendada para role Motorista
+Cheque nesta ordem:
 
-A role do motorista deve ser mínima.
+1. a DLL foi compilada?
+2. o Plugin Registration Tool está no ambiente certo?
+3. o assembly foi registrado em `Sandbox`?
+4. a Location/Data Source está `Database`?
+5. o step `Create` existe?
+6. o step `Update` existe?
+7. o `Filtering Attributes` do Update está `cr40f_motorista`?
+8. a Pre Image existe com alias `pre`?
+9. o usuário técnico tem permissão?
+10. o email do funcionário bate com o `systemuser`?
 
-Recomendado:
-
-- `Read` básico/user apenas no necessário
-- `Write` apenas no que o app realmente usa
-- sem `Share`
-- sem `Assign`
-- sem `Delete`
-- sem `Read Organization` em:
-  - `cr40f_reservadeveculos`
-  - `cr40f_servicosporpassageiro`
-  - `cr40f_bancodedados`
-- sem acesso ao app interno operacional
-
-Ideia:
-- o motorista não ganha acesso geral
-- ele só vê o que o plugin compartilhou
-
-## Parte 12: arquivos importantes
+## Arquivos importantes
 
 Projeto:
 - [DriverRecordSharing.csproj](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\DriverRecordSharing.csproj)
@@ -288,34 +324,30 @@ Projeto:
 Classe principal:
 - [ServiceDriverSharePlugin.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\ServiceDriverSharePlugin.cs)
 
-Configuração de nomes lógicos:
+Configuração:
 - [PluginConfig.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\PluginConfig.cs)
 
-Resolver de usuário:
-- [DriverResolver.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\DriverResolver.cs)
+README:
+- [README.md](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\README.md)
 
-Grant / Modify access:
-- [DataverseAccessHelper.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\DataverseAccessHelper.cs)
+## Resumo direto
 
-Busca de filhos:
-- [ServicePassengerRepository.cs](C:\Users\mendo\Desktop\vscode\App Motoristas\plugins\DriverRecordSharing\ServicePassengerRepository.cs)
+Você ainda não está na etapa de “clicar em publicar”.
 
-## Resumo curto
+Sua ordem é:
 
-Ordem certa:
+1. conseguir o Plugin Registration Tool
+2. compilar a DLL
+3. abrir a ferramenta
+4. conectar no Dataverse
+5. registrar assembly
+6. criar os 2 steps
+7. testar
 
-1. rodar `dotnet restore`
-2. rodar `dotnet build`
-3. abrir Plugin Registration Tool
-4. registrar assembly em `Sandbox` + `Database`
-5. criar step `Create`
-6. criar step `Update`
-7. adicionar Pre Image `pre` no Update
-8. configurar usuário técnico
-9. testar com um motorista real
+## Próximo passo recomendado
 
-## Limitações desta versão
+Se você quiser, eu posso fazer agora o próximo README também:
 
-- não remove acesso antigo
-- acessos antigos podem acumular
-- se não existir `systemuser` correspondente ao email do funcionário, o plugin falha
+1. `COMO_INSTALAR_PLUGIN_REGISTRATION_TOOL.md`
+
+ou posso te passar aqui, direto, o texto exato para você mandar para a TI pedir a ferramenta.
