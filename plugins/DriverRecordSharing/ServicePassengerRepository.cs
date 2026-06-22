@@ -114,6 +114,28 @@ namespace Betinhos.DriverRecordSharing
             return exists;
         }
 
+        public bool HasOtherRequesterServiceForEmployee(Guid employeeId, Guid requesterId, Guid excludedServiceId)
+        {
+            var query = new QueryExpression(PluginConfig.ServiceTable)
+            {
+                ColumnSet = new ColumnSet(PluginConfig.ServicePrimaryId),
+                TopCount = 1,
+                NoLock = true
+            };
+            query.Criteria.AddCondition(PluginConfig.ServiceRequesterLookup, ConditionOperator.Equal, requesterId);
+            query.Criteria.AddCondition(PluginConfig.ServicePrimaryId, ConditionOperator.NotEqual, excludedServiceId);
+            query.Criteria.AddCondition(PluginConfig.ServiceDriverLookup, ConditionOperator.Equal, employeeId);
+
+            var exists = _service.RetrieveMultiple(query).Entities.Count > 0;
+            _tracing.Trace(
+                "HasOtherRequesterServiceForEmployee employeeId={0} requesterId={1} excludedServiceId={2} exists={3}",
+                employeeId,
+                requesterId,
+                excludedServiceId,
+                exists);
+            return exists;
+        }
+
         private static ServicePassengerLink Map(Entity entity)
         {
             return new ServicePassengerLink(

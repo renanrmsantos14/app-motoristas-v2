@@ -133,7 +133,7 @@ Para todos os steps:
 
 - Message: `Update`
 - Primary Entity: `cr40f_reservadeveculos`
-- Filtering Attributes: `cr40f_motorista`
+- Filtering Attributes: `cr40f_motorista,cr40f_solicitante`
 - Execution Mode: `Synchronous`
 - Image: criar `Pre Image`
 
@@ -238,6 +238,7 @@ Depois, no campo de atributos, use exatamente os atributos abaixo.
 ### Update de Servicos
 
 - `cr40f_motorista`
+- `cr40f_solicitante`
 
 ### Update de Servicos por passageiro
 

@@ -13,6 +13,7 @@ namespace Betinhos.DriverRecordSharing
         public const string ServicePrimaryId = "cr40f_reservadeveculosid";
         public const string ServiceDriverLookup = "cr40f_motorista";
         public const string ServiceMaintenanceLookup = "cr40f_om";
+        public const string ServiceRequesterLookup = "cr40f_solicitante";
 
         public const string MaintenanceTable = "cr40f_manutencoes";
         public const string MaintenancePrimaryId = "cr40f_manutencoesid";
