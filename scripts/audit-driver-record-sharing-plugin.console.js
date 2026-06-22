@@ -1,0 +1,935 @@
+/**
+ * Cole este script no console do navegador, dentro do model-driven app.
+ *
+ * O script NAO altera nada.
+ * Ele audita se o plugin Betinhos.DriverRecordSharing esta refletido
+ * corretamente nos compartilhamentos atuais do Dataverse.
+ *
+ * Comandos depois de colar:
+ *   await window.DriverRecordSharingAudit.auditCurrentForm()
+ *   await window.DriverRecordSharingAudit.auditRecord("cr40f_reservadeveculos", "GUID")
+ *   await window.DriverRecordSharingAudit.runAll({ sampleSizePerEntity: 5 })
+ *
+ * O script verifica:
+ * - entidades diretas: servico, troca, posse, colisao, recibo
+ * - hierarquia do servico: manutencao, servicos por passageiro, passageiros
+ * - entidade especial: cr40f_servicosporpassageiro
+ * - problemas de identidade: email vazio, systemuser ausente, duplicado
+ * - shares faltando
+ * - shares sobrando
+ */
+(async () => {
+  if (!window.Xrm?.Utility?.getGlobalContext) {
+    throw new Error("Xrm.Utility nao encontrado. Abra este script dentro do model-driven app.");
+  }
+
+  const CONFIG = {
+    apiVersion: "v9.2",
+    sampleSizePerEntity: 5,
+    logTables: true,
+    supportedDirectEntities: [
+      {
+        logicalName: "cr40f_reservadeveculos",
+        label: "Servico",
+        includeServiceHierarchy: true,
+        driverLookups: ["cr40f_motorista"]
+      },
+      {
+        logicalName: "cr40f_trocasdecarro",
+        label: "Troca de carro",
+        includeServiceHierarchy: false,
+        driverLookups: ["cr40f_motorista1", "cr40f_motorista2"]
+      },
+      {
+        logicalName: "new_possedeveiculo",
+        label: "Posse de veiculo",
+        includeServiceHierarchy: false,
+        driverLookups: ["new_motorista"]
+      },
+      {
+        logicalName: "cr40f_colisao_v2",
+        label: "Colisao",
+        includeServiceHierarchy: false,
+        driverLookups: ["cr40f_motorista"]
+      },
+      {
+        logicalName: "cr40f_recibos_v2",
+        label: "Recibo",
+        includeServiceHierarchy: false,
+        driverLookups: ["cr40f_motorista"]
+      }
+    ],
+    servicePassenger: {
+      logicalName: "cr40f_servicosporpassageiro",
+      serviceLookup: "cr40f_geral",
+      passengerLookup: "cr40f_bancodedados"
+    },
+    tables: {
+      employee: {
+        logicalName: "cr40f_funcionarios",
+        id: "cr40f_funcionariosid",
+        name: "cr40f_nomecompleto",
+        email: "cr40f_emailmicrosoft",
+        dismissalDate: "cr40f_datadedemissao"
+      },
+      user: {
+        logicalName: "systemuser",
+        id: "systemuserid",
+        name: "fullname",
+        email: "internalemailaddress",
+        disabled: "isdisabled"
+      },
+      service: {
+        logicalName: "cr40f_reservadeveculos",
+        id: "cr40f_reservadeveculosid",
+        driver: "cr40f_motorista",
+        maintenance: "cr40f_om"
+      },
+      maintenance: {
+        logicalName: "cr40f_manutencoes",
+        id: "cr40f_manutencoesid"
+      },
+      passenger: {
+        logicalName: "cr40f_bancodedados",
+        id: "cr40f_bancodedadosid",
+        name: "cr40f_nomedopassageiro"
+      },
+      principalObjectAccess: {
+        logicalName: "principalobjectaccess"
+      }
+    }
+  };
+
+  const ctx = Xrm.Utility.getGlobalContext();
+  const apiBaseUrl = `${ctx.getClientUrl().replace(/\/$/, "")}/api/data/${CONFIG.apiVersion}`;
+  const state = {
+    entityMeta: new Map(),
+    employeeResolution: new Map(),
+    userById: new Map(),
+    serviceDrivers: new Map(),
+    passengerAllowedUsers: new Map(),
+    servicePassengerByService: new Map(),
+    servicePassengerByPassenger: new Map(),
+    sharesByRecord: new Map()
+  };
+
+  function cleanGuid(value) {
+    return String(value || "").replace(/[{}]/g, "").trim().toLowerCase();
+  }
+
+  function sameGuid(left, right) {
+    return cleanGuid(left) === cleanGuid(right);
+  }
+
+  function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase() || "";
+  }
+
+  function uniqueById(items) {
+    const map = new Map();
+    for (const item of items || []) {
+      const id = cleanGuid(item?.id || item?.userId || item?.principalId);
+      if (!id || map.has(id)) {
+        continue;
+      }
+
+      map.set(id, item);
+    }
+    return [...map.values()];
+  }
+
+  function escapeXml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function requestUrl(pathOrUrl) {
+    return /^https?:\/\//i.test(pathOrUrl) ? pathOrUrl : `${apiBaseUrl}${pathOrUrl}`;
+  }
+
+  async function getJson(pathOrUrl) {
+    const url = requestUrl(pathOrUrl);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0",
+        Prefer: 'odata.include-annotations="*"'
+      }
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`GET ${response.status} ${response.statusText}: ${url}\n${body}`);
+    }
+
+    if (response.status === 204) {
+      return {};
+    }
+
+    return response.json();
+  }
+
+  async function retrieveAll(pathOrUrl) {
+    const rows = [];
+    let next = pathOrUrl;
+
+    while (next) {
+      const result = await getJson(next);
+      rows.push(...(result.value || []));
+      next = result["@odata.nextLink"] || null;
+    }
+
+    return rows;
+  }
+
+  async function getEntityMeta(logicalName) {
+    const key = String(logicalName || "").trim().toLowerCase();
+    if (state.entityMeta.has(key)) {
+      return state.entityMeta.get(key);
+    }
+
+    const metadata = await getJson(
+      `/EntityDefinitions(LogicalName='${escapeXml(key)}')?$select=LogicalName,EntitySetName,PrimaryIdAttribute`
+    );
+
+    const value = {
+      logicalName: metadata.LogicalName,
+      entitySetName: metadata.EntitySetName,
+      primaryIdAttribute: metadata.PrimaryIdAttribute
+    };
+
+    state.entityMeta.set(key, value);
+    return value;
+  }
+
+  async function fetchXml(logicalName, fetchXmlText) {
+    const meta = await getEntityMeta(logicalName);
+    return retrieveAll(`/${meta.entitySetName}?fetchXml=${encodeURIComponent(fetchXmlText)}`);
+  }
+
+  async function retrieveRecord(logicalName, id, columns) {
+    const meta = await getEntityMeta(logicalName);
+    const recordId = cleanGuid(id);
+    const select = (columns || []).filter(Boolean).join(",");
+    return getJson(`/${meta.entitySetName}(${recordId})?$select=${select}`);
+  }
+
+  function getLookup(record, attribute) {
+    if (!record || !attribute) {
+      return null;
+    }
+
+    const valueKey = `_${attribute}_value`;
+    const id = cleanGuid(record[valueKey]);
+    if (!id) {
+      return null;
+    }
+
+    return {
+      id,
+      name: record[`${valueKey}@OData.Community.Display.V1.FormattedValue`] || "",
+      logicalName: record[`${valueKey}@Microsoft.Dynamics.CRM.lookuplogicalname`] || ""
+    };
+  }
+
+  function setDifference(expectedIds, actualIds) {
+    const actual = new Set((actualIds || []).map(cleanGuid));
+    return (expectedIds || []).filter((id) => !actual.has(cleanGuid(id)));
+  }
+
+  async function resolveEmployee(employeeLookup) {
+    const employeeId = cleanGuid(employeeLookup?.id);
+    if (!employeeId) {
+      return null;
+    }
+
+    if (state.employeeResolution.has(employeeId)) {
+      return state.employeeResolution.get(employeeId);
+    }
+
+    const employee = await retrieveRecord(CONFIG.tables.employee.logicalName, employeeId, [
+      CONFIG.tables.employee.id,
+      CONFIG.tables.employee.name,
+      CONFIG.tables.employee.email,
+      CONFIG.tables.employee.dismissalDate
+    ]);
+
+    const employeeName = employee[CONFIG.tables.employee.name] || employeeLookup.name || employeeId;
+    const email = normalizeEmail(employee[CONFIG.tables.employee.email]);
+    const dismissalDate = employee[CONFIG.tables.employee.dismissalDate] || null;
+
+    let resolution;
+    if (!email) {
+      resolution = {
+        status: "missing_email",
+        employeeId,
+        employeeName,
+        email,
+        dismissalDate,
+        users: []
+      };
+    } else {
+      const fetch = [
+        "<fetch version=\"1.0\" mapping=\"logical\">",
+        `<entity name="${CONFIG.tables.user.logicalName}">`,
+        `<attribute name="${CONFIG.tables.user.id}" />`,
+        `<attribute name="${CONFIG.tables.user.name}" />`,
+        `<attribute name="${CONFIG.tables.user.email}" />`,
+        `<attribute name="${CONFIG.tables.user.disabled}" />`,
+        "<filter type=\"and\">",
+        `<condition attribute="${CONFIG.tables.user.email}" operator="eq" value="${escapeXml(email)}" />`,
+        `<condition attribute="${CONFIG.tables.user.disabled}" operator="eq" value="0" />`,
+        "</filter>",
+        "</entity>",
+        "</fetch>"
+      ].join("");
+
+      const users = (await fetchXml(CONFIG.tables.user.logicalName, fetch)).map((row) => ({
+        id: cleanGuid(row[CONFIG.tables.user.id]),
+        name: row[CONFIG.tables.user.name] || "",
+        email: normalizeEmail(row[CONFIG.tables.user.email]),
+        isDisabled: Boolean(row[CONFIG.tables.user.disabled])
+      }));
+
+      for (const user of users) {
+        state.userById.set(user.id, user);
+      }
+
+      if (users.length === 0) {
+        resolution = {
+          status: "no_active_user",
+          employeeId,
+          employeeName,
+          email,
+          dismissalDate,
+          users: []
+        };
+      } else if (users.length > 1) {
+        resolution = {
+          status: "duplicate_active_users",
+          employeeId,
+          employeeName,
+          email,
+          dismissalDate,
+          users
+        };
+      } else {
+        resolution = {
+          status: "resolved",
+          employeeId,
+          employeeName,
+          email,
+          dismissalDate,
+          users
+        };
+      }
+    }
+
+    state.employeeResolution.set(employeeId, resolution);
+    return resolution;
+  }
+
+  async function getServiceCurrentDrivers(serviceId) {
+    const normalizedId = cleanGuid(serviceId);
+    if (!normalizedId) {
+      return { drivers: [], identityIssues: [] };
+    }
+
+    if (state.serviceDrivers.has(normalizedId)) {
+      return state.serviceDrivers.get(normalizedId);
+    }
+
+    const service = await retrieveRecord(CONFIG.tables.service.logicalName, normalizedId, [
+      CONFIG.tables.service.id,
+      CONFIG.tables.service.driver,
+      CONFIG.tables.service.maintenance
+    ]);
+
+    const driverLookup = getLookup(service, CONFIG.tables.service.driver);
+    const driverResolutions = driverLookup ? [await resolveEmployee(driverLookup)] : [];
+    const identityIssues = driverResolutions
+      .filter(Boolean)
+      .filter((item) => item.status !== "resolved")
+      .map((item) => ({
+        severity: item.status === "missing_email" ? "warning" : "error",
+        message: `Servico ${normalizedId}: funcionario ${item.employeeName} ficou em estado ${item.status}.`,
+        code: item.status
+      }));
+
+    const drivers = uniqueById(
+      driverResolutions
+        .filter((item) => item?.status === "resolved")
+        .flatMap((item) =>
+          item.users.map((user) => ({
+            id: user.id,
+            name: user.name || user.email || user.id,
+            email: user.email,
+            employeeId: item.employeeId,
+            employeeName: item.employeeName
+          }))
+        )
+    );
+
+    const value = {
+      serviceId: normalizedId,
+      drivers,
+      identityIssues,
+      maintenanceLookup: getLookup(service, CONFIG.tables.service.maintenance)
+    };
+
+    state.serviceDrivers.set(normalizedId, value);
+    return value;
+  }
+
+  async function getSharedPrincipals(logicalName, recordId) {
+    const cacheKey = `${logicalName}:${cleanGuid(recordId)}`;
+    if (state.sharesByRecord.has(cacheKey)) {
+      return state.sharesByRecord.get(cacheKey);
+    }
+
+    const entitySetName = (await getEntityMeta(CONFIG.tables.principalObjectAccess.logicalName)).entitySetName;
+    const fetch = [
+      "<fetch version=\"1.0\" mapping=\"logical\">",
+      `<entity name="${CONFIG.tables.principalObjectAccess.logicalName}">`,
+      "<attribute name=\"principalid\" />",
+      "<attribute name=\"accessrightsmask\" />",
+      "<attribute name=\"inheritedaccessrightsmask\" />",
+      "<filter type=\"and\">",
+      `<condition attribute="objectid" operator="eq" value="${escapeXml(cleanGuid(recordId))}" />`,
+      "</filter>",
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    const rows = await retrieveAll(`/${entitySetName}?fetchXml=${encodeURIComponent(fetch)}`);
+    const principals = rows.map((row) => {
+      const principalId =
+        cleanGuid(row._principalid_value) ||
+        cleanGuid(row.principalid) ||
+        cleanGuid(row["principalid"]);
+      return {
+        principalId,
+        principalName:
+          row["_principalid_value@OData.Community.Display.V1.FormattedValue"] ||
+          row["principalid@OData.Community.Display.V1.FormattedValue"] ||
+          principalId,
+        principalType:
+          row["_principalid_value@Microsoft.Dynamics.CRM.lookuplogicalname"] ||
+          row["principalid@Microsoft.Dynamics.CRM.lookuplogicalname"] ||
+          "",
+        accessRightsMask: row.accessrightsmask,
+        inheritedAccessRightsMask: row.inheritedaccessrightsmask
+      };
+    });
+
+    const value = {
+      all: principals,
+      users: principals.filter((item) => item.principalType === CONFIG.tables.user.logicalName),
+      nonUsers: principals.filter((item) => item.principalType && item.principalType !== CONFIG.tables.user.logicalName)
+    };
+
+    state.sharesByRecord.set(cacheKey, value);
+    return value;
+  }
+
+  async function listServicePassengersByService(serviceId) {
+    const normalizedId = cleanGuid(serviceId);
+    if (!normalizedId) {
+      return [];
+    }
+
+    if (state.servicePassengerByService.has(normalizedId)) {
+      return state.servicePassengerByService.get(normalizedId);
+    }
+
+    const logicalName = CONFIG.servicePassenger.logicalName;
+    const fetch = [
+      "<fetch version=\"1.0\" mapping=\"logical\">",
+      `<entity name="${logicalName}">`,
+      `<attribute name="cr40f_servicosporpassageiroid" />`,
+      `<attribute name="${CONFIG.servicePassenger.serviceLookup}" />`,
+      `<attribute name="${CONFIG.servicePassenger.passengerLookup}" />`,
+      "<filter type=\"and\">",
+      `<condition attribute="${CONFIG.servicePassenger.serviceLookup}" operator="eq" value="${escapeXml(normalizedId)}" />`,
+      "</filter>",
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    const rows = (await fetchXml(logicalName, fetch)).map((row) => ({
+      id: cleanGuid(row.cr40f_servicosporpassageiroid),
+      service: getLookup(row, CONFIG.servicePassenger.serviceLookup),
+      passenger: getLookup(row, CONFIG.servicePassenger.passengerLookup)
+    }));
+
+    state.servicePassengerByService.set(normalizedId, rows);
+    return rows;
+  }
+
+  async function listServicePassengersByPassenger(passengerId) {
+    const normalizedId = cleanGuid(passengerId);
+    if (!normalizedId) {
+      return [];
+    }
+
+    if (state.servicePassengerByPassenger.has(normalizedId)) {
+      return state.servicePassengerByPassenger.get(normalizedId);
+    }
+
+    const logicalName = CONFIG.servicePassenger.logicalName;
+    const fetch = [
+      "<fetch version=\"1.0\" mapping=\"logical\">",
+      `<entity name="${logicalName}">`,
+      `<attribute name="cr40f_servicosporpassageiroid" />`,
+      `<attribute name="${CONFIG.servicePassenger.serviceLookup}" />`,
+      `<attribute name="${CONFIG.servicePassenger.passengerLookup}" />`,
+      "<filter type=\"and\">",
+      `<condition attribute="${CONFIG.servicePassenger.passengerLookup}" operator="eq" value="${escapeXml(normalizedId)}" />`,
+      "</filter>",
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    const rows = (await fetchXml(logicalName, fetch)).map((row) => ({
+      id: cleanGuid(row.cr40f_servicosporpassageiroid),
+      service: getLookup(row, CONFIG.servicePassenger.serviceLookup),
+      passenger: getLookup(row, CONFIG.servicePassenger.passengerLookup)
+    }));
+
+    state.servicePassengerByPassenger.set(normalizedId, rows);
+    return rows;
+  }
+
+  async function getAllowedUsersForPassenger(passengerId) {
+    const normalizedId = cleanGuid(passengerId);
+    if (!normalizedId) {
+      return [];
+    }
+
+    if (state.passengerAllowedUsers.has(normalizedId)) {
+      return state.passengerAllowedUsers.get(normalizedId);
+    }
+
+    const links = await listServicePassengersByPassenger(normalizedId);
+    const nestedDrivers = await Promise.all(
+      links
+        .map((link) => cleanGuid(link.service?.id))
+        .filter(Boolean)
+        .map((serviceId) => getServiceCurrentDrivers(serviceId))
+    );
+
+    const allowedUsers = uniqueById(
+      nestedDrivers.flatMap((item) => item.drivers.map((driver) => ({ id: driver.id, name: driver.name, email: driver.email })))
+    );
+
+    state.passengerAllowedUsers.set(normalizedId, allowedUsers);
+    return allowedUsers;
+  }
+
+  function makeIssue(severity, entity, recordId, scope, message, details) {
+    return {
+      severity,
+      entity,
+      recordId: cleanGuid(recordId),
+      scope,
+      message,
+      details: details || ""
+    };
+  }
+
+  function buildShareCheckRow(result, check) {
+    return {
+      entity: result.entity,
+      recordId: result.recordId,
+      caseType: result.caseType,
+      scope: check.scope,
+      targetEntity: check.targetEntity,
+      targetId: check.targetId,
+      expectedUsers: check.expectedUsers.map((item) => item.name || item.email || item.id).join(" | "),
+      actualUsers: check.actualUsers.map((item) => item.principalName || item.principalId).join(" | "),
+      missingUsers: check.missingUsers.map((item) => item.name || item.email || item.id).join(" | "),
+      unexpectedUsers: check.unexpectedUsers.map((item) => item.principalName || item.principalId).join(" | "),
+      nonUserShares: check.nonUserShares.map((item) => `${item.principalType}:${item.principalName}`).join(" | "),
+      status: check.status
+    };
+  }
+
+  function compareShares(scope, targetEntity, targetId, expectedUsers, shareSet) {
+    const expected = uniqueById(expectedUsers || []);
+    const actualUsers = uniqueById((shareSet?.users || []).map((item) => ({
+      id: item.principalId,
+      principalId: item.principalId,
+      principalName: item.principalName,
+      principalType: item.principalType,
+      accessRightsMask: item.accessRightsMask
+    })));
+
+    const missingIds = setDifference(
+      expected.map((item) => item.id),
+      actualUsers.map((item) => item.principalId)
+    );
+    const unexpectedIds = setDifference(
+      actualUsers.map((item) => item.principalId),
+      expected.map((item) => item.id)
+    );
+
+    const missingUsers = expected.filter((item) => missingIds.some((missingId) => sameGuid(missingId, item.id)));
+    const unexpectedUsers = actualUsers.filter((item) => unexpectedIds.some((unexpectedId) => sameGuid(unexpectedId, item.principalId)));
+    const nonUserShares = shareSet?.nonUsers || [];
+
+    let status = "ok";
+    if (missingUsers.length > 0) {
+      status = "missing";
+    } else if (unexpectedUsers.length > 0 || nonUserShares.length > 0) {
+      status = "unexpected";
+    }
+
+    return {
+      scope,
+      targetEntity,
+      targetId: cleanGuid(targetId),
+      expectedUsers: expected,
+      actualUsers,
+      missingUsers,
+      unexpectedUsers,
+      nonUserShares,
+      status
+    };
+  }
+
+  async function buildDirectRecordAudit(entityConfig, recordId) {
+    const meta = await getEntityMeta(entityConfig.logicalName);
+    const columns = [...entityConfig.driverLookups];
+    if (entityConfig.includeServiceHierarchy) {
+      columns.push(CONFIG.tables.service.maintenance);
+    }
+
+    const record = await retrieveRecord(entityConfig.logicalName, recordId, [...columns, meta.primaryIdAttribute]);
+    const driverLookups = uniqueById(entityConfig.driverLookups.map((field) => getLookup(record, field)).filter(Boolean));
+    const driverResolutions = await Promise.all(driverLookups.map(resolveEmployee));
+
+    const result = {
+      entity: entityConfig.logicalName,
+      recordId: cleanGuid(recordId),
+      caseType: "direct",
+      label: entityConfig.label,
+      checks: [],
+      issues: []
+    };
+
+    for (const resolution of driverResolutions.filter(Boolean)) {
+      if (resolution.status === "resolved") {
+        continue;
+      }
+
+      result.issues.push(
+        makeIssue(
+          resolution.status === "missing_email" ? "warning" : "error",
+          entityConfig.logicalName,
+          recordId,
+          "identity",
+          `Funcionario ${resolution.employeeName} ficou em estado ${resolution.status}.`,
+          resolution.email || ""
+        )
+      );
+    }
+
+    const expectedUsers = uniqueById(
+      driverResolutions
+        .filter((item) => item?.status === "resolved")
+        .flatMap((item) =>
+          item.users.map((user) => ({
+            id: user.id,
+            name: user.name || user.email || user.id,
+            email: user.email
+          }))
+        )
+    );
+
+    const mainShares = await getSharedPrincipals(entityConfig.logicalName, recordId);
+    result.checks.push(compareShares("main", entityConfig.logicalName, recordId, expectedUsers, mainShares));
+
+    if (!entityConfig.includeServiceHierarchy) {
+      return result;
+    }
+
+    const maintenanceLookup = getLookup(record, CONFIG.tables.service.maintenance);
+    if (maintenanceLookup) {
+      const maintenanceShares = await getSharedPrincipals(CONFIG.tables.maintenance.logicalName, maintenanceLookup.id);
+      result.checks.push(
+        compareShares("maintenance", CONFIG.tables.maintenance.logicalName, maintenanceLookup.id, expectedUsers, maintenanceShares)
+      );
+    }
+
+    const servicePassengers = await listServicePassengersByService(recordId);
+    for (const link of servicePassengers) {
+      const linkShares = await getSharedPrincipals(CONFIG.servicePassenger.logicalName, link.id);
+      result.checks.push(compareShares("service_passenger_link", CONFIG.servicePassenger.logicalName, link.id, expectedUsers, linkShares));
+    }
+
+    const uniquePassengers = uniqueById(servicePassengers.map((item) => item.passenger).filter(Boolean));
+    for (const passenger of uniquePassengers) {
+      const allowedUsers = await getAllowedUsersForPassenger(passenger.id);
+      const passengerShares = await getSharedPrincipals(CONFIG.tables.passenger.logicalName, passenger.id);
+      result.checks.push(compareShares("passenger", CONFIG.tables.passenger.logicalName, passenger.id, allowedUsers, passengerShares));
+    }
+
+    return result;
+  }
+
+  async function buildServicePassengerAudit(recordId) {
+    const record = await retrieveRecord(CONFIG.servicePassenger.logicalName, recordId, [
+      "cr40f_servicosporpassageiroid",
+      CONFIG.servicePassenger.serviceLookup,
+      CONFIG.servicePassenger.passengerLookup
+    ]);
+
+    const serviceLookup = getLookup(record, CONFIG.servicePassenger.serviceLookup);
+    const passengerLookup = getLookup(record, CONFIG.servicePassenger.passengerLookup);
+    const serviceState = serviceLookup ? await getServiceCurrentDrivers(serviceLookup.id) : { drivers: [], identityIssues: [] };
+
+    const result = {
+      entity: CONFIG.servicePassenger.logicalName,
+      recordId: cleanGuid(recordId),
+      caseType: "service_passenger",
+      label: "Servico por passageiro",
+      checks: [],
+      issues: [...serviceState.identityIssues.map((item) => makeIssue(item.severity, CONFIG.servicePassenger.logicalName, recordId, "identity", item.message, item.code))]
+    };
+
+    const linkShares = await getSharedPrincipals(CONFIG.servicePassenger.logicalName, recordId);
+    result.checks.push(compareShares("service_passenger_link", CONFIG.servicePassenger.logicalName, recordId, serviceState.drivers, linkShares));
+
+    if (passengerLookup) {
+      const allowedUsers = await getAllowedUsersForPassenger(passengerLookup.id);
+      const passengerShares = await getSharedPrincipals(CONFIG.tables.passenger.logicalName, passengerLookup.id);
+      result.checks.push(compareShares("passenger", CONFIG.tables.passenger.logicalName, passengerLookup.id, allowedUsers, passengerShares));
+    }
+
+    return result;
+  }
+
+  async function getSampleIdsForEntity(logicalName, sampleSize) {
+    const meta = await getEntityMeta(logicalName);
+    const fetch = [
+      `<fetch version="1.0" mapping="logical" top="${Number(sampleSize || CONFIG.sampleSizePerEntity) || 5}">`,
+      `<entity name="${logicalName}">`,
+      `<attribute name="${meta.primaryIdAttribute}" />`,
+      "<order attribute=\"createdon\" descending=\"true\" />",
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    const rows = await fetchXml(logicalName, fetch);
+    return rows.map((row) => cleanGuid(row[meta.primaryIdAttribute])).filter(Boolean);
+  }
+
+  async function auditRecord(logicalName, recordId) {
+    const normalizedEntity = String(logicalName || "").trim().toLowerCase();
+    const normalizedId = cleanGuid(recordId);
+    if (!normalizedEntity || !normalizedId) {
+      throw new Error("auditRecord exige logicalName e GUID validos.");
+    }
+
+    const direct = CONFIG.supportedDirectEntities.find((item) => item.logicalName === normalizedEntity);
+    let result;
+    if (direct) {
+      result = await buildDirectRecordAudit(direct, normalizedId);
+    } else if (normalizedEntity === CONFIG.servicePassenger.logicalName) {
+      result = await buildServicePassengerAudit(normalizedId);
+    } else {
+      throw new Error(`Entidade nao suportada pelo plugin: ${normalizedEntity}`);
+    }
+
+    const report = finalizeReport([result]);
+    printReport(report);
+    return report;
+  }
+
+  async function auditCurrentForm() {
+    const formTarget = getCurrentFormTarget();
+    if (!formTarget) {
+      throw new Error("Nao consegui descobrir entidade e ID da tela atual.");
+    }
+
+    return auditRecord(formTarget.entityName, formTarget.id);
+  }
+
+  function getCurrentFormTarget() {
+    try {
+      if (window.Xrm?.Page?.data?.entity) {
+        const entityName = Xrm.Page.data.entity.getEntityName();
+        const id = cleanGuid(Xrm.Page.data.entity.getId());
+        if (entityName && id) {
+          return { entityName, id, source: "Xrm.Page" };
+        }
+      }
+    } catch (error) {
+      console.warn("Falha lendo Xrm.Page:", error);
+    }
+
+    try {
+      const url = new URL(window.location.href);
+      const entityName = (url.searchParams.get("etn") || "").trim().toLowerCase();
+      const id = cleanGuid(url.searchParams.get("id"));
+      if (entityName && id) {
+        return { entityName, id, source: "url" };
+      }
+    } catch (error) {
+      console.warn("Falha lendo URL da pagina atual:", error);
+    }
+
+    return null;
+  }
+
+  async function runAll(options = {}) {
+    const sampleSizePerEntity = Number(options.sampleSizePerEntity || CONFIG.sampleSizePerEntity) || 5;
+    const reports = [];
+
+    for (const direct of CONFIG.supportedDirectEntities) {
+      const ids = await getSampleIdsForEntity(direct.logicalName, sampleSizePerEntity);
+      for (const id of ids) {
+        try {
+          reports.push(await buildDirectRecordAudit(direct, id));
+        } catch (error) {
+          reports.push({
+            entity: direct.logicalName,
+            recordId: cleanGuid(id),
+            caseType: "direct",
+            label: direct.label,
+            checks: [],
+            issues: [makeIssue("error", direct.logicalName, id, "runtime", String(error?.message || error), "record audit failed")]
+          });
+        }
+      }
+    }
+
+    const servicePassengerIds = await getSampleIdsForEntity(CONFIG.servicePassenger.logicalName, sampleSizePerEntity);
+    for (const id of servicePassengerIds) {
+      try {
+        reports.push(await buildServicePassengerAudit(id));
+      } catch (error) {
+        reports.push({
+          entity: CONFIG.servicePassenger.logicalName,
+          recordId: cleanGuid(id),
+          caseType: "service_passenger",
+          label: "Servico por passageiro",
+          checks: [],
+          issues: [makeIssue("error", CONFIG.servicePassenger.logicalName, id, "runtime", String(error?.message || error), "record audit failed")]
+        });
+      }
+    }
+
+    const report = finalizeReport(reports);
+    printReport(report);
+    return report;
+  }
+
+  function finalizeReport(recordResults) {
+    const checkRows = [];
+    const issueRows = [];
+
+    for (const result of recordResults) {
+      for (const check of result.checks || []) {
+        checkRows.push(buildShareCheckRow(result, check));
+
+        if (check.missingUsers.length > 0) {
+          issueRows.push(
+            makeIssue(
+              "error",
+              result.entity,
+              result.recordId,
+              check.scope,
+              `Faltam shares em ${check.targetEntity}:${check.targetId}.`,
+              check.missingUsers.map((item) => item.name || item.email || item.id).join(" | ")
+            )
+          );
+        }
+
+        if (check.unexpectedUsers.length > 0) {
+          issueRows.push(
+            makeIssue(
+              "warning",
+              result.entity,
+              result.recordId,
+              check.scope,
+              `Ha shares sobrando em ${check.targetEntity}:${check.targetId}.`,
+              check.unexpectedUsers.map((item) => item.principalName || item.principalId).join(" | ")
+            )
+          );
+        }
+
+        if (check.nonUserShares.length > 0) {
+          issueRows.push(
+            makeIssue(
+              "warning",
+              result.entity,
+              result.recordId,
+              check.scope,
+              `Ha principals nao-user compartilhados em ${check.targetEntity}:${check.targetId}.`,
+              check.nonUserShares.map((item) => `${item.principalType}:${item.principalName}`).join(" | ")
+            )
+          );
+        }
+      }
+
+      issueRows.push(...(result.issues || []));
+    }
+
+    const summary = {
+      auditedRecords: recordResults.length,
+      totalChecks: checkRows.length,
+      failedChecks: checkRows.filter((item) => item.status === "missing").length,
+      warningChecks: checkRows.filter((item) => item.status === "unexpected").length,
+      totalIssues: issueRows.length,
+      errors: issueRows.filter((item) => item.severity === "error").length,
+      warnings: issueRows.filter((item) => item.severity === "warning").length
+    };
+
+    return {
+      generatedAt: new Date().toISOString(),
+      summary,
+      recordResults,
+      checkRows,
+      issueRows
+    };
+  }
+
+  function printReport(report) {
+    console.log("Resumo da auditoria do plugin:", report.summary);
+
+    if (!CONFIG.logTables) {
+      return;
+    }
+
+    console.log("Checks executados:");
+    console.table(report.checkRows);
+
+    if (report.issueRows.length > 0) {
+      console.log("Issues encontradas:");
+      console.table(report.issueRows);
+    } else {
+      console.log("Nenhuma issue encontrada.");
+    }
+  }
+
+  window.DriverRecordSharingAudit = {
+    config: CONFIG,
+    runAll,
+    auditCurrentForm,
+    auditRecord,
+    getCurrentFormTarget
+  };
+
+  console.log("DriverRecordSharingAudit carregado.");
+  console.log("Uso rapido:");
+  console.log("  await window.DriverRecordSharingAudit.auditCurrentForm()");
+  console.log("  await window.DriverRecordSharingAudit.auditRecord('cr40f_reservadeveculos', 'GUID')");
+  console.log("  await window.DriverRecordSharingAudit.runAll({ sampleSizePerEntity: 5 })");
+})();
