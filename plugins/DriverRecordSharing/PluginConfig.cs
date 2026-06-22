@@ -12,6 +12,10 @@ namespace Betinhos.DriverRecordSharing
         public const string ServiceTable = "cr40f_reservadeveculos";
         public const string ServicePrimaryId = "cr40f_reservadeveculosid";
         public const string ServiceDriverLookup = "cr40f_motorista";
+        public const string ServiceMaintenanceLookup = "cr40f_om";
+
+        public const string MaintenanceTable = "cr40f_manutencoes";
+        public const string MaintenancePrimaryId = "cr40f_manutencoesid";
 
         public const string EmployeeTable = "cr40f_funcionarios";
         public const string EmployeePrimaryId = "cr40f_funcionariosid";
@@ -59,6 +63,7 @@ namespace Betinhos.DriverRecordSharing
             AccessRights.AppendToAccess;
 
         public static readonly AccessRights AssignedRecordAccessRights = ServiceAccessRights;
+        public static readonly AccessRights MaintenanceAccessRights = AssignedRecordAccessRights;
         public static readonly AccessRights ServicePassengerAccessRights = AccessRights.ReadAccess;
         public static readonly AccessRights PassengerAccessRights = AccessRights.ReadAccess;
     }

@@ -140,7 +140,10 @@ namespace Betinhos.DriverRecordSharing
             var currentEntity = service.Retrieve(
                 definition.EntityName,
                 context.PrimaryEntityId,
-                new ColumnSet(definition.DriverLookupAttributes));
+                BuildDirectEntityColumnSet(definition));
+            var currentMaintenance = definition.IncludeServiceHierarchy
+                ? LoadMaintenanceReference(currentEntity)
+                : null;
 
             var currentDrivers = ResolveDriverSet(
                 LoadLookupReferences(currentEntity, definition.DriverLookupAttributes),
@@ -161,6 +164,7 @@ namespace Betinhos.DriverRecordSharing
                 {
                     GrantServiceHierarchy(
                         targetReference,
+                        currentMaintenance,
                         driver.UserReference,
                         servicePassengerRepository.ListByService(context.PrimaryEntityId),
                         accessHelper,
@@ -177,6 +181,7 @@ namespace Betinhos.DriverRecordSharing
                 {
                     RevokeServiceHierarchy(
                         targetReference,
+                        currentMaintenance,
                         driver,
                         servicePassengerRepository.ListByService(context.PrimaryEntityId),
                         accessHelper,
@@ -330,6 +335,18 @@ namespace Betinhos.DriverRecordSharing
                 mode);
         }
 
+        private static ColumnSet BuildDirectEntityColumnSet(EntityShareDefinition definition)
+        {
+            var columns = new List<string>(definition.DriverLookupAttributes ?? Array.Empty<string>());
+
+            if (definition?.IncludeServiceHierarchy == true)
+            {
+                columns.Add(PluginConfig.ServiceMaintenanceLookup);
+            }
+
+            return new ColumnSet(columns.ToArray());
+        }
+
         private static Dictionary<Guid, ResolvedDriver> ResolveDriverSet(
             IReadOnlyList<EntityReference> employeeReferences,
             DriverResolver resolver,
@@ -394,12 +411,28 @@ namespace Betinhos.DriverRecordSharing
 
         private static void GrantServiceHierarchy(
             EntityReference serviceReference,
+            EntityReference maintenanceReference,
             EntityReference userReference,
             IReadOnlyList<ServicePassengerLink> servicePassengerLinks,
             DataverseAccessHelper accessHelper,
             ITracingService tracing)
         {
             accessHelper.EnsureAccess(serviceReference, userReference, PluginConfig.ServiceAccessRights);
+
+            if (maintenanceReference != null)
+            {
+                tracing.Trace(
+                    "GrantServiceHierarchy maintenance target={0}:{1} user={2}:{3}",
+                    maintenanceReference.LogicalName,
+                    maintenanceReference.Id,
+                    userReference.LogicalName,
+                    userReference.Id);
+
+                accessHelper.EnsureAccess(
+                    maintenanceReference,
+                    userReference,
+                    PluginConfig.MaintenanceAccessRights);
+            }
 
             var grantedPassengers = new HashSet<Guid>();
             foreach (var item in servicePassengerLinks)
@@ -430,6 +463,7 @@ namespace Betinhos.DriverRecordSharing
 
         private static void RevokeServiceHierarchy(
             EntityReference serviceReference,
+            EntityReference maintenanceReference,
             ResolvedDriver driver,
             IReadOnlyList<ServicePassengerLink> servicePassengerLinks,
             DataverseAccessHelper accessHelper,
@@ -437,6 +471,18 @@ namespace Betinhos.DriverRecordSharing
             ITracingService tracing)
         {
             accessHelper.RevokeAccess(serviceReference, driver.UserReference);
+
+            if (maintenanceReference != null)
+            {
+                tracing.Trace(
+                    "RevokeServiceHierarchy maintenance target={0}:{1} user={2}:{3}",
+                    maintenanceReference.LogicalName,
+                    maintenanceReference.Id,
+                    driver.UserReference.LogicalName,
+                    driver.UserReference.Id);
+
+                accessHelper.RevokeAccess(maintenanceReference, driver.UserReference);
+            }
 
             var revokedPassengers = new HashSet<Guid>();
             foreach (var item in servicePassengerLinks)
@@ -465,6 +511,16 @@ namespace Betinhos.DriverRecordSharing
 
                 accessHelper.RevokeAccess(item.PassengerReference, driver.UserReference);
             }
+        }
+
+        private static EntityReference LoadMaintenanceReference(Entity entity)
+        {
+            if (entity == null)
+            {
+                return null;
+            }
+
+            return entity.GetAttributeValue<EntityReference>(PluginConfig.ServiceMaintenanceLookup);
         }
 
         private static void EnsurePreImage(

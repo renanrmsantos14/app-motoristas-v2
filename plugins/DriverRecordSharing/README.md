@@ -7,6 +7,7 @@ Esta versao esta preparada para:
 - conceder acesso quando o motorista entra
 - manter acesso quando o motorista continua igual
 - retirar acesso quando o motorista sai ou e trocado
+- compartilhar a `cr40f_manutencoes` vinculada no `cr40f_om` do servico
 
 Para isso, agora existe uma exigencia nova:
 
@@ -285,6 +286,7 @@ Confira:
 Esse usuario precisa conseguir:
 
 - ler `cr40f_reservadeveculos`
+- ler `cr40f_manutencoes`
 - ler `cr40f_servicosporpassageiro`
 - ler `cr40f_bancodedados`
 - ler `cr40f_trocasdecarro`
@@ -310,6 +312,7 @@ Esperado:
 
 - se existir problema de email Microsoft ou `systemuser`, o save pode falhar na hora
 - se estiver tudo certo, o motorista recebe acesso
+- se o servico tiver `cr40f_om`, o motorista tambem recebe acesso a `cr40f_manutencoes`
 
 ### Teste 2. Pegar servico sem motorista e atribuir
 
@@ -320,6 +323,7 @@ Esperado:
 Esperado:
 
 - o motorista ganha acesso ao servico
+- se o servico tiver `cr40f_om`, o motorista ganha acesso a essa manutencao
 
 ### Teste 3. Trocar motorista do servico
 
@@ -331,6 +335,7 @@ Esperado:
 
 - o novo motorista ganha acesso
 - o antigo perde acesso
+- se o servico tiver `cr40f_om`, o novo motorista ganha acesso a manutencao e o antigo perde
 
 ### Teste 4. Confirmar filhos do servico
 
