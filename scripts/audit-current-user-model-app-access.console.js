@@ -36,6 +36,15 @@
     return roleFamilyKeys(b).some((key) => left.has(key));
   }
 
+  function escapeXml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   function requestUrl(pathOrUrl) {
     return /^https?:\/\//i.test(pathOrUrl) ? pathOrUrl : `${apiBaseUrl}${pathOrUrl}`;
   }
@@ -70,6 +79,37 @@
     }
 
     return rows;
+  }
+
+  async function getCurrentApp() {
+    const urlAppId = cleanGuid(new URL(window.location.href).searchParams.get("appid"));
+
+    if (typeof ctx.getCurrentAppProperties !== "function") {
+      return { appId: urlAppId, appName: "", appUniqueName: "", source: "url" };
+    }
+
+    try {
+      const app = await ctx.getCurrentAppProperties();
+      return {
+        appId: cleanGuid(app.appId || app.appmoduleid || urlAppId),
+        appName: app.displayName || app.name || "",
+        appUniqueName: app.uniqueName || app.uniquename || "",
+        source: "getCurrentAppProperties"
+      };
+    } catch (error) {
+      return {
+        appId: urlAppId,
+        appName: "",
+        appUniqueName: "",
+        source: "url fallback",
+        error: String(error?.message || error)
+      };
+    }
+  }
+
+  async function getEntitySetName(logicalName) {
+    const metadata = await getJson(`/EntityDefinitions(LogicalName='${logicalName}')?$select=EntitySetName`);
+    return metadata.EntitySetName;
   }
 
   async function getUserDirectRoles(userId) {
@@ -120,14 +160,72 @@
     );
   }
 
-  const [{ user, roles: directRoles }, teams, apps] = await Promise.all([
+  async function getPrincipalObjectAccessForApp(entitySetName, app, principal) {
+    const fetchXml = [
+      "<fetch version=\"1.0\" mapping=\"logical\" distinct=\"false\">",
+      "<entity name=\"principalobjectaccess\">",
+      "<attribute name=\"accessrightsmask\" />",
+      "<attribute name=\"inheritedaccessrightsmask\" />",
+      "<attribute name=\"objectid\" />",
+      "<attribute name=\"principalid\" />",
+      "<filter type=\"and\">",
+      `<condition attribute=\"objectid\" operator=\"eq\" value=\"${escapeXml(cleanGuid(app.appmoduleid))}\" />`,
+      `<condition attribute=\"principalid\" operator=\"eq\" value=\"${escapeXml(principal.id)}\" />`,
+      "</filter>",
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    const rows = await retrieveAll(`/${entitySetName}?fetchXml=${encodeURIComponent(fetchXml)}`);
+    return rows.map((row) => ({
+      appName: app.name || app.uniquename || app.appmoduleid,
+      appUniqueName: app.uniquename || "",
+      appId: cleanGuid(app.appmoduleid),
+      principalType: principal.type,
+      principalName: principal.name,
+      principalId: principal.id,
+      accessRightsMask: row.accessrightsmask,
+      inheritedAccessRightsMask: row.inheritedaccessrightsmask
+    }));
+  }
+
+  async function getPrincipalObjectAccess(apps, principals) {
+    try {
+      const entitySetName = await getEntitySetName("principalobjectaccess");
+      const nested = await Promise.all(
+        apps.flatMap((app) =>
+          principals.map((principal) => getPrincipalObjectAccessForApp(entitySetName, app, principal))
+        )
+      );
+
+      return { rows: nested.flat(), error: "" };
+    } catch (error) {
+      return { rows: [], error: String(error?.message || error) };
+    }
+  }
+
+  const [{ user, roles: directRoles }, teams, apps, currentApp] = await Promise.all([
     getUserDirectRoles(currentUserId),
     getUserTeams(currentUserId),
-    getApps()
+    getApps(),
+    getCurrentApp()
   ]);
 
   const teamRolesNested = await Promise.all(teams.map(getTeamRoles));
   const effectiveRoles = [...directRoles, ...teamRolesNested.flat()];
+  const principals = [
+    {
+      type: "user",
+      name: user.fullname || user.internalemailaddress || currentUserId,
+      id: currentUserId
+    },
+    ...teams.map((team) => ({
+      type: "team",
+      name: team.name || cleanGuid(team.teamid),
+      id: cleanGuid(team.teamid)
+    }))
+  ];
+  const poaAccess = await getPrincipalObjectAccess(apps, principals);
 
   const appAccess = [];
   for (const app of apps) {
@@ -155,6 +253,11 @@
     }
   }
 
+  const currentAppAccessByRole = appAccess.filter((row) => sameGuid(row.appId, currentApp.appId));
+  const currentAppAccessByPoa = poaAccess.rows.filter((row) => sameGuid(row.appId, currentApp.appId));
+  const currentAppHasUnexplainedAccess =
+    Boolean(currentApp.appId) && currentAppAccessByRole.length === 0 && currentAppAccessByPoa.length === 0;
+
   const roleSummary = effectiveRoles.map((role) => ({
     roleName: role.name,
     roleId: cleanGuid(role.roleid),
@@ -170,10 +273,23 @@
     name: user.fullname,
     email: user.internalemailaddress
   });
+  console.log("App atual aberto:");
+  console.table([currentApp]);
   console.log("Roles efetivos do usuario:");
   console.table(roleSummary);
-  console.log("Apps liberados e caminho de acesso:");
+  console.log("Apps liberados por role appmoduleroles_association:");
   console.table(appAccess);
+  console.log("Compartilhamentos diretos principalobjectaccess para usuario/times:");
+  if (poaAccess.error) {
+    console.warn("Nao consegui consultar principalobjectaccess:", poaAccess.error);
+  }
+  console.table(poaAccess.rows);
+  if (currentAppHasUnexplainedAccess) {
+    console.warn(
+      "App atual abriu, mas nao apareceu por app role nem por principalobjectaccess. Verifique sessao/login, cache, grupo Entra ID ou outro mecanismo nao capturado pelo script.",
+      currentApp
+    );
+  }
 
   window.__modelDrivenAppAccessAudit = {
     user: {
@@ -182,7 +298,13 @@
       email: user.internalemailaddress
     },
     roles: roleSummary,
-    appAccess
+    currentApp,
+    appAccess,
+    principalObjectAccess: poaAccess.rows,
+    principalObjectAccessError: poaAccess.error,
+    currentAppAccessByRole,
+    currentAppAccessByPoa,
+    currentAppHasUnexplainedAccess
   };
 
   console.log("Resultado salvo em window.__modelDrivenAppAccessAudit");
