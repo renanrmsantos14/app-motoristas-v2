@@ -1,5 +1,5 @@
 import type { PersonalReceiptModel } from "./personalReceipt";
-import { getReceiptCopy, getReceiptDisplayClient } from "./receiptLanguage";
+import { getReceiptCopy, getReceiptDisplayClient } from "./receiptLanguage.ts";
 
 export const RECEIPT_SVG_WIDTH = 794;
 export const RECEIPT_SVG_HEIGHT = 1123;
@@ -41,6 +41,14 @@ function normalizeText(value: unknown) {
 function displayReceiptValue(value: unknown) {
   const normalized = normalizeText(value);
   return normalized || "-";
+}
+
+function buildReceiptDescription(model: PersonalReceiptModel, descriptionBody: string) {
+  return [
+    descriptionBody,
+    normalizeText(model.periodo),
+    normalizeText(model.trajetos)
+  ].filter(Boolean).join("\n");
 }
 
 function estimateTextWidth(text: string, size: number, weight = 500) {
@@ -115,6 +123,7 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
   const contentWidth = RECEIPT_SVG_WIDTH - MARGIN * 2;
   const colWidth = contentWidth / 3;
   const copy = getReceiptCopy(model.idioma);
+  const description = buildReceiptDescription(model, copy.descriptionBody);
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${RECEIPT_SVG_WIDTH}" height="${RECEIPT_SVG_HEIGHT}" viewBox="0 0 ${RECEIPT_SVG_WIDTH} ${RECEIPT_SVG_HEIGHT}">`,
@@ -151,13 +160,13 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
     svgText(copy.descriptionTitle, { x: MARGIN + 16, y: 371, size: 18, weight: 800 }),
     line(MARGIN, 383, right),
     line(MARGIN, 548, right),
-    svgText(copy.descriptionBody, {
+    svgText(description, {
       x: MARGIN + 16,
       y: 423,
       size: 15,
       maxWidth: contentWidth - 32,
-      lineHeight: 23,
-      maxLines: 3
+      lineHeight: 21,
+      maxLines: 5
     }),
     rect(MARGIN, 548, contentWidth - 260, 40, "#ebf3ff"),
     rect(right - 260, 548, 110, 40, "#cde1ff"),

@@ -59,7 +59,7 @@ import {
   type DriverContext,
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
-import { reportAppError } from "./lib/appErrorLogger";
+import { reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
 import {
   createVideoPosterDataUrl,
   getVideoDurationLabelFromUrl,
@@ -338,6 +338,7 @@ function App() {
   const voucherDraftTimerRef = useRef<number | null>(null);
   const nativeCaptureInputRef = useRef<HTMLInputElement | null>(null);
   const nativeCaptureTargetRef = useRef<NativeCaptureTarget | null>(null);
+  const lastGlobalErrorRef = useRef<{ id: string; at: number }>({ id: "", at: 0 });
 
   const logAppError = (error: unknown, action: string, phase = "") => {
     reportAppError(error, {
@@ -700,6 +701,38 @@ function App() {
     const timer = window.setTimeout(() => setToastState(null), toast.tone === "error" ? 3600 : 3000);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    const onGlobalError = (event: Event) => {
+      const detail = (event as CustomEvent<AppErrorNotice>).detail;
+      if (!detail?.userMessage) return;
+
+      const now = Date.now();
+      if (lastGlobalErrorRef.current.id === detail.id && now - lastGlobalErrorRef.current.at < 4000) return;
+      lastGlobalErrorRef.current = { id: detail.id, at: now };
+
+      if (detail.severity === "critical") {
+        setCriticalError(detail.userMessage);
+        return;
+      }
+
+      const tone: ToastTone =
+        detail.severity === "warning"
+          ? "warning"
+          : detail.severity === "info"
+            ? "info"
+            : "error";
+
+      setToastState({
+        id: now + Math.floor(Math.random() * 1000),
+        message: detail.userMessage,
+        tone
+      });
+    };
+
+    window.addEventListener("appmotoristas:error", onGlobalError as EventListener);
+    return () => window.removeEventListener("appmotoristas:error", onGlobalError as EventListener);
+  }, []);
 
   useEffect(() => {
     return () => {

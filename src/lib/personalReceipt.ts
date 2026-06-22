@@ -1,5 +1,5 @@
 import type { DetailData } from "../types";
-import { formatReceiptCurrencyByLanguage, formatReceiptDateByLanguage, normalizeReceiptLanguage, RECEIPT_LANGUAGE, type ReceiptLanguage } from "./receiptLanguage";
+import { formatReceiptCurrencyByLanguage, formatReceiptDateByLanguage, normalizeReceiptLanguage, RECEIPT_LANGUAGE, type ReceiptLanguage } from "./receiptLanguage.ts";
 
 export type PersonalReceiptModel = {
   idOp: string;

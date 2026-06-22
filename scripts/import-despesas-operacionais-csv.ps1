@@ -1,6 +1,6 @@
 param(
   [string] $CsvPath = "",
-  [string] $EnvironmentUrl = "https://org23b93544.crm2.dynamics.com/",
+  [string] $EnvironmentUrl = "https://appbetinhosdev.crm2.dynamics.com/",
   [string] $TenantId = "organizations",
   [string] $ClientId = "51f81489-12ee-4a9e-aaae-a2591f45987d",
   [int] $StartAt = 1,

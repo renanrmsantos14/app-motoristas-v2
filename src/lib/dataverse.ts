@@ -3,7 +3,7 @@
 import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
 import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
 import type { PersonalReceiptModel } from "./personalReceipt";
-import { RECEIPT_LANGUAGE } from "./receiptLanguage";
+import { RECEIPT_LANGUAGE } from "./receiptLanguage.ts";
 
 import { getFieldValue } from "./fieldLookup.ts";
 
@@ -197,7 +197,7 @@ const FLOW_URLS = {
   salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL"
 } as const;
 
-const DEV_DATAVERSE_URL = "https://org23b93544.crm2.dynamics.com/";
+const DEV_DATAVERSE_URL = "https://appbetinhosdev.crm2.dynamics.com/";
 
 const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> = {
   [FLOW_URLS.gerarVoucher]: "new_FlowURLFlowGerarVoucherAppMotoristasv2",
@@ -2059,6 +2059,13 @@ function buildPassengerMessage(passengerName: string, driverName: string, servic
   ].join("\n");
 }
 
+function formatDetailDateTime(date: Date | null) {
+  if (!date) return "";
+  const day = date.toLocaleDateString("pt-BR");
+  const time = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return `${day} ${time}`;
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -2105,10 +2112,43 @@ async function buildPassengersHtml(geralId: string, serviceDate: Date | null, dr
   return passengers.filter(Boolean).join("<br>");
 }
 
-function buildFields(record: DataverseRecord, passengerHtml = ""): DetailField[] {
+async function buildSolicitanteHtml(record: DataverseRecord, serviceDate: Date | null, driverName: string) {
+  const solicitanteId = cleanODataGuid(record._cr40f_solicitante_value);
+  const solicitanteName = getLookupName(record, "cr40f_solicitante");
+  const solicitanteType = String(record["_cr40f_solicitante_value@Microsoft.Dynamics.CRM.lookuplogicalname"] ?? "");
+  if (!solicitanteId || solicitanteType !== "cr40f_bancodedados") return solicitanteName;
+
+  try {
+    const solicitante = await retrieveOne(
+      DATAVERSE.bancoDeDados,
+      solicitanteId,
+      "$select=cr40f_bancodedadosid,cr40f_nomedopassageiro,cr40f_telefone"
+    );
+    const phoneRaw = String(solicitante.cr40f_telefone ?? "");
+    if (!phoneRaw) return solicitanteName;
+
+    const phone = normalizeWhatsAppPhone(phoneRaw);
+    const phoneText = escapeHtml(phoneRaw || "Sem telefone");
+    const message = buildPassengerMessage(solicitanteName, driverName, serviceDate);
+    const phoneHtml = phone
+      ? `<a href="https://wa.me/${phone}?text=${encodeURIComponent(message)}" target="_blank" rel="noopener noreferrer">${phoneText}</a>`
+      : `<span style="color:#8a8a8a">${phoneText}</span>`;
+
+    return `${escapeHtml(solicitanteName)}${solicitanteName && phoneRaw ? " - " : ""}${phoneHtml}`;
+  } catch (error) {
+    dataverseWarn("Falha ao enriquecer telefone da solicitante. Usando apenas nome.", {
+      solicitanteId,
+      solicitanteType,
+      error
+    });
+    return solicitanteName;
+  }
+}
+
+function buildFields(record: DataverseRecord, passengerHtml = "", solicitanteHtml = ""): DetailField[] {
   const date = toDate(record.cr40f_dataehorriodesada);
   return [
-    { label: "Data e Horário de Saída", value: date ? date.toLocaleString("pt-BR") : "" },
+    { label: "Data e Horário de Saída", value: formatDetailDateTime(date) },
     { label: "Cliente", value: getLookupName(record, "cr40f_cliente") || getFormatted(record, "cr40f_cliente") },
     { label: "Receber", value: getFormatted(record, "cr40f_receber") },
     { label: "Trajeto", value: String(record.cr40f_trajeto ?? "") },
@@ -2117,7 +2157,7 @@ function buildFields(record: DataverseRecord, passengerHtml = ""): DetailField[]
     { label: "Destino", value: String(record.cr40f_destino ?? "") },
     { label: "Obs de Operação", value: String(record.cr40f_obsdeoperao ?? "") },
     { label: "Perfil do Passageiro", value: String(record.cr40f_perfildopassageiro ?? "") },
-    { label: "Solicitante", value: getLookupName(record, "cr40f_solicitante") },
+    { label: "Solicitante", value: solicitanteHtml || getLookupName(record, "cr40f_solicitante"), html: Boolean(solicitanteHtml) },
     { label: "Veículo", value: getLookupName(record, "cr40f_veiculo") }
   ].filter((field) => field.value);
 }
@@ -2129,7 +2169,7 @@ function serviceActions(record: DataverseRecord): DetailAction[] {
   return /tenn?aris/i.test(cliente) ? ["cancel", "voucher"] : ["cancel", "finalizar"];
 }
 
-function mapGeralService(record: DataverseRecord, passengerHtml = ""): AgendaItem {
+function mapGeralService(record: DataverseRecord, passengerHtml = "", solicitanteHtml = ""): AgendaItem {
   const date = toDate(record.cr40f_dataehorriodesada);
   const id = getGeralId(record);
   const businessId = getBusinessId(record, id);
@@ -2144,7 +2184,7 @@ function mapGeralService(record: DataverseRecord, passengerHtml = ""): AgendaIte
     id: businessId,
     title: "Detalhes do Serviço",
     actions: serviceActions(record),
-    fields: buildFields(record, passengerHtml),
+    fields: buildFields(record, passengerHtml, solicitanteHtml),
     dataverse: { entitySetName: DATAVERSE.geral, id, record }
   };
 
@@ -2163,18 +2203,20 @@ function mapGeralService(record: DataverseRecord, passengerHtml = ""): AgendaIte
 async function mapGeralServiceWithPassengers(record: DataverseRecord, driver: DriverContext) {
   const serviceId = getGeralId(record);
   let passengerHtml = "";
+  let solicitanteHtml = "";
   try {
     passengerHtml = await buildPassengersHtml(serviceId, toDate(record.cr40f_dataehorriodesada), driver.fullName);
   } catch (error) {
     dataverseWarn("Falha ao enriquecer passageiros. Usando Pax - VIEW do Geral.", { serviceId, error });
   }
-  return mapGeralService(record, passengerHtml);
+  solicitanteHtml = await buildSolicitanteHtml(record, toDate(record.cr40f_dataehorriodesada), driver.fullName);
+  return mapGeralService(record, passengerHtml || "", solicitanteHtml);
 }
 
 function buildMaintenanceFields(geral: DataverseRecord, maintenance: DataverseRecord): DetailField[] {
   const date = toDate(geral.cr40f_dataehorriodesada);
   return [
-    { label: "Data e Horário de Saída", value: date ? date.toLocaleString("pt-BR") : "" },
+    { label: "Data e Horário de Saída", value: formatDetailDateTime(date) },
     { label: "ID Manutenção", value: String(maintenance.cr40f_id ?? "") },
     { label: "Veículo", value: getLookupName(maintenance, "cr40f_placa_carro") || getLookupName(geral, "cr40f_veiculo") },
     { label: "Descrição", value: String(maintenance.cr40f_descricao ?? "") },

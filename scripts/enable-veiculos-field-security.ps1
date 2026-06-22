@@ -1,5 +1,5 @@
 param(
-  [string] $EnvironmentUrl = "https://org23b93544.crm2.dynamics.com/",
+  [string] $EnvironmentUrl = "https://appbetinhosdev.crm2.dynamics.com/",
   [string] $TableLogicalName = "cr40f_veiculos",
   [switch] $DryRun
 )
@@ -41,7 +41,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 
-var environmentUrl = args.Length > 0 ? args[0] : "https://org23b93544.crm2.dynamics.com/";
+var environmentUrl = args.Length > 0 ? args[0] : "https://appbetinhosdev.crm2.dynamics.com/";
 var tableLogicalName = args.Length > 1 ? args[1] : "cr40f_veiculos";
 var dryRun = args.Any(a => string.Equals(a, "--dry-run", StringComparison.OrdinalIgnoreCase));
 

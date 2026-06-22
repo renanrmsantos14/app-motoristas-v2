@@ -11408,7 +11408,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.354","builtAt":"2026-06-17T15:12:28.901Z","builtAtLabel":"17/06/2026, 12:12"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.360","builtAt":"2026-06-22T17:16:25.069Z","builtAtLabel":"22/06/2026, 14:16"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -34634,6 +34634,50 @@ select,
   function truncate(value, maxLength = MAX_TEXT) {
     return String(value ?? "").slice(0, maxLength);
   }
+  function buildNoticeId(source, message, action, phase) {
+    return `${source}|${action}|${phase}|${message}`.slice(0, 500);
+  }
+  function buildUserFacingMessage(message, code, context) {
+    const normalized = message.trim();
+    const privilegeMatch = normalized.match(/missing (prv[\w]+) privilege .* entity '([^']+)'/i);
+    if (privilegeMatch) {
+      const [, privilege, entityName] = privilegeMatch;
+      return `Acesso negado no Power Apps. Falta permiss\xE3o ${privilege} para a entidade ${entityName}. Pe\xE7a para adicionar esse privil\xE9gio na role do usu\xE1rio ou do time.`;
+    }
+    if (/powerapps\/apps\/.+\/launch/i.test(normalized) && /403/.test(normalized)) {
+      return "Acesso negado ao abrir o app publicado no Power Apps. Confirme se o usu\xE1rio tem role do app e permiss\xF5es das tabelas exigidas.";
+    }
+    if (/msdyn_tour/i.test(normalized) && /403|forbidden|acesso negado/i.test(normalized)) {
+      return "Acesso negado \xE0 entidade msdyn_tour. O usu\xE1rio precisa de privil\xE9gio de leitura nessa tabela para o app abrir sem erro.";
+    }
+    if (/falha ao carregar recurso/i.test(normalized)) {
+      return normalized;
+    }
+    if (code) {
+      return `${normalized} C\xF3digo: ${code}`.trim();
+    }
+    if (context.source === "window.unhandledrejection") return `Falha inesperada no app: ${normalized}`;
+    return normalized || "Erro inesperado no app.";
+  }
+  function dispatchErrorNotice(normalized, context) {
+    const runtime = getWindowRuntime();
+    if (!runtime) return;
+    const severity = context.severity ?? "error";
+    const source = context.source ?? "app";
+    const action = context.action ?? "";
+    const phase = context.phase ?? "";
+    const notice = {
+      id: buildNoticeId(source, normalized.message, action, phase),
+      severity,
+      source,
+      action,
+      phase,
+      message: normalized.message,
+      code: normalized.code,
+      userMessage: buildUserFacingMessage(normalized.message, normalized.code, context)
+    };
+    runtime.dispatchEvent(new CustomEvent("appmotoristas:error", { detail: notice }));
+  }
   function getConnectionType(runtime) {
     const navigatorWithConnection = runtime?.navigator;
     return navigatorWithConnection?.connection?.effectiveType ?? navigatorWithConnection?.connection?.type ?? "";
@@ -34720,6 +34764,7 @@ select,
   }
   function reportAppError(error2, context = {}) {
     const normalized = normalizeError(error2);
+    dispatchErrorNotice(normalized, context);
     void getBaseRecord(context, normalized).then((record) => {
       const xrm = getXrm();
       if (!xrm?.WebApi) {
@@ -34751,19 +34796,36 @@ select,
     if (runtime.__APP_ERROR_LOGGER_INSTALLED) return;
     runtime.__APP_ERROR_LOGGER_INSTALLED = true;
     runtime.addEventListener("error", (event) => {
-      reportAppError(event.error ?? event.message, {
+      const resourceTarget = event.target;
+      if (resourceTarget && resourceTarget !== runtime) {
+        const tagName = String(resourceTarget.tagName ?? "resource").toLowerCase();
+        const resourceUrl = String(resourceTarget.currentSrc ?? resourceTarget.src ?? resourceTarget.href ?? "").trim();
+        reportAppError(new Error(`Falha ao carregar recurso ${tagName}: ${resourceUrl || "desconhecido"}`), {
+          severity: "error",
+          source: "window.resourceerror",
+          action: resourceUrl,
+          phase: tagName,
+          payload: {
+            tagName,
+            resourceUrl
+          }
+        });
+        return;
+      }
+      const errorEvent = event;
+      reportAppError(errorEvent.error ?? errorEvent.message, {
         severity: "critical",
         source: "window.error",
-        action: event.filename,
-        phase: `${event.lineno}:${event.colno}`,
+        action: errorEvent.filename,
+        phase: `${errorEvent.lineno}:${errorEvent.colno}`,
         payload: {
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
-          message: event.message
+          filename: errorEvent.filename,
+          lineno: errorEvent.lineno,
+          colno: errorEvent.colno,
+          message: errorEvent.message
         }
       });
-    });
+    }, true);
     runtime.addEventListener("unhandledrejection", (event) => {
       reportAppError(event.reason, {
         severity: "critical",
@@ -35610,7 +35672,7 @@ select,
     gerarVoucher: "VITE_FLOW_GERAR_VOUCHER_URL",
     salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL"
   };
-  var DEV_DATAVERSE_URL = "https://org23b93544.crm2.dynamics.com/";
+  var DEV_DATAVERSE_URL = "https://appbetinhosdev.crm2.dynamics.com/";
   var FLOW_DATAVERSE_ENVIRONMENT_VARIABLES = {
     [FLOW_URLS.gerarVoucher]: "new_FlowURLFlowGerarVoucherAppMotoristasv2",
     [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive"
@@ -37162,6 +37224,12 @@ ${text}`);
       "Ate breve."
     ].join("\n");
   }
+  function formatDetailDateTime(date) {
+    if (!date) return "";
+    const day = date.toLocaleDateString("pt-BR");
+    const time2 = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return `${day} ${time2}`;
+  }
   function escapeHtml(value) {
     return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
@@ -37197,10 +37265,37 @@ ${text}`);
     );
     return passengers.filter(Boolean).join("<br>");
   }
-  function buildFields(record, passengerHtml = "") {
+  async function buildSolicitanteHtml(record, serviceDate, driverName) {
+    const solicitanteId = cleanODataGuid(record._cr40f_solicitante_value);
+    const solicitanteName = getLookupName(record, "cr40f_solicitante");
+    const solicitanteType = String(record["_cr40f_solicitante_value@Microsoft.Dynamics.CRM.lookuplogicalname"] ?? "");
+    if (!solicitanteId || solicitanteType !== "cr40f_bancodedados") return solicitanteName;
+    try {
+      const solicitante = await retrieveOne(
+        DATAVERSE.bancoDeDados,
+        solicitanteId,
+        "$select=cr40f_bancodedadosid,cr40f_nomedopassageiro,cr40f_telefone"
+      );
+      const phoneRaw = String(solicitante.cr40f_telefone ?? "");
+      if (!phoneRaw) return solicitanteName;
+      const phone = normalizeWhatsAppPhone(phoneRaw);
+      const phoneText = escapeHtml(phoneRaw || "Sem telefone");
+      const message = buildPassengerMessage(solicitanteName, driverName, serviceDate);
+      const phoneHtml = phone ? `<a href="https://wa.me/${phone}?text=${encodeURIComponent(message)}" target="_blank" rel="noopener noreferrer">${phoneText}</a>` : `<span style="color:#8a8a8a">${phoneText}</span>`;
+      return `${escapeHtml(solicitanteName)}${solicitanteName && phoneRaw ? " - " : ""}${phoneHtml}`;
+    } catch (error2) {
+      dataverseWarn("Falha ao enriquecer telefone da solicitante. Usando apenas nome.", {
+        solicitanteId,
+        solicitanteType,
+        error: error2
+      });
+      return solicitanteName;
+    }
+  }
+  function buildFields(record, passengerHtml = "", solicitanteHtml = "") {
     const date = toDate(record.cr40f_dataehorriodesada);
     return [
-      { label: "Data e Hor\xE1rio de Sa\xEDda", value: date ? date.toLocaleString("pt-BR") : "" },
+      { label: "Data e Hor\xE1rio de Sa\xEDda", value: formatDetailDateTime(date) },
       { label: "Cliente", value: getLookupName(record, "cr40f_cliente") || getFormatted(record, "cr40f_cliente") },
       { label: "Receber", value: getFormatted(record, "cr40f_receber") },
       { label: "Trajeto", value: String(record.cr40f_trajeto ?? "") },
@@ -37209,7 +37304,7 @@ ${text}`);
       { label: "Destino", value: String(record.cr40f_destino ?? "") },
       { label: "Obs de Opera\xE7\xE3o", value: String(record.cr40f_obsdeoperao ?? "") },
       { label: "Perfil do Passageiro", value: String(record.cr40f_perfildopassageiro ?? "") },
-      { label: "Solicitante", value: getLookupName(record, "cr40f_solicitante") },
+      { label: "Solicitante", value: solicitanteHtml || getLookupName(record, "cr40f_solicitante"), html: Boolean(solicitanteHtml) },
       { label: "Ve\xEDculo", value: getLookupName(record, "cr40f_veiculo") }
     ].filter((field) => field.value);
   }
@@ -37219,7 +37314,7 @@ ${text}`);
     if (isReceber) return ["cancel", "receber"];
     return /tenn?aris/i.test(cliente) ? ["cancel", "voucher"] : ["cancel", "finalizar"];
   }
-  function mapGeralService(record, passengerHtml = "") {
+  function mapGeralService(record, passengerHtml = "", solicitanteHtml = "") {
     const date = toDate(record.cr40f_dataehorriodesada);
     const id3 = getGeralId(record);
     const businessId = getBusinessId(record, id3);
@@ -37234,7 +37329,7 @@ ${text}`);
       id: businessId,
       title: "Detalhes do Servi\xE7o",
       actions: serviceActions(record),
-      fields: buildFields(record, passengerHtml),
+      fields: buildFields(record, passengerHtml, solicitanteHtml),
       dataverse: { entitySetName: DATAVERSE.geral, id: id3, record }
     };
     return {
@@ -37251,17 +37346,19 @@ ${text}`);
   async function mapGeralServiceWithPassengers(record, driver) {
     const serviceId = getGeralId(record);
     let passengerHtml = "";
+    let solicitanteHtml = "";
     try {
       passengerHtml = await buildPassengersHtml(serviceId, toDate(record.cr40f_dataehorriodesada), driver.fullName);
     } catch (error2) {
       dataverseWarn("Falha ao enriquecer passageiros. Usando Pax - VIEW do Geral.", { serviceId, error: error2 });
     }
-    return mapGeralService(record, passengerHtml);
+    solicitanteHtml = await buildSolicitanteHtml(record, toDate(record.cr40f_dataehorriodesada), driver.fullName);
+    return mapGeralService(record, passengerHtml || "", solicitanteHtml);
   }
   function buildMaintenanceFields(geral, maintenance) {
     const date = toDate(geral.cr40f_dataehorriodesada);
     return [
-      { label: "Data e Hor\xE1rio de Sa\xEDda", value: date ? date.toLocaleString("pt-BR") : "" },
+      { label: "Data e Hor\xE1rio de Sa\xEDda", value: formatDetailDateTime(date) },
       { label: "ID Manuten\xE7\xE3o", value: String(maintenance.cr40f_id ?? "") },
       { label: "Ve\xEDculo", value: getLookupName(maintenance, "cr40f_placa_carro") || getLookupName(geral, "cr40f_veiculo") },
       { label: "Descri\xE7\xE3o", value: String(maintenance.cr40f_descricao ?? "") },
@@ -38864,7 +38961,7 @@ ${text}`);
     ...inputProps
   }, ref) {
     const resolvedPlaceholder = placeholder ?? getInputPlaceholder(label, inputProps.type, inputProps.inputMode);
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FormField, { label, error: error2, hint, className: fieldClassName, labelClassName, required: Boolean(required ?? inputProps.required), children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextInputControl, { ref, "aria-invalid": Boolean(error2), placeholder: resolvedPlaceholder, ...inputProps }) });
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FormField, { label, error: error2, hint, className: fieldClassName, labelClassName, required: Boolean(required), children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextInputControl, { ref, "aria-invalid": Boolean(error2), placeholder: resolvedPlaceholder, ...inputProps }) });
   });
   var MoneyInputField = (0, import_react29.forwardRef)(function MoneyInputField2({
     label,
@@ -38879,7 +38976,7 @@ ${text}`);
     placeholder = "",
     ...inputProps
   }, ref) {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FormField, { label, error: error2, hint, className: fieldClassName, labelClassName, required: Boolean(required ?? inputProps.required), children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: `money-input-field form-control-shell ${currencyFieldClassName}`.trim(), children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FormField, { label, error: error2, hint, className: fieldClassName, labelClassName, required: Boolean(required), children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: `money-input-field form-control-shell ${currencyFieldClassName}`.trim(), children: [
       /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: `money-input-prefix form-control-value ${currencyPrefixClassName}`.trim(), "aria-hidden": "true", children: prefix }),
       /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextInputControl, { ref, "aria-invalid": Boolean(error2), placeholder, ...inputProps })
     ] }) });
@@ -38895,7 +38992,7 @@ ${text}`);
     ...textareaProps
   }, ref) {
     const resolvedPlaceholder = placeholder ?? getTextareaPlaceholder(label);
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FormField, { label, error: error2, hint, className: fieldClassName, labelClassName, required: Boolean(required ?? textareaProps.required), children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextAreaControl, { ref, "aria-invalid": Boolean(error2), placeholder: resolvedPlaceholder, ...textareaProps }) });
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FormField, { label, error: error2, hint, className: fieldClassName, labelClassName, required: Boolean(required), children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextAreaControl, { ref, "aria-invalid": Boolean(error2), placeholder: resolvedPlaceholder, ...textareaProps }) });
   });
   var SelectField = (0, import_react29.forwardRef)(function SelectField2({
     label,
@@ -57627,6 +57724,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const normalized = normalizeText4(value);
     return normalized || "-";
   }
+  function buildReceiptDescription(model, descriptionBody) {
+    return [
+      descriptionBody,
+      normalizeText4(model.periodo),
+      normalizeText4(model.trajetos)
+    ].filter(Boolean).join("\n");
+  }
   function estimateTextWidth(text, size, weight = 500) {
     const weightFactor = weight >= 700 ? 0.58 : 0.52;
     return Array.from(text).reduce((width, char) => {
@@ -57689,6 +57793,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const contentWidth = RECEIPT_SVG_WIDTH - MARGIN * 2;
     const colWidth = contentWidth / 3;
     const copy = getReceiptCopy(model.idioma);
+    const description = buildReceiptDescription(model, copy.descriptionBody);
     return [
       `<svg xmlns="http://www.w3.org/2000/svg" width="${RECEIPT_SVG_WIDTH}" height="${RECEIPT_SVG_HEIGHT}" viewBox="0 0 ${RECEIPT_SVG_WIDTH} ${RECEIPT_SVG_HEIGHT}">`,
       rect(0, 0, RECEIPT_SVG_WIDTH, RECEIPT_SVG_HEIGHT, "#ffffff"),
@@ -57724,13 +57829,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       svgText(copy.descriptionTitle, { x: MARGIN + 16, y: 371, size: 18, weight: 800 }),
       line(MARGIN, 383, right),
       line(MARGIN, 548, right),
-      svgText(copy.descriptionBody, {
+      svgText(description, {
         x: MARGIN + 16,
         y: 423,
         size: 15,
         maxWidth: contentWidth - 32,
-        lineHeight: 23,
-        maxLines: 3
+        lineHeight: 21,
+        maxLines: 5
       }),
       rect(MARGIN, 548, contentWidth - 260, 40, "#ebf3ff"),
       rect(right - 260, 548, 110, 40, "#cde1ff"),
@@ -60433,6 +60538,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const voucherDraftTimerRef = (0, import_react58.useRef)(null);
     const nativeCaptureInputRef = (0, import_react58.useRef)(null);
     const nativeCaptureTargetRef = (0, import_react58.useRef)(null);
+    const lastGlobalErrorRef = (0, import_react58.useRef)({ id: "", at: 0 });
     const logAppError = (error2, action, phase = "") => {
       reportAppError(error2, {
         severity: "error",
@@ -60775,6 +60881,27 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       const timer = window.setTimeout(() => setToastState(null), toast.tone === "error" ? 3600 : 3e3);
       return () => window.clearTimeout(timer);
     }, [toast]);
+    (0, import_react58.useEffect)(() => {
+      const onGlobalError = (event) => {
+        const detail = event.detail;
+        if (!detail?.userMessage) return;
+        const now2 = Date.now();
+        if (lastGlobalErrorRef.current.id === detail.id && now2 - lastGlobalErrorRef.current.at < 4e3) return;
+        lastGlobalErrorRef.current = { id: detail.id, at: now2 };
+        if (detail.severity === "critical") {
+          setCriticalError(detail.userMessage);
+          return;
+        }
+        const tone = detail.severity === "warning" ? "warning" : detail.severity === "info" ? "info" : "error";
+        setToastState({
+          id: now2 + Math.floor(Math.random() * 1e3),
+          message: detail.userMessage,
+          tone
+        });
+      };
+      window.addEventListener("appmotoristas:error", onGlobalError);
+      return () => window.removeEventListener("appmotoristas:error", onGlobalError);
+    }, []);
     (0, import_react58.useEffect)(() => {
       return () => {
         if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);

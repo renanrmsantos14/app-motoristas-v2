@@ -24,6 +24,17 @@ type WindowWithRuntime = Window & {
   __APP_REPORT_ERROR?: (error: unknown, context?: AppErrorLogContext) => void;
 };
 
+export type AppErrorNotice = {
+  id: string;
+  severity: "info" | "warning" | "error" | "critical";
+  source: string;
+  action: string;
+  phase: string;
+  message: string;
+  code: string;
+  userMessage: string;
+};
+
 export type AppErrorLogContext = {
   severity?: "info" | "warning" | "error" | "critical";
   source?: string;
@@ -165,6 +176,58 @@ function truncate(value: unknown, maxLength = MAX_TEXT) {
   return String(value ?? "").slice(0, maxLength);
 }
 
+function buildNoticeId(source: string, message: string, action: string, phase: string) {
+  return `${source}|${action}|${phase}|${message}`.slice(0, 500);
+}
+
+function buildUserFacingMessage(message: string, code: string, context: AppErrorLogContext) {
+  const normalized = message.trim();
+  const privilegeMatch = normalized.match(/missing (prv[\w]+) privilege .* entity '([^']+)'/i);
+  if (privilegeMatch) {
+    const [, privilege, entityName] = privilegeMatch;
+    return `Acesso negado no Power Apps. Falta permissão ${privilege} para a entidade ${entityName}. Peça para adicionar esse privilégio na role do usuário ou do time.`;
+  }
+
+  if (/powerapps\/apps\/.+\/launch/i.test(normalized) && /403/.test(normalized)) {
+    return "Acesso negado ao abrir o app publicado no Power Apps. Confirme se o usuário tem role do app e permissões das tabelas exigidas.";
+  }
+
+  if (/msdyn_tour/i.test(normalized) && /403|forbidden|acesso negado/i.test(normalized)) {
+    return "Acesso negado à entidade msdyn_tour. O usuário precisa de privilégio de leitura nessa tabela para o app abrir sem erro.";
+  }
+
+  if (/falha ao carregar recurso/i.test(normalized)) {
+    return normalized;
+  }
+
+  if (code) {
+    return `${normalized} Código: ${code}`.trim();
+  }
+
+  if (context.source === "window.unhandledrejection") return `Falha inesperada no app: ${normalized}`;
+  return normalized || "Erro inesperado no app.";
+}
+
+function dispatchErrorNotice(normalized: ReturnType<typeof normalizeError>, context: AppErrorLogContext) {
+  const runtime = getWindowRuntime();
+  if (!runtime) return;
+  const severity = context.severity ?? "error";
+  const source = context.source ?? "app";
+  const action = context.action ?? "";
+  const phase = context.phase ?? "";
+  const notice: AppErrorNotice = {
+    id: buildNoticeId(source, normalized.message, action, phase),
+    severity,
+    source,
+    action,
+    phase,
+    message: normalized.message,
+    code: normalized.code,
+    userMessage: buildUserFacingMessage(normalized.message, normalized.code, context)
+  };
+  runtime.dispatchEvent(new CustomEvent<AppErrorNotice>("appmotoristas:error", { detail: notice }));
+}
+
 function getConnectionType(runtime: WindowWithRuntime | null) {
   const navigatorWithConnection = runtime?.navigator as Navigator & {
     connection?: { effectiveType?: string; type?: string };
@@ -262,6 +325,7 @@ export async function flushAppErrorLogQueue() {
 
 export function reportAppError(error: unknown, context: AppErrorLogContext = {}) {
   const normalized = normalizeError(error);
+  dispatchErrorNotice(normalized, context);
   void getBaseRecord(context, normalized).then((record) => {
     const xrm = getXrm();
     if (!xrm?.WebApi) {
@@ -298,20 +362,43 @@ export function installGlobalAppErrorLogger() {
   if (runtime.__APP_ERROR_LOGGER_INSTALLED) return;
   runtime.__APP_ERROR_LOGGER_INSTALLED = true;
 
-  runtime.addEventListener("error", (event) => {
-    reportAppError(event.error ?? event.message, {
+  runtime.addEventListener("error", ((event: Event) => {
+    const resourceTarget = event.target as (EventTarget & {
+      tagName?: string;
+      src?: string;
+      href?: string;
+      currentSrc?: string;
+    }) | null;
+    if (resourceTarget && resourceTarget !== runtime) {
+      const tagName = String(resourceTarget.tagName ?? "resource").toLowerCase();
+      const resourceUrl = String(resourceTarget.currentSrc ?? resourceTarget.src ?? resourceTarget.href ?? "").trim();
+      reportAppError(new Error(`Falha ao carregar recurso ${tagName}: ${resourceUrl || "desconhecido"}`), {
+        severity: "error",
+        source: "window.resourceerror",
+        action: resourceUrl,
+        phase: tagName,
+        payload: {
+          tagName,
+          resourceUrl
+        }
+      });
+      return;
+    }
+
+    const errorEvent = event as ErrorEvent;
+    reportAppError(errorEvent.error ?? errorEvent.message, {
       severity: "critical",
       source: "window.error",
-      action: event.filename,
-      phase: `${event.lineno}:${event.colno}`,
+      action: errorEvent.filename,
+      phase: `${errorEvent.lineno}:${errorEvent.colno}`,
       payload: {
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        message: event.message
+        filename: errorEvent.filename,
+        lineno: errorEvent.lineno,
+        colno: errorEvent.colno,
+        message: errorEvent.message
       }
     });
-  });
+  }) as EventListener, true);
 
   runtime.addEventListener("unhandledrejection", (event) => {
     reportAppError(event.reason, {

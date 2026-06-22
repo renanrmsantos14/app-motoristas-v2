@@ -145,7 +145,7 @@ export const TextInputField = forwardRef<HTMLInputElement, TextInputFieldProps>(
   const resolvedPlaceholder = placeholder ?? getInputPlaceholder(label, inputProps.type, inputProps.inputMode);
 
   return (
-    <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName} required={Boolean(required ?? inputProps.required)}>
+    <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName} required={Boolean(required)}>
       <TextInputControl ref={ref} aria-invalid={Boolean(error)} placeholder={resolvedPlaceholder} {...inputProps} />
     </FormField>
   );
@@ -165,7 +165,7 @@ export const MoneyInputField = forwardRef<HTMLInputElement, MoneyInputFieldProps
   ...inputProps
 }, ref) {
   return (
-    <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName} required={Boolean(required ?? inputProps.required)}>
+    <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName} required={Boolean(required)}>
       <div className={`money-input-field form-control-shell ${currencyFieldClassName}`.trim()}>
         <span className={`money-input-prefix form-control-value ${currencyPrefixClassName}`.trim()} aria-hidden="true">{prefix}</span>
         <TextInputControl ref={ref} aria-invalid={Boolean(error)} placeholder={placeholder} {...inputProps} />
@@ -187,7 +187,7 @@ export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaFieldProps>
   const resolvedPlaceholder = placeholder ?? getTextareaPlaceholder(label);
 
   return (
-    <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName} required={Boolean(required ?? textareaProps.required)}>
+    <FormField label={label} error={error} hint={hint} className={fieldClassName} labelClassName={labelClassName} required={Boolean(required)}>
       <TextAreaControl ref={ref} aria-invalid={Boolean(error)} placeholder={resolvedPlaceholder} {...textareaProps} />
     </FormField>
   );

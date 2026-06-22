@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-06-16T16:55:19.427Z",
-  "environment": "https://org23b93544.crm2.dynamics.com",
+  "environment": "https://appbetinhosdev.crm2.dynamics.com",
   "solutionUniqueName": "Betinhos_Core_Clean",
   "unifiedRuntimeTable": {
     "logicalName": "cr40f_recibos_v2",

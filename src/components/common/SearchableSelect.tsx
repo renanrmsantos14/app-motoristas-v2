@@ -42,6 +42,14 @@ function normalizeSearchableValue(value: string) {
     .trim();
 }
 
+function shouldAutoFocusSearchOnOpen() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return true;
+  const userAgent = navigator.userAgent ?? "";
+  const isMobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(userAgent);
+  const coarsePointer = window.matchMedia?.("(hover: none) and (pointer: coarse)").matches ?? false;
+  return !(isMobileUserAgent || coarsePointer);
+}
+
 export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectProps>(function SearchableSelect({
   value,
   options,
@@ -67,6 +75,7 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const autoFocusSearchOnOpen = useMemo(() => shouldAutoFocusSearchOnOpen(), []);
 
   const setTriggerRef = (node: HTMLButtonElement | null) => {
     triggerRef.current = node;
@@ -135,7 +144,7 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
     setFocusedIndex(selectedIndex >= 0 ? selectedIndex : 0);
     window.setTimeout(() => {
       updatePanelPosition();
-      if (focusSearch) searchRef.current?.focus();
+      if (focusSearch && autoFocusSearchOnOpen) searchRef.current?.focus();
     }, 0);
   };
 

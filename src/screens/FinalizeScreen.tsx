@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { FieldError, MoneyInputField, SelectField, TextAreaField, TextInputField } from "../components/common/FormFields";
+import { FieldError, MoneyInputField, SelectField, TextAreaField } from "../components/common/FormFields";
 import { PhotoAddButton } from "../components/common/PhotoAddButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
