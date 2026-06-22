@@ -63,9 +63,7 @@ namespace Betinhos.DriverRecordSharing
                 }
 
                 var target = (Entity)context.InputParameters[PluginConfig.TargetParameterName];
-                var preImage = context.PreEntityImages.Contains(PluginConfig.PreImageAlias)
-                    ? context.PreEntityImages[PluginConfig.PreImageAlias]
-                    : null;
+                var preImage = ResolvePreImage(context, tracing);
                 var resolver = new DriverResolver(service, tracing);
                 var accessHelper = new DataverseAccessHelper(service, tracing);
                 var servicePassengerRepository = new ServicePassengerRepository(service, tracing);
@@ -126,9 +124,11 @@ namespace Betinhos.DriverRecordSharing
             ServicePassengerRepository servicePassengerRepository,
             ITracingService tracing)
         {
+            var hasUsablePreImage = true;
+
             if (context.MessageName == PluginConfig.UpdateMessage)
             {
-                EnsurePreImage(context, preImage, definition.DriverLookupAttributes);
+                hasUsablePreImage = EnsurePreImage(context, preImage, tracing, definition.DriverLookupAttributes);
 
                 if (!ContainsAnyAttribute(target, definition.DriverLookupAttributes))
                 {
@@ -149,14 +149,18 @@ namespace Betinhos.DriverRecordSharing
                 LoadLookupReferences(currentEntity, definition.DriverLookupAttributes),
                 resolver,
                 DriverResolutionMode.StrictForGrant);
-            var previousDrivers = context.MessageName == PluginConfig.UpdateMessage
+            var targetReference = new EntityReference(definition.EntityName, context.PrimaryEntityId);
+            var previousDrivers = context.MessageName == PluginConfig.UpdateMessage && hasUsablePreImage
                 ? ResolveDriverSet(
                     LoadLookupReferences(preImage, definition.DriverLookupAttributes),
                     resolver,
                     DriverResolutionMode.BestEffortForRevoke)
-                : new Dictionary<Guid, ResolvedDriver>();
-
-            var targetReference = new EntityReference(definition.EntityName, context.PrimaryEntityId);
+                : ResolvePreviouslySharedDrivers(
+                    targetReference,
+                    currentDrivers,
+                    accessHelper,
+                    resolver,
+                    tracing);
 
             foreach (var driver in currentDrivers.Values)
             {
@@ -211,11 +215,14 @@ namespace Betinhos.DriverRecordSharing
             ServicePassengerRepository servicePassengerRepository,
             ITracingService tracing)
         {
+            var hasUsablePreImage = true;
+
             if (context.MessageName == PluginConfig.UpdateMessage)
             {
-                EnsurePreImage(
+                hasUsablePreImage = EnsurePreImage(
                     context,
                     preImage,
+                    tracing,
                     PluginConfig.ServicePassengerServiceLookup,
                     PluginConfig.ServicePassengerPassengerLookup);
 
@@ -230,7 +237,7 @@ namespace Betinhos.DriverRecordSharing
             }
 
             var currentLink = servicePassengerRepository.Load(context.PrimaryEntityId);
-            var previousLink = context.MessageName == PluginConfig.UpdateMessage
+            var previousLink = context.MessageName == PluginConfig.UpdateMessage && hasUsablePreImage
                 ? BuildPreImageLink(preImage, context.PrimaryEntityId)
                 : null;
 
@@ -245,7 +252,12 @@ namespace Betinhos.DriverRecordSharing
                     previousLink.ServiceReference,
                     resolver,
                     DriverResolutionMode.BestEffortForRevoke)
-                : new Dictionary<Guid, ResolvedDriver>();
+                : ResolvePreviouslySharedDrivers(
+                    currentLink.ServicePassengerReference,
+                    currentDrivers,
+                    accessHelper,
+                    resolver,
+                    tracing);
 
             foreach (var driver in currentDrivers.Values)
             {
@@ -281,6 +293,17 @@ namespace Betinhos.DriverRecordSharing
 
                     if (stillNeedsPreviousPassenger)
                     {
+                        continue;
+                    }
+
+                    if (driver.EmployeeReference == null)
+                    {
+                        tracing.Trace(
+                            "HandleServicePassenger skip passenger revoke target={0}:{1} user={2}:{3} because employee reference could not be resolved.",
+                            previousLink.PassengerReference.LogicalName,
+                            previousLink.PassengerReference.Id,
+                            driver.UserReference.LogicalName,
+                            driver.UserReference.Id);
                         continue;
                     }
 
@@ -383,6 +406,43 @@ namespace Betinhos.DriverRecordSharing
             }
 
             return removed;
+        }
+
+        private static Dictionary<Guid, ResolvedDriver> ResolvePreviouslySharedDrivers(
+            EntityReference targetReference,
+            IReadOnlyDictionary<Guid, ResolvedDriver> currentDrivers,
+            DataverseAccessHelper accessHelper,
+            DriverResolver resolver,
+            ITracingService tracing)
+        {
+            var previousDrivers = new Dictionary<Guid, ResolvedDriver>();
+            var sharedUsers = accessHelper.ListSharedUsers(targetReference);
+
+            foreach (var sharedUser in sharedUsers)
+            {
+                if (currentDrivers.ContainsKey(sharedUser.Id))
+                {
+                    continue;
+                }
+
+                var resolved = resolver.ResolveFromUser(sharedUser);
+                if (resolved == null)
+                {
+                    tracing.Trace(
+                        "ResolvePreviouslySharedDrivers skip unresolved shared userId={0}",
+                        sharedUser.Id);
+                    continue;
+                }
+
+                previousDrivers[resolved.UserReference.Id] = resolved;
+            }
+
+            tracing.Trace(
+                "ResolvePreviouslySharedDrivers target={0}:{1} previousDrivers={2}",
+                targetReference.LogicalName,
+                targetReference.Id,
+                previousDrivers.Count);
+            return previousDrivers;
         }
 
         private static IReadOnlyList<EntityReference> LoadLookupReferences(Entity entity, params string[] attributeNames)
@@ -496,6 +556,17 @@ namespace Betinhos.DriverRecordSharing
                     continue;
                 }
 
+                if (driver.EmployeeReference == null)
+                {
+                    tracing.Trace(
+                        "RevokeServiceHierarchy skip passenger revoke target={0}:{1} user={2}:{3} because employee reference could not be resolved.",
+                        item.PassengerReference.LogicalName,
+                        item.PassengerReference.Id,
+                        driver.UserReference.LogicalName,
+                        driver.UserReference.Id);
+                    continue;
+                }
+
                 if (servicePassengerRepository.HasOtherPassengerServiceForEmployee(
                     driver.EmployeeReference.Id,
                     item.PassengerReference.Id,
@@ -523,30 +594,84 @@ namespace Betinhos.DriverRecordSharing
             return entity.GetAttributeValue<EntityReference>(PluginConfig.ServiceMaintenanceLookup);
         }
 
-        private static void EnsurePreImage(
+        private static bool EnsurePreImage(
             IPluginExecutionContext context,
             Entity preImage,
+            ITracingService tracing,
             params string[] requiredAttributes)
         {
             if (context.MessageName != PluginConfig.UpdateMessage)
             {
-                return;
+                return false;
             }
 
             if (preImage == null)
             {
-                throw new InvalidPluginExecutionException(
-                    $"O step Update de '{context.PrimaryEntityName}' precisa de Pre Image com alias '{PluginConfig.PreImageAlias}' para remover acesso do motorista antigo.");
+                tracing.Trace(
+                    "EnsurePreImage warning entity={0} alias={1} preImage=<null>. Plugin will grant current access but skip revoke because previous values are unavailable.",
+                    context.PrimaryEntityName,
+                    PluginConfig.PreImageAlias);
+                return false;
             }
 
             foreach (var attributeName in requiredAttributes)
             {
                 if (!preImage.Attributes.Contains(attributeName))
                 {
-                    throw new InvalidPluginExecutionException(
-                        $"A Pre Image '{PluginConfig.PreImageAlias}' do step Update de '{context.PrimaryEntityName}' precisa incluir o atributo '{attributeName}'.");
+                    tracing.Trace(
+                        "EnsurePreImage warning entity={0} alias={1} missingAttribute={2}. Plugin will grant current access but skip revoke because previous values are incomplete.",
+                        context.PrimaryEntityName,
+                        PluginConfig.PreImageAlias,
+                        attributeName);
+                    return false;
                 }
             }
+
+            return true;
+        }
+
+        private static Entity ResolvePreImage(
+            IPluginExecutionContext context,
+            ITracingService tracing)
+        {
+            if (context == null || context.MessageName != PluginConfig.UpdateMessage)
+            {
+                return null;
+            }
+
+            if (context.PreEntityImages == null || context.PreEntityImages.Count == 0)
+            {
+                tracing.Trace("ResolvePreImage no pre-images available.");
+                return null;
+            }
+
+            foreach (var key in context.PreEntityImages.Keys)
+            {
+                if (!string.Equals(key, PluginConfig.PreImageAlias, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                tracing.Trace("ResolvePreImage matched alias={0}", key);
+                return context.PreEntityImages[key];
+            }
+
+            if (context.PreEntityImages.Count == 1)
+            {
+                foreach (var key in context.PreEntityImages.Keys)
+                {
+                    tracing.Trace(
+                        "ResolvePreImage fallback using only available alias={0}",
+                        key);
+                    return context.PreEntityImages[key];
+                }
+            }
+
+            tracing.Trace(
+                "ResolvePreImage could not match alias={0}. Available aliases={1}",
+                PluginConfig.PreImageAlias,
+                string.Join(",", context.PreEntityImages.Keys));
+            return null;
         }
 
         private static EntityShareDefinition GetDirectEntityDefinition(string entityName)

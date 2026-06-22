@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ServiceModel;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
@@ -127,6 +128,48 @@ namespace Betinhos.DriverRecordSharing
                     ex.Detail?.Message ?? ex.Message);
                 throw;
             }
+        }
+
+        public IReadOnlyList<EntityReference> ListSharedUsers(EntityReference target)
+        {
+            var users = new List<EntityReference>();
+            if (target == null)
+            {
+                return users;
+            }
+
+            var response = (RetrieveSharedPrincipalsAndAccessResponse)_service.Execute(
+                new RetrieveSharedPrincipalsAndAccessRequest
+                {
+                    Target = target
+                });
+
+            if (response?.PrincipalAccesses == null)
+            {
+                _tracing.Trace(
+                    "ListSharedUsers target={0}:{1} count=0",
+                    target.LogicalName,
+                    target.Id);
+                return users;
+            }
+
+            foreach (var item in response.PrincipalAccesses)
+            {
+                var principal = item?.Principal;
+                if (principal == null || principal.LogicalName != PluginConfig.UserTable)
+                {
+                    continue;
+                }
+
+                users.Add(principal);
+            }
+
+            _tracing.Trace(
+                "ListSharedUsers target={0}:{1} count={2}",
+                target.LogicalName,
+                target.Id,
+                users.Count);
+            return users;
         }
 
         private AccessRights GetCurrentRights(EntityReference target, EntityReference principal)

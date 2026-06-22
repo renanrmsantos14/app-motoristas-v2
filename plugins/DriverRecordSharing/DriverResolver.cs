@@ -90,6 +90,71 @@ namespace Betinhos.DriverRecordSharing
                 userReference);
         }
 
+        public ResolvedDriver ResolveFromUser(EntityReference userReference)
+        {
+            if (userReference == null)
+            {
+                return null;
+            }
+
+            var user = _service.Retrieve(
+                PluginConfig.UserTable,
+                userReference.Id,
+                new ColumnSet(
+                    PluginConfig.UserPrimaryId,
+                    PluginConfig.UserFullName,
+                    PluginConfig.UserInternalEmail,
+                    PluginConfig.UserIsDisabled));
+
+            var email = NormalizeEmail(user.GetAttributeValue<string>(PluginConfig.UserInternalEmail));
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                _tracing.Trace(
+                    "DriverResolver.ResolveFromUser skip userId={0} because {1} is empty.",
+                    userReference.Id,
+                    PluginConfig.UserInternalEmail);
+                return null;
+            }
+
+            var employeeQuery = new QueryExpression(PluginConfig.EmployeeTable)
+            {
+                ColumnSet = new ColumnSet(
+                    PluginConfig.EmployeePrimaryId,
+                    PluginConfig.EmployeeName,
+                    PluginConfig.EmployeeMicrosoftEmail),
+                NoLock = true
+            };
+            employeeQuery.Criteria.AddCondition(PluginConfig.EmployeeMicrosoftEmail, ConditionOperator.Equal, email);
+
+            var employees = _service.RetrieveMultiple(employeeQuery);
+            if (employees.Entities.Count != 1)
+            {
+                _tracing.Trace(
+                    "DriverResolver.ResolveFromUser skip userId={0} email={1} because employee matches={2}.",
+                    userReference.Id,
+                    email,
+                    employees.Entities.Count);
+                return new ResolvedDriver(null, email, new EntityReference(PluginConfig.UserTable, userReference.Id)
+                {
+                    Name = user.GetAttributeValue<string>(PluginConfig.UserFullName) ?? userReference.Name
+                });
+            }
+
+            var employee = employees.Entities[0];
+            var employeeReference = new EntityReference(PluginConfig.EmployeeTable, employee.Id)
+            {
+                Name = employee.GetAttributeValue<string>(PluginConfig.EmployeeName)
+            };
+
+            return new ResolvedDriver(
+                employeeReference,
+                email,
+                new EntityReference(PluginConfig.UserTable, userReference.Id)
+                {
+                    Name = user.GetAttributeValue<string>(PluginConfig.UserFullName) ?? userReference.Name
+                });
+        }
+
         private ResolvedDriver HandleMissingUser(
             DriverResolutionMode mode,
             EntityReference employeeReference,
