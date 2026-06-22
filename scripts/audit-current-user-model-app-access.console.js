@@ -33,12 +33,12 @@
     return roleFamilyKeys(b).some((key) => left.has(key));
   }
 
-  async function retrieveAll(entitySetName, query) {
+  async function retrieveAll(entityLogicalName, query) {
     const rows = [];
-    let result = await api.retrieveMultipleRecords(entitySetName, query);
+    let result = await api.retrieveMultipleRecords(entityLogicalName, query);
     rows.push(...result.entities);
     while (result.nextLink) {
-      result = await api.retrieveMultipleRecords(entitySetName, result.nextLink);
+      result = await api.retrieveMultipleRecords(entityLogicalName, result.nextLink);
       rows.push(...result.entities);
     }
     return rows;
@@ -46,7 +46,7 @@
 
   async function getUserDirectRoles(userId) {
     const user = await api.retrieveRecord(
-      "systemusers",
+      "systemuser",
       userId,
       "?$select=systemuserid,fullname,internalemailaddress&$expand=systemuserroles_association($select=roleid,name,_parentrootroleid_value,roletemplateid)"
     );
@@ -64,7 +64,7 @@
 
   async function getUserTeams(userId) {
     const user = await api.retrieveRecord(
-      "systemusers",
+      "systemuser",
       userId,
       "?$select=systemuserid&$expand=teammembership_association($select=teamid,name)"
     );
@@ -73,7 +73,7 @@
 
   async function getTeamRoles(team) {
     const fullTeam = await api.retrieveRecord(
-      "teams",
+      "team",
       cleanGuid(team.teamid),
       "?$select=teamid,name&$expand=teamroles_association($select=roleid,name,_parentrootroleid_value,roletemplateid)"
     );
@@ -88,7 +88,7 @@
 
   async function getApps() {
     return retrieveAll(
-      "appmodules",
+      "appmodule",
       "?$select=appmoduleid,name,uniquename&$filter=componentstate eq 0&$expand=appmoduleroles_association($select=roleid,name,_parentrootroleid_value,roletemplateid)"
     );
   }
