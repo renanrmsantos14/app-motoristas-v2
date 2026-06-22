@@ -4,13 +4,3 @@ name = "App Motoristas"
 
 [setup]
 script = ""
-
-[[actions]]
-name = "npm run push"
-icon = "tool"
-command = "npm run push"
-
-[[actions]]
-name = "aa"
-icon = "tool"
-command = "aa"

@@ -11408,7 +11408,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.360","builtAt":"2026-06-22T17:16:25.069Z","builtAtLabel":"22/06/2026, 14:16"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.364","builtAt":"2026-06-22T19:38:21.825Z","builtAtLabel":"22/06/2026, 16:38"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -61113,18 +61113,21 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setDataLoading((current) => current?.phase === "success" ? current : null);
       }
     };
+    const blockIfNotFirstPending = (detail = selectedDetail) => {
+      if (!detail) return true;
+      const firstPendingDetail = findFirstPendingDetail(store.agenda);
+      if (!firstPendingDetail || isSameDetail(firstPendingDetail, detail)) return false;
+      setToast("Conclua os itens anteriores da fila antes de prosseguir.");
+      setScreen("servicos");
+      return true;
+    };
     const finalizeSelected = async (fields) => {
       if (!selectedDetail || remoteOperation) return;
       const detailToFinalize = selectedDetail;
       const receiveProofCount = receiveProofs[detailToFinalize.id]?.length ?? 0;
       const finalFields = receiveProofCount > 0 ? { ...fields, "Comprovantes de Recebimento": `${receiveProofCount} comprovante(s) anexado(s).` } : fields;
       const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
-      const firstPendingDetail = findFirstPendingDetail(store.agenda);
-      if (firstPendingDetail && !isSameDetail(firstPendingDetail, detailToFinalize)) {
-        setToast("Conclua os itens anteriores da fila antes de prosseguir.");
-        setScreen("servicos");
-        return;
-      }
+      if (blockIfNotFirstPending(detailToFinalize)) return;
       if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);
       if (completingClearTimerRef.current) window.clearTimeout(completingClearTimerRef.current);
       if (remoteMode) {
@@ -61852,7 +61855,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       const detailToContinue = selectedDetail;
       const photos = receiveProofs[detailToContinue.id] ?? [];
       if (!photos.length) return;
-      const goNext = () => setScreen(shouldRouteServiceToVoucher(detailToContinue) ? "voucher" : "finalizar");
+      if (blockIfNotFirstPending(detailToContinue)) return;
+      const goNext = () => {
+        if (blockIfNotFirstPending(detailToContinue)) return;
+        setScreen(shouldRouteServiceToVoucher(detailToContinue) ? "voucher" : "finalizar");
+      };
       if (hasUploadedReceiveProofs(detailToContinue, receiveProofs, receiveUploadedCounts) || !remoteMode) {
         goNext();
         return;
@@ -61918,6 +61925,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     };
     const openVoucherFlow = () => {
       if (!selectedDetail) return;
+      if (blockIfNotFirstPending(selectedDetail)) return;
       if (shouldRequireReceiveStep(selectedDetail) && (!hasReceiveProofs(selectedDetail, receiveProofs) || remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts))) {
         setScreen("receber");
         return;
@@ -61926,11 +61934,22 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     };
     const openFinalizeFlow = () => {
       if (!selectedDetail) return;
+      if (blockIfNotFirstPending(selectedDetail)) return;
       if (shouldRequireReceiveStep(selectedDetail) && (!hasReceiveProofs(selectedDetail, receiveProofs) || remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts))) {
         setScreen("receber");
         return;
       }
       setScreen("finalizar");
+    };
+    const openReceiveFlow = () => {
+      if (!selectedDetail) return;
+      if (blockIfNotFirstPending(selectedDetail)) return;
+      setScreen("receber");
+    };
+    const openLocalCancelFlow = () => {
+      if (!selectedDetail) return;
+      if (blockIfNotFirstPending(selectedDetail)) return;
+      setScreen("canceladoLocal");
     };
     const openPersonalReceipt = () => {
       if (!selectedDetail) return;
@@ -62523,10 +62542,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           {
             detail: selectedDetail,
             onBack: () => setScreen("servicos"),
-            onOpenReceive: () => setScreen("receber"),
+            onOpenReceive: openReceiveFlow,
             onOpenVoucher: openVoucherFlow,
             onOpenFinalize: openFinalizeFlow,
-            onCancelLocal: () => setScreen("canceladoLocal"),
+            onCancelLocal: openLocalCancelFlow,
             onRefresh: () => refreshLocal(selectedDetail),
             onCopy: () => {
               void navigator.clipboard?.writeText(detailsToClipboardText(selectedDetail));

@@ -986,6 +986,15 @@ function App() {
     }
   };
 
+  const blockIfNotFirstPending = (detail: typeof selectedDetail = selectedDetail) => {
+    if (!detail) return true;
+    const firstPendingDetail = findFirstPendingDetail(store.agenda);
+    if (!firstPendingDetail || isSameDetail(firstPendingDetail, detail)) return false;
+    setToast("Conclua os itens anteriores da fila antes de prosseguir.");
+    setScreen("servicos");
+    return true;
+  };
+
   const finalizeSelected = async (fields: Record<string, string>) => {
     if (!selectedDetail || remoteOperation) return;
     const detailToFinalize = selectedDetail;
@@ -995,13 +1004,7 @@ function App() {
         ? { ...fields, "Comprovantes de Recebimento": `${receiveProofCount} comprovante(s) anexado(s).` }
         : fields;
     const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
-    const firstPendingDetail = findFirstPendingDetail(store.agenda);
-
-    if (firstPendingDetail && !isSameDetail(firstPendingDetail, detailToFinalize)) {
-      setToast("Conclua os itens anteriores da fila antes de prosseguir.");
-      setScreen("servicos");
-      return;
-    }
+    if (blockIfNotFirstPending(detailToFinalize)) return;
 
     if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);
     if (completingClearTimerRef.current) window.clearTimeout(completingClearTimerRef.current);
@@ -1777,8 +1780,12 @@ function App() {
     const detailToContinue = selectedDetail;
     const photos = receiveProofs[detailToContinue.id] ?? [];
     if (!photos.length) return;
+    if (blockIfNotFirstPending(detailToContinue)) return;
 
-    const goNext = () => setScreen(shouldRouteServiceToVoucher(detailToContinue) ? "voucher" : "finalizar");
+    const goNext = () => {
+      if (blockIfNotFirstPending(detailToContinue)) return;
+      setScreen(shouldRouteServiceToVoucher(detailToContinue) ? "voucher" : "finalizar");
+    };
 
     if (hasUploadedReceiveProofs(detailToContinue, receiveProofs, receiveUploadedCounts) || !remoteMode) {
       goNext();
@@ -1849,6 +1856,7 @@ function App() {
 
   const openVoucherFlow = () => {
     if (!selectedDetail) return;
+    if (blockIfNotFirstPending(selectedDetail)) return;
     if (
       shouldRequireReceiveStep(selectedDetail) &&
       (!hasReceiveProofs(selectedDetail, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts)))
@@ -1861,6 +1869,7 @@ function App() {
 
   const openFinalizeFlow = () => {
     if (!selectedDetail) return;
+    if (blockIfNotFirstPending(selectedDetail)) return;
     if (
       shouldRequireReceiveStep(selectedDetail) &&
       (!hasReceiveProofs(selectedDetail, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts)))
@@ -1869,6 +1878,18 @@ function App() {
       return;
     }
     setScreen("finalizar");
+  };
+
+  const openReceiveFlow = () => {
+    if (!selectedDetail) return;
+    if (blockIfNotFirstPending(selectedDetail)) return;
+    setScreen("receber");
+  };
+
+  const openLocalCancelFlow = () => {
+    if (!selectedDetail) return;
+    if (blockIfNotFirstPending(selectedDetail)) return;
+    setScreen("canceladoLocal");
   };
 
   const openPersonalReceipt = () => {
@@ -2429,10 +2450,10 @@ function App() {
       <DetailsScreen
         detail={selectedDetail}
         onBack={() => setScreen("servicos")}
-        onOpenReceive={() => setScreen("receber")}
+        onOpenReceive={openReceiveFlow}
         onOpenVoucher={openVoucherFlow}
         onOpenFinalize={openFinalizeFlow}
-        onCancelLocal={() => setScreen("canceladoLocal")}
+        onCancelLocal={openLocalCancelFlow}
         onRefresh={() => refreshLocal(selectedDetail)}
         onCopy={() => {
           void navigator.clipboard?.writeText(detailsToClipboardText(selectedDetail));
