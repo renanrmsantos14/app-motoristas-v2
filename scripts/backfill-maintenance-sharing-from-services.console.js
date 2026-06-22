@@ -127,23 +127,8 @@
     };
   }
 
-  async function executeOrganizationAction(operationName, payload, parameterTypes) {
-    const requestPayload = {
-      ...payload,
-      getMetadata: () => ({
-        boundParameter: null,
-        parameterTypes,
-        operationType: 0,
-        operationName
-      })
-    };
-
-    const response = await api.execute(requestPayload);
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`${operationName}\n${response.status} ${response.statusText}\n${text}`);
-    }
-    return text ? JSON.parse(text) : null;
+  async function executeOrganizationAction(operationName, payload) {
+    return request("POST", `/${operationName}`, payload);
   }
 
   function requiredRightsText() {
@@ -211,17 +196,11 @@
     }
 
     try {
-      await executeOrganizationAction("GrantAccess", payload, {
-        Target: { typeName: "mscrm.crmbaseentity", structuralProperty: 5 },
-        PrincipalAccess: { typeName: "mscrm.PrincipalAccess", structuralProperty: 2 }
-      });
+      await executeOrganizationAction("GrantAccess", payload);
       return "grant";
     } catch (grantError) {
       try {
-        await executeOrganizationAction("ModifyAccess", payload, {
-          Target: { typeName: "mscrm.crmbaseentity", structuralProperty: 5 },
-          PrincipalAccess: { typeName: "mscrm.PrincipalAccess", structuralProperty: 2 }
-        });
+        await executeOrganizationAction("ModifyAccess", payload);
         return "modify";
       } catch (modifyError) {
         throw new Error(
