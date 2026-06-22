@@ -3,19 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fluxograma do Plugin Dataverse</title>
+  <title>Fluxograma Real do Plugin Dataverse</title>
   <style>
     :root {
-      --bg: #f4efe6;
-      --panel: #fffaf2;
-      --ink: #1e1e1e;
-      --muted: #6e6558;
-      --line: #cdbfa8;
-      --accent: #184a45;
-      --accent-2: #9d5c2f;
-      --good: #2f6f43;
-      --warn: #a04d2d;
-      --shadow: 0 18px 40px rgba(54, 40, 18, 0.12);
+      --bg: #f2ede3;
+      --card: #fffaf0;
+      --line: #c8baa4;
+      --ink: #201d18;
+      --muted: #685f53;
+      --brand: #234b46;
+      --brand-soft: #e7f2ef;
+      --good: #2f6c42;
+      --good-soft: #edf7f0;
+      --warn: #9d5b30;
+      --warn-soft: #fff4eb;
+      --stop: #912f2f;
+      --stop-soft: #fdeeee;
+      --shadow: 0 18px 38px rgba(61, 43, 18, 0.12);
     }
 
     * {
@@ -25,25 +29,29 @@
     body {
       margin: 0;
       font-family: Georgia, "Times New Roman", serif;
-      background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 35%),
-        linear-gradient(180deg, #f8f3eb 0%, var(--bg) 100%);
       color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.85), transparent 30%),
+        linear-gradient(180deg, #f8f4ec 0%, var(--bg) 100%);
     }
 
     .page {
-      max-width: 1240px;
+      max-width: 1380px;
       margin: 0 auto;
-      padding: 40px 24px 80px;
+      padding: 32px 20px 72px;
+    }
+
+    .hero,
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
     }
 
     .hero {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      padding: 28px 32px;
-      box-shadow: var(--shadow);
-      margin-bottom: 28px;
+      padding: 28px 30px;
+      margin-bottom: 24px;
     }
 
     h1,
@@ -53,194 +61,105 @@
       margin: 0;
     }
 
-    .hero h1 {
+    h1 {
       font-size: clamp(2rem, 4vw, 3.2rem);
       line-height: 1;
       letter-spacing: -0.04em;
-      margin-bottom: 12px;
-      color: var(--accent);
+      color: var(--brand);
+      margin-bottom: 10px;
     }
 
     .hero p {
-      max-width: 860px;
-      font-size: 1.05rem;
-      line-height: 1.6;
+      max-width: 980px;
       color: var(--muted);
+      line-height: 1.55;
+      font-size: 1.02rem;
     }
 
     .legend {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
       margin-top: 18px;
     }
 
-    .legend-item {
+    .legend div {
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 14px 16px;
-      background: rgba(255, 255, 255, 0.66);
-      font-size: 0.95rem;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.68);
+      color: var(--muted);
       line-height: 1.45;
+      font-size: 0.94rem;
     }
 
-    .legend-item strong {
+    .legend strong {
       display: block;
-      color: var(--accent);
+      color: var(--brand);
       margin-bottom: 4px;
     }
 
-    .flow-grid {
+    .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 24px;
+      gap: 20px;
     }
 
-    .column {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      padding: 24px;
-      box-shadow: var(--shadow);
+    .panel {
+      padding: 20px;
     }
 
-    .column h2 {
-      font-size: 1.55rem;
-      margin-bottom: 18px;
-      color: var(--accent);
+    .panel h2 {
+      color: var(--brand);
+      font-size: 1.45rem;
+      margin-bottom: 8px;
     }
 
-    .flow {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .step {
-      position: relative;
-      padding: 16px 18px;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: #fff;
-      margin-bottom: 34px;
-    }
-
-    .step::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: -25px;
-      width: 2px;
-      height: 18px;
-      background: var(--line);
-      transform: translateX(-50%);
-    }
-
-    .step:last-child {
-      margin-bottom: 0;
-    }
-
-    .step:last-child::after {
-      display: none;
-    }
-
-    .step h3 {
-      font-size: 1rem;
-      margin-bottom: 6px;
-      color: var(--ink);
-    }
-
-    .step p {
-      font-size: 0.95rem;
+    .panel p {
+      color: var(--muted);
       line-height: 1.5;
-      color: var(--muted);
+      margin-bottom: 14px;
+      font-size: 0.97rem;
     }
 
-    .step.accent {
-      background: #f4fbf9;
-      border-color: #a9d0c9;
-    }
-
-    .step.warn {
-      background: #fff7f3;
-      border-color: #e0b39e;
-    }
-
-    .step.good {
-      background: #f4fbf4;
-      border-color: #a8cfae;
-    }
-
-    .branches {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-bottom: 34px;
-      position: relative;
-    }
-
-    .branches::before {
-      content: "";
-      position: absolute;
-      top: -18px;
-      left: 50%;
-      width: 2px;
-      height: 18px;
-      background: var(--line);
-      transform: translateX(-50%);
-    }
-
-    .branch {
-      border: 1px dashed var(--line);
-      border-radius: 18px;
-      padding: 14px 16px;
-      background: rgba(255, 255, 255, 0.75);
-    }
-
-    .branch strong {
+    svg {
+      width: 100%;
+      height: auto;
       display: block;
-      margin-bottom: 6px;
-      color: var(--accent-2);
-      font-size: 0.95rem;
+      background: #fffdf8;
+      border: 1px solid #ddd0bc;
+      border-radius: 22px;
     }
 
-    .branch p {
-      font-size: 0.92rem;
-      line-height: 1.45;
-      color: var(--muted);
-    }
-
-    .note {
-      margin-top: 28px;
-      background: #1f2522;
-      color: #f5efe5;
-      border-radius: 24px;
+    .notes {
+      margin-top: 22px;
       padding: 22px 24px;
     }
 
-    .note h2 {
-      color: #f7d9a8;
+    .notes h2 {
       margin-bottom: 12px;
     }
 
-    .note ul {
+    .notes ul {
       margin: 0;
       padding-left: 18px;
+      color: var(--muted);
       line-height: 1.7;
     }
 
-    .note code {
-      font-family: "Consolas", "Courier New", monospace;
-      font-size: 0.92em;
-      color: #ffe5bf;
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      color: var(--brand);
+      background: rgba(255,255,255,0.76);
+      margin-bottom: 10px;
     }
 
-    @media (max-width: 960px) {
-      .flow-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .branches {
+    @media (max-width: 1100px) {
+      .grid {
         grid-template-columns: 1fr;
       }
     }
@@ -249,176 +168,300 @@
 <body>
   <main class="page">
     <section class="hero">
-      <h1>Fluxograma do Plugin Dataverse</h1>
+      <h1>Fluxograma Real do Plugin Dataverse</h1>
       <p>
-        Este arquivo descreve o funcionamento do plugin <code>Betinhos.DriverRecordSharing</code>.
-        Ele mostra como o plugin decide conceder acesso, manter acesso ou revogar acesso quando um
-        motorista entra, sai ou é trocado em um registro.
+        Aqui cada caso tem um fluxograma visual proprio. O foco e mostrar o caminho real da decisao:
+        quando o plugin concede acesso, quando revoga, quando ignora e quando pode bloquear.
       </p>
 
       <div class="legend">
-        <div class="legend-item">
-          <strong>Entidades diretas</strong>
-          Serviço, troca de carro, posse de veículo, colisão e recibo.
-        </div>
-        <div class="legend-item">
-          <strong>Entidade especial</strong>
-          <code>cr40f_servicosporpassageiro</code> tem fluxo próprio porque depende de serviço e passageiro.
-        </div>
-        <div class="legend-item">
-          <strong>Regra central</strong>
-          Primeiro ele descobre o motorista atual. Depois tenta descobrir o antigo. Aí compara os dois.
-        </div>
-        <div class="legend-item">
-          <strong>Fallback atual</strong>
-          Se a <code>Pre Image</code> falhar, o plugin tenta achar o motorista antigo pelos compartilhamentos já existentes.
-        </div>
+        <div><strong>Verde</strong>Concede ou mantem acesso.</div>
+        <div><strong>Laranja</strong>Revoga ou limpa acesso antigo.</div>
+        <div><strong>Vermelho</strong>Ponto de bloqueio do grant.</div>
+        <div><strong>Azulado</strong>Leitura e decisao do fluxo.</div>
       </div>
     </section>
 
-    <section class="flow-grid">
-      <article class="column">
-        <h2>Fluxo 1: Entidades Diretas</h2>
-        <div class="flow">
-          <div class="step accent">
-            <h3>1. Evento chega</h3>
-            <p>Plugin roda em <code>Create</code> ou <code>Update</code> de serviço, troca, posse, colisão ou recibo.</p>
-          </div>
+    <section class="grid">
+      <article class="panel">
+        <div class="pill">Caso 1</div>
+        <h2>Create em entidade direta</h2>
+        <p>Servico, troca de carro, posse de veiculo, colisao e recibo. Aqui nao existe motorista antigo.</p>
+        <svg viewBox="0 0 620 760" xmlns="http://www.w3.org/2000/svg" aria-label="Fluxograma create entidade direta">
+          <defs>
+            <marker id="arrowA" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#b9ab96"/>
+            </marker>
+          </defs>
 
-          <div class="step">
-            <h3>2. Verifica se a entidade é suportada</h3>
-            <p>Se não for uma entidade do mapa interno, o plugin para sem fazer nada.</p>
-          </div>
+          <rect x="190" y="24" width="240" height="54" rx="27" fill="#e7f2ef" stroke="#8fb9b2" />
+          <text x="310" y="56" text-anchor="middle" font-size="18" fill="#234b46">Create recebido</text>
 
-          <div class="step">
-            <h3>3. Lê o registro atual</h3>
-            <p>Busca o valor atual do campo de motorista no Dataverse para saber quem está no registro agora.</p>
-          </div>
+          <line x1="310" y1="78" x2="310" y2="118" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
 
-          <div class="step">
-            <h3>4. Resolve o motorista atual</h3>
-            <p>Vai em <code>cr40f_funcionarios</code>, pega o <code>cr40f_emailmicrosoft</code> e procura o <code>systemuser</code> ativo correspondente.</p>
-          </div>
+          <rect x="150" y="118" width="320" height="72" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="148" text-anchor="middle" font-size="17" fill="#201d18">Le registro atual</text>
+          <text x="310" y="172" text-anchor="middle" font-size="14" fill="#685f53">Busca campo de motorista no Dataverse</text>
 
-          <div class="branches">
-            <div class="branch">
-              <strong>Se é Create</strong>
-              <p>Não existe motorista antigo. Então o plugin só concede acesso ao motorista atual, se existir.</p>
-            </div>
-            <div class="branch">
-              <strong>Se é Update</strong>
-              <p>Ele tenta descobrir quem era o motorista antigo para saber se deve revogar acesso.</p>
-            </div>
-          </div>
+          <line x1="310" y1="190" x2="310" y2="232" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
 
-          <div class="step">
-            <h3>5. Descobre o motorista antigo</h3>
-            <p>Primeira tentativa: usar a <code>Pre Image</code>. Segunda tentativa: olhar usuários que já estavam compartilhados no registro.</p>
-          </div>
+          <polygon points="310,232 430,290 310,348 190,290" fill="#f5f0e6" stroke="#c8baa4" />
+          <text x="310" y="286" text-anchor="middle" font-size="16" fill="#201d18">Tem motorista</text>
+          <text x="310" y="308" text-anchor="middle" font-size="16" fill="#201d18">atual?</text>
 
-          <div class="branches">
-            <div class="branch">
-              <strong>Sem motorista antigo</strong>
-              <p>Exemplo: serviço estava vazio e agora ganhou motorista. Resultado: concede acesso. Não revoga nada.</p>
-            </div>
-            <div class="branch">
-              <strong>Com motorista antigo</strong>
-              <p>Exemplo: saiu Motorista A e entrou Motorista B. Resultado: concede para B e revoga de A.</p>
-            </div>
-          </div>
+          <line x1="190" y1="290" x2="82" y2="290" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
+          <text x="128" y="278" text-anchor="middle" font-size="13" fill="#685f53">Nao</text>
+          <rect x="26" y="252" width="56" height="78" rx="18" fill="#fffdf8" stroke="#c8baa4" />
+          <text x="54" y="287" text-anchor="middle" font-size="15" fill="#201d18">Fim</text>
+          <text x="54" y="307" text-anchor="middle" font-size="12" fill="#685f53">sem acao</text>
 
-          <div class="step good">
-            <h3>6. Concede acesso ao motorista atual</h3>
-            <p>Se o motorista atual foi resolvido com sucesso, o plugin compartilha o registro com esse usuário.</p>
-          </div>
+          <line x1="430" y1="290" x2="530" y2="290" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
+          <text x="487" y="278" text-anchor="middle" font-size="13" fill="#685f53">Sim</text>
+          <rect x="448" y="246" width="148" height="88" rx="18" fill="#fffdf8" stroke="#c8baa4" />
+          <text x="522" y="275" text-anchor="middle" font-size="15" fill="#201d18">Resolve funcionario</text>
+          <text x="522" y="296" text-anchor="middle" font-size="13" fill="#685f53">email Microsoft</text>
+          <text x="522" y="315" text-anchor="middle" font-size="13" fill="#685f53">para systemuser</text>
 
-          <div class="step">
-            <h3>7. Se for serviço principal, compartilha a hierarquia</h3>
-            <p>Em <code>cr40f_reservadeveculos</code> ele também compartilha a manutenção ligada, os links de passageiros e os passageiros.</p>
-          </div>
+          <line x1="522" y1="334" x2="522" y2="382" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
 
-          <div class="step warn">
-            <h3>8. Revoga acesso do motorista removido</h3>
-            <p>Se encontrou motorista antigo diferente do atual, o plugin revoga o compartilhamento do antigo.</p>
-          </div>
+          <polygon points="522,382 600,430 522,478 444,430" fill="#f5f0e6" stroke="#c8baa4" />
+          <text x="522" y="426" text-anchor="middle" font-size="15" fill="#201d18">Resolveu</text>
+          <text x="522" y="446" text-anchor="middle" font-size="15" fill="#201d18">usuario?</text>
 
-          <div class="step">
-            <h3>9. Se for serviço principal, revoga a hierarquia também</h3>
-            <p>Revoga serviço, manutenção, links de passageiros e passageiros, mas só remove passageiro se nenhum outro serviço daquele motorista ainda precisar dele.</p>
-          </div>
+          <line x1="444" y1="430" x2="316" y2="430" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
+          <text x="384" y="418" text-anchor="middle" font-size="13" fill="#685f53">Nao</text>
+          <rect x="172" y="388" width="144" height="84" rx="18" fill="#fdeeee" stroke="#cf9a9a" />
+          <text x="244" y="418" text-anchor="middle" font-size="15" fill="#912f2f">Bloqueia so se</text>
+          <text x="244" y="438" text-anchor="middle" font-size="13" fill="#6b4949">email existe e nao</text>
+          <text x="244" y="456" text-anchor="middle" font-size="13" fill="#6b4949">acha usuario valido</text>
 
-          <div class="step accent">
-            <h3>10. Finaliza</h3>
-            <p>Trace grava quantos motoristas atuais e anteriores foram encontrados. A execução termina sem depender cegamente da <code>Pre Image</code>.</p>
-          </div>
-        </div>
+          <line x1="522" y1="478" x2="522" y2="526" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
+          <text x="542" y="504" font-size="13" fill="#685f53">Sim</text>
+
+          <rect x="426" y="526" width="192" height="92" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="522" y="558" text-anchor="middle" font-size="15" fill="#2f6c42">Concede acesso</text>
+          <text x="522" y="578" text-anchor="middle" font-size="13" fill="#4d6a55">ao registro atual</text>
+          <text x="522" y="597" text-anchor="middle" font-size="13" fill="#4d6a55">e monta direitos</text>
+
+          <line x1="522" y1="618" x2="522" y2="664" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowA)" />
+
+          <rect x="400" y="664" width="244" height="66" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="522" y="691" text-anchor="middle" font-size="15" fill="#2f6c42">Se for servico principal</text>
+          <text x="522" y="711" text-anchor="middle" font-size="13" fill="#4d6a55">compartilha manutencao, links e passageiros</text>
+        </svg>
       </article>
 
-      <article class="column">
-        <h2>Fluxo 2: Serviço por Passageiro</h2>
-        <div class="flow">
-          <div class="step accent">
-            <h3>1. Evento chega</h3>
-            <p>Plugin roda em <code>Create</code> ou <code>Update</code> de <code>cr40f_servicosporpassageiro</code>.</p>
-          </div>
+      <article class="panel">
+        <div class="pill">Caso 2</div>
+        <h2>Update de atribuicao inicial</h2>
+        <p>Registro antes estava sem motorista. Agora recebeu um motorista novo. Deve conceder e nao revogar.</p>
+        <svg viewBox="0 0 620 760" xmlns="http://www.w3.org/2000/svg" aria-label="Fluxograma update sem motorista antigo">
+          <defs>
+            <marker id="arrowB" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#b9ab96"/>
+            </marker>
+          </defs>
 
-          <div class="step">
-            <h3>2. Lê o vínculo atual</h3>
-            <p>Busca qual é o serviço atual e qual é o passageiro atual ligados naquele item.</p>
-          </div>
+          <rect x="178" y="24" width="264" height="54" rx="27" fill="#e7f2ef" stroke="#8fb9b2" />
+          <text x="310" y="56" text-anchor="middle" font-size="18" fill="#234b46">Update recebido</text>
 
-          <div class="step">
-            <h3>3. Resolve os motoristas atuais pelo serviço</h3>
-            <p>Ele não lê motorista direto do link. Ele sobe até o serviço e resolve o motorista que está no serviço.</p>
-          </div>
+          <line x1="310" y1="78" x2="310" y2="116" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowB)" />
 
-          <div class="step">
-            <h3>4. Descobre o estado anterior</h3>
-            <p>Se tiver <code>Pre Image</code>, usa o serviço antigo e o passageiro antigo. Se não tiver, tenta usar os compartilhamentos atuais do próprio link.</p>
-          </div>
+          <rect x="138" y="116" width="344" height="72" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="145" text-anchor="middle" font-size="17" fill="#201d18">Verifica se campo de motorista mudou</text>
+          <text x="310" y="168" text-anchor="middle" font-size="14" fill="#685f53">Se nao mudou, plugin sai</text>
 
-          <div class="step good">
-            <h3>5. Concede acesso ao link serviço-passageiro</h3>
-            <p>Todo motorista atual recebe acesso de leitura ao item de <code>cr40f_servicosporpassageiro</code>.</p>
-          </div>
+          <line x1="310" y1="188" x2="310" y2="230" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowB)" />
 
-          <div class="step good">
-            <h3>6. Concede acesso ao passageiro</h3>
-            <p>Se existe passageiro válido no link, o plugin também compartilha o passageiro com o motorista atual.</p>
-          </div>
+          <rect x="132" y="230" width="356" height="92" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="260" text-anchor="middle" font-size="16" fill="#201d18">Descobre motorista anterior</text>
+          <text x="310" y="283" text-anchor="middle" font-size="13" fill="#685f53">1. tenta Pre Image</text>
+          <text x="310" y="303" text-anchor="middle" font-size="13" fill="#685f53">2. se falhar, tenta compartilhamentos atuais</text>
 
-          <div class="step warn">
-            <h3>7. Revoga o link do motorista removido</h3>
-            <p>Se um motorista antigo saiu, o plugin revoga o compartilhamento daquele item do serviço por passageiro.</p>
-          </div>
+          <line x1="310" y1="322" x2="310" y2="368" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowB)" />
 
-          <div class="branches">
-            <div class="branch">
-              <strong>Passageiro ainda continua sendo usado</strong>
-              <p>Se o mesmo passageiro ainda estiver em outro link de serviço para o mesmo motorista, o acesso ao passageiro é mantido.</p>
-            </div>
-            <div class="branch">
-              <strong>Passageiro não é mais usado</strong>
-              <p>Se não existir mais outro vínculo válido, o acesso ao passageiro antigo é revogado.</p>
-            </div>
-          </div>
+          <polygon points="310,368 452,434 310,500 168,434" fill="#f5f0e6" stroke="#c8baa4" />
+          <text x="310" y="430" text-anchor="middle" font-size="16" fill="#201d18">Encontrou</text>
+          <text x="310" y="452" text-anchor="middle" font-size="16" fill="#201d18">motorista antigo?</text>
 
-          <div class="step accent">
-            <h3>8. Finaliza</h3>
-            <p>O plugin encerra com concessão e revogação alinhadas ao estado final do serviço e do passageiro.</p>
-          </div>
-        </div>
+          <line x1="168" y1="434" x2="78" y2="434" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowB)" />
+          <text x="120" y="420" text-anchor="middle" font-size="13" fill="#685f53">Nao</text>
+          <rect x="20" y="390" width="124" height="90" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="82" y="421" text-anchor="middle" font-size="15" fill="#2f6c42">Nao revoga</text>
+          <text x="82" y="442" text-anchor="middle" font-size="13" fill="#4d6a55">porque antes</text>
+          <text x="82" y="461" text-anchor="middle" font-size="13" fill="#4d6a55">nao havia motorista</text>
+
+          <line x1="452" y1="434" x2="550" y2="434" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowB)" />
+          <text x="500" y="420" text-anchor="middle" font-size="13" fill="#685f53">Sim</text>
+          <rect x="462" y="390" width="136" height="90" rx="18" fill="#fff4eb" stroke="#d7b18b" />
+          <text x="530" y="420" text-anchor="middle" font-size="15" fill="#9d5b30">Entrou em outro</text>
+          <text x="530" y="441" text-anchor="middle" font-size="13" fill="#7a5a44">caso de troca</text>
+          <text x="530" y="460" text-anchor="middle" font-size="13" fill="#7a5a44">ver caso 3</text>
+
+          <line x1="82" y1="480" x2="82" y2="560" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowB)" />
+
+          <rect x="20" y="560" width="124" height="92" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="82" y="592" text-anchor="middle" font-size="15" fill="#2f6c42">Concede ao</text>
+          <text x="82" y="613" text-anchor="middle" font-size="15" fill="#2f6c42">motorista atual</text>
+          <text x="82" y="634" text-anchor="middle" font-size="13" fill="#4d6a55">registro e hierarquia</text>
+
+          <line x1="82" y1="652" x2="82" y2="722" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowB)" />
+
+          <rect x="24" y="722" width="116" height="30" rx="15" fill="#e7f2ef" stroke="#8fb9b2" />
+          <text x="82" y="742" text-anchor="middle" font-size="14" fill="#234b46">Fim sem revogacao</text>
+        </svg>
+      </article>
+
+      <article class="panel">
+        <div class="pill">Caso 3</div>
+        <h2>Update com troca de motorista</h2>
+        <p>Registro estava com Motorista A e foi trocado para Motorista B. Aqui o plugin precisa conceder e revogar.</p>
+        <svg viewBox="0 0 620 860" xmlns="http://www.w3.org/2000/svg" aria-label="Fluxograma update troca de motorista">
+          <defs>
+            <marker id="arrowC" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#b9ab96"/>
+            </marker>
+          </defs>
+
+          <rect x="168" y="24" width="284" height="54" rx="27" fill="#e7f2ef" stroke="#8fb9b2" />
+          <text x="310" y="56" text-anchor="middle" font-size="18" fill="#234b46">Update com troca</text>
+
+          <line x1="310" y1="78" x2="310" y2="116" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+
+          <rect x="138" y="116" width="344" height="86" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="146" text-anchor="middle" font-size="16" fill="#201d18">Resolve motorista atual</text>
+          <text x="310" y="168" text-anchor="middle" font-size="13" fill="#685f53">funcionario - email Microsoft - systemuser ativo</text>
+          <text x="310" y="188" text-anchor="middle" font-size="13" fill="#685f53">se falhar aqui, grant pode bloquear</text>
+
+          <line x1="310" y1="202" x2="310" y2="248" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+
+          <rect x="132" y="248" width="356" height="92" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="278" text-anchor="middle" font-size="16" fill="#201d18">Resolve motorista antigo</text>
+          <text x="310" y="301" text-anchor="middle" font-size="13" fill="#685f53">1. Pre Image se existir</text>
+          <text x="310" y="321" text-anchor="middle" font-size="13" fill="#685f53">2. compartilhamentos atuais do registro se a image falhar</text>
+
+          <line x1="310" y1="340" x2="310" y2="386" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+
+          <polygon points="310,386 456,456 310,526 164,456" fill="#f5f0e6" stroke="#c8baa4" />
+          <text x="310" y="450" text-anchor="middle" font-size="16" fill="#201d18">Atual e antigo</text>
+          <text x="310" y="472" text-anchor="middle" font-size="16" fill="#201d18">sao diferentes?</text>
+
+          <line x1="456" y1="456" x2="566" y2="456" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+          <text x="510" y="442" text-anchor="middle" font-size="13" fill="#685f53">Nao</text>
+          <rect x="486" y="418" width="116" height="74" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="544" y="447" text-anchor="middle" font-size="15" fill="#2f6c42">Mantem acesso</text>
+          <text x="544" y="468" text-anchor="middle" font-size="13" fill="#4d6a55">nada a revogar</text>
+
+          <line x1="164" y1="456" x2="70" y2="456" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+          <text x="116" y="442" text-anchor="middle" font-size="13" fill="#685f53">Sim</text>
+          <rect x="20" y="416" width="124" height="82" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="82" y="446" text-anchor="middle" font-size="15" fill="#2f6c42">Concede acesso</text>
+          <text x="82" y="467" text-anchor="middle" font-size="13" fill="#4d6a55">ao motorista novo</text>
+
+          <line x1="82" y1="498" x2="82" y2="560" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+
+          <rect x="20" y="560" width="124" height="96" rx="18" fill="#fff4eb" stroke="#d7b18b" />
+          <text x="82" y="591" text-anchor="middle" font-size="15" fill="#9d5b30">Revoga acesso</text>
+          <text x="82" y="612" text-anchor="middle" font-size="13" fill="#7a5a44">do motorista antigo</text>
+          <text x="82" y="631" text-anchor="middle" font-size="13" fill="#7a5a44">no registro principal</text>
+
+          <line x1="82" y1="656" x2="82" y2="716" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+
+          <polygon points="82,716 170,760 82,804 -6,760" fill="#f5f0e6" stroke="#c8baa4" />
+          <text x="82" y="754" text-anchor="middle" font-size="15" fill="#201d18">E servico</text>
+          <text x="82" y="774" text-anchor="middle" font-size="15" fill="#201d18">principal?</text>
+
+          <line x1="170" y1="760" x2="280" y2="760" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+          <text x="224" y="747" text-anchor="middle" font-size="13" fill="#685f53">Nao</text>
+          <rect x="280" y="730" width="120" height="60" rx="18" fill="#e7f2ef" stroke="#8fb9b2" />
+          <text x="340" y="766" text-anchor="middle" font-size="14" fill="#234b46">Fim</text>
+
+          <line x1="82" y1="804" x2="82" y2="846" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowC)" />
+          <text x="102" y="826" font-size="13" fill="#685f53">Sim</text>
+
+          <rect x="168" y="804" width="420" height="42" rx="18" fill="#fff4eb" stroke="#d7b18b" />
+          <text x="378" y="830" text-anchor="middle" font-size="14" fill="#9d5b30">
+            Revoga tambem manutencao, links de passageiros e passageiros quando nao houver outro servico usando
+          </text>
+        </svg>
+      </article>
+
+      <article class="panel">
+        <div class="pill">Caso 4</div>
+        <h2>Servico por passageiro</h2>
+        <p>Fluxo proprio de <code>cr40f_servicosporpassageiro</code>. Aqui o plugin olha o servico ligado e o passageiro ligado.</p>
+        <svg viewBox="0 0 620 860" xmlns="http://www.w3.org/2000/svg" aria-label="Fluxograma servico por passageiro">
+          <defs>
+            <marker id="arrowD" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#b9ab96"/>
+            </marker>
+          </defs>
+
+          <rect x="164" y="24" width="292" height="54" rx="27" fill="#e7f2ef" stroke="#8fb9b2" />
+          <text x="310" y="56" text-anchor="middle" font-size="18" fill="#234b46">Servico por passageiro</text>
+
+          <line x1="310" y1="78" x2="310" y2="116" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+
+          <rect x="128" y="116" width="364" height="76" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="146" text-anchor="middle" font-size="16" fill="#201d18">Le vinculo atual</text>
+          <text x="310" y="168" text-anchor="middle" font-size="13" fill="#685f53">servico atual + passageiro atual</text>
+
+          <line x1="310" y1="192" x2="310" y2="232" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+
+          <rect x="116" y="232" width="388" height="84" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="262" text-anchor="middle" font-size="16" fill="#201d18">Resolve motoristas atuais pelo servico</text>
+          <text x="310" y="285" text-anchor="middle" font-size="13" fill="#685f53">o link nao guarda motorista final; o servico guarda</text>
+
+          <line x1="310" y1="316" x2="310" y2="360" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+
+          <rect x="118" y="360" width="384" height="94" rx="18" fill="#ffffff" stroke="#c8baa4" />
+          <text x="310" y="390" text-anchor="middle" font-size="16" fill="#201d18">Descobre estado anterior</text>
+          <text x="310" y="413" text-anchor="middle" font-size="13" fill="#685f53">Pre Image do link se existir</text>
+          <text x="310" y="433" text-anchor="middle" font-size="13" fill="#685f53">ou compartilhamentos atuais do proprio link se a image falhar</text>
+
+          <line x1="310" y1="454" x2="310" y2="496" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+
+          <rect x="186" y="496" width="248" height="80" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="310" y="526" text-anchor="middle" font-size="15" fill="#2f6c42">Concede acesso ao link</text>
+          <text x="310" y="547" text-anchor="middle" font-size="13" fill="#4d6a55">cr40f_servicosporpassageiro</text>
+          <text x="310" y="566" text-anchor="middle" font-size="13" fill="#4d6a55">para os motoristas atuais</text>
+
+          <line x1="310" y1="576" x2="310" y2="618" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+
+          <rect x="196" y="618" width="228" height="74" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="310" y="647" text-anchor="middle" font-size="15" fill="#2f6c42">Concede acesso ao passageiro</text>
+          <text x="310" y="668" text-anchor="middle" font-size="13" fill="#4d6a55">se o passageiro atual existir</text>
+
+          <line x1="310" y1="692" x2="310" y2="734" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+
+          <polygon points="310,734 456,800 310,866 164,800" fill="#f5f0e6" stroke="#c8baa4" />
+          <text x="310" y="794" text-anchor="middle" font-size="16" fill="#201d18">Motorista antigo</text>
+          <text x="310" y="816" text-anchor="middle" font-size="16" fill="#201d18">ainda precisa do passageiro?</text>
+
+          <line x1="164" y1="800" x2="50" y2="800" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+          <text x="108" y="786" text-anchor="middle" font-size="13" fill="#685f53">Nao</text>
+          <rect x="8" y="758" width="120" height="86" rx="18" fill="#fff4eb" stroke="#d7b18b" />
+          <text x="68" y="790" text-anchor="middle" font-size="15" fill="#9d5b30">Revoga link</text>
+          <text x="68" y="811" text-anchor="middle" font-size="13" fill="#7a5a44">e passageiro</text>
+          <text x="68" y="830" text-anchor="middle" font-size="13" fill="#7a5a44">do antigo</text>
+
+          <line x1="456" y1="800" x2="568" y2="800" stroke="#b9ab96" stroke-width="3" marker-end="url(#arrowD)" />
+          <text x="512" y="786" text-anchor="middle" font-size="13" fill="#685f53">Sim</text>
+          <rect x="470" y="760" width="124" height="80" rx="18" fill="#edf7f0" stroke="#9fcaab" />
+          <text x="532" y="790" text-anchor="middle" font-size="15" fill="#2f6c42">Mantem</text>
+          <text x="532" y="811" text-anchor="middle" font-size="13" fill="#4d6a55">passageiro</text>
+          <text x="532" y="830" text-anchor="middle" font-size="13" fill="#4d6a55">compartilhado</text>
+        </svg>
       </article>
     </section>
 
-    <section class="note">
-      <h2>Regras Importantes</h2>
+    <section class="panel notes">
+      <h2>Casos de bloqueio do grant</h2>
       <ul>
-        <li>Se o funcionário não tiver <code>cr40f_emailmicrosoft</code>, o plugin não compartilha e não bloqueia.</li>
-        <li>Se existir email Microsoft mas não existir <code>systemuser</code> ativo correspondente, o grant falha.</li>
-        <li>Se existir mais de um <code>systemuser</code> ativo para o mesmo email, o grant falha.</li>
-        <li>No cenário de troca, o plugin trabalha em cima de “motoristas atuais” versus “motoristas anteriores”.</li>
-        <li>O fallback novo evita erro quando a <code>Pre Image</code> não chega, mas ainda tenta revogar corretamente.</li>
+        <li>Funcionario tem <code>cr40f_emailmicrosoft</code>, mas nao existe <code>systemuser</code> ativo correspondente.</li>
+        <li>Existe mais de um <code>systemuser</code> ativo para o mesmo email.</li>
+        <li>Se o funcionario nao tem email Microsoft, o plugin nao bloqueia: ele so nao compartilha.</li>
+        <li>Para revogacao, o plugin agora tenta primeiro a <code>Pre Image</code> e depois o fallback por compartilhamento atual.</li>
       </ul>
     </section>
   </main>
