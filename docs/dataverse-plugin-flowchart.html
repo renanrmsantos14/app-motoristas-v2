@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxograma do Plugin Dataverse</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --panel: #fffaf2;
+      --ink: #1e1e1e;
+      --muted: #6e6558;
+      --line: #cdbfa8;
+      --accent: #184a45;
+      --accent-2: #9d5c2f;
+      --good: #2f6f43;
+      --warn: #a04d2d;
+      --shadow: 0 18px 40px rgba(54, 40, 18, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 35%),
+        linear-gradient(180deg, #f8f3eb 0%, var(--bg) 100%);
+      color: var(--ink);
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .hero {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px 32px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    .hero p {
+      max-width: 860px;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .legend-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.66);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .legend-item strong {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .column {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .column h2 {
+      font-size: 1.55rem;
+      margin-bottom: 18px;
+      color: var(--accent);
+    }
+
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step {
+      position: relative;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      margin-bottom: 34px;
+    }
+
+    .step::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -25px;
+      width: 2px;
+      height: 18px;
+      background: var(--line);
+      transform: translateX(-50%);
+    }
+
+    .step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step:last-child::after {
+      display: none;
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    .step p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .step.accent {
+      background: #f4fbf9;
+      border-color: #a9d0c9;
+    }
+
+    .step.warn {
+      background: #fff7f3;
+      border-color: #e0b39e;
+    }
+
+    .step.good {
+      background: #f4fbf4;
+      border-color: #a8cfae;
+    }
+
+    .branches {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 34px;
+      position: relative;
+    }
+
+    .branches::before {
+      content: "";
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      width: 2px;
+      height: 18px;
+      background: var(--line);
+      transform: translateX(-50%);
+    }
+
+    .branch {
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .branch strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent-2);
+      font-size: 0.95rem;
+    }
+
+    .branch p {
+      font-size: 0.92rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .note {
+      margin-top: 28px;
+      background: #1f2522;
+      color: #f5efe5;
+      border-radius: 24px;
+      padding: 22px 24px;
+    }
+
+    .note h2 {
+      color: #f7d9a8;
+      margin-bottom: 12px;
+    }
+
+    .note ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.7;
+    }
+
+    .note code {
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.92em;
+      color: #ffe5bf;
+    }
+
+    @media (max-width: 960px) {
+      .flow-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .branches {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Fluxograma do Plugin Dataverse</h1>
+      <p>
+        Este arquivo descreve o funcionamento do plugin <code>Betinhos.DriverRecordSharing</code>.
+        Ele mostra como o plugin decide conceder acesso, manter acesso ou revogar acesso quando um
+        motorista entra, sai ou é trocado em um registro.
+      </p>
+
+      <div class="legend">
+        <div class="legend-item">
+          <strong>Entidades diretas</strong>
+          Serviço, troca de carro, posse de veículo, colisão e recibo.
+        </div>
+        <div class="legend-item">
+          <strong>Entidade especial</strong>
+          <code>cr40f_servicosporpassageiro</code> tem fluxo próprio porque depende de serviço e passageiro.
+        </div>
+        <div class="legend-item">
+          <strong>Regra central</strong>
+          Primeiro ele descobre o motorista atual. Depois tenta descobrir o antigo. Aí compara os dois.
+        </div>
+        <div class="legend-item">
+          <strong>Fallback atual</strong>
+          Se a <code>Pre Image</code> falhar, o plugin tenta achar o motorista antigo pelos compartilhamentos já existentes.
+        </div>
+      </div>
+    </section>
+
+    <section class="flow-grid">
+      <article class="column">
+        <h2>Fluxo 1: Entidades Diretas</h2>
+        <div class="flow">
+          <div class="step accent">
+            <h3>1. Evento chega</h3>
+            <p>Plugin roda em <code>Create</code> ou <code>Update</code> de serviço, troca, posse, colisão ou recibo.</p>
+          </div>
+
+          <div class="step">
+            <h3>2. Verifica se a entidade é suportada</h3>
+            <p>Se não for uma entidade do mapa interno, o plugin para sem fazer nada.</p>
+          </div>
+
+          <div class="step">
+            <h3>3. Lê o registro atual</h3>
+            <p>Busca o valor atual do campo de motorista no Dataverse para saber quem está no registro agora.</p>
+          </div>
+
+          <div class="step">
+            <h3>4. Resolve o motorista atual</h3>
+            <p>Vai em <code>cr40f_funcionarios</code>, pega o <code>cr40f_emailmicrosoft</code> e procura o <code>systemuser</code> ativo correspondente.</p>
+          </div>
+
+          <div class="branches">
+            <div class="branch">
+              <strong>Se é Create</strong>
+              <p>Não existe motorista antigo. Então o plugin só concede acesso ao motorista atual, se existir.</p>
+            </div>
+            <div class="branch">
+              <strong>Se é Update</strong>
+              <p>Ele tenta descobrir quem era o motorista antigo para saber se deve revogar acesso.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <h3>5. Descobre o motorista antigo</h3>
+            <p>Primeira tentativa: usar a <code>Pre Image</code>. Segunda tentativa: olhar usuários que já estavam compartilhados no registro.</p>
+          </div>
+
+          <div class="branches">
+            <div class="branch">
+              <strong>Sem motorista antigo</strong>
+              <p>Exemplo: serviço estava vazio e agora ganhou motorista. Resultado: concede acesso. Não revoga nada.</p>
+            </div>
+            <div class="branch">
+              <strong>Com motorista antigo</strong>
+              <p>Exemplo: saiu Motorista A e entrou Motorista B. Resultado: concede para B e revoga de A.</p>
+            </div>
+          </div>
+
+          <div class="step good">
+            <h3>6. Concede acesso ao motorista atual</h3>
+            <p>Se o motorista atual foi resolvido com sucesso, o plugin compartilha o registro com esse usuário.</p>
+          </div>
+
+          <div class="step">
+            <h3>7. Se for serviço principal, compartilha a hierarquia</h3>
+            <p>Em <code>cr40f_reservadeveculos</code> ele também compartilha a manutenção ligada, os links de passageiros e os passageiros.</p>
+          </div>
+
+          <div class="step warn">
+            <h3>8. Revoga acesso do motorista removido</h3>
+            <p>Se encontrou motorista antigo diferente do atual, o plugin revoga o compartilhamento do antigo.</p>
+          </div>
+
+          <div class="step">
+            <h3>9. Se for serviço principal, revoga a hierarquia também</h3>
+            <p>Revoga serviço, manutenção, links de passageiros e passageiros, mas só remove passageiro se nenhum outro serviço daquele motorista ainda precisar dele.</p>
+          </div>
+
+          <div class="step accent">
+            <h3>10. Finaliza</h3>
+            <p>Trace grava quantos motoristas atuais e anteriores foram encontrados. A execução termina sem depender cegamente da <code>Pre Image</code>.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="column">
+        <h2>Fluxo 2: Serviço por Passageiro</h2>
+        <div class="flow">
+          <div class="step accent">
+            <h3>1. Evento chega</h3>
+            <p>Plugin roda em <code>Create</code> ou <code>Update</code> de <code>cr40f_servicosporpassageiro</code>.</p>
+          </div>
+
+          <div class="step">
+            <h3>2. Lê o vínculo atual</h3>
+            <p>Busca qual é o serviço atual e qual é o passageiro atual ligados naquele item.</p>
+          </div>
+
+          <div class="step">
+            <h3>3. Resolve os motoristas atuais pelo serviço</h3>
+            <p>Ele não lê motorista direto do link. Ele sobe até o serviço e resolve o motorista que está no serviço.</p>
+          </div>
+
+          <div class="step">
+            <h3>4. Descobre o estado anterior</h3>
+            <p>Se tiver <code>Pre Image</code>, usa o serviço antigo e o passageiro antigo. Se não tiver, tenta usar os compartilhamentos atuais do próprio link.</p>
+          </div>
+
+          <div class="step good">
+            <h3>5. Concede acesso ao link serviço-passageiro</h3>
+            <p>Todo motorista atual recebe acesso de leitura ao item de <code>cr40f_servicosporpassageiro</code>.</p>
+          </div>
+
+          <div class="step good">
+            <h3>6. Concede acesso ao passageiro</h3>
+            <p>Se existe passageiro válido no link, o plugin também compartilha o passageiro com o motorista atual.</p>
+          </div>
+
+          <div class="step warn">
+            <h3>7. Revoga o link do motorista removido</h3>
+            <p>Se um motorista antigo saiu, o plugin revoga o compartilhamento daquele item do serviço por passageiro.</p>
+          </div>
+
+          <div class="branches">
+            <div class="branch">
+              <strong>Passageiro ainda continua sendo usado</strong>
+              <p>Se o mesmo passageiro ainda estiver em outro link de serviço para o mesmo motorista, o acesso ao passageiro é mantido.</p>
+            </div>
+            <div class="branch">
+              <strong>Passageiro não é mais usado</strong>
+              <p>Se não existir mais outro vínculo válido, o acesso ao passageiro antigo é revogado.</p>
+            </div>
+          </div>
+
+          <div class="step accent">
+            <h3>8. Finaliza</h3>
+            <p>O plugin encerra com concessão e revogação alinhadas ao estado final do serviço e do passageiro.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="note">
+      <h2>Regras Importantes</h2>
+      <ul>
+        <li>Se o funcionário não tiver <code>cr40f_emailmicrosoft</code>, o plugin não compartilha e não bloqueia.</li>
+        <li>Se existir email Microsoft mas não existir <code>systemuser</code> ativo correspondente, o grant falha.</li>
+        <li>Se existir mais de um <code>systemuser</code> ativo para o mesmo email, o grant falha.</li>
+        <li>No cenário de troca, o plugin trabalha em cima de “motoristas atuais” versus “motoristas anteriores”.</li>
+        <li>O fallback novo evita erro quando a <code>Pre Image</code> não chega, mas ainda tenta revogar corretamente.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
