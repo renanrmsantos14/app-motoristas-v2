@@ -112,6 +112,13 @@
     servicePassengerByPassenger: new Map(),
     sharesByRecord: new Map()
   };
+  const LOOKUP_COLUMNS = new Set([
+    CONFIG.tables.service.driver,
+    CONFIG.tables.service.maintenance,
+    CONFIG.servicePassenger.serviceLookup,
+    CONFIG.servicePassenger.passengerLookup,
+    ...CONFIG.supportedDirectEntities.flatMap((item) => item.driverLookups)
+  ]);
 
   function cleanGuid(value) {
     return String(value || "").replace(/[{}]/g, "").trim().toLowerCase();
@@ -216,7 +223,10 @@
   async function retrieveRecord(logicalName, id, columns) {
     const meta = await getEntityMeta(logicalName);
     const recordId = cleanGuid(id);
-    const select = (columns || []).filter(Boolean).join(",");
+    const select = (columns || [])
+      .filter(Boolean)
+      .map((column) => (LOOKUP_COLUMNS.has(column) ? `_${column}_value` : column))
+      .join(",");
     return getJson(`/${meta.entitySetName}(${recordId})?$select=${select}`);
   }
 
@@ -755,34 +765,142 @@
   async function auditCurrentForm() {
     const formTarget = getCurrentFormTarget();
     if (!formTarget) {
-      throw new Error("Nao consegui descobrir entidade e ID da tela atual.");
+      throw new Error(
+        "Nao consegui descobrir entidade e ID da tela atual. Se for registro novo, salve antes. Se for registro existente, use auditRecord('entidade', 'GUID')."
+      );
     }
 
+    console.log(`[DriverRecordSharingAudit] Tela atual detectada via ${formTarget.source}: ${formTarget.entityName} ${formTarget.id}`);
     return auditRecord(formTarget.entityName, formTarget.id);
   }
 
-  function getCurrentFormTarget() {
+  function pickFirstNonEmpty(values) {
+    for (const value of values || []) {
+      const text = String(value || "").trim();
+      if (text) {
+        return text;
+      }
+    }
+
+    return "";
+  }
+
+  function tryBuildFormTarget(entityName, id, source) {
+    const normalizedEntity = String(entityName || "").trim().toLowerCase();
+    const normalizedId = cleanGuid(id);
+    if (!normalizedEntity || !normalizedId) {
+      return null;
+    }
+
+    return {
+      entityName: normalizedEntity,
+      id: normalizedId,
+      source
+    };
+  }
+
+  function tryReadXrmPage(sourceLabel, xrmObject) {
     try {
-      if (window.Xrm?.Page?.data?.entity) {
-        const entityName = Xrm.Page.data.entity.getEntityName();
-        const id = cleanGuid(Xrm.Page.data.entity.getId());
-        if (entityName && id) {
-          return { entityName, id, source: "Xrm.Page" };
+      const entity = xrmObject?.Page?.data?.entity;
+      if (!entity) {
+        return null;
+      }
+
+      return tryBuildFormTarget(entity.getEntityName?.(), entity.getId?.(), sourceLabel);
+    } catch (error) {
+      console.warn(`Falha lendo ${sourceLabel}:`, error);
+      return null;
+    }
+  }
+
+  function tryReadPageContext() {
+    try {
+      const pageContext = window.Xrm?.Utility?.getPageContext?.();
+      const input = pageContext?.input;
+      if (!input) {
+        return null;
+      }
+
+      const entityName = pickFirstNonEmpty([
+        input.entityName,
+        input.etn,
+        input.logicalName
+      ]);
+
+      const id = pickFirstNonEmpty([
+        input.entityId,
+        input.recordId,
+        input.id
+      ]);
+
+      return tryBuildFormTarget(entityName, id, "Xrm.Utility.getPageContext");
+    } catch (error) {
+      console.warn("Falha lendo Xrm.Utility.getPageContext:", error);
+      return null;
+    }
+  }
+
+  function tryReadUrl(sourceLabel, rawUrl) {
+    try {
+      if (!rawUrl) {
+        return null;
+      }
+
+      const url = new URL(rawUrl, window.location.origin);
+      const direct = tryBuildFormTarget(url.searchParams.get("etn"), url.searchParams.get("id"), sourceLabel);
+      if (direct) {
+        return direct;
+      }
+
+      const hash = String(url.hash || "").replace(/^#/, "");
+      if (!hash) {
+        return null;
+      }
+
+      const hashVariants = [hash];
+      try {
+        const decoded = decodeURIComponent(hash);
+        if (decoded && decoded !== hash) {
+          hashVariants.push(decoded);
+        }
+      } catch (error) {
+        console.warn(`Falha decodificando hash em ${sourceLabel}:`, error);
+      }
+
+      for (const variant of hashVariants) {
+        const params = new URLSearchParams(variant.replace(/^[?#]/, ""));
+        const candidate = tryBuildFormTarget(
+          params.get("etn") || params.get("entityName"),
+          params.get("id") || params.get("entityId") || params.get("recordId"),
+          `${sourceLabel}#hash`
+        );
+        if (candidate) {
+          return candidate;
         }
       }
     } catch (error) {
-      console.warn("Falha lendo Xrm.Page:", error);
+      console.warn(`Falha lendo ${sourceLabel}:`, error);
     }
 
-    try {
-      const url = new URL(window.location.href);
-      const entityName = (url.searchParams.get("etn") || "").trim().toLowerCase();
-      const id = cleanGuid(url.searchParams.get("id"));
-      if (entityName && id) {
-        return { entityName, id, source: "url" };
+    return null;
+  }
+
+  function getCurrentFormTarget() {
+    const resolvers = [
+      () => tryReadXrmPage("window.Xrm.Page", window.Xrm),
+      () => tryReadXrmPage("window.parent.Xrm.Page", window.parent?.Xrm),
+      () => tryReadXrmPage("window.top.Xrm.Page", window.top?.Xrm),
+      () => tryReadPageContext(),
+      () => tryReadUrl("window.location.href", window.location?.href),
+      () => tryReadUrl("window.parent.location.href", window.parent?.location?.href),
+      () => tryReadUrl("window.top.location.href", window.top?.location?.href)
+    ];
+
+    for (const resolve of resolvers) {
+      const target = resolve();
+      if (target) {
+        return target;
       }
-    } catch (error) {
-      console.warn("Falha lendo URL da pagina atual:", error);
     }
 
     return null;
