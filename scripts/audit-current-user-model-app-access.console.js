@@ -5,11 +5,14 @@
  * cada model-driven app. Nao altera nada.
  */
 (async () => {
-  const api = Xrm?.WebApi?.online || Xrm?.WebApi;
-  if (!api) throw new Error("Xrm.WebApi nao encontrado. Abra dentro do model-driven app.");
+  if (!Xrm?.Utility?.getGlobalContext) {
+    throw new Error("Xrm.Utility nao encontrado. Abra dentro do model-driven app.");
+  }
 
   const ctx = Xrm.Utility.getGlobalContext();
   const currentUserId = cleanGuid(ctx.userSettings.userId);
+  const apiBaseUrl = `${ctx.getClientUrl().replace(/\/$/, "")}/api/data/v9.2`;
+  const roleQuery = "?$select=roleid,name,_parentrootroleid_value,roletemplateid";
 
   function cleanGuid(value) {
     return String(value || "").replace(/[{}]/g, "").toLowerCase();
@@ -33,27 +36,51 @@
     return roleFamilyKeys(b).some((key) => left.has(key));
   }
 
-  async function retrieveAll(entityLogicalName, query) {
-    const rows = [];
-    let result = await api.retrieveMultipleRecords(entityLogicalName, query);
-    rows.push(...result.entities);
-    while (result.nextLink) {
-      result = await api.retrieveMultipleRecords(entityLogicalName, result.nextLink);
-      rows.push(...result.entities);
+  function requestUrl(pathOrUrl) {
+    return /^https?:\/\//i.test(pathOrUrl) ? pathOrUrl : `${apiBaseUrl}${pathOrUrl}`;
+  }
+
+  async function getJson(pathOrUrl) {
+    const url = requestUrl(pathOrUrl);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0"
+      }
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`GET ${response.status} ${response.statusText}: ${url}\n${body}`);
     }
+
+    return response.json();
+  }
+
+  async function retrieveAll(pathOrUrl) {
+    const rows = [];
+    let next = pathOrUrl;
+
+    while (next) {
+      const result = await getJson(next);
+      rows.push(...(result.value || []));
+      next = result["@odata.nextLink"] || null;
+    }
+
     return rows;
   }
 
   async function getUserDirectRoles(userId) {
-    const user = await api.retrieveRecord(
-      "systemuser",
-      userId,
-      "?$select=systemuserid,fullname,internalemailaddress&$expand=systemuserroles_association($select=roleid,name,_parentrootroleid_value,roletemplateid)"
-    );
+    const [user, roles] = await Promise.all([
+      getJson(`/systemusers(${userId})?$select=systemuserid,fullname,internalemailaddress`),
+      retrieveAll(`/systemusers(${userId})/systemuserroles_association${roleQuery}`)
+    ]);
 
     return {
       user,
-      roles: (user.systemuserroles_association || []).map((role) => ({
+      roles: roles.map((role) => ({
         ...role,
         source: "user",
         sourceName: user.fullname || user.internalemailaddress || userId,
@@ -63,33 +90,33 @@
   }
 
   async function getUserTeams(userId) {
-    const user = await api.retrieveRecord(
-      "systemuser",
-      userId,
-      "?$select=systemuserid&$expand=teammembership_association($select=teamid,name)"
-    );
-    return user.teammembership_association || [];
+    return retrieveAll(`/systemusers(${userId})/teammembership_association?$select=teamid,name`);
   }
 
   async function getTeamRoles(team) {
-    const fullTeam = await api.retrieveRecord(
-      "team",
-      cleanGuid(team.teamid),
-      "?$select=teamid,name&$expand=teamroles_association($select=roleid,name,_parentrootroleid_value,roletemplateid)"
-    );
+    const teamId = cleanGuid(team.teamid);
+    const roles = await retrieveAll(`/teams(${teamId})/teamroles_association${roleQuery}`);
 
-    return (fullTeam.teamroles_association || []).map((role) => ({
+    return roles.map((role) => ({
       ...role,
       source: "team",
-      sourceName: fullTeam.name || team.name || cleanGuid(team.teamid),
-      sourceId: cleanGuid(team.teamid)
+      sourceName: team.name || teamId,
+      sourceId: teamId
     }));
   }
 
   async function getApps() {
-    return retrieveAll(
-      "appmodule",
-      "?$select=appmoduleid,name,uniquename&$filter=componentstate eq 0&$expand=appmoduleroles_association($select=roleid,name,_parentrootroleid_value,roletemplateid)"
+    const apps = await retrieveAll(
+      "/appmodules?$select=appmoduleid,name,uniquename&$filter=componentstate%20eq%200"
+    );
+
+    return Promise.all(
+      apps.map(async (app) => ({
+        ...app,
+        appmoduleroles_association: await retrieveAll(
+          `/appmodules(${cleanGuid(app.appmoduleid)})/appmoduleroles_association${roleQuery}`
+        )
+      }))
     );
   }
 
