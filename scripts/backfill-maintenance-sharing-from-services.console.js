@@ -33,16 +33,6 @@
   const USER_EMAIL = "internalemailaddress";
 
   const REQUIRED_RIGHTS = ["ReadAccess", "WriteAccess", "AppendAccess", "AppendToAccess"];
-  const KNOWN_RIGHTS = new Set([
-    "ReadAccess",
-    "WriteAccess",
-    "AppendAccess",
-    "AppendToAccess",
-    "CreateAccess",
-    "DeleteAccess",
-    "ShareAccess",
-    "AssignAccess"
-  ]);
 
   const api = Xrm?.WebApi?.online || Xrm?.WebApi;
   if (!api) throw new Error("Xrm.WebApi nao encontrado. Abra dentro do model-driven app.");
@@ -137,37 +127,27 @@
     };
   }
 
-  async function executeAction(actionName, payload) {
-    return request("POST", `/${actionName}`, payload);
+  async function executeOrganizationAction(operationName, payload, parameterTypes) {
+    const requestPayload = {
+      ...payload,
+      getMetadata: () => ({
+        boundParameter: null,
+        parameterTypes,
+        operationType: 0,
+        operationName
+      })
+    };
+
+    const response = await api.execute(requestPayload);
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(`${operationName}\n${response.status} ${response.statusText}\n${text}`);
+    }
+    return text ? JSON.parse(text) : null;
   }
 
-  function parseRights(raw) {
-    if (raw == null || raw === "" || raw === "None") return new Set();
-    if (Array.isArray(raw)) return new Set(raw.map((item) => String(item).trim()).filter(Boolean));
-    if (typeof raw === "string") {
-      return new Set(
-        raw
-          .split(",")
-          .map((item) => item.trim())
-          .filter((item) => item && item !== "None")
-      );
-    }
-    if (typeof raw === "object" && typeof raw.Value === "string") {
-      return parseRights(raw.Value);
-    }
-    return new Set([String(raw)]);
-  }
-
-  function hasRequiredRights(rights) {
-    return REQUIRED_RIGHTS.every((right) => rights.has(right));
-  }
-
-  function mergeRights(rights) {
-    const merged = new Set(REQUIRED_RIGHTS);
-    for (const right of rights) {
-      if (KNOWN_RIGHTS.has(right)) merged.add(right);
-    }
-    return Array.from(merged).join(", ");
+  function requiredRightsText() {
+    return REQUIRED_RIGHTS.join(", ");
   }
 
   async function resolveEmployee(employeeId) {
@@ -220,28 +200,39 @@
     return result;
   }
 
-  async function getCurrentRights(maintenanceId, userId) {
-    const response = await executeAction("RetrievePrincipalAccess", {
-      Target: buildEntityReference(MAINTENANCE_LOGICAL_NAME, MAINTENANCE_ID, maintenanceId),
-      Principal: buildEntityReference(USER_LOGICAL_NAME, USER_ID, userId)
-    });
-    return parseRights(response?.AccessRights);
-  }
-
-  async function ensureMaintenanceAccess(maintenanceId, userId, existingRights) {
-    const mergedRights = mergeRights(existingRights);
+  async function ensureMaintenanceAccess(maintenanceId, userId) {
     const payload = {
       Target: buildEntityReference(MAINTENANCE_LOGICAL_NAME, MAINTENANCE_ID, maintenanceId),
-      PrincipalAccess: buildPrincipalAccess(userId, mergedRights)
+      PrincipalAccess: buildPrincipalAccess(userId, requiredRightsText())
     };
 
-    if (existingRights.size === 0) {
-      if (!DRY_RUN) await executeAction("GrantAccess", payload);
-      return "grant";
+    if (DRY_RUN) {
+      return "grant_or_modify";
     }
 
-    if (!DRY_RUN) await executeAction("ModifyAccess", payload);
-    return "modify";
+    try {
+      await executeOrganizationAction("GrantAccess", payload, {
+        Target: { typeName: "mscrm.crmbaseentity", structuralProperty: 5 },
+        PrincipalAccess: { typeName: "mscrm.PrincipalAccess", structuralProperty: 2 }
+      });
+      return "grant";
+    } catch (grantError) {
+      try {
+        await executeOrganizationAction("ModifyAccess", payload, {
+          Target: { typeName: "mscrm.crmbaseentity", structuralProperty: 5 },
+          PrincipalAccess: { typeName: "mscrm.PrincipalAccess", structuralProperty: 2 }
+        });
+        return "modify";
+      } catch (modifyError) {
+        throw new Error(
+          [
+            "GrantAccess falhou e ModifyAccess tambem falhou.",
+            `GrantAccess: ${grantError?.message || String(grantError)}`,
+            `ModifyAccess: ${modifyError?.message || String(modifyError)}`
+          ].join("\n")
+        );
+      }
+    }
   }
 
   function pushIssue(kind, service, extra) {
@@ -293,13 +284,7 @@
       processedPairs.add(pairKey);
       summary.uniquePairs += 1;
 
-      const currentRights = await getCurrentRights(maintenanceId, resolved.userId);
-      if (hasRequiredRights(currentRights)) {
-        summary.alreadyOk += 1;
-        continue;
-      }
-
-      const action = await ensureMaintenanceAccess(maintenanceId, resolved.userId, currentRights);
+      const action = await ensureMaintenanceAccess(maintenanceId, resolved.userId);
       actions.push({
         action,
         serviceBusinessId,
@@ -309,13 +294,11 @@
         email: resolved.email,
         userName: resolved.userName,
         userId: resolved.userId,
-        existingRights: Array.from(currentRights).join(", "),
         dryRun: DRY_RUN
       });
 
       if (DRY_RUN) {
-        if (action === "grant") summary.dryRunGrant += 1;
-        else summary.dryRunModify += 1;
+        summary.dryRunGrant += 1;
       } else {
         if (action === "grant") summary.granted += 1;
         else summary.modified += 1;
