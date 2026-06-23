@@ -269,6 +269,7 @@ function App() {
   const [dataLoading, setDataLoading] = useState<LoadingOverlayState | null>(null);
   const [criticalError, setCriticalError] = useState("");
   const [completingDetailKey, setCompletingDetailKey] = useState("");
+  const [queueHighlightDetailKey, setQueueHighlightDetailKey] = useState("");
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
   const [remoteMode, setRemoteMode] = useState(false);
   const [driverContext, setDriverContext] = useState<DriverContext | null>(null);
@@ -335,6 +336,7 @@ function App() {
   });
   const finalizeTimerRef = useRef<number | null>(null);
   const completingClearTimerRef = useRef<number | null>(null);
+  const queueHighlightTimerRef = useRef<number | null>(null);
   const voucherDraftTimerRef = useRef<number | null>(null);
   const nativeCaptureInputRef = useRef<HTMLInputElement | null>(null);
   const nativeCaptureTargetRef = useRef<NativeCaptureTarget | null>(null);
@@ -990,6 +992,13 @@ function App() {
     if (!detail) return true;
     const firstPendingDetail = findFirstPendingDetail(store.agenda);
     if (!firstPendingDetail || isSameDetail(firstPendingDetail, detail)) return false;
+    const firstPendingKey = `${firstPendingDetail.type}:${firstPendingDetail.id}`;
+    if (queueHighlightTimerRef.current) window.clearTimeout(queueHighlightTimerRef.current);
+    setQueueHighlightDetailKey(firstPendingKey);
+    queueHighlightTimerRef.current = window.setTimeout(() => {
+      setQueueHighlightDetailKey("");
+      queueHighlightTimerRef.current = null;
+    }, 3600);
     setToast("Conclua os itens anteriores da fila antes de prosseguir.");
     setScreen("servicos");
     return true;
@@ -1175,7 +1184,6 @@ function App() {
       }
     }
     const next = cancelDetailLocally(store, detailToCancel, reason);
-    const historyItem = next.history[0];
     setStore(next);
     setReceiveProofs((current) => {
       if (!current[detailToCancel.id]) return current;
@@ -1189,8 +1197,8 @@ function App() {
       delete copy[detailToCancel.id];
       return copy;
     });
-    setSelectedDetail(historyItem.detail ?? null);
-    setScreen("historico");
+    setSelectedDetail(null);
+    setScreen("servicos");
     setToast("Cancelado localmente.");
   };
 
@@ -2488,6 +2496,7 @@ function App() {
         onHome={() => setScreen("inicio")}
         onRefresh={refreshLocal}
         completingDetailKey={completingDetailKey}
+        queueHighlightDetailKey={queueHighlightDetailKey}
         onOpenDetails={(detail) => {
           if (remoteMode) {
             markDetailViewedRemote(detail).catch((error) => {

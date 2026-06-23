@@ -8,6 +8,7 @@ type AgendaCardProps = {
   item: AgendaItem;
   index?: number;
   isCompleting?: boolean;
+  isQueueHighlight?: boolean;
   onOpen: (item: AgendaItem) => void;
 };
 
@@ -40,8 +41,8 @@ function getTrajectory(item: AgendaItem) {
   return trajectoryField?.value || item.description || "";
 }
 
-export function AgendaCard({ item, index = 0, isCompleting = false, onOpen }: AgendaCardProps) {
-  const className = `agenda-card ${item.tipo.toLowerCase()} ${isCompleting ? "is-completing" : ""}`;
+export function AgendaCard({ item, index = 0, isCompleting = false, isQueueHighlight = false, onOpen }: AgendaCardProps) {
+  const className = `agenda-card ${item.tipo.toLowerCase()} ${isCompleting ? "is-completing" : ""} ${isQueueHighlight ? "is-queue-highlight" : ""}`;
   const time = formatAgendaTime(item.time);
   const trajectory = getTrajectory(item);
   const style = { "--agenda-index": index } as CSSProperties;

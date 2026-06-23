@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { AgendaItem, DetailData } from "../types";
 import { AppShell } from "../components/layout/AppShell";
@@ -11,11 +11,19 @@ type ServicesScreenProps = {
   onHome: () => void;
   onRefresh: () => void | Promise<void>;
   completingDetailKey?: string;
+  queueHighlightDetailKey?: string;
   onOpenDetails: (detail: DetailData) => void;
 };
 
-export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", onOpenDetails }: ServicesScreenProps) {
+export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", queueHighlightDetailKey = "", onOpenDetails }: ServicesScreenProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!queueHighlightDetailKey) return;
+    const list = listRef.current;
+    const target = list?.querySelector<HTMLElement>("[data-queue-highlight='true']");
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [queueHighlightDetailKey]);
 
   return (
     <AppShell screenLabel="TelaServiços">
@@ -28,12 +36,15 @@ export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey =
             <div ref={listRef} className="agenda-list">
             <AnimatePresence initial={false}>
               {items.map((item, index) => {
-                const isCompleting = Boolean(item.detail && `${item.detail.type}:${item.detail.id}` === completingDetailKey);
+                const detailKey = item.detail ? `${item.detail.type}:${item.detail.id}` : "";
+                const isCompleting = Boolean(detailKey && detailKey === completingDetailKey);
+                const isQueueHighlight = Boolean(detailKey && detailKey === queueHighlightDetailKey);
 
                 return (
                   <motion.div
                     key={item.id}
-                    className={`agenda-layout-item ${isCompleting ? "is-completing-shell" : ""}`}
+                    className={`agenda-layout-item ${isCompleting ? "is-completing-shell" : ""} ${isQueueHighlight ? "is-queue-highlight-shell" : ""}`}
+                    data-queue-highlight={isQueueHighlight ? "true" : undefined}
                     layout
                     initial={false}
                     animate={{ opacity: 1, y: 0, scale: 1, marginBottom: 14 }}
@@ -50,6 +61,7 @@ export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey =
                       item={item}
                       index={index}
                       isCompleting={isCompleting}
+                      isQueueHighlight={isQueueHighlight}
                       onOpen={(selected) => selected.detail && onOpenDetails(selected.detail)}
                     />
                   </motion.div>

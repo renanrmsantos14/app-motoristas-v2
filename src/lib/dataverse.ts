@@ -122,6 +122,10 @@ const VEHICLE_CATEGORY = {
   proprio: 100000000
 } as const;
 
+const VEHICLE_STATUS = {
+  ativo: 202410001
+} as const;
+
 const COLLISION_DATAVERSE_ATTACHMENT_TYPE: Record<CollisionPhotoKind, number> = {
   cena: 100000000,
   danoBetinhos: 100000001,
@@ -519,11 +523,11 @@ function getVehicleLabel(record: DataverseRecord) {
 export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext, options: { onlyOwnCategory?: boolean } = {}) {
   const currentVehicleId = getDriverCurrentVehicleId(driver);
   const categoryFilter = options.onlyOwnCategory
-    ? `&$filter=(new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio} or new_categoriadoveiculo eq null)`
+    ? `&$filter=cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}`
     : "";
   const result = await retrieveMultiple(
     DATAVERSE.veiculos,
-    `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`
+    `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`
   );
   return result.entities
     .map((record): MaintenanceRequestVehicleOption => {
@@ -840,6 +844,13 @@ function normalizeText(value: string) {
 function isMaintenanceDoneStatus(record: DataverseRecord) {
   const statusLabel = normalizeText(getFormatted(record, "cr40f_status"));
   return statusLabel === "realizado" || statusLabel === "realizada";
+}
+
+function shouldShowCanceledOverlay(record: DataverseRecord) {
+  if (!getBooleanValue(record, "new_foiprogramado")) return false;
+  const statusLabel = normalizeText(getFormatted(record, "cr40f_status"));
+  const statusValue = Number(record.cr40f_status);
+  return statusValue === OPERATION_STATUS.requerAnalise || statusLabel.includes("cancel") || statusLabel.includes("requer analise");
 }
 
 function parseCurrencyNumber(value: string) {
@@ -2195,6 +2206,7 @@ function mapGeralService(record: DataverseRecord, passengerHtml = "", solicitant
     time: formatAgendaTime(date),
     description: trajectory,
     priority: isReceber ? 10 : minutesUntilStart >= 0 && minutesUntilStart <= 30 && wasEditedAfterView ? 1 : wasEditedAfterView ? 3 : 0,
+    canceled: shouldShowCanceledOverlay(record),
     searchText: `${businessId} ${id} ${trajectory}`.toLowerCase(),
     detail
   };
@@ -2382,7 +2394,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.geral,
     [
       geralSelect,
-      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and cr40f_status ne ${OPERATION_STATUS.requerAnalise} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
+      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc",
       "$top=80"
     ].join("&")

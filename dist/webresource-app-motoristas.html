@@ -4842,7 +4842,7 @@ button:disabled {
   padding: 4px 12px 0;
   border-radius: 0;
   background: transparent;
-  overflow: hidden;
+  overflow: visible;
 }
 .services-panel .search-row {
   height: auto;
@@ -9390,14 +9390,41 @@ button:disabled {
 .services-panel .agenda-layout-item .agenda-card {
   margin-bottom: 0 !important;
 }
+.services-panel .pull-refresh,
+.services-panel .pull-refresh-content {
+  overflow: visible !important;
+}
 .services-panel .agenda-list {
   gap: 0 !important;
+  overflow-x: visible !important;
+  padding: 14px 0 max(28px, calc(env(safe-area-inset-bottom) + 46px)) !important;
 }
 .services-panel .agenda-card.is-completing::after {
   display: none !important;
 }
 .services-panel .agenda-card.is-completing .agenda-hit {
   display: none !important;
+}
+.services-panel .agenda-layout-item.is-queue-highlight-shell {
+  position: relative !important;
+  z-index: 7 !important;
+  overflow: visible !important;
+}
+.services-panel .agenda-card.is-queue-highlight {
+  position: relative !important;
+  z-index: 1 !important;
+}
+.services-panel .agenda-card.is-queue-highlight::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  border: 2px solid rgb(32, 118, 231) !important;
+  border-radius: inherit !important;
+  opacity: .42 !important;
+  pointer-events: none !important;
+  animation: service-queue-border-pulse 1400ms cubic-bezier(.37, 0, .16, 1) 3 !important;
+  will-change: opacity !important;
 }
 .agenda-complete-layer {
   position: absolute !important;
@@ -9547,12 +9574,24 @@ button:disabled {
     stroke-dashoffset: 0;
   }
 }
+@keyframes service-queue-border-pulse {
+  0% {
+    opacity: .34;
+  }
+  48% {
+    opacity: 1;
+  }
+  100% {
+    opacity: .38;
+  }
+}
 @media (prefers-reduced-motion:reduce) {
   .services-panel .agenda-card.is-completing,
   .services-panel .agenda-card.is-completing .agenda-card-inner,
   .agenda-complete-layer,
   .agenda-complete-check,
-  .agenda-complete-check::before {
+  .agenda-complete-check::before,
+  .services-panel .agenda-card.is-queue-highlight::before {
     animation: none !important;
   }
   .services-panel .agenda-card.is-completing {
@@ -11408,7 +11447,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.364","builtAt":"2026-06-22T19:38:21.825Z","builtAtLabel":"22/06/2026, 16:38"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.374","builtAt":"2026-06-23T12:43:01.452Z","builtAtLabel":"23/06/2026, 09:43"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -12516,7 +12555,7 @@ select,
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect22(create, deps) {
+          function useEffect23(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -13299,7 +13338,7 @@ select,
           exports.useContext = useContext9;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect22;
+          exports.useEffect = useEffect23;
           exports.useId = useId5;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect4;
@@ -35602,6 +35641,9 @@ select,
   var VEHICLE_CATEGORY = {
     proprio: 1e8
   };
+  var VEHICLE_STATUS = {
+    ativo: 202410001
+  };
   var COLLISION_DATAVERSE_ATTACHMENT_TYPE = {
     cena: 1e8,
     danoBetinhos: 100000001,
@@ -35956,10 +35998,10 @@ select,
   }
   async function loadMaintenanceRequestVehiclesRemote(driver, options = {}) {
     const currentVehicleId = getDriverCurrentVehicleId(driver);
-    const categoryFilter = options.onlyOwnCategory ? `&$filter=(new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio} or new_categoriadoveiculo eq null)` : "";
+    const categoryFilter = options.onlyOwnCategory ? `&$filter=cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}` : "";
     const result = await retrieveMultiple(
       DATAVERSE.veiculos,
-      `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`
+      `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`
     );
     return result.entities.map((record) => {
       const id3 = cleanODataGuid(record.cr40f_veiculosid);
@@ -36213,6 +36255,12 @@ select,
   function isMaintenanceDoneStatus(record) {
     const statusLabel = normalizeText(getFormatted(record, "cr40f_status"));
     return statusLabel === "realizado" || statusLabel === "realizada";
+  }
+  function shouldShowCanceledOverlay(record) {
+    if (!getBooleanValue(record, "new_foiprogramado")) return false;
+    const statusLabel = normalizeText(getFormatted(record, "cr40f_status"));
+    const statusValue = Number(record.cr40f_status);
+    return statusValue === OPERATION_STATUS.requerAnalise || statusLabel.includes("cancel") || statusLabel.includes("requer analise");
   }
   function parseCurrencyNumber(value) {
     return Number(
@@ -37339,6 +37387,7 @@ ${text}`);
       time: formatAgendaTime(date),
       description: trajectory,
       priority: isReceber ? 10 : minutesUntilStart >= 0 && minutesUntilStart <= 30 && wasEditedAfterView ? 1 : wasEditedAfterView ? 3 : 0,
+      canceled: shouldShowCanceledOverlay(record),
       searchText: `${businessId} ${id3} ${trajectory}`.toLowerCase(),
       detail
     };
@@ -37509,7 +37558,7 @@ ${text}`);
       DATAVERSE.geral,
       [
         geralSelect,
-        `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and cr40f_status ne ${OPERATION_STATUS.requerAnalise} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
+        `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
         "$orderby=cr40f_dataehorriodesada asc",
         "$top=80"
       ].join("&")
@@ -41184,8 +41233,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const trajectoryField = item.detail?.fields.find((field) => field.label.toLowerCase() === "trajeto");
     return trajectoryField?.value || item.description || "";
   }
-  function AgendaCard({ item, index = 0, isCompleting = false, onOpen }) {
-    const className = `agenda-card ${item.tipo.toLowerCase()} ${isCompleting ? "is-completing" : ""}`;
+  function AgendaCard({ item, index = 0, isCompleting = false, isQueueHighlight = false, onOpen }) {
+    const className = `agenda-card ${item.tipo.toLowerCase()} ${isCompleting ? "is-completing" : ""} ${isQueueHighlight ? "is-queue-highlight" : ""}`;
     const time2 = formatAgendaTime2(item.time);
     const trajectory = getTrajectory(item);
     const style = { "--agenda-index": index };
@@ -58663,16 +58712,25 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/screens/ServicesScreen.tsx
   var import_react52 = __toESM(require_react(), 1);
   var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
-  function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", onOpenDetails }) {
+  function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", queueHighlightDetailKey = "", onOpenDetails }) {
     const listRef = (0, import_react52.useRef)(null);
+    (0, import_react52.useEffect)(() => {
+      if (!queueHighlightDetailKey) return;
+      const list = listRef.current;
+      const target = list?.querySelector("[data-queue-highlight='true']");
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, [queueHighlightDetailKey]);
     return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(AppShell, { screenLabel: "TelaServi\xE7os", children: [
       /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(ServicesMenu, { onHome, onRefresh }),
       /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("section", { className: "main-panel services-panel", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(PullToRefresh, { scrollRef: listRef, onRefresh, children: items.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "empty-services", children: "Nenhum servi\xE7o atribu\xEDdo a voc\xEA no momento" }) : /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { ref: listRef, className: "agenda-list", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(AnimatePresence, { initial: false, children: items.map((item, index) => {
-        const isCompleting = Boolean(item.detail && `${item.detail.type}:${item.detail.id}` === completingDetailKey);
+        const detailKey = item.detail ? `${item.detail.type}:${item.detail.id}` : "";
+        const isCompleting = Boolean(detailKey && detailKey === completingDetailKey);
+        const isQueueHighlight = Boolean(detailKey && detailKey === queueHighlightDetailKey);
         return /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
           motion.div,
           {
-            className: `agenda-layout-item ${isCompleting ? "is-completing-shell" : ""}`,
+            className: `agenda-layout-item ${isCompleting ? "is-completing-shell" : ""} ${isQueueHighlight ? "is-queue-highlight-shell" : ""}`,
+            "data-queue-highlight": isQueueHighlight ? "true" : void 0,
             layout: true,
             initial: false,
             animate: { opacity: 1, y: 0, scale: 1, marginBottom: 14 },
@@ -58690,6 +58748,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
                 item,
                 index,
                 isCompleting,
+                isQueueHighlight,
                 onOpen: (selected) => selected.detail && onOpenDetails(selected.detail)
               }
             )
@@ -58703,6 +58762,49 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/screens/SignatureScreen.tsx
   var import_react54 = __toESM(require_react(), 1);
   var import_jsx_runtime38 = __toESM(require_jsx_runtime(), 1);
+  var SIGNATURE_EXPORT_WIDTH = 856;
+  var SIGNATURE_EXPORT_HEIGHT = 400;
+  var SIGNATURE_EXPORT_PADDING_X = 80;
+  var SIGNATURE_EXPORT_PADDING_Y = 52;
+  function exportSignatureDataUrl(source) {
+    const sourceContext = source.getContext("2d");
+    if (!sourceContext) return source.toDataURL("image/png");
+    const pixels = sourceContext.getImageData(0, 0, source.width, source.height);
+    let minX = source.width;
+    let minY = source.height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < source.height; y += 1) {
+      for (let x = 0; x < source.width; x += 1) {
+        const alpha2 = pixels.data[(y * source.width + x) * 4 + 3];
+        if (alpha2 > 0) {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    if (maxX < minX || maxY < minY) return source.toDataURL("image/png");
+    const inkWidth = maxX - minX + 1;
+    const inkHeight = maxY - minY + 1;
+    const target = document.createElement("canvas");
+    target.width = SIGNATURE_EXPORT_WIDTH;
+    target.height = SIGNATURE_EXPORT_HEIGHT;
+    const targetContext = target.getContext("2d");
+    if (!targetContext) return source.toDataURL("image/png");
+    const availableWidth = SIGNATURE_EXPORT_WIDTH - SIGNATURE_EXPORT_PADDING_X * 2;
+    const availableHeight = SIGNATURE_EXPORT_HEIGHT - SIGNATURE_EXPORT_PADDING_Y * 2;
+    const scale3 = Math.min(availableWidth / inkWidth, availableHeight / inkHeight);
+    const drawWidth = Math.max(1, Math.round(inkWidth * scale3));
+    const drawHeight = Math.max(1, Math.round(inkHeight * scale3));
+    const drawX = Math.round((SIGNATURE_EXPORT_WIDTH - drawWidth) / 2);
+    const drawY = Math.round((SIGNATURE_EXPORT_HEIGHT - drawHeight) / 2);
+    targetContext.imageSmoothingEnabled = true;
+    targetContext.imageSmoothingQuality = "high";
+    targetContext.drawImage(source, minX, minY, inkWidth, inkHeight, drawX, drawY, drawWidth, drawHeight);
+    return target.toDataURL("image/png");
+  }
   function SignatureScreen({ onBack, onConfirm }) {
     const canvasRef = (0, import_react54.useRef)(null);
     const padWrapRef = (0, import_react54.useRef)(null);
@@ -58832,7 +58934,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         }, 40);
         return;
       }
-      onConfirm(signedRef.current ? canvasRef.current?.toDataURL("image/png") ?? null : null);
+      onConfirm(signedRef.current && canvasRef.current ? exportSignatureDataUrl(canvasRef.current) : null);
     };
     return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(AppShell, { screenLabel: "TelaAssinaturaPassageiro", children: [
       /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(FormMenu, { title: "Assinatura do Passageiro", onBack }),
@@ -60469,6 +60571,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [dataLoading, setDataLoading] = (0, import_react58.useState)(null);
     const [criticalError, setCriticalError] = (0, import_react58.useState)("");
     const [completingDetailKey, setCompletingDetailKey] = (0, import_react58.useState)("");
+    const [queueHighlightDetailKey, setQueueHighlightDetailKey] = (0, import_react58.useState)("");
     const [remoteOperation, setRemoteOperation] = (0, import_react58.useState)(null);
     const [remoteMode, setRemoteMode] = (0, import_react58.useState)(false);
     const [driverContext, setDriverContext] = (0, import_react58.useState)(null);
@@ -60535,6 +60638,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     });
     const finalizeTimerRef = (0, import_react58.useRef)(null);
     const completingClearTimerRef = (0, import_react58.useRef)(null);
+    const queueHighlightTimerRef = (0, import_react58.useRef)(null);
     const voucherDraftTimerRef = (0, import_react58.useRef)(null);
     const nativeCaptureInputRef = (0, import_react58.useRef)(null);
     const nativeCaptureTargetRef = (0, import_react58.useRef)(null);
@@ -61117,6 +61221,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (!detail) return true;
       const firstPendingDetail = findFirstPendingDetail(store.agenda);
       if (!firstPendingDetail || isSameDetail(firstPendingDetail, detail)) return false;
+      const firstPendingKey = `${firstPendingDetail.type}:${firstPendingDetail.id}`;
+      if (queueHighlightTimerRef.current) window.clearTimeout(queueHighlightTimerRef.current);
+      setQueueHighlightDetailKey(firstPendingKey);
+      queueHighlightTimerRef.current = window.setTimeout(() => {
+        setQueueHighlightDetailKey("");
+        queueHighlightTimerRef.current = null;
+      }, 3600);
       setToast("Conclua os itens anteriores da fila antes de prosseguir.");
       setScreen("servicos");
       return true;
@@ -61280,7 +61391,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         }
       }
       const next = cancelDetailLocally(store, detailToCancel, reason);
-      const historyItem = next.history[0];
       setStore(next);
       setReceiveProofs((current) => {
         if (!current[detailToCancel.id]) return current;
@@ -61294,8 +61404,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         delete copy[detailToCancel.id];
         return copy;
       });
-      setSelectedDetail(historyItem.detail ?? null);
-      setScreen("historico");
+      setSelectedDetail(null);
+      setScreen("servicos");
       setToast("Cancelado localmente.");
     };
     const saveVoucherDraft = (fields) => {
@@ -62583,6 +62693,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             onHome: () => setScreen("inicio"),
             onRefresh: refreshLocal,
             completingDetailKey,
+            queueHighlightDetailKey,
             onOpenDetails: (detail) => {
               if (remoteMode) {
                 markDetailViewedRemote(detail).catch((error2) => {

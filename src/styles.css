@@ -5322,7 +5322,7 @@ button:disabled {
   padding: 4px 12px 0;
   border-radius: 0;
   background: transparent;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .services-panel .search-row {
@@ -9523,9 +9523,13 @@ button:disabled {
 .services-panel .agenda-layout-item{width:100%!important;min-width:0!important;flex:0 0 auto!important}
 .services-panel .agenda-layout-item.is-completing-shell{position:relative!important;z-index:6!important;overflow:visible!important;pointer-events:none!important}
 .services-panel .agenda-layout-item .agenda-card{margin-bottom:0!important}
-.services-panel .agenda-list{gap:0!important}
+.services-panel .pull-refresh,.services-panel .pull-refresh-content{overflow:visible!important}
+.services-panel .agenda-list{gap:0!important;overflow-x:visible!important;padding:14px 0 max(28px,calc(env(safe-area-inset-bottom) + 46px))!important}
 .services-panel .agenda-card.is-completing::after{display:none!important}
 .services-panel .agenda-card.is-completing .agenda-hit{display:none!important}
+.services-panel .agenda-layout-item.is-queue-highlight-shell{position:relative!important;z-index:7!important;overflow:visible!important}
+.services-panel .agenda-card.is-queue-highlight{position:relative!important;z-index:1!important}
+.services-panel .agenda-card.is-queue-highlight::before{content:""!important;position:absolute!important;inset:0!important;z-index:3!important;border:2px solid rgb(32,118,231)!important;border-radius:inherit!important;opacity:.42!important;pointer-events:none!important;animation:service-queue-border-pulse 1400ms cubic-bezier(.37,0,.16,1) 3!important;will-change:opacity!important}
 .agenda-complete-layer{position:absolute!important;inset:0!important;z-index:5!important;display:grid!important;place-items:center!important;background:rgba(20,132,83,.46)!important;box-shadow:inset 0 0 0 1px rgba(20,132,83,.24)!important;backdrop-filter:saturate(1.04)!important;animation:service-complete-layer 1650ms cubic-bezier(.32,.72,0,1) forwards!important;will-change:opacity,transform!important}
 .agenda-complete-check{position:relative!important;width:62px!important;height:62px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:rgba(253,253,252,.94)!important;color:rgb(15,107,72)!important;box-shadow:0 14px 30px rgba(0,14,35,.14),inset 0 0 0 1px rgba(253,253,252,.72)!important;animation:service-check-minimal 1650ms cubic-bezier(.32,.72,0,1) forwards!important;will-change:transform,opacity!important}
 .agenda-complete-check::before{display:none!important}
@@ -9537,7 +9541,8 @@ button:disabled {
 @keyframes service-check-css{0%,17%{opacity:0;transform:translate3d(1px,-2px,0) rotate(-45deg) scale(.58)}30%{opacity:1;transform:translate3d(1px,-2px,0) rotate(-45deg) scale(1)}70%{opacity:1;transform:translate3d(1px,-2px,0) rotate(-45deg) scale(1)}82%,100%{opacity:0;transform:translate3d(1px,-2px,0) rotate(-45deg) scale(.88)}}
 @keyframes service-check-icon{0%{opacity:0;transform:scale(.72)}100%{opacity:1;transform:scale(1)}}
 @keyframes service-check-draw{to{stroke-dashoffset:0}}
-@media (prefers-reduced-motion:reduce){.services-panel .agenda-card.is-completing,.services-panel .agenda-card.is-completing .agenda-card-inner,.agenda-complete-layer,.agenda-complete-check,.agenda-complete-check::before{animation:none!important}.services-panel .agenda-card.is-completing{display:none!important}}
+@keyframes service-queue-border-pulse{0%{opacity:.34}48%{opacity:1}100%{opacity:.38}}
+@media (prefers-reduced-motion:reduce){.services-panel .agenda-card.is-completing,.services-panel .agenda-card.is-completing .agenda-card-inner,.agenda-complete-layer,.agenda-complete-check,.agenda-complete-check::before,.services-panel .agenda-card.is-queue-highlight::before{animation:none!important}.services-panel .agenda-card.is-completing{display:none!important}}
 
 /* Pull to refresh - Dataverse screens */
 .pull-refresh {
