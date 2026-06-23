@@ -24,6 +24,10 @@ type BuildPersonalReceiptModelOptions = {
   receiptIdentifier?: string;
 };
 
+function getDefaultPaymentMethod() {
+  return "Cartão de Crédito";
+}
+
 function getField(detail: DetailData | undefined, label: string) {
   return detail?.fields?.find((field) => field.label === label)?.value?.trim() ?? "";
 }
@@ -52,6 +56,10 @@ function formatDate(value: unknown) {
   const date = value ? new Date(String(value)) : null;
   if (!date || Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString(RECEIPT_LANGUAGE.portuguese);
+}
+
+function getTodayDisplayDate() {
+  return formatDate(new Date().toISOString());
 }
 
 function formatDateTime(value: unknown) {
@@ -187,8 +195,8 @@ export function buildPersonalReceiptModel(
     cliente,
     idioma,
     idPag: options.receiptIdentifier?.trim() || getPendingReceiptIdentifier(),
-    dataEmissao: hasDetail ? formatReceiptDateByLanguage(formatDate(new Date().toISOString()), idioma) : "",
-    metodoPagamento: "",
+    dataEmissao: formatReceiptDateByLanguage(getTodayDisplayDate(), idioma),
+    metodoPagamento: getDefaultPaymentMethod(),
     periodo: hasDetail ? buildPeriodText(detail, record) : "",
     trajetos: hasDetail ? buildTrajetos(detail) : "",
     valorTotal,
@@ -199,7 +207,7 @@ export function buildPersonalReceiptModel(
     ...baseModel,
     ...overrides,
     idioma,
-    dataEmissao: formatReceiptDateByLanguage(toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao), idioma),
+    dataEmissao: formatReceiptDateByLanguage(getTodayDisplayDate(), idioma),
     valorTotal: overrides.valorTotal !== undefined ? formatReceiptTotalByLanguage(overrides.valorTotal, idioma) : baseModel.valorTotal
   };
 }
@@ -211,8 +219,8 @@ export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptE
       cliente: "",
       idioma: RECEIPT_LANGUAGE.portuguese,
       valorTotal: "",
-      dataEmissao: "",
-      metodoPagamento: "",
+      dataEmissao: toYmdDateString(getTodayDisplayDate()),
+      metodoPagamento: getDefaultPaymentMethod(),
       observacoes: "-"
     };
   }
@@ -227,8 +235,8 @@ export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptE
     cliente: model.cliente,
     idioma: model.idioma,
     valorTotal: rawValor,
-    dataEmissao: toYmdDateString(model.dataEmissao),
-    metodoPagamento: model.metodoPagamento,
+    dataEmissao: toYmdDateString(getTodayDisplayDate()),
+    metodoPagamento: getDefaultPaymentMethod(),
     observacoes: model.observacoes || "-"
   };
 }

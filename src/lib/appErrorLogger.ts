@@ -355,6 +355,11 @@ function errorFromConsoleArgs(args: unknown[]) {
   return new Error(args.map((item) => (typeof item === "string" ? item : safeStringify(item, 2000))).join(" "));
 }
 
+function isIgnorableWindowErrorMessage(message: unknown) {
+  const normalized = String(message ?? "").trim().toLowerCase();
+  return normalized === "resizeobserver loop completed with undelivered notifications.";
+}
+
 export function installGlobalAppErrorLogger() {
   const runtime = getWindowRuntime();
   if (!runtime) return;
@@ -386,6 +391,7 @@ export function installGlobalAppErrorLogger() {
     }
 
     const errorEvent = event as ErrorEvent;
+    if (isIgnorableWindowErrorMessage(errorEvent.message)) return;
     reportAppError(errorEvent.error ?? errorEvent.message, {
       severity: "critical",
       source: "window.error",

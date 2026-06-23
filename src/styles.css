@@ -1208,7 +1208,9 @@ svg {
 .receipt-preview-card-shell.is-generated {
   min-height: calc(100dvh - 132px);
   border-radius: 22px;
-  background: linear-gradient(180deg, rgb(241, 245, 251) 0%, rgb(232, 238, 247) 100%);
+  background:
+    radial-gradient(circle at top left, rgba(194, 225, 255, 0.44), transparent 34%),
+    linear-gradient(180deg, rgb(247, 249, 252) 0%, rgb(233, 238, 245) 100%);
   box-shadow:
     0 28px 64px rgba(0, 14, 35, 0.12),
     inset 0 0 0 1px rgba(170, 182, 204, 0.2);
@@ -1380,19 +1382,25 @@ svg {
 }
 
 .receipt-preview-expanded-panel.is-visible {
-  max-height: calc(100dvh - 220px);
+  max-height: calc(100dvh - 160px);
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0) scale(1);
-  padding: 18px 18px 20px;
+  padding: 22px 22px 24px;
 }
 
 .receipt-preview-expanded-copy {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 2px 14px;
+  gap: 16px;
+  padding: 0 2px 18px;
+}
+
+.receipt-preview-expanded-copy-main {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
 }
 
 .receipt-preview-expanded-copy span {
@@ -1408,23 +1416,49 @@ svg {
 .receipt-preview-expanded-copy strong {
   color: rgb(0, 14, 35);
   font-family: "Manrope", Arial, sans-serif;
-  font-size: 15px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1;
 }
 
+.receipt-preview-expanded-copy small {
+  color: rgba(0, 14, 35, 0.66);
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.receipt-preview-status-badge {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.12);
+  color: rgb(20, 120, 52);
+  border: 1px solid rgba(22, 163, 74, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .receipt-preview-expanded-stage-shell {
-  min-height: calc(100dvh - 340px);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.76);
+  min-height: calc(100dvh - 300px);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(249, 251, 255, 0.9) 100%);
   box-shadow:
     inset 0 0 0 1px rgba(170, 182, 204, 0.2),
-    0 18px 40px rgba(0, 14, 35, 0.08);
+    0 22px 44px rgba(0, 14, 35, 0.1);
   overflow: hidden;
 }
 
 .receipt-preview-expanded-stage {
-  padding: 22px 18px 14px;
+  padding: 28px 22px 18px;
 }
 
 .receipt-preview-expanded-panel.is-visible .receipt-preview-expanded-stage-shell {
@@ -1432,10 +1466,11 @@ svg {
 }
 
 .receipt-preview-generated-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
 }
 
 .receipt-preview-generated-action {
@@ -1468,9 +1503,13 @@ svg {
   color: rgb(255, 255, 255);
 }
 
-.receipt-preview-generated-action.is-secondary {
-  background: rgba(255, 255, 255, 0.82);
-  color: rgb(0, 14, 35);
+.receipt-preview-generated-helper {
+  color: rgba(0, 14, 35, 0.62);
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
 }
 
 .receipt-scroll {
@@ -2104,16 +2143,9 @@ svg {
     min-height: calc(100dvh - 118px);
   }
 
-  .receipt-preview-inline.is-generated {
-    height: 82px;
-    min-height: 82px;
-    max-height: 82px;
-    padding: 10px 14px;
-  }
-
   .receipt-preview-expanded-panel.is-visible {
-    max-height: calc(100dvh - 198px);
-    padding: 14px 14px 16px;
+    max-height: calc(100dvh - 140px);
+    padding: 16px 16px 18px;
   }
 
   .receipt-preview-expanded-copy {
@@ -2122,8 +2154,12 @@ svg {
     gap: 6px;
   }
 
+  .receipt-preview-status-badge {
+    align-self: flex-start;
+  }
+
   .receipt-preview-expanded-stage-shell {
-    min-height: calc(100dvh - 320px);
+    min-height: calc(100dvh - 286px);
     border-radius: 16px;
   }
 
@@ -2132,7 +2168,12 @@ svg {
   }
 
   .receipt-preview-generated-actions {
-    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .receipt-preview-generated-helper {
+    text-align: left;
   }
 
   .receipt-success-card {

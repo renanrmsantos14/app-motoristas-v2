@@ -1135,10 +1135,14 @@ svg {
   min-height: calc(100dvh - 132px);
   border-radius: 22px;
   background:
+    radial-gradient(
+      circle at top left,
+      rgba(194, 225, 255, 0.44),
+      transparent 34%),
     linear-gradient(
       180deg,
-      rgb(241, 245, 251) 0%,
-      rgb(232, 238, 247) 100%);
+      rgb(247, 249, 252) 0%,
+      rgb(233, 238, 245) 100%);
   box-shadow: 0 28px 64px rgba(0, 14, 35, 0.12), inset 0 0 0 1px rgba(170, 182, 204, 0.2);
 }
 .receipt-preview-inline {
@@ -1294,18 +1298,23 @@ svg {
     padding 320ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .receipt-preview-expanded-panel.is-visible {
-  max-height: calc(100dvh - 220px);
+  max-height: calc(100dvh - 160px);
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0) scale(1);
-  padding: 18px 18px 20px;
+  padding: 22px 22px 24px;
 }
 .receipt-preview-expanded-copy {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 2px 14px;
+  gap: 16px;
+  padding: 0 2px 18px;
+}
+.receipt-preview-expanded-copy-main {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
 }
 .receipt-preview-expanded-copy span {
   color: rgba(0, 14, 35, 0.58);
@@ -1325,28 +1334,63 @@ svg {
     "Manrope",
     Arial,
     sans-serif;
-  font-size: 15px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1;
 }
+.receipt-preview-expanded-copy small {
+  color: rgba(0, 14, 35, 0.66);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.receipt-preview-status-badge {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.12);
+  color: rgb(20, 120, 52);
+  border: 1px solid rgba(22, 163, 74, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .receipt-preview-expanded-stage-shell {
-  min-height: calc(100dvh - 340px);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.76);
-  box-shadow: inset 0 0 0 1px rgba(170, 182, 204, 0.2), 0 18px 40px rgba(0, 14, 35, 0.08);
+  min-height: calc(100dvh - 300px);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(249, 251, 255, 0.9) 100%);
+  box-shadow: inset 0 0 0 1px rgba(170, 182, 204, 0.2), 0 22px 44px rgba(0, 14, 35, 0.1);
   overflow: hidden;
 }
 .receipt-preview-expanded-stage {
-  padding: 22px 18px 14px;
+  padding: 28px 22px 18px;
 }
 .receipt-preview-expanded-panel.is-visible .receipt-preview-expanded-stage-shell {
   animation: receiptGeneratedStageIn 420ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .receipt-preview-generated-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
 }
 .receipt-preview-generated-action {
   min-height: 52px;
@@ -1378,9 +1422,16 @@ svg {
   border-color: rgb(0, 14, 35);
   color: rgb(255, 255, 255);
 }
-.receipt-preview-generated-action.is-secondary {
-  background: rgba(255, 255, 255, 0.82);
-  color: rgb(0, 14, 35);
+.receipt-preview-generated-helper {
+  color: rgba(0, 14, 35, 0.62);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
 }
 .receipt-scroll {
   width: 100%;
@@ -1969,30 +2020,31 @@ svg {
   .receipt-preview-card-shell.is-generated {
     min-height: calc(100dvh - 118px);
   }
-  .receipt-preview-inline.is-generated {
-    height: 82px;
-    min-height: 82px;
-    max-height: 82px;
-    padding: 10px 14px;
-  }
   .receipt-preview-expanded-panel.is-visible {
-    max-height: calc(100dvh - 198px);
-    padding: 14px 14px 16px;
+    max-height: calc(100dvh - 140px);
+    padding: 16px 16px 18px;
   }
   .receipt-preview-expanded-copy {
     align-items: flex-start;
     flex-direction: column;
     gap: 6px;
   }
+  .receipt-preview-status-badge {
+    align-self: flex-start;
+  }
   .receipt-preview-expanded-stage-shell {
-    min-height: calc(100dvh - 320px);
+    min-height: calc(100dvh - 286px);
     border-radius: 16px;
   }
   .receipt-preview-expanded-stage {
     padding: 16px 10px 8px;
   }
   .receipt-preview-generated-actions {
-    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .receipt-preview-generated-helper {
+    text-align: left;
   }
   .receipt-success-card {
     padding: 12px;
@@ -11447,7 +11499,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.374","builtAt":"2026-06-23T12:43:01.452Z","builtAtLabel":"23/06/2026, 09:43"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.397","builtAt":"2026-06-23T16:55:14.522Z","builtAtLabel":"23/06/2026, 13:55"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -12543,7 +12595,7 @@ select,
             }
             return dispatcher.useContext(Context);
           }
-          function useState25(initialState) {
+          function useState26(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -12571,7 +12623,7 @@ select,
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
-          function useMemo17(create, deps) {
+          function useMemo18(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useMemo(create, deps);
           }
@@ -13343,10 +13395,10 @@ select,
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect4;
           exports.useLayoutEffect = useLayoutEffect7;
-          exports.useMemo = useMemo17;
+          exports.useMemo = useMemo18;
           exports.useReducer = useReducer;
           exports.useRef = useRef25;
-          exports.useState = useState25;
+          exports.useState = useState26;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -34526,6 +34578,46 @@ select,
     }
   ];
 
+  // src/app/agendaVisibility.ts
+  var CANCELED_AGENDA_GRACE_MS = 20 * 60 * 1e3;
+  function parseAgendaFieldDate(value) {
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    if (!match) return null;
+    const [, day, month, year, hour, minute] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
+  }
+  function getServiceDateFromAgendaItem(item) {
+    const fieldValue = item.detail?.fields.find((field) => {
+      const label = field.label.toLowerCase();
+      return label.includes("data") && (label.includes("horario") || label.includes("hor\xE1rio"));
+    })?.value;
+    return fieldValue ? parseAgendaFieldDate(fieldValue) : null;
+  }
+  function getRelativeDateFromTimeLabel(item, now2) {
+    if (!item.time) return null;
+    const timeMatch = item.time.match(/(\d{2}):(\d{2})/);
+    if (!timeMatch) return null;
+    const [, hour, minute] = timeMatch;
+    const label = item.time.toUpperCase();
+    const date = new Date(now2);
+    if (label.includes("AMANH")) date.setDate(date.getDate() + 1);
+    if (label.includes("ONTEM")) date.setDate(date.getDate() - 1);
+    date.setHours(Number(hour), Number(minute), 0, 0);
+    return date;
+  }
+  function getAgendaItemStartDate(item, now2 = Date.now()) {
+    return getServiceDateFromAgendaItem(item) ?? getRelativeDateFromTimeLabel(item, now2);
+  }
+  function shouldShowAgendaItemInGallery(item, now2 = Date.now()) {
+    if (item.tipo === "HEADER" || !item.canceled) return true;
+    const startDate = getAgendaItemStartDate(item, now2);
+    if (!startDate) return true;
+    return now2 < startDate.getTime() + CANCELED_AGENDA_GRACE_MS;
+  }
+  function filterAgendaGalleryItems(items, now2 = Date.now()) {
+    return items.filter((item) => shouldShowAgendaItemInGallery(item, now2));
+  }
+
   // src/lib/fieldLookup.ts
   var suspiciousMojibakePattern = /[\u00c2\u00c3\ufffd]/;
   function decodeMojibakeOnce(value) {
@@ -34828,6 +34920,10 @@ select,
     if (firstError) return firstError;
     return new Error(args.map((item) => typeof item === "string" ? item : safeStringify(item, 2e3)).join(" "));
   }
+  function isIgnorableWindowErrorMessage(message) {
+    const normalized = String(message ?? "").trim().toLowerCase();
+    return normalized === "resizeobserver loop completed with undelivered notifications.";
+  }
   function installGlobalAppErrorLogger() {
     const runtime = getWindowRuntime();
     if (!runtime) return;
@@ -34852,6 +34948,7 @@ select,
         return;
       }
       const errorEvent = event;
+      if (isIgnorableWindowErrorMessage(errorEvent.message)) return;
       reportAppError(errorEvent.error ?? errorEvent.message, {
         severity: "critical",
         source: "window.error",
@@ -35075,7 +35172,7 @@ select,
     return Boolean(left && left.id === right.id && left.type === right.type);
   }
   function findFirstPendingDetail(agenda) {
-    return agenda.find((item) => item.tipo !== "HEADER" && item.detail)?.detail;
+    return agenda.find((item) => shouldShowAgendaItemInGallery(item) && item.tipo !== "HEADER" && !item.canceled && item.detail)?.detail;
   }
   function initialStore() {
     return {
@@ -35644,6 +35741,12 @@ select,
   var VEHICLE_STATUS = {
     ativo: 202410001
   };
+  var ACTIVE_VEHICLE_FILTER = [
+    "statecode eq 0",
+    "statuscode eq 1",
+    `cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo}`,
+    `new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}`
+  ].join(" and ");
   var COLLISION_DATAVERSE_ATTACHMENT_TYPE = {
     cena: 1e8,
     danoBetinhos: 100000001,
@@ -35714,7 +35817,7 @@ select,
     gerarVoucher: "VITE_FLOW_GERAR_VOUCHER_URL",
     salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL"
   };
-  var DEV_DATAVERSE_URL = "https://appbetinhosdev.crm2.dynamics.com/";
+  var DEV_DATAVERSE_URL = "https://org23b93544.crm2.dynamics.com/";
   var FLOW_DATAVERSE_ENVIRONMENT_VARIABLES = {
     [FLOW_URLS.gerarVoucher]: "new_FlowURLFlowGerarVoucherAppMotoristasv2",
     [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive"
@@ -35725,6 +35828,13 @@ select,
   var EXCHANGE_SELECT = "$select=cr40f_trocasdecarroid,cr40f_id,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,_cr40f_motorista1_value,_cr40f_motorista2_value,_cr40f_veiculo1antesdatroca_value,_cr40f_veiculo2antesdatroca_value,cr40f_observacao,cr40f_statusdatroca,new_tipodetroca,new_concluidomotorista1,new_concluidomotorista2,new_observacaodomotorista1,new_observacaodomotorista2";
   var DV_LOG_PREFIX = "[AppMotoristas:Dataverse]";
   var lastRuntimeLogKey = "";
+  function isLocalhostRuntime() {
+    if (typeof window === "undefined") return false;
+    return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+  }
+  function shouldUseLocalFrontendFallback() {
+    return isLocalhostRuntime() || !getWindowXrm()?.WebApi;
+  }
   var flowUrlCache = /* @__PURE__ */ new Map();
   function dataverseLog(message, data) {
     if (data === void 0) {
@@ -35804,6 +35914,10 @@ select,
     }
   }
   function hasDataverseRuntime() {
+    if (shouldUseLocalFrontendFallback()) {
+      dataverseLog("Frontend local/fallback detectado. Dataverse desativado para uso sem Xrm.");
+      return false;
+    }
     const hasRuntime = Boolean(getWindowXrm()?.WebApi);
     dataverseLog(hasRuntime ? "Runtime Xrm.WebApi detectado." : "Runtime Xrm.WebApi nao encontrado. Modo local/fallback.");
     return hasRuntime;
@@ -35956,6 +36070,10 @@ select,
     }
   }
   async function getCurrentUserEmail() {
+    if (shouldUseLocalFrontendFallback()) {
+      dataverseLog("Frontend local/fallback sem consulta de usuario Dataverse.");
+      return "";
+    }
     const xrm = getWindowXrm();
     const userId = cleanGuid2(xrm?.Utility?.getGlobalContext?.().userSettings?.userId ?? "");
     dataverseLog("Usuario atual detectado.", { userId });
@@ -35967,6 +36085,20 @@ select,
   }
   async function getDriverContext() {
     const email = await getCurrentUserEmail();
+    if (!email && shouldUseLocalFrontendFallback()) {
+      dataverseLog("Fallback de motorista local ativado para frontend sem Xrm.");
+      return {
+        id: "localhost-driver",
+        email: "",
+        fullName: "Localhost",
+        funcionario: {
+          cr40f_funcionariosid: "localhost-driver",
+          cr40f_nomecompleto: "Localhost",
+          cr40f_emailmicrosoft: "",
+          cr40f_gerarrecibopersonalizado: true
+        }
+      };
+    }
     if (!email) throw new Error("Email Microsoft do usuario atual nao foi encontrado no Dataverse.");
     const result = await retrieveMultiple(
       DATAVERSE.funcionarios,
@@ -35996,13 +36128,19 @@ select,
     const modelo = [record.cr40f_marca, record.cr40f_modelo].map((value) => String(value ?? "").trim()).filter(Boolean).join(" ");
     return [placa, modelo].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
   }
+  function buildMaintenanceRequestVehiclesQuery(options = {}) {
+    const query = [
+      "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
+    ];
+    if (options.onlyOwnCategory) {
+      query.push(`$filter=${ACTIVE_VEHICLE_FILTER}`);
+    }
+    query.push("$orderby=cr40f_placa asc", "$top=200");
+    return query.join("&");
+  }
   async function loadMaintenanceRequestVehiclesRemote(driver, options = {}) {
     const currentVehicleId = getDriverCurrentVehicleId(driver);
-    const categoryFilter = options.onlyOwnCategory ? `&$filter=cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}` : "";
-    const result = await retrieveMultiple(
-      DATAVERSE.veiculos,
-      `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`
-    );
+    const result = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestVehiclesQuery(options));
     return result.entities.map((record) => {
       const id3 = cleanODataGuid(record.cr40f_veiculosid);
       return {
@@ -36533,7 +36671,9 @@ select,
   function normalizeReceiptIdentifier(value) {
     const trimmed = String(value ?? "").trim();
     if (!trimmed) return "";
-    return /^R-/i.test(trimmed) ? trimmed.replace(/^r-/i, "R-") : `R-${trimmed.replace(/^[-\s]+/, "")}`;
+    const match = trimmed.match(/^R\s*-\s*-*\s*(\d+)$/i) ?? trimmed.match(/^(\d+)$/);
+    if (match?.[1]) return `R-${match[1].padStart(4, "0")}`;
+    return /^R-/i.test(trimmed) ? trimmed.replace(/^r-/i, "R-") : trimmed;
   }
   async function createReceiptRecordRemote({
     detail,
@@ -41576,35 +41716,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const date = value instanceof Date ? value : new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   }
-  function getServiceDateFromAgendaItem(item) {
-    const fieldValue = item.detail?.fields.find((field) => {
-      const label = field.label.toLowerCase();
-      return label.includes("data") && (label.includes("hor\xE1rio") || label.includes("horario"));
-    })?.value;
-    if (!fieldValue) return null;
-    const match = fieldValue.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-    if (!match) return null;
-    const [, day, month, year, hour, minute] = match;
-    return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
-  }
-  function getRelativeDateFromTimeLabel(item, now2) {
-    if (!item.time) return null;
-    const timeMatch = item.time.match(/(\d{2}):(\d{2})/);
-    if (!timeMatch) return null;
-    const [, hour, minute] = timeMatch;
-    const label = item.time.toUpperCase();
-    const date = new Date(now2);
-    if (label.includes("AMANH")) {
-      date.setDate(date.getDate() + 1);
-    }
-    date.setHours(Number(hour), Number(minute), 0, 0);
-    return date;
-  }
   function resolveAgendaDate(item, now2) {
-    const actualDate = getServiceDateFromAgendaItem(item);
-    if (actualDate && actualDate.getTime() >= now2) return actualDate;
-    const relativeDate = getRelativeDateFromTimeLabel(item, now2);
-    if (relativeDate && relativeDate.getTime() >= now2) return relativeDate;
+    const date = getAgendaItemStartDate(item, now2);
+    if (date && date.getTime() >= now2) return date;
     return null;
   }
   function formatTimeUntil(date, now2) {
@@ -41619,10 +41733,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function getNextServiceItem(props, now2) {
     const directDate = getServiceDate(props.nextServiceAt ?? props.proximoServicoEm);
     if (directDate) return { date: directDate, item: null };
-    const serviceDates = props.services?.filter((service) => service.tipo !== "HEADER" && !service.canceled && service.detail).map((item) => {
+    const serviceDates = filterAgendaGalleryItems(props.services ?? [], now2).filter((service) => service.tipo !== "HEADER" && !service.canceled && service.detail).map((item) => {
       const date = resolveAgendaDate(item, now2);
       return { item, date };
-    }).filter((service) => Boolean(service.date)).sort((a, b) => a.date.getTime() - b.date.getTime()) ?? [];
+    }).filter((service) => Boolean(service.date)).sort((a, b) => a.date.getTime() - b.date.getTime());
     return serviceDates[0] ?? null;
   }
   function isToday(date, now2) {
@@ -41633,13 +41747,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const timeLabel = item.time?.toUpperCase() ?? "";
     if (timeLabel.includes("HOJE")) return true;
     if (timeLabel.includes("AMANH")) return false;
-    const date = getServiceDateFromAgendaItem(item);
+    const date = getAgendaItemStartDate(item, now2);
     return Boolean(date && isToday(date, now2));
   }
   function getTodayAgendaCount(services, now2) {
-    return services?.filter((service) => {
+    return filterAgendaGalleryItems(services ?? [], now2).filter((service) => {
       return service.tipo !== "HEADER" && !service.canceled && service.detail && isTodayAgendaItem(service, now2);
-    }).length ?? 0;
+    }).length;
   }
   function ModuleIcon({ name }) {
     if (name === "services") {
@@ -42219,6 +42333,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   var QrCode_Avalia_o_default = "data:image/png;base64,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";
 
   // src/lib/personalReceipt.ts
+  function getDefaultPaymentMethod() {
+    return "Cart\xE3o de Cr\xE9dito";
+  }
   function getField(detail, label) {
     return detail?.fields?.find((field) => field.label === label)?.value?.trim() ?? "";
   }
@@ -42233,6 +42350,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const date = value ? new Date(String(value)) : null;
     if (!date || Number.isNaN(date.getTime())) return "";
     return date.toLocaleDateString(RECEIPT_LANGUAGE.portuguese);
+  }
+  function getTodayDisplayDate() {
+    return formatDate((/* @__PURE__ */ new Date()).toISOString());
   }
   function formatDateTime(value) {
     const date = value ? new Date(String(value)) : null;
@@ -42283,19 +42403,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (Number.isNaN(date.getTime())) return "";
     return date.toISOString().slice(0, 10);
   }
-  function toDisplayDateString(value) {
-    const trimmed = value.trim();
-    if (!trimmed) return "";
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return trimmed;
-    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
-    if (isoMatch) {
-      const [year, month, day] = isoMatch.slice(1);
-      return `${day}/${month}/${year}`;
-    }
-    const date = new Date(trimmed);
-    if (Number.isNaN(date.getTime())) return trimmed;
-    return date.toLocaleDateString("pt-BR");
-  }
   function parseReceiptTotalInput(value) {
     const trimmed = value.trim();
     if (!trimmed) return null;
@@ -42330,8 +42437,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       cliente,
       idioma,
       idPag: options.receiptIdentifier?.trim() || getPendingReceiptIdentifier(),
-      dataEmissao: hasDetail ? formatReceiptDateByLanguage(formatDate((/* @__PURE__ */ new Date()).toISOString()), idioma) : "",
-      metodoPagamento: "",
+      dataEmissao: formatReceiptDateByLanguage(getTodayDisplayDate(), idioma),
+      metodoPagamento: getDefaultPaymentMethod(),
       periodo: hasDetail ? buildPeriodText(detail, record) : "",
       trajetos: hasDetail ? buildTrajetos(detail) : "",
       valorTotal,
@@ -42341,7 +42448,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       ...baseModel,
       ...overrides,
       idioma,
-      dataEmissao: formatReceiptDateByLanguage(toDisplayDateString(overrides.dataEmissao ?? baseModel.dataEmissao), idioma),
+      dataEmissao: formatReceiptDateByLanguage(getTodayDisplayDate(), idioma),
       valorTotal: overrides.valorTotal !== void 0 ? formatReceiptTotalByLanguage(overrides.valorTotal, idioma) : baseModel.valorTotal
     };
   }
@@ -42352,8 +42459,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         cliente: "",
         idioma: RECEIPT_LANGUAGE.portuguese,
         valorTotal: "",
-        dataEmissao: "",
-        metodoPagamento: "",
+        dataEmissao: toYmdDateString(getTodayDisplayDate()),
+        metodoPagamento: getDefaultPaymentMethod(),
         observacoes: "-"
       };
     }
@@ -42365,8 +42472,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       cliente: model.cliente,
       idioma: model.idioma,
       valorTotal: rawValor,
-      dataEmissao: toYmdDateString(model.dataEmissao),
-      metodoPagamento: model.metodoPagamento,
+      dataEmissao: toYmdDateString(getTodayDisplayDate()),
+      metodoPagamento: getDefaultPaymentMethod(),
       observacoes: model.observacoes || "-"
     };
   }
@@ -58017,8 +58124,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (!draft.cliente.trim()) errors.cliente = "Informe o cliente.";
     if (!draft.valorTotal.trim()) errors.valorTotal = "Informe o total.";
     else if (!/^\d+(?:[.,]\d{1,2})?$/.test(draft.valorTotal.trim())) errors.valorTotal = "Informe um valor numerico valido.";
-    if (!draft.dataEmissao.trim()) errors.dataEmissao = "Informe a data de emiss\xE3o.";
-    if (!draft.metodoPagamento.trim()) errors.metodoPagamento = "Informe o m\xE9todo de pagamento.";
     return errors;
   }
   function displayReceiptValue2(value) {
@@ -58043,7 +58148,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     generateState,
     receiptLink,
     clienteOptions = [],
-    metodoPagamentoOptions = [],
     onChange,
     onGenerate
   }) {
@@ -58114,32 +58218,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               autoComplete: "off",
               value: draft.valorTotal,
               onChange: (event) => onChange("valorTotal", sanitizeReceiptTotalInput(event.target.value))
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
-            TextInputField,
-            {
-              fieldClassName: `finalize-input-block receipt-editor-block`,
-              label: "Data de emiss\xE3o",
-              required: true,
-              error: errors.dataEmissao,
-              type: "date",
-              value: draft.dataEmissao,
-              onChange: (event) => onChange("dataEmissao", event.target.value)
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
-            SelectField,
-            {
-              fieldClassName: `finalize-input-block receipt-editor-block receipt-editor-block-span-2`,
-              label: "M\xE9todo de pagamento",
-              required: true,
-              error: errors.metodoPagamento,
-              value: draft.metodoPagamento,
-              options: metodoPagamentoOptions.map((option) => ({ value: option, label: option })),
-              placeholder: "Digite ou escolha um m\xE9todo",
-              ariaLabel: "Selecionar m\xE9todo de pagamento",
-              onChange: (value) => onChange("metodoPagamento", value)
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
@@ -58331,11 +58409,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const copy = getReceiptCopy(model.idioma);
     const isGenerated = Boolean(receiptLink);
     return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("article", { className: `receipt-preview-card-shell ${isGenerated ? "is-generated" : ""}`.trim(), children: [
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(
+      !isGenerated ? /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(
         "button",
         {
           type: "button",
-          className: `receipt-card-shell receipt-preview-card receipt-preview-inline ${isGenerated ? "is-generated" : ""}`.trim(),
+          className: "receipt-card-shell receipt-preview-card receipt-preview-inline",
           onClick: onExpand,
           "aria-label": copy.expandPreviewAria,
           children: [
@@ -58346,11 +58424,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-mini-shell", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-mini", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptDocument, { model, documentRef }) }) })
           ]
         }
-      ),
+      ) : null,
       /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: `receipt-preview-expanded-panel ${isGenerated ? "is-visible" : ""}`.trim(), "aria-hidden": !isGenerated, children: [
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-expanded-copy", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { children: "Recibo gerado" }),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("strong", { children: displayReceiptValue2(model.idPag) })
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-expanded-copy-main", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { children: "Recibo gerado" }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("strong", { children: displayReceiptValue2(model.idPag) }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("small", { children: "PDF pronto para abrir. Toque no documento para ampliar." })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-status-badge", children: "Pronto" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-expanded-stage-shell", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
           ReceiptScaledCanvas,
@@ -58363,8 +58445,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           }
         ) }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-generated-actions", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("a", { className: "receipt-preview-generated-action is-primary", href: receiptLink ?? "#", target: "_blank", rel: "noreferrer", children: "Abrir link" }),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("button", { type: "button", className: "receipt-preview-generated-action is-secondary", children: "Enviar por email" })
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("a", { className: "receipt-preview-generated-action is-primary", href: receiptLink ?? "#", target: "_blank", rel: "noreferrer", children: "Abrir PDF" }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "receipt-preview-generated-helper", children: "Link pronto e recibo salvo." })
         ] })
       ] })
     ] });
@@ -58551,7 +58633,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             errors: errors ?? {},
             generateState: generateState ?? "idle",
             clienteOptions,
-            metodoPagamentoOptions,
             receiptLink,
             onChange: onDraftChange,
             onGenerate
@@ -58577,19 +58658,33 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [generateState, setGenerateState] = (0, import_react51.useState)("idle");
     const receiptDocumentRef = (0, import_react51.useRef)(null);
     const receiptPdfCacheRef = (0, import_react51.useRef)(null);
+    const localReceiptLinkRef = (0, import_react51.useRef)(null);
     const model = (0, import_react51.useMemo)(
       () => buildPersonalReceiptModel(detail, draft, generatedIdentifier ? { receiptIdentifier: generatedIdentifier } : {}),
       [detail, draft, generatedIdentifier]
     );
+    const clearLocalReceiptLink = () => {
+      if (localReceiptLinkRef.current) {
+        URL.revokeObjectURL(localReceiptLinkRef.current);
+        localReceiptLinkRef.current = null;
+      }
+    };
+    const resetReceiptLink = () => {
+      clearLocalReceiptLink();
+      setReceiptLink(null);
+    };
     (0, import_react51.useEffect)(() => {
       setDraft(buildPersonalReceiptDraft(detail));
       setErrors({});
       setToast(null);
-      setReceiptLink(null);
+      resetReceiptLink();
       setGeneratedIdentifier("");
       setGenerateState("idle");
       receiptPdfCacheRef.current = null;
     }, [detail]);
+    (0, import_react51.useEffect)(() => () => {
+      clearLocalReceiptLink();
+    }, []);
     (0, import_react51.useEffect)(() => {
       if (Object.keys(validateReceiptDraft(draft)).length > 0) {
         receiptPdfCacheRef.current = null;
@@ -58613,7 +58708,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       const nextValue = field === "valorTotal" ? sanitizeReceiptTotalInput(value) : value;
       setDraft((current) => ({ ...current, [field]: nextValue }));
       setErrors((current) => ({ ...current, [field]: void 0 }));
-      setReceiptLink(null);
+      resetReceiptLink();
       setGeneratedIdentifier("");
     };
     const ensureValidDraft = () => {
@@ -58629,6 +58724,24 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setGenerateState("loading");
       onProgress?.({ message: "Gerando recibo personalizado", phase: "loading" });
       void (async () => {
+        if (!hasDataverseRuntime()) {
+          onProgress?.({ message: "Montando recibo local para localhost", phase: "loading" });
+          const cacheKey = JSON.stringify(model);
+          const cachedBlob = receiptPdfCacheRef.current?.key === cacheKey ? receiptPdfCacheRef.current.blob : null;
+          const blob2 = cachedBlob ?? await generateReceiptPdfBlob(model);
+          receiptPdfCacheRef.current = { key: cacheKey, blob: blob2 };
+          const localLink = URL.createObjectURL(blob2);
+          clearLocalReceiptLink();
+          localReceiptLinkRef.current = localLink;
+          setGeneratedIdentifier(model.idPag);
+          setReceiptLink(localLink);
+          setGenerateState("success");
+          onProgress?.({ message: "Recibo local pronto para abertura.", phase: "success" });
+          setToast(nextToast("Recibo gerado localmente. Abra o PDF.", "success"));
+          window.setTimeout(() => setGenerateState("idle"), 1400);
+          window.setTimeout(() => onProgress?.(null), 1600);
+          return;
+        }
         const prepared = await createReceiptRecordRemote({
           detail,
           model,
@@ -58699,7 +58812,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     idioma: "pt-BR",
     idPag: "R-0012",
     dataEmissao: "15/06/2026",
-    metodoPagamento: "Pedido de Compra",
+    metodoPagamento: "Cart\xE3o de Cr\xE9dito",
     periodo: "15/06/2026 08:30",
     trajetos: "Hotel -> Tenaris\nTenaris -> Aeroporto de Guarulhos",
     valorTotal: "R$ 1.020,50",
@@ -58714,15 +58827,21 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
   function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", queueHighlightDetailKey = "", onOpenDetails }) {
     const listRef = (0, import_react52.useRef)(null);
+    const [now2, setNow] = (0, import_react52.useState)(() => Date.now());
+    const visibleItems = (0, import_react52.useMemo)(() => filterAgendaGalleryItems(items, now2), [items, now2]);
     (0, import_react52.useEffect)(() => {
       if (!queueHighlightDetailKey) return;
       const list = listRef.current;
       const target = list?.querySelector("[data-queue-highlight='true']");
       target?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, [queueHighlightDetailKey]);
+    (0, import_react52.useEffect)(() => {
+      const intervalId = window.setInterval(() => setNow(Date.now()), 6e4);
+      return () => window.clearInterval(intervalId);
+    }, []);
     return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(AppShell, { screenLabel: "TelaServi\xE7os", children: [
       /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(ServicesMenu, { onHome, onRefresh }),
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("section", { className: "main-panel services-panel", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(PullToRefresh, { scrollRef: listRef, onRefresh, children: items.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "empty-services", children: "Nenhum servi\xE7o atribu\xEDdo a voc\xEA no momento" }) : /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { ref: listRef, className: "agenda-list", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(AnimatePresence, { initial: false, children: items.map((item, index) => {
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("section", { className: "main-panel services-panel", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(PullToRefresh, { scrollRef: listRef, onRefresh, children: visibleItems.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "empty-services", children: "Nenhum servi\xE7o atribu\xEDdo a voc\xEA no momento" }) : /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { ref: listRef, className: "agenda-list", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(AnimatePresence, { initial: false, children: visibleItems.map((item, index) => {
         const detailKey = item.detail ? `${item.detail.type}:${item.detail.id}` : "";
         const isCompleting = Boolean(detailKey && detailKey === completingDetailKey);
         const isQueueHighlight = Boolean(detailKey && detailKey === queueHighlightDetailKey);
@@ -60543,7 +60662,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const previewHashActive = (0, import_react58.useMemo)(() => /^#\/?preview(?:[/?]|$)/i.test(window.location.hash), []);
     const isButtonPreviewMode = devMode === "preview" || previewHashActive;
     const isReceiptPreviewMode = devMode === "recibo";
-    const isLocalhostRuntime = (0, import_react58.useMemo)(() => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname), []);
+    const isLocalhostRuntime2 = (0, import_react58.useMemo)(() => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname), []);
     const isIosRuntime = (0, import_react58.useMemo)(() => {
       if (typeof navigator === "undefined") return false;
       const userAgent = navigator.userAgent ?? "";
@@ -61019,7 +61138,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     }, [selectedDetail, store.photos]);
     const receiptDetail = receiptEntrySource === "service" ? selectedDetail ?? void 0 : void 0;
     const screenMotion = getScreenMotion(screen, previousScreenRef.current);
-    const canGeneratePersonalReceipt = isTrueLike3(driverContext?.funcionario?.cr40f_gerarrecibopersonalizado) || isLocalhostRuntime;
+    const canGeneratePersonalReceipt = isTrueLike3(driverContext?.funcionario?.cr40f_gerarrecibopersonalizado) || isLocalhostRuntime2;
     (0, import_react58.useEffect)(() => {
       previousScreenRef.current = screen;
     }, [screen]);
@@ -61095,13 +61214,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         return;
       }
       if (!remoteMode) {
-        setReceiptClienteOptions(isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
+        setReceiptClienteOptions(isLocalhostRuntime2 ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
         return;
       }
       let alive = true;
       loadReceiptClienteOptionsRemote().then((clientes) => {
         if (!alive) return;
-        setReceiptClienteOptions(clientes.length ? clientes : isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
+        setReceiptClienteOptions(clientes.length ? clientes : isLocalhostRuntime2 ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
       }).catch((error2) => {
         if (!alive) return;
         setDataLoadingState(null);
@@ -61112,12 +61231,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           phase: "receipt-form",
           screen
         });
-        setReceiptClienteOptions(isLocalhostRuntime ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
+        setReceiptClienteOptions(isLocalhostRuntime2 ? LOCAL_RECEIPT_CLIENT_MOCKS : []);
       });
       return () => {
         alive = false;
       };
-    }, [isLocalhostRuntime, remoteMode, screen]);
+    }, [isLocalhostRuntime2, remoteMode, screen]);
     const show = (node) => /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)(import_jsx_runtime44.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(AnimatePresence, { mode: "wait", children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
         motion.div,

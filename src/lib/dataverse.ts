@@ -126,6 +126,13 @@ const VEHICLE_STATUS = {
   ativo: 202410001
 } as const;
 
+const ACTIVE_VEHICLE_FILTER = [
+  "statecode eq 0",
+  "statuscode eq 1",
+  `cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo}`,
+  `new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}`
+].join(" and ");
+
 const COLLISION_DATAVERSE_ATTACHMENT_TYPE: Record<CollisionPhotoKind, number> = {
   cena: 100000000,
   danoBetinhos: 100000001,
@@ -201,7 +208,7 @@ const FLOW_URLS = {
   salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL"
 } as const;
 
-const DEV_DATAVERSE_URL = "https://appbetinhosdev.crm2.dynamics.com/";
+const DEV_DATAVERSE_URL = "https://org23b93544.crm2.dynamics.com/";
 
 const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> = {
   [FLOW_URLS.gerarVoucher]: "new_FlowURLFlowGerarVoucherAppMotoristasv2",
@@ -221,6 +228,15 @@ const EXCHANGE_SELECT =
 
 const DV_LOG_PREFIX = "[AppMotoristas:Dataverse]";
 let lastRuntimeLogKey = "";
+
+function isLocalhostRuntime() {
+  if (typeof window === "undefined") return false;
+  return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+}
+
+function shouldUseLocalFrontendFallback() {
+  return isLocalhostRuntime() || !getWindowXrm()?.WebApi;
+}
 const flowUrlCache = new Map<string, string>();
 
 function dataverseLog(message: string, data?: unknown) {
@@ -305,6 +321,10 @@ function getWindowXrm(): XrmLike | null {
 }
 
 export function hasDataverseRuntime() {
+  if (shouldUseLocalFrontendFallback()) {
+    dataverseLog("Frontend local/fallback detectado. Dataverse desativado para uso sem Xrm.");
+    return false;
+  }
   const hasRuntime = Boolean(getWindowXrm()?.WebApi);
   dataverseLog(hasRuntime ? "Runtime Xrm.WebApi detectado." : "Runtime Xrm.WebApi nao encontrado. Modo local/fallback.");
   return hasRuntime;
@@ -473,6 +493,10 @@ export async function createOne(entitySetName: string, data: Record<string, unkn
 }
 
 async function getCurrentUserEmail() {
+  if (shouldUseLocalFrontendFallback()) {
+    dataverseLog("Frontend local/fallback sem consulta de usuario Dataverse.");
+    return "";
+  }
   const xrm = getWindowXrm();
   const userId = cleanGuid(xrm?.Utility?.getGlobalContext?.().userSettings?.userId ?? "");
   dataverseLog("Usuario atual detectado.", { userId });
@@ -485,6 +509,20 @@ async function getCurrentUserEmail() {
 
 export async function getDriverContext(): Promise<DriverContext> {
   const email = await getCurrentUserEmail();
+  if (!email && shouldUseLocalFrontendFallback()) {
+    dataverseLog("Fallback de motorista local ativado para frontend sem Xrm.");
+    return {
+      id: "localhost-driver",
+      email: "",
+      fullName: "Localhost",
+      funcionario: {
+        cr40f_funcionariosid: "localhost-driver",
+        cr40f_nomecompleto: "Localhost",
+        cr40f_emailmicrosoft: "",
+        cr40f_gerarrecibopersonalizado: true
+      }
+    };
+  }
   if (!email) throw new Error("Email Microsoft do usuario atual nao foi encontrado no Dataverse.");
 
   const result = await retrieveMultiple(
@@ -520,15 +558,20 @@ function getVehicleLabel(record: DataverseRecord) {
   return [placa, modelo].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
 }
 
+export function buildMaintenanceRequestVehiclesQuery(options: { onlyOwnCategory?: boolean } = {}) {
+  const query = [
+    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
+  ];
+  if (options.onlyOwnCategory) {
+    query.push(`$filter=${ACTIVE_VEHICLE_FILTER}`);
+  }
+  query.push("$orderby=cr40f_placa asc", "$top=200");
+  return query.join("&");
+}
+
 export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext, options: { onlyOwnCategory?: boolean } = {}) {
   const currentVehicleId = getDriverCurrentVehicleId(driver);
-  const categoryFilter = options.onlyOwnCategory
-    ? `&$filter=cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}`
-    : "";
-  const result = await retrieveMultiple(
-    DATAVERSE.veiculos,
-    `$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo${categoryFilter}&$orderby=cr40f_placa asc&$top=200`
-  );
+  const result = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestVehiclesQuery(options));
   return result.entities
     .map((record): MaintenanceRequestVehicleOption => {
       const id = cleanODataGuid(record.cr40f_veiculosid);
@@ -1187,10 +1230,12 @@ function buildReceiptPendingRecordName(model: PersonalReceiptModel) {
   return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em geracao", 100);
 }
 
-function normalizeReceiptIdentifier(value: unknown) {
+export function normalizeReceiptIdentifier(value: unknown) {
   const trimmed = String(value ?? "").trim();
   if (!trimmed) return "";
-  return /^R-/i.test(trimmed) ? trimmed.replace(/^r-/i, "R-") : `R-${trimmed.replace(/^[-\s]+/, "")}`;
+  const match = trimmed.match(/^R\s*-\s*-*\s*(\d+)$/i) ?? trimmed.match(/^(\d+)$/);
+  if (match?.[1]) return `R-${match[1].padStart(4, "0")}`;
+  return /^R-/i.test(trimmed) ? trimmed.replace(/^r-/i, "R-") : trimmed;
 }
 
 export type PreparedReceiptUpload = {

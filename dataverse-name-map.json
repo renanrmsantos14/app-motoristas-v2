@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-06-16T14:47:58.078Z",
-  "environment": "https://appbetinhosdev.crm2.dynamics.com",
+  "environment": "https://org23b93544.crm2.dynamics.com",
   "solutionUniqueName": "Betinhos_Core_Clean",
   "tables": {
     "cr40f_colisao": {

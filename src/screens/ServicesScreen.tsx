@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { filterAgendaGalleryItems } from "../app/agendaVisibility.ts";
 import type { AgendaItem, DetailData } from "../types";
 import { AppShell } from "../components/layout/AppShell";
 import { ServicesMenu } from "../components/navigation/ServicesMenu";
@@ -17,6 +18,8 @@ type ServicesScreenProps = {
 
 export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", queueHighlightDetailKey = "", onOpenDetails }: ServicesScreenProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const visibleItems = useMemo(() => filterAgendaGalleryItems(items, now), [items, now]);
 
   useEffect(() => {
     if (!queueHighlightDetailKey) return;
@@ -25,17 +28,22 @@ export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey =
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [queueHighlightDetailKey]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   return (
     <AppShell screenLabel="TelaServiços">
       <ServicesMenu onHome={onHome} onRefresh={onRefresh} />
       <section className="main-panel services-panel">
         <PullToRefresh scrollRef={listRef} onRefresh={onRefresh}>
-        {items.length === 0 ? (
+        {visibleItems.length === 0 ? (
           <div className="empty-services">Nenhum serviço atribuído a você no momento</div>
         ) : (
             <div ref={listRef} className="agenda-list">
             <AnimatePresence initial={false}>
-              {items.map((item, index) => {
+              {visibleItems.map((item, index) => {
                 const detailKey = item.detail ? `${item.detail.type}:${item.detail.id}` : "";
                 const isCompleting = Boolean(detailKey && detailKey === completingDetailKey);
                 const isQueueHighlight = Boolean(detailKey && detailKey === queueHighlightDetailKey);

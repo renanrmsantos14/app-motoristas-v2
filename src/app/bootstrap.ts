@@ -1,6 +1,7 @@
-import { agendaMock, historyMock } from "../data/mockData";
-import { findDetailByParams, type LocalStore } from "../lib/localWorkflow";
-import type { DetailData } from "../types";
+import { agendaMock, historyMock } from "../data/mockData.ts";
+import { shouldShowAgendaItemInGallery } from "./agendaVisibility.ts";
+import { findDetailByParams, type LocalStore } from "../lib/localWorkflow.ts";
+import type { DetailData } from "../types.ts";
 
 export const STORAGE_KEY = "app-motoristas-local-v1";
 
@@ -9,7 +10,7 @@ export function isSameDetail(left: DetailData | undefined, right: DetailData) {
 }
 
 export function findFirstPendingDetail(agenda: LocalStore["agenda"]) {
-  return agenda.find((item) => item.tipo !== "HEADER" && item.detail)?.detail;
+  return agenda.find((item) => shouldShowAgendaItemInGallery(item) && item.tipo !== "HEADER" && !item.canceled && item.detail)?.detail;
 }
 
 export function initialStore(): LocalStore {

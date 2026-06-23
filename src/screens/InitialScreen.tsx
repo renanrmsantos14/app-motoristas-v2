@@ -4,6 +4,7 @@ import carCrashIcon from "../assets/icons/car-crash-svgrepo-com.svg";
 import carIcon from "../assets/icons/car.svg";
 import historyIcon from "../assets/icons/clock.svg";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
+import { filterAgendaGalleryItems, getAgendaItemStartDate } from "../app/agendaVisibility.ts";
 import { ActionButton } from "../components/common/ActionButton";
 import { PullToRefresh } from "../components/common/PullToRefresh";
 import { reportAppError } from "../lib/appErrorLogger";
@@ -268,12 +269,8 @@ function getRelativeDateFromTimeLabel(item: AgendaItem, now: number) {
 }
 
 function resolveAgendaDate(item: AgendaItem, now: number) {
-  const actualDate = getServiceDateFromAgendaItem(item);
-  if (actualDate && actualDate.getTime() >= now) return actualDate;
-
-  const relativeDate = getRelativeDateFromTimeLabel(item, now);
-  if (relativeDate && relativeDate.getTime() >= now) return relativeDate;
-
+  const date = getAgendaItemStartDate(item, now);
+  if (date && date.getTime() >= now) return date;
   return null;
 }
 
@@ -293,14 +290,14 @@ function getNextServiceItem(props: InitialScreenProps, now: number) {
   const directDate = getServiceDate(props.nextServiceAt ?? props.proximoServicoEm);
   if (directDate) return { date: directDate, item: null };
 
-  const serviceDates = props.services
-    ?.filter((service) => service.tipo !== "HEADER" && !service.canceled && service.detail)
+  const serviceDates = filterAgendaGalleryItems(props.services ?? [], now)
+    .filter((service) => service.tipo !== "HEADER" && !service.canceled && service.detail)
     .map((item) => {
       const date = resolveAgendaDate(item, now);
       return { item, date };
     })
     .filter((service): service is { item: AgendaItem; date: Date } => Boolean(service.date))
-    .sort((a, b) => a.date.getTime() - b.date.getTime()) ?? [];
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return serviceDates[0] ?? null;
 }
@@ -319,14 +316,14 @@ function isTodayAgendaItem(item: AgendaItem, now: number) {
   if (timeLabel.includes("HOJE")) return true;
   if (timeLabel.includes("AMANH")) return false;
 
-  const date = getServiceDateFromAgendaItem(item);
+  const date = getAgendaItemStartDate(item, now);
   return Boolean(date && isToday(date, now));
 }
 
 function getTodayAgendaCount(services: AgendaItem[] | undefined, now: number) {
-  return services?.filter((service) => {
+  return filterAgendaGalleryItems(services ?? [], now).filter((service) => {
     return service.tipo !== "HEADER" && !service.canceled && service.detail && isTodayAgendaItem(service, now);
-  }).length ?? 0;
+  }).length;
 }
 
 function ModuleIcon({ name }: { name: string }) {

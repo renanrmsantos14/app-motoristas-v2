@@ -10,7 +10,7 @@ import { LocalToast, type ToastState, type ToastTone } from "../components/commo
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
-import { createReceiptRecordRemote, uploadReceiptPdfRemote, type PreparedReceiptUpload, type ReceiptPdfUploadResult } from "../lib/dataverse";
+import { createReceiptRecordRemote, hasDataverseRuntime, uploadReceiptPdfRemote, type PreparedReceiptUpload, type ReceiptPdfUploadResult } from "../lib/dataverse";
 import { buildPersonalReceiptDraft, buildPersonalReceiptModel, type PersonalReceiptEditableDraft, type PersonalReceiptModel } from "../lib/personalReceipt";
 import { getReceiptCopy, getReceiptDisplayClient, RECEIPT_LANGUAGE_OPTIONS } from "../lib/receiptLanguage";
 import { generateReceiptPdfBlob } from "../lib/receiptPdf";
@@ -37,8 +37,6 @@ function validateReceiptDraft(draft: PersonalReceiptEditableDraft) {
   if (!draft.cliente.trim()) errors.cliente = "Informe o cliente.";
   if (!draft.valorTotal.trim()) errors.valorTotal = "Informe o total.";
   else if (!/^\d+(?:[.,]\d{1,2})?$/.test(draft.valorTotal.trim())) errors.valorTotal = "Informe um valor numerico valido.";
-  if (!draft.dataEmissao.trim()) errors.dataEmissao = "Informe a data de emissão.";
-  if (!draft.metodoPagamento.trim()) errors.metodoPagamento = "Informe o método de pagamento.";
   return errors;
 }
 
@@ -69,7 +67,6 @@ function ReceiptForm({
   generateState,
   receiptLink,
   clienteOptions = [],
-  metodoPagamentoOptions = [],
   onChange,
   onGenerate
 }: {
@@ -78,7 +75,6 @@ function ReceiptForm({
   generateState: ActionButtonState;
   receiptLink?: string | null;
   clienteOptions?: string[];
-  metodoPagamentoOptions?: string[];
   onChange: (field: ReceiptDraftKey, value: string) => void;
   onGenerate: () => void;
 }) {
@@ -139,26 +135,6 @@ function ReceiptForm({
               autoComplete="off"
               value={draft.valorTotal}
               onChange={(event) => onChange("valorTotal", sanitizeReceiptTotalInput(event.target.value))}
-            />
-            <TextInputField
-              fieldClassName={`finalize-input-block receipt-editor-block`}
-              label="Data de emissão"
-              required
-              error={errors.dataEmissao}
-              type="date"
-              value={draft.dataEmissao}
-              onChange={(event) => onChange("dataEmissao", event.target.value)}
-            />
-            <SelectField
-              fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
-              label="Método de pagamento"
-              required
-              error={errors.metodoPagamento}
-              value={draft.metodoPagamento}
-              options={metodoPagamentoOptions.map((option) => ({ value: option, label: option }))}
-              placeholder="Digite ou escolha um método"
-              ariaLabel="Selecionar método de pagamento"
-              onChange={(value) => onChange("metodoPagamento", value)}
             />
             <TextAreaField
               fieldClassName={`finalize-input-block receipt-editor-block receipt-editor-block-span-2`}
@@ -391,27 +367,33 @@ function ReceiptPreview({
 
   return (
     <article className={`receipt-preview-card-shell ${isGenerated ? "is-generated" : ""}`.trim()}>
-      <button
-        type="button"
-        className={`receipt-card-shell receipt-preview-card receipt-preview-inline ${isGenerated ? "is-generated" : ""}`.trim()}
-        onClick={onExpand}
-        aria-label={copy.expandPreviewAria}
-      >
-        <div className="receipt-preview-copy">
-          <span>Preview do recibo</span>
-          <small>Toque aqui para visualizar</small>
-        </div>
-        <div className="receipt-preview-mini-shell">
-          <div className="receipt-preview-mini" aria-hidden="true">
-            <ReceiptDocument model={model} documentRef={documentRef} />
+      {!isGenerated ? (
+        <button
+          type="button"
+          className="receipt-card-shell receipt-preview-card receipt-preview-inline"
+          onClick={onExpand}
+          aria-label={copy.expandPreviewAria}
+        >
+          <div className="receipt-preview-copy">
+            <span>Preview do recibo</span>
+            <small>Toque aqui para visualizar</small>
           </div>
-        </div>
-      </button>
+          <div className="receipt-preview-mini-shell">
+            <div className="receipt-preview-mini" aria-hidden="true">
+              <ReceiptDocument model={model} documentRef={documentRef} />
+            </div>
+          </div>
+        </button>
+      ) : null}
 
       <div className={`receipt-preview-expanded-panel ${isGenerated ? "is-visible" : ""}`.trim()} aria-hidden={!isGenerated}>
         <div className="receipt-preview-expanded-copy">
-          <span>Recibo gerado</span>
-          <strong>{displayReceiptValue(model.idPag)}</strong>
+          <div className="receipt-preview-expanded-copy-main">
+            <span>Recibo gerado</span>
+            <strong>{displayReceiptValue(model.idPag)}</strong>
+            <small>PDF pronto para abrir. Toque no documento para ampliar.</small>
+          </div>
+          <div className="receipt-preview-status-badge">Pronto</div>
         </div>
 
         <div className="receipt-preview-expanded-stage-shell">
@@ -426,11 +408,9 @@ function ReceiptPreview({
 
         <div className="receipt-preview-generated-actions">
           <a className="receipt-preview-generated-action is-primary" href={receiptLink ?? "#"} target="_blank" rel="noreferrer">
-            Abrir link
+            Abrir PDF
           </a>
-          <button type="button" className="receipt-preview-generated-action is-secondary">
-            Enviar por email
-          </button>
+          <span className="receipt-preview-generated-helper">Link pronto e recibo salvo.</span>
         </div>
       </div>
     </article>
@@ -642,7 +622,6 @@ function ReceiptViewport({
   generateState?: ActionButtonState;
   receiptLink?: string | null;
   clienteOptions?: string[];
-  metodoPagamentoOptions?: string[];
   toast?: ToastState | null;
   documentRef?: RefObject<HTMLElement>;
   onDraftChange?: (field: ReceiptDraftKey, value: string) => void;
@@ -672,7 +651,6 @@ function ReceiptViewport({
               errors={errors ?? {}}
               generateState={generateState ?? "idle"}
               clienteOptions={clienteOptions}
-              metodoPagamentoOptions={metodoPagamentoOptions}
               receiptLink={receiptLink}
               onChange={onDraftChange}
               onGenerate={onGenerate}
@@ -701,20 +679,37 @@ export function ReceiptScreen({
   const [generateState, setGenerateState] = useState<ActionButtonState>("idle");
   const receiptDocumentRef = useRef<HTMLElement | null>(null);
   const receiptPdfCacheRef = useRef<{ key: string; blob: Blob } | null>(null);
+  const localReceiptLinkRef = useRef<string | null>(null);
   const model = useMemo(
     () => buildPersonalReceiptModel(detail, draft, generatedIdentifier ? { receiptIdentifier: generatedIdentifier } : {}),
     [detail, draft, generatedIdentifier]
   );
 
+  const clearLocalReceiptLink = () => {
+    if (localReceiptLinkRef.current) {
+      URL.revokeObjectURL(localReceiptLinkRef.current);
+      localReceiptLinkRef.current = null;
+    }
+  };
+
+  const resetReceiptLink = () => {
+    clearLocalReceiptLink();
+    setReceiptLink(null);
+  };
+
   useEffect(() => {
     setDraft(buildPersonalReceiptDraft(detail));
     setErrors({});
     setToast(null);
-    setReceiptLink(null);
+    resetReceiptLink();
     setGeneratedIdentifier("");
     setGenerateState("idle");
     receiptPdfCacheRef.current = null;
   }, [detail]);
+
+  useEffect(() => () => {
+    clearLocalReceiptLink();
+  }, []);
 
   useEffect(() => {
     if (Object.keys(validateReceiptDraft(draft)).length > 0) {
@@ -744,7 +739,7 @@ export function ReceiptScreen({
     const nextValue = field === "valorTotal" ? sanitizeReceiptTotalInput(value) : value;
     setDraft((current) => ({ ...current, [field]: nextValue }));
     setErrors((current) => ({ ...current, [field]: undefined }));
-    setReceiptLink(null);
+    resetReceiptLink();
     setGeneratedIdentifier("");
   };
 
@@ -764,6 +759,25 @@ export function ReceiptScreen({
     onProgress?.({ message: "Gerando recibo personalizado", phase: "loading" });
 
     void (async () => {
+      if (!hasDataverseRuntime()) {
+        onProgress?.({ message: "Montando recibo local para localhost", phase: "loading" });
+        const cacheKey = JSON.stringify(model);
+        const cachedBlob = receiptPdfCacheRef.current?.key === cacheKey ? receiptPdfCacheRef.current.blob : null;
+        const blob = cachedBlob ?? await generateReceiptPdfBlob(model);
+        receiptPdfCacheRef.current = { key: cacheKey, blob };
+        const localLink = URL.createObjectURL(blob);
+        clearLocalReceiptLink();
+        localReceiptLinkRef.current = localLink;
+        setGeneratedIdentifier(model.idPag);
+        setReceiptLink(localLink);
+        setGenerateState("success");
+        onProgress?.({ message: "Recibo local pronto para abertura.", phase: "success" });
+        setToast(nextToast("Recibo gerado localmente. Abra o PDF.", "success"));
+        window.setTimeout(() => setGenerateState("idle"), 1400);
+        window.setTimeout(() => onProgress?.(null), 1600);
+        return;
+      }
+
       const prepared = await createReceiptRecordRemote({
         detail,
         model,
@@ -836,7 +850,7 @@ const PREVIEW_MODEL: PersonalReceiptModel = {
   idioma: "pt-BR",
   idPag: "R-0012",
   dataEmissao: "15/06/2026",
-  metodoPagamento: "Pedido de Compra",
+  metodoPagamento: "Cartão de Crédito",
   periodo: "15/06/2026 08:30",
   trajetos: "Hotel -> Tenaris\nTenaris -> Aeroporto de Guarulhos",
   valorTotal: "R$ 1.020,50",

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildMaintenanceRequestRecord } from "../src/lib/dataverse.ts";
+import { buildMaintenanceRequestRecord, buildMaintenanceRequestVehiclesQuery, normalizeReceiptIdentifier } from "../src/lib/dataverse.ts";
 
 test("solicitacao de manutencao monta apenas campos de requisicao", () => {
   const record = buildMaintenanceRequestRecord({
@@ -45,4 +45,28 @@ test("solicitacao de manutencao exige descricao km veiculo e motorista", () => {
     () => buildMaintenanceRequestRecord({ descricao: "Falha", kmAtual: 1, veiculoId: "1", motoristaId: "", gravidade: 1 }),
     /Motorista logado nao encontrado/
   );
+});
+
+test("consulta de veiculos da manutencao filtra ativos proprios sem quebrar select", () => {
+  const query = buildMaintenanceRequestVehiclesQuery({ onlyOwnCategory: true });
+  const params = new URLSearchParams(query);
+
+  assert.equal(params.get("$select")?.includes("&$filter"), false);
+  assert.equal(params.get("$select")?.includes("cr40f_statusdoveiculo"), true);
+  assert.equal(params.get("$select")?.includes("new_categoriadoveiculo"), true);
+  assert.equal(params.get("$select")?.includes("statecode"), true);
+  assert.equal(params.get("$select")?.includes("statuscode"), true);
+  assert.equal(
+    params.get("$filter"),
+    "statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq 202410001 and new_categoriadoveiculo eq 100000000"
+  );
+  assert.equal(params.get("$orderby"), "cr40f_placa asc");
+  assert.equal(params.get("$top"), "200");
+});
+
+test("identificador de recibo usa padrao R-XXXX", () => {
+  assert.equal(normalizeReceiptIdentifier("12"), "R-0012");
+  assert.equal(normalizeReceiptIdentifier("R-7"), "R-0007");
+  assert.equal(normalizeReceiptIdentifier("R--123"), "R-0123");
+  assert.equal(normalizeReceiptIdentifier("000123"), "R-000123");
 });
