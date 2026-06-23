@@ -16,10 +16,10 @@ type Point = {
   y: number;
 };
 
-const SIGNATURE_EXPORT_WIDTH = 900;
-const SIGNATURE_EXPORT_HEIGHT = 240;
-const SIGNATURE_EXPORT_PADDING_X = 72;
-const SIGNATURE_EXPORT_PADDING_Y = 36;
+const SIGNATURE_EXPORT_WIDTH = 680;
+const SIGNATURE_EXPORT_HEIGHT = 400;
+const SIGNATURE_EXPORT_PADDING_X = 56;
+const SIGNATURE_EXPORT_PADDING_Y = 44;
 
 function exportSignatureDataUrl(source: HTMLCanvasElement) {
   const sourceContext = source.getContext("2d");
