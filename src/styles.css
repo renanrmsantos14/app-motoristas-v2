@@ -844,6 +844,10 @@ svg {
   align-items: stretch;
 }
 
+.receipt-editor-main.is-generated {
+  overflow: hidden;
+}
+
 .receipt-editor-layout {
   width: 100%;
   min-height: 0;
@@ -854,7 +858,12 @@ svg {
 }
 
 .receipt-editor-layout.is-generated {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  align-content: stretch;
+  justify-items: center;
+  padding-bottom: 6px;
 }
 
 .receipt-editor-form-card {
@@ -1206,14 +1215,14 @@ svg {
 }
 
 .receipt-preview-card-shell.is-generated {
-  min-height: calc(100dvh - 132px);
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at top left, rgba(194, 225, 255, 0.44), transparent 34%),
-    linear-gradient(180deg, rgb(247, 249, 252) 0%, rgb(233, 238, 245) 100%);
+  width: min(100%, 620px);
+  height: 100%;
+  min-height: 0;
+  border-radius: 14px;
+  background: rgb(255, 255, 255);
   box-shadow:
-    0 28px 64px rgba(0, 14, 35, 0.12),
-    inset 0 0 0 1px rgba(170, 182, 204, 0.2);
+    0 10px 30px rgba(0, 14, 35, 0.08),
+    inset 0 0 0 1px rgba(170, 182, 204, 0.22);
 }
 
 .receipt-preview-inline {
@@ -1382,11 +1391,15 @@ svg {
 }
 
 .receipt-preview-expanded-panel.is-visible {
-  max-height: calc(100dvh - 160px);
+  height: 100%;
+  max-height: none;
   opacity: 1;
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
   transform: translateY(0) scale(1);
-  padding: 22px 22px 24px;
+  padding: 16px;
+  overflow: visible;
 }
 
 .receipt-preview-expanded-copy {
@@ -1394,7 +1407,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 2px 18px;
+  padding: 0 2px 14px;
 }
 
 .receipt-preview-expanded-copy-main {
@@ -1416,7 +1429,7 @@ svg {
 .receipt-preview-expanded-copy strong {
   color: rgb(0, 14, 35);
   font-family: "Manrope", Arial, sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1;
 }
@@ -1431,8 +1444,8 @@ svg {
 
 .receipt-preview-status-badge {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
   background: rgba(22, 163, 74, 0.12);
   color: rgb(20, 120, 52);
@@ -1448,17 +1461,20 @@ svg {
 }
 
 .receipt-preview-expanded-stage-shell {
-  min-height: calc(100dvh - 300px);
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(249, 251, 255, 0.9) 100%);
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  border-radius: 12px;
+  background: rgb(246, 248, 252);
   box-shadow:
-    inset 0 0 0 1px rgba(170, 182, 204, 0.2),
-    0 22px 44px rgba(0, 14, 35, 0.1);
+    inset 0 0 0 1px rgba(170, 182, 204, 0.24),
+    0 12px 28px rgba(0, 14, 35, 0.08);
   overflow: hidden;
 }
 
 .receipt-preview-expanded-stage {
-  padding: 28px 22px 18px;
+  height: 100%;
+  padding: 12px;
 }
 
 .receipt-preview-expanded-panel.is-visible .receipt-preview-expanded-stage-shell {
@@ -1469,13 +1485,90 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-top: 18px;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.receipt-generated-actions {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-height: 106px;
+}
+
+.receipt-generated-actions .action-button,
+.receipt-generated-action-link {
+  width: 100%;
+  min-width: 0;
+}
+
+.receipt-generated-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.receipt-email-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  padding: max(16px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  background: rgba(0, 14, 35, 0.34);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.receipt-email-dialog {
+  width: min(100%, 420px);
+  padding: 16px;
+  border-radius: 16px;
+  background: rgb(255, 255, 255);
+  box-shadow: 0 24px 60px rgba(0, 14, 35, 0.24);
+  display: grid;
+  gap: 14px;
+}
+
+.receipt-email-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.receipt-email-copy span {
+  color: rgb(0, 14, 35);
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.receipt-email-copy small {
+  color: rgba(0, 14, 35, 0.64);
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.receipt-email-field {
+  margin: 0;
+}
+
+.receipt-email-actions {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .receipt-preview-generated-action {
-  min-height: 52px;
-  border-radius: 14px;
+  min-height: 46px;
+  border-radius: 12px;
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1503,13 +1596,10 @@ svg {
   color: rgb(255, 255, 255);
 }
 
-.receipt-preview-generated-helper {
-  color: rgba(0, 14, 35, 0.62);
-  font-family: "Manrope", Arial, sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.35;
-  text-align: right;
+.receipt-preview-generated-action.is-secondary {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(0, 14, 35, 0.12);
+  color: rgb(0, 14, 35);
 }
 
 .receipt-scroll {
@@ -2140,12 +2230,12 @@ svg {
   }
 
   .receipt-preview-card-shell.is-generated {
-    min-height: calc(100dvh - 118px);
+    min-height: 0;
   }
 
   .receipt-preview-expanded-panel.is-visible {
-    max-height: calc(100dvh - 140px);
-    padding: 16px 16px 18px;
+    max-height: none;
+    padding: 12px;
   }
 
   .receipt-preview-expanded-copy {
@@ -2159,21 +2249,23 @@ svg {
   }
 
   .receipt-preview-expanded-stage-shell {
-    min-height: calc(100dvh - 286px);
-    border-radius: 16px;
+    height: auto;
+    min-height: 0;
+    border-radius: 12px;
   }
 
   .receipt-preview-expanded-stage {
-    padding: 16px 10px 8px;
+    padding: 8px;
   }
 
   .receipt-preview-generated-actions {
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
+    gap: 8px;
   }
 
-  .receipt-preview-generated-helper {
-    text-align: left;
+  .receipt-generated-actions {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .receipt-success-card {
@@ -11391,4 +11483,36 @@ select,
     min-height: 640px;
     border-radius: 24px;
   }
+}
+
+/* Receipt generated footer: keep both actions stacked and inside the viewport. */
+.receipt-generated-actions.finalize-actions {
+  width: calc(100% - 16px) !important;
+  min-height: 106px !important;
+  margin: 0 8px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: 46px !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  gap: 8px !important;
+  padding: 7px 0 max(8px, env(safe-area-inset-bottom)) !important;
+}
+
+.receipt-generated-actions.finalize-actions .receipt-generated-send {
+  order: 1 !important;
+}
+
+.receipt-generated-actions.finalize-actions .receipt-generated-action-link {
+  order: 2 !important;
+}
+
+.receipt-generated-actions.finalize-actions .action-button,
+.receipt-generated-actions.finalize-actions .receipt-generated-action-link {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  margin: 0 !important;
 }

@@ -10,7 +10,7 @@ import { LocalToast, type ToastState, type ToastTone } from "../components/commo
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
-import { createReceiptRecordRemote, hasDataverseRuntime, uploadReceiptPdfRemote, type PreparedReceiptUpload, type ReceiptPdfUploadResult } from "../lib/dataverse";
+import { createReceiptRecordRemote, hasDataverseRuntime, sendReceiptEmailRemote, uploadReceiptPdfRemote, type PreparedReceiptUpload, type ReceiptPdfUploadResult } from "../lib/dataverse";
 import { buildPersonalReceiptDraft, buildPersonalReceiptModel, type PersonalReceiptEditableDraft, type PersonalReceiptModel } from "../lib/personalReceipt";
 import { getReceiptCopy, getReceiptDisplayClient, RECEIPT_LANGUAGE_OPTIONS } from "../lib/receiptLanguage";
 import { generateReceiptPdfBlob } from "../lib/receiptPdf";
@@ -36,7 +36,7 @@ function validateReceiptDraft(draft: PersonalReceiptEditableDraft) {
   if (!draft.nomePagante.trim()) errors.nomePagante = "Informe o pagante.";
   if (!draft.cliente.trim()) errors.cliente = "Informe o cliente.";
   if (!draft.valorTotal.trim()) errors.valorTotal = "Informe o total.";
-  else if (!/^\d+(?:[.,]\d{1,2})?$/.test(draft.valorTotal.trim())) errors.valorTotal = "Informe um valor numerico valido.";
+  else if (!/^\d+(?:[.,]\d{1,2})?$/.test(draft.valorTotal.trim())) errors.valorTotal = "Informe um valor numérico válido.";
   return errors;
 }
 
@@ -405,13 +405,6 @@ function ReceiptPreview({
             onClick={onExpand}
           />
         </div>
-
-        <div className="receipt-preview-generated-actions">
-          <a className="receipt-preview-generated-action is-primary" href={receiptLink ?? "#"} target="_blank" rel="noreferrer">
-            Abrir PDF
-          </a>
-          <span className="receipt-preview-generated-helper">Link pronto e recibo salvo.</span>
-        </div>
       </div>
     </article>
   );
@@ -447,6 +440,61 @@ function ReceiptExpandedPreview({
         <div className="receipt-preview-overlay-body">
           <ReceiptZoomCanvas model={model} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ReceiptEmailDialog({
+  email,
+  error,
+  sendState,
+  onEmailChange,
+  onCancel,
+  onSubmit
+}: {
+  email: string;
+  error?: string;
+  sendState: ActionButtonState;
+  onEmailChange: (value: string) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="receipt-email-overlay" role="dialog" aria-modal="true" aria-labelledby="receipt-email-title">
+      <div className="receipt-email-dialog">
+        <div className="receipt-email-copy">
+          <span id="receipt-email-title">Enviar para o cliente</span>
+          <small>Informe o email que receberá o recibo.</small>
+        </div>
+        <TextInputField
+          fieldClassName="finalize-input-block receipt-email-field"
+          label="Email do cliente"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
+          error={error}
+          placeholder="cliente@empresa.com"
+          onChange={(event) => onEmailChange(event.target.value)}
+        />
+        <ActionBar className="receipt-email-actions">
+          <ActionButton
+            idleLabel="Cancelar"
+            variant="secondary"
+            disabled={sendState === "loading"}
+            onClick={onCancel}
+          />
+          <ActionButton
+            idleLabel="Enviar"
+            loadingLabel="Enviando"
+            successLabel="Enviado"
+            state={sendState}
+            active
+            variant="primary"
+            onClick={onSubmit}
+          />
+        </ActionBar>
       </div>
     </div>
   );
@@ -609,8 +657,10 @@ function ReceiptViewport({
   metodoPagamentoOptions,
   toast,
   documentRef,
+  sendState = "idle",
   onDraftChange,
   onGenerate,
+  onSendReceiptToClient,
   onDismissToast,
   onBack,
   title,
@@ -624,14 +674,19 @@ function ReceiptViewport({
   clienteOptions?: string[];
   toast?: ToastState | null;
   documentRef?: RefObject<HTMLElement>;
+  sendState?: ActionButtonState;
   onDraftChange?: (field: ReceiptDraftKey, value: string) => void;
   onGenerate?: () => void;
+  onSendReceiptToClient?: (email: string) => Promise<void>;
   onDismissToast?: () => void;
   onBack?: () => void;
   title: string;
   screenLabel: string;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [receiptEmail, setReceiptEmail] = useState("");
+  const [receiptEmailError, setReceiptEmailError] = useState("");
 
   const openExpandedPreview = () => setIsExpanded(true);
 
@@ -639,10 +694,37 @@ function ReceiptViewport({
     setIsExpanded(false);
   };
 
+  const closeEmailDialog = () => {
+    if (sendState === "loading") return;
+    setIsEmailDialogOpen(false);
+    setReceiptEmailError("");
+  };
+
+  const submitReceiptEmail = () => {
+    const email = receiptEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setReceiptEmailError("Informe um email válido.");
+      return;
+    }
+    setReceiptEmailError("");
+    const sendPromise = onSendReceiptToClient?.(email);
+    if (!sendPromise) {
+      setReceiptEmailError("Envio de recibo indisponível.");
+      return;
+    }
+    void sendPromise.then(() => {
+      setIsEmailDialogOpen(false);
+      setReceiptEmail("");
+    }).catch((error) => {
+      const message = error instanceof Error ? error.message : "Falha ao enviar recibo.";
+      setReceiptEmailError(message);
+    });
+  };
+
   return (
     <AppShell screenLabel={screenLabel}>
       <FormMenu title={title} onBack={onBack} />
-      <section className="main-panel receipt-main receipt-editor-main">
+      <section className={`main-panel receipt-main receipt-editor-main ${receiptLink ? "is-generated" : ""}`.trim()}>
         <div className={`receipt-editor-layout ${receiptLink ? "is-generated" : ""}`.trim()}>
           <ReceiptPreview model={model} documentRef={documentRef} onExpand={openExpandedPreview} receiptLink={receiptLink} />
           {draft && onDraftChange && onGenerate && !receiptLink ? (
@@ -658,8 +740,36 @@ function ReceiptViewport({
           ) : null}
         </div>
       </section>
+      {receiptLink ? (
+        <ActionBar className="finalize-actions receipt-generated-actions">
+          <ActionButton
+            className="receipt-generated-send"
+            idleLabel="Enviar para o cliente"
+            variant="secondary"
+            onClick={() => setIsEmailDialogOpen(true)}
+          />
+          <a className="receipt-generated-action-link action-button action-button--primary" href={receiptLink} target="_blank" rel="noreferrer">
+            <span className="action-button-content">
+              <span>Abrir link</span>
+            </span>
+          </a>
+        </ActionBar>
+      ) : null}
       {toast ? <LocalToast toast={toast} onDismiss={onDismissToast ?? (() => undefined)} /> : null}
       {isExpanded ? <ReceiptExpandedPreview model={model} onClose={closeExpandedPreview} /> : null}
+      {isEmailDialogOpen ? (
+        <ReceiptEmailDialog
+          email={receiptEmail}
+          error={receiptEmailError}
+          sendState={sendState}
+          onEmailChange={(value) => {
+            setReceiptEmail(value);
+            setReceiptEmailError("");
+          }}
+          onCancel={closeEmailDialog}
+          onSubmit={submitReceiptEmail}
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -675,8 +785,10 @@ export function ReceiptScreen({
   const [errors, setErrors] = useState<ReceiptDraftErrors>({});
   const [toast, setToast] = useState<ToastState | null>(null);
   const [receiptLink, setReceiptLink] = useState<string | null>(null);
+  const [receiptUploadResult, setReceiptUploadResult] = useState<ReceiptPdfUploadResult | null>(null);
   const [generatedIdentifier, setGeneratedIdentifier] = useState("");
   const [generateState, setGenerateState] = useState<ActionButtonState>("idle");
+  const [sendReceiptState, setSendReceiptState] = useState<ActionButtonState>("idle");
   const receiptDocumentRef = useRef<HTMLElement | null>(null);
   const receiptPdfCacheRef = useRef<{ key: string; blob: Blob } | null>(null);
   const localReceiptLinkRef = useRef<string | null>(null);
@@ -695,6 +807,7 @@ export function ReceiptScreen({
   const resetReceiptLink = () => {
     clearLocalReceiptLink();
     setReceiptLink(null);
+    setReceiptUploadResult(null);
   };
 
   useEffect(() => {
@@ -704,6 +817,7 @@ export function ReceiptScreen({
     resetReceiptLink();
     setGeneratedIdentifier("");
     setGenerateState("idle");
+    setSendReceiptState("idle");
     receiptPdfCacheRef.current = null;
   }, [detail]);
 
@@ -741,6 +855,7 @@ export function ReceiptScreen({
     setErrors((current) => ({ ...current, [field]: undefined }));
     resetReceiptLink();
     setGeneratedIdentifier("");
+    setSendReceiptState("idle");
   };
 
   const ensureValidDraft = () => {
@@ -770,6 +885,7 @@ export function ReceiptScreen({
         localReceiptLinkRef.current = localLink;
         setGeneratedIdentifier(model.idPag);
         setReceiptLink(localLink);
+        setReceiptUploadResult(null);
         setGenerateState("success");
         onProgress?.({ message: "Recibo local pronto para abertura.", phase: "success" });
         setToast(nextToast("Recibo gerado localmente. Abra o PDF.", "success"));
@@ -791,6 +907,7 @@ export function ReceiptScreen({
       receiptPdfCacheRef.current = { key: JSON.stringify(prepared.model), blob };
       const result = await ensureReceiptUploaded(prepared, blob);
       setReceiptLink(result.link);
+      setReceiptUploadResult(result);
       setGenerateState("success");
       onProgress?.({ message: "Recibo pronto para abertura.", phase: "success" });
       setToast(nextToast("Recibo gerado. Abra o link do PDF.", "success"));
@@ -822,6 +939,50 @@ export function ReceiptScreen({
     });
   };
 
+  const handleSendReceiptToClient = async (email: string) => {
+    if (!receiptLink) throw new Error("Link do recibo não encontrado.");
+    setSendReceiptState("loading");
+    onProgress?.({ message: "Enviando recibo para o cliente", phase: "loading" });
+    try {
+      const cacheKey = JSON.stringify(model);
+      const cachedBlob = receiptPdfCacheRef.current?.key === cacheKey ? receiptPdfCacheRef.current.blob : null;
+      const pdfBlob = cachedBlob ?? await generateReceiptPdfBlob(model);
+      receiptPdfCacheRef.current = { key: cacheKey, blob: pdfBlob };
+      await sendReceiptEmailRemote({
+        email,
+        receiptLink,
+        pdfBlob,
+        fileName: receiptUploadResult?.fileName,
+        receiptRecordId: receiptUploadResult?.recordId,
+        receiptIdentifier: generatedIdentifier || model.idPag,
+        model,
+        detailId: detail?.id,
+        onProgress: (message) => {
+          onProgress?.({ message, phase: "loading" });
+        }
+      });
+      setSendReceiptState("success");
+      setToast(nextToast("Recibo enviado para o cliente.", "success"));
+      onProgress?.({ message: "Recibo enviado para o cliente.", phase: "success" });
+      window.setTimeout(() => setSendReceiptState("idle"), 1400);
+      window.setTimeout(() => onProgress?.(null), 1600);
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "receipt",
+        action: "send-receipt-email",
+        component: "ReceiptScreen",
+        screen: "TelaReciboPersonalizado",
+        detailId: detail?.id
+      });
+      setSendReceiptState("idle");
+      onProgress?.(null);
+      const message = error instanceof Error ? error.message : "Falha ao enviar recibo para o cliente.";
+      setToast(nextToast(message, "error"));
+      throw error;
+    }
+  };
+
   return (
     <ReceiptViewport
       model={model}
@@ -835,6 +996,8 @@ export function ReceiptScreen({
       documentRef={receiptDocumentRef}
       onDraftChange={updateField}
       onGenerate={handleGenerate}
+      sendState={sendReceiptState}
+      onSendReceiptToClient={handleSendReceiptToClient}
       onDismissToast={() => setToast(null)}
       onBack={onBack}
       title="Recibo personalizado"

@@ -771,6 +771,9 @@ svg {
   position: relative;
   align-items: stretch;
 }
+.receipt-editor-main.is-generated {
+  overflow: hidden;
+}
 .receipt-editor-layout {
   width: 100%;
   min-height: 0;
@@ -780,7 +783,12 @@ svg {
   align-content: start;
 }
 .receipt-editor-layout.is-generated {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  align-content: stretch;
+  justify-items: center;
+  padding-bottom: 6px;
 }
 .receipt-editor-form-card {
   min-height: 0;
@@ -1132,18 +1140,12 @@ svg {
     transform 260ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .receipt-preview-card-shell.is-generated {
-  min-height: calc(100dvh - 132px);
-  border-radius: 22px;
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(194, 225, 255, 0.44),
-      transparent 34%),
-    linear-gradient(
-      180deg,
-      rgb(247, 249, 252) 0%,
-      rgb(233, 238, 245) 100%);
-  box-shadow: 0 28px 64px rgba(0, 14, 35, 0.12), inset 0 0 0 1px rgba(170, 182, 204, 0.2);
+  width: min(100%, 620px);
+  height: 100%;
+  min-height: 0;
+  border-radius: 14px;
+  background: rgb(255, 255, 255);
+  box-shadow: 0 10px 30px rgba(0, 14, 35, 0.08), inset 0 0 0 1px rgba(170, 182, 204, 0.22);
 }
 .receipt-preview-inline {
   position: sticky;
@@ -1298,18 +1300,22 @@ svg {
     padding 320ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .receipt-preview-expanded-panel.is-visible {
-  max-height: calc(100dvh - 160px);
+  height: 100%;
+  max-height: none;
   opacity: 1;
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
   transform: translateY(0) scale(1);
-  padding: 22px 22px 24px;
+  padding: 16px;
+  overflow: visible;
 }
 .receipt-preview-expanded-copy {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 2px 18px;
+  padding: 0 2px 14px;
 }
 .receipt-preview-expanded-copy-main {
   min-width: 0;
@@ -1334,7 +1340,7 @@ svg {
     "Manrope",
     Arial,
     sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1;
 }
@@ -1350,8 +1356,8 @@ svg {
 }
 .receipt-preview-status-badge {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
   background: rgba(22, 163, 74, 0.12);
   color: rgb(20, 120, 52);
@@ -1369,18 +1375,17 @@ svg {
   text-transform: uppercase;
 }
 .receipt-preview-expanded-stage-shell {
-  min-height: calc(100dvh - 300px);
-  border-radius: 22px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.96) 0%,
-      rgba(249, 251, 255, 0.9) 100%);
-  box-shadow: inset 0 0 0 1px rgba(170, 182, 204, 0.2), 0 22px 44px rgba(0, 14, 35, 0.1);
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  border-radius: 12px;
+  background: rgb(246, 248, 252);
+  box-shadow: inset 0 0 0 1px rgba(170, 182, 204, 0.24), 0 12px 28px rgba(0, 14, 35, 0.08);
   overflow: hidden;
 }
 .receipt-preview-expanded-stage {
-  padding: 28px 22px 18px;
+  height: 100%;
+  padding: 12px;
 }
 .receipt-preview-expanded-panel.is-visible .receipt-preview-expanded-stage-shell {
   animation: receiptGeneratedStageIn 420ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -1389,12 +1394,85 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-top: 18px;
+  gap: 10px;
+  padding-top: 12px;
+}
+.receipt-generated-actions {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-height: 106px;
+}
+.receipt-generated-actions .action-button,
+.receipt-generated-action-link {
+  width: 100%;
+  min-width: 0;
+}
+.receipt-generated-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.receipt-email-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  padding: max(16px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  background: rgba(0, 14, 35, 0.34);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.receipt-email-dialog {
+  width: min(100%, 420px);
+  padding: 16px;
+  border-radius: 16px;
+  background: rgb(255, 255, 255);
+  box-shadow: 0 24px 60px rgba(0, 14, 35, 0.24);
+  display: grid;
+  gap: 14px;
+}
+.receipt-email-copy {
+  display: grid;
+  gap: 4px;
+}
+.receipt-email-copy span {
+  color: rgb(0, 14, 35);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+.receipt-email-copy small {
+  color: rgba(0, 14, 35, 0.64);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.receipt-email-field {
+  margin: 0;
+}
+.receipt-email-actions {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+  padding: 0;
+  background: transparent;
 }
 .receipt-preview-generated-action {
-  min-height: 52px;
-  border-radius: 14px;
+  min-height: 46px;
+  border-radius: 12px;
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1422,16 +1500,10 @@ svg {
   border-color: rgb(0, 14, 35);
   color: rgb(255, 255, 255);
 }
-.receipt-preview-generated-helper {
-  color: rgba(0, 14, 35, 0.62);
-  font-family:
-    "Manrope",
-    Arial,
-    sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.35;
-  text-align: right;
+.receipt-preview-generated-action.is-secondary {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(0, 14, 35, 0.12);
+  color: rgb(0, 14, 35);
 }
 .receipt-scroll {
   width: 100%;
@@ -2018,11 +2090,11 @@ svg {
     flex-basis: 98px;
   }
   .receipt-preview-card-shell.is-generated {
-    min-height: calc(100dvh - 118px);
+    min-height: 0;
   }
   .receipt-preview-expanded-panel.is-visible {
-    max-height: calc(100dvh - 140px);
-    padding: 16px 16px 18px;
+    max-height: none;
+    padding: 12px;
   }
   .receipt-preview-expanded-copy {
     align-items: flex-start;
@@ -2033,18 +2105,20 @@ svg {
     align-self: flex-start;
   }
   .receipt-preview-expanded-stage-shell {
-    min-height: calc(100dvh - 286px);
-    border-radius: 16px;
+    height: auto;
+    min-height: 0;
+    border-radius: 12px;
   }
   .receipt-preview-expanded-stage {
-    padding: 16px 10px 8px;
+    padding: 8px;
   }
   .receipt-preview-generated-actions {
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
+    gap: 8px;
   }
-  .receipt-preview-generated-helper {
-    text-align: left;
+  .receipt-generated-actions {
+    grid-template-columns: minmax(0, 1fr);
   }
   .receipt-success-card {
     padding: 12px;
@@ -11495,11 +11569,38 @@ select,
     border-radius: 24px;
   }
 }
+.receipt-generated-actions.finalize-actions {
+  width: calc(100% - 16px) !important;
+  min-height: 106px !important;
+  margin: 0 8px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: 46px !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  gap: 8px !important;
+  padding: 7px 0 max(8px, env(safe-area-inset-bottom)) !important;
+}
+.receipt-generated-actions.finalize-actions .receipt-generated-send {
+  order: 1 !important;
+}
+.receipt-generated-actions.finalize-actions .receipt-generated-action-link {
+  order: 2 !important;
+}
+.receipt-generated-actions.finalize-actions .action-button,
+.receipt-generated-actions.finalize-actions .receipt-generated-action-link {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+}
 </style>
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.397","builtAt":"2026-06-23T16:55:14.522Z","builtAtLabel":"23/06/2026, 13:55"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.404","builtAt":"2026-06-23T17:16:34.184Z","builtAtLabel":"23/06/2026, 14:16"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -35815,12 +35916,14 @@ select,
   };
   var FLOW_URLS = {
     gerarVoucher: "VITE_FLOW_GERAR_VOUCHER_URL",
-    salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL"
+    salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL",
+    enviarReciboCliente: "VITE_FLOW_ENVIAR_RECIBO_CLIENTE_URL"
   };
   var DEV_DATAVERSE_URL = "https://org23b93544.crm2.dynamics.com/";
   var FLOW_DATAVERSE_ENVIRONMENT_VARIABLES = {
     [FLOW_URLS.gerarVoucher]: "new_FlowURLFlowGerarVoucherAppMotoristasv2",
-    [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive"
+    [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive",
+    [FLOW_URLS.enviarReciboCliente]: "new_FlowURLFlowEnviarReciboCliente"
   };
   var GERAL_SELECT = "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,modifiedon";
   var MAINTENANCE_SELECT = "$select=cr40f_manutencoesid,cr40f_id,cr40f_descricao,cr40f_comentariosaomotorista,cr40f_graudamanutencao,cr40f_tipodoreparo,cr40f_status,cr40f_servicorealizado,cr40f_estabelecimento,cr40f_valor,cr40f_pagamento,_cr40f_placa_carro_value,_cr40f_realizado_por_nome_value,new_comentariosdocolaborador,cr40f_foto01,cr40f_linkdaevidencia,cr40f_foto03,new_linkdanotafiscal,new_linkdafotofinal1,new_linkdafotofinal2,new_linkdafotofinal3";
@@ -36666,7 +36769,7 @@ select,
     return truncateDataverseText(model.idPag || "Recibo", 100);
   }
   function buildReceiptPendingRecordName(model) {
-    return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em geracao", 100);
+    return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em gera\xE7\xE3o", 100);
   }
   function normalizeReceiptIdentifier(value) {
     const trimmed = String(value ?? "").trim();
@@ -36720,7 +36823,7 @@ select,
       const fileNameBase = sanitizePathSegment(identifier, "recibo");
       const storedFileName = `${fileNameBase}.pdf`;
       const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
-      const path = `Recibos/${devPrefix}${sanitizePathSegment(finalModel.cliente, "Sem cliente")}/${sanitizePathSegment(identifier, "Sem identificacao")}`;
+      const path = `Recibos/${devPrefix}${sanitizePathSegment(finalModel.cliente, "Sem cliente")}/${sanitizePathSegment(identifier, "Sem identifica\xE7\xE3o")}`;
       await updateOne(DATAVERSE.recibos, receiptId, {
         cr40f_name: buildReceiptRecordName(finalModel),
         cr40f_id_pagamento: truncateDataverseText(identifier, 1e3),
@@ -36815,6 +36918,49 @@ select,
       });
       throw error2;
     }
+  }
+  async function sendReceiptEmailRemote({
+    email,
+    receiptLink,
+    pdfBlob,
+    fileName,
+    receiptRecordId,
+    receiptIdentifier,
+    model,
+    detailId,
+    onProgress
+  }) {
+    const targetEmail = email.trim();
+    if (!targetEmail) throw new Error("Informe o email do cliente.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) throw new Error("Informe um email v\xE1lido.");
+    if (!receiptLink.trim()) throw new Error("Link do recibo n\xE3o encontrado.");
+    const dataUrl = await blobToDataUrl(pdfBlob);
+    const conteudoBase64 = dataUrlToBase64(dataUrl);
+    assertValidBase64Payload(conteudoBase64, {
+      context: "sendReceiptEmailRemote",
+      receiptIdentifier: receiptIdentifier || model.idPag,
+      email: targetEmail
+    });
+    onProgress?.("Enviando recibo para o cliente.");
+    const flowResult = await runHttpFlow(FLOW_URLS.enviarReciboCliente, {
+      emailCliente: targetEmail,
+      linkRecibo: receiptLink,
+      nomeArquivo: fileName || `${sanitizePathSegment(receiptIdentifier || model.idPag, "recibo")}.pdf`,
+      mimeType: "application/pdf",
+      conteudoBase64,
+      reciboGuid: receiptRecordId ?? "",
+      idPagamento: receiptIdentifier || model.idPag,
+      idOperacao: model.idOp,
+      cliente: model.cliente,
+      pagante: model.nomePagante,
+      valorTotal: model.valorTotal,
+      dataEmissao: model.dataEmissao,
+      metodoPagamento: model.metodoPagamento,
+      detailId: detailId ?? "",
+      modelo: model
+    });
+    assertFlowSuccess(flowResult, "FlowEnviarReciboCliente");
+    return flowResult;
   }
   async function uploadCollisionPhotoRemote({
     collisionId,
@@ -58123,7 +58269,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (!draft.nomePagante.trim()) errors.nomePagante = "Informe o pagante.";
     if (!draft.cliente.trim()) errors.cliente = "Informe o cliente.";
     if (!draft.valorTotal.trim()) errors.valorTotal = "Informe o total.";
-    else if (!/^\d+(?:[.,]\d{1,2})?$/.test(draft.valorTotal.trim())) errors.valorTotal = "Informe um valor numerico valido.";
+    else if (!/^\d+(?:[.,]\d{1,2})?$/.test(draft.valorTotal.trim())) errors.valorTotal = "Informe um valor num\xE9rico v\xE1lido.";
     return errors;
   }
   function displayReceiptValue2(value) {
@@ -58443,11 +58589,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             interactive: true,
             onClick: onExpand
           }
-        ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-preview-generated-actions", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("a", { className: "receipt-preview-generated-action is-primary", href: receiptLink ?? "#", target: "_blank", rel: "noreferrer", children: "Abrir PDF" }),
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "receipt-preview-generated-helper", children: "Link pronto e recibo salvo." })
-        ] })
+        ) })
       ] })
     ] });
   }
@@ -58469,6 +58611,58 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("button", { type: "button", className: "receipt-preview-overlay-close", onClick: onClose, "aria-label": copy.closeExpandedPreviewAria, children: "X" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-preview-overlay-body", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptZoomCanvas, { model }) })
+    ] }) });
+  }
+  function ReceiptEmailDialog({
+    email,
+    error: error2,
+    sendState,
+    onEmailChange,
+    onCancel,
+    onSubmit
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-email-overlay", role: "dialog", "aria-modal": "true", "aria-labelledby": "receipt-email-title", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-email-dialog", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-email-copy", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { id: "receipt-email-title", children: "Enviar para o cliente" }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("small", { children: "Informe o email que receber\xE1 o recibo." })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+        TextInputField,
+        {
+          fieldClassName: "finalize-input-block receipt-email-field",
+          label: "Email do cliente",
+          type: "email",
+          inputMode: "email",
+          autoComplete: "email",
+          value: email,
+          error: error2,
+          placeholder: "cliente@empresa.com",
+          onChange: (event) => onEmailChange(event.target.value)
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(ActionBar, { className: "receipt-email-actions", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          ActionButton,
+          {
+            idleLabel: "Cancelar",
+            variant: "secondary",
+            disabled: sendState === "loading",
+            onClick: onCancel
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          ActionButton,
+          {
+            idleLabel: "Enviar",
+            loadingLabel: "Enviando",
+            successLabel: "Enviado",
+            state: sendState,
+            active: true,
+            variant: "primary",
+            onClick: onSubmit
+          }
+        )
+      ] })
     ] }) });
   }
   function clampZoom(value) {
@@ -58610,21 +58804,51 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     metodoPagamentoOptions,
     toast,
     documentRef,
+    sendState = "idle",
     onDraftChange,
     onGenerate,
+    onSendReceiptToClient,
     onDismissToast,
     onBack,
     title,
     screenLabel
   }) {
     const [isExpanded, setIsExpanded] = (0, import_react51.useState)(false);
+    const [isEmailDialogOpen, setIsEmailDialogOpen] = (0, import_react51.useState)(false);
+    const [receiptEmail, setReceiptEmail] = (0, import_react51.useState)("");
+    const [receiptEmailError, setReceiptEmailError] = (0, import_react51.useState)("");
     const openExpandedPreview = () => setIsExpanded(true);
     const closeExpandedPreview = () => {
       setIsExpanded(false);
     };
+    const closeEmailDialog = () => {
+      if (sendState === "loading") return;
+      setIsEmailDialogOpen(false);
+      setReceiptEmailError("");
+    };
+    const submitReceiptEmail = () => {
+      const email = receiptEmail.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setReceiptEmailError("Informe um email v\xE1lido.");
+        return;
+      }
+      setReceiptEmailError("");
+      const sendPromise = onSendReceiptToClient?.(email);
+      if (!sendPromise) {
+        setReceiptEmailError("Envio de recibo indispon\xEDvel.");
+        return;
+      }
+      void sendPromise.then(() => {
+        setIsEmailDialogOpen(false);
+        setReceiptEmail("");
+      }).catch((error2) => {
+        const message = error2 instanceof Error ? error2.message : "Falha ao enviar recibo.";
+        setReceiptEmailError(message);
+      });
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(AppShell, { screenLabel, children: [
       /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(FormMenu, { title, onBack }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("section", { className: "main-panel receipt-main receipt-editor-main", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: `receipt-editor-layout ${receiptLink ? "is-generated" : ""}`.trim(), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("section", { className: `main-panel receipt-main receipt-editor-main ${receiptLink ? "is-generated" : ""}`.trim(), children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: `receipt-editor-layout ${receiptLink ? "is-generated" : ""}`.trim(), children: [
         /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptPreview, { model, documentRef, onExpand: openExpandedPreview, receiptLink }),
         draft && onDraftChange && onGenerate && !receiptLink ? /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
           ReceiptForm,
@@ -58639,8 +58863,34 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           }
         ) : null
       ] }) }),
+      receiptLink ? /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(ActionBar, { className: "finalize-actions receipt-generated-actions", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          ActionButton,
+          {
+            className: "receipt-generated-send",
+            idleLabel: "Enviar para o cliente",
+            variant: "secondary",
+            onClick: () => setIsEmailDialogOpen(true)
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("a", { className: "receipt-generated-action-link action-button action-button--primary", href: receiptLink, target: "_blank", rel: "noreferrer", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "action-button-content", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { children: "Abrir link" }) }) })
+      ] }) : null,
       toast ? /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(LocalToast, { toast, onDismiss: onDismissToast ?? (() => void 0) }) : null,
-      isExpanded ? /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptExpandedPreview, { model, onClose: closeExpandedPreview }) : null
+      isExpanded ? /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ReceiptExpandedPreview, { model, onClose: closeExpandedPreview }) : null,
+      isEmailDialogOpen ? /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+        ReceiptEmailDialog,
+        {
+          email: receiptEmail,
+          error: receiptEmailError,
+          sendState,
+          onEmailChange: (value) => {
+            setReceiptEmail(value);
+            setReceiptEmailError("");
+          },
+          onCancel: closeEmailDialog,
+          onSubmit: submitReceiptEmail
+        }
+      ) : null
     ] });
   }
   function ReceiptScreen({
@@ -58654,8 +58904,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [errors, setErrors] = (0, import_react51.useState)({});
     const [toast, setToast] = (0, import_react51.useState)(null);
     const [receiptLink, setReceiptLink] = (0, import_react51.useState)(null);
+    const [receiptUploadResult, setReceiptUploadResult] = (0, import_react51.useState)(null);
     const [generatedIdentifier, setGeneratedIdentifier] = (0, import_react51.useState)("");
     const [generateState, setGenerateState] = (0, import_react51.useState)("idle");
+    const [sendReceiptState, setSendReceiptState] = (0, import_react51.useState)("idle");
     const receiptDocumentRef = (0, import_react51.useRef)(null);
     const receiptPdfCacheRef = (0, import_react51.useRef)(null);
     const localReceiptLinkRef = (0, import_react51.useRef)(null);
@@ -58672,6 +58924,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const resetReceiptLink = () => {
       clearLocalReceiptLink();
       setReceiptLink(null);
+      setReceiptUploadResult(null);
     };
     (0, import_react51.useEffect)(() => {
       setDraft(buildPersonalReceiptDraft(detail));
@@ -58680,6 +58933,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       resetReceiptLink();
       setGeneratedIdentifier("");
       setGenerateState("idle");
+      setSendReceiptState("idle");
       receiptPdfCacheRef.current = null;
     }, [detail]);
     (0, import_react51.useEffect)(() => () => {
@@ -58710,6 +58964,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setErrors((current) => ({ ...current, [field]: void 0 }));
       resetReceiptLink();
       setGeneratedIdentifier("");
+      setSendReceiptState("idle");
     };
     const ensureValidDraft = () => {
       const nextErrors = validateReceiptDraft(draft);
@@ -58735,6 +58990,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           localReceiptLinkRef.current = localLink;
           setGeneratedIdentifier(model.idPag);
           setReceiptLink(localLink);
+          setReceiptUploadResult(null);
           setGenerateState("success");
           onProgress?.({ message: "Recibo local pronto para abertura.", phase: "success" });
           setToast(nextToast("Recibo gerado localmente. Abra o PDF.", "success"));
@@ -58755,6 +59011,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         receiptPdfCacheRef.current = { key: JSON.stringify(prepared.model), blob };
         const result = await ensureReceiptUploaded(prepared, blob);
         setReceiptLink(result.link);
+        setReceiptUploadResult(result);
         setGenerateState("success");
         onProgress?.({ message: "Recibo pronto para abertura.", phase: "success" });
         setToast(nextToast("Recibo gerado. Abra o link do PDF.", "success"));
@@ -58784,6 +59041,49 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         }
       });
     };
+    const handleSendReceiptToClient = async (email) => {
+      if (!receiptLink) throw new Error("Link do recibo n\xE3o encontrado.");
+      setSendReceiptState("loading");
+      onProgress?.({ message: "Enviando recibo para o cliente", phase: "loading" });
+      try {
+        const cacheKey = JSON.stringify(model);
+        const cachedBlob = receiptPdfCacheRef.current?.key === cacheKey ? receiptPdfCacheRef.current.blob : null;
+        const pdfBlob = cachedBlob ?? await generateReceiptPdfBlob(model);
+        receiptPdfCacheRef.current = { key: cacheKey, blob: pdfBlob };
+        await sendReceiptEmailRemote({
+          email,
+          receiptLink,
+          pdfBlob,
+          fileName: receiptUploadResult?.fileName,
+          receiptRecordId: receiptUploadResult?.recordId,
+          receiptIdentifier: generatedIdentifier || model.idPag,
+          model,
+          detailId: detail?.id,
+          onProgress: (message) => {
+            onProgress?.({ message, phase: "loading" });
+          }
+        });
+        setSendReceiptState("success");
+        setToast(nextToast("Recibo enviado para o cliente.", "success"));
+        onProgress?.({ message: "Recibo enviado para o cliente.", phase: "success" });
+        window.setTimeout(() => setSendReceiptState("idle"), 1400);
+        window.setTimeout(() => onProgress?.(null), 1600);
+      } catch (error2) {
+        reportAppError(error2, {
+          severity: "error",
+          source: "receipt",
+          action: "send-receipt-email",
+          component: "ReceiptScreen",
+          screen: "TelaReciboPersonalizado",
+          detailId: detail?.id
+        });
+        setSendReceiptState("idle");
+        onProgress?.(null);
+        const message = error2 instanceof Error ? error2.message : "Falha ao enviar recibo para o cliente.";
+        setToast(nextToast(message, "error"));
+        throw error2;
+      }
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
       ReceiptViewport,
       {
@@ -58798,6 +59098,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         documentRef: receiptDocumentRef,
         onDraftChange: updateField,
         onGenerate: handleGenerate,
+        sendState: sendReceiptState,
+        onSendReceiptToClient: handleSendReceiptToClient,
         onDismissToast: () => setToast(null),
         onBack,
         title: "Recibo personalizado",

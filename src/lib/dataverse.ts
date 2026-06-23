@@ -205,14 +205,16 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
 
 const FLOW_URLS = {
   gerarVoucher: "VITE_FLOW_GERAR_VOUCHER_URL",
-  salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL"
+  salvarFotosManutencao: "VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL",
+  enviarReciboCliente: "VITE_FLOW_ENVIAR_RECIBO_CLIENTE_URL"
 } as const;
 
 const DEV_DATAVERSE_URL = "https://org23b93544.crm2.dynamics.com/";
 
 const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> = {
   [FLOW_URLS.gerarVoucher]: "new_FlowURLFlowGerarVoucherAppMotoristasv2",
-  [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive"
+  [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive",
+  [FLOW_URLS.enviarReciboCliente]: "new_FlowURLFlowEnviarReciboCliente"
 };
 
 const GERAL_SELECT =
@@ -1227,7 +1229,7 @@ function buildReceiptRecordName(model: PersonalReceiptModel) {
 }
 
 function buildReceiptPendingRecordName(model: PersonalReceiptModel) {
-  return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em geracao", 100);
+  return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em geração", 100);
 }
 
 export function normalizeReceiptIdentifier(value: unknown) {
@@ -1299,7 +1301,7 @@ export async function createReceiptRecordRemote({
     const fileNameBase = sanitizePathSegment(identifier, "recibo");
     const storedFileName = `${fileNameBase}.pdf`;
     const devPrefix = shouldUseDevFolderPrefix() ? "DEV/" : "";
-    const path = `Recibos/${devPrefix}${sanitizePathSegment(finalModel.cliente, "Sem cliente")}/${sanitizePathSegment(identifier, "Sem identificacao")}`;
+    const path = `Recibos/${devPrefix}${sanitizePathSegment(finalModel.cliente, "Sem cliente")}/${sanitizePathSegment(identifier, "Sem identificação")}`;
     await updateOne(DATAVERSE.recibos, receiptId, {
       cr40f_name: buildReceiptRecordName(finalModel),
       cr40f_id_pagamento: truncateDataverseText(identifier, 1000),
@@ -1403,6 +1405,61 @@ export async function uploadReceiptPdfRemote({
     });
     throw error;
   }
+}
+
+export async function sendReceiptEmailRemote({
+  email,
+  receiptLink,
+  pdfBlob,
+  fileName,
+  receiptRecordId,
+  receiptIdentifier,
+  model,
+  detailId,
+  onProgress
+}: {
+  email: string;
+  receiptLink: string;
+  pdfBlob: Blob;
+  fileName?: string;
+  receiptRecordId?: string;
+  receiptIdentifier?: string;
+  model: PersonalReceiptModel;
+  detailId?: string;
+  onProgress?: (message: string) => void;
+}) {
+  const targetEmail = email.trim();
+  if (!targetEmail) throw new Error("Informe o email do cliente.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) throw new Error("Informe um email válido.");
+  if (!receiptLink.trim()) throw new Error("Link do recibo não encontrado.");
+  const dataUrl = await blobToDataUrl(pdfBlob);
+  const conteudoBase64 = dataUrlToBase64(dataUrl);
+  assertValidBase64Payload(conteudoBase64, {
+    context: "sendReceiptEmailRemote",
+    receiptIdentifier: receiptIdentifier || model.idPag,
+    email: targetEmail
+  });
+
+  onProgress?.("Enviando recibo para o cliente.");
+  const flowResult = await runHttpFlow(FLOW_URLS.enviarReciboCliente, {
+    emailCliente: targetEmail,
+    linkRecibo: receiptLink,
+    nomeArquivo: fileName || `${sanitizePathSegment(receiptIdentifier || model.idPag, "recibo")}.pdf`,
+    mimeType: "application/pdf",
+    conteudoBase64,
+    reciboGuid: receiptRecordId ?? "",
+    idPagamento: receiptIdentifier || model.idPag,
+    idOperacao: model.idOp,
+    cliente: model.cliente,
+    pagante: model.nomePagante,
+    valorTotal: model.valorTotal,
+    dataEmissao: model.dataEmissao,
+    metodoPagamento: model.metodoPagamento,
+    detailId: detailId ?? "",
+    modelo: model
+  });
+  assertFlowSuccess(flowResult, "FlowEnviarReciboCliente");
+  return flowResult;
 }
 
 export async function uploadCollisionPhotoRemote({
