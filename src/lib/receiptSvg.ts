@@ -124,6 +124,13 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
   const colWidth = contentWidth / 3;
   const copy = getReceiptCopy(model.idioma);
   const description = buildReceiptDescription(model, copy.descriptionBody);
+  const footerLogoY = 818;
+  const footerContactX = {
+    name: MARGIN + 8,
+    role: MARGIN + 142,
+    phone: MARGIN + 315,
+    email: MARGIN + 455
+  };
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${RECEIPT_SVG_WIDTH}" height="${RECEIPT_SVG_HEIGHT}" viewBox="0 0 ${RECEIPT_SVG_WIDTH} ${RECEIPT_SVG_HEIGHT}">`,
@@ -182,23 +189,24 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
     svgText("CNPJ: 24.484.228/0001-62", { x: right, y: 681, size: 11, fill: "#747474", anchor: "end" }),
     svgText("Sede: São José dos Campos, São Paulo - Brasil", { x: right, y: 699, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
     svgText("Filial: Pindamonhangaba, São Paulo - Brasil", { x: right, y: 717, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
-    image(assets.nlaLogo, MARGIN + 4, 835, colWidth - 18, 78),
-    image(assets.logoPreta, MARGIN + colWidth + 4, 820, colWidth - 8, 100),
-    image(assets.qrCode, MARGIN + colWidth * 2 + 48, 842, 72, 72),
-    svgText(copy.qrCaption, { x: MARGIN + colWidth * 2 + 84, y: 933, size: 11, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: colWidth - 30 }),
-    line(MARGIN + 24, 963, right - 24, "#00398e", 2),
-    svgText("Junior de Paula", { x: 76, y: 1001, size: 11, weight: 700 }),
-    svgText(copy.conciergeRole, { x: 184, y: 1001, size: 11, fill: "#00398e" }),
-    svgText("+55 12 99723 6961", { x: 314, y: 1001, size: 11, fill: "#747474" }),
-    svgText("junior@betinhos.com.br", { x: 426, y: 1001, size: 11, fill: "#747474" }),
-    svgText("Deborah Keila", { x: 76, y: 1022, size: 11, weight: 700 }),
-    svgText(copy.operationsManagerRole, { x: 184, y: 1022, size: 11, fill: "#00398e" }),
-    svgText("+55 12 99615 9093", { x: 314, y: 1022, size: 11, fill: "#747474" }),
-    svgText("deborah.keila@betinhos.com.br", { x: 426, y: 1022, size: 11, fill: "#747474" }),
-    svgText("Juliana Rodrigues", { x: 76, y: 1043, size: 11, weight: 700 }),
-    svgText(copy.financeManagerRole, { x: 184, y: 1043, size: 11, fill: "#00398e" }),
-    svgText("+55 12 99615 9085", { x: 314, y: 1043, size: 11, fill: "#747474" }),
-    svgText("financeiro@betinhos.com.br", { x: 426, y: 1043, size: 11, fill: "#747474" }),
+    image(assets.nlaLogo, MARGIN + 10, footerLogoY + 18, colWidth - 36, 64),
+    image(assets.logoPreta, MARGIN + colWidth + 22, footerLogoY, colWidth - 44, 96),
+    image(assets.qrCode, MARGIN + colWidth * 2 + 78, footerLogoY + 10, 70, 70),
+    svgText(copy.qrCaption, { x: MARGIN + colWidth * 2 + 113, y: footerLogoY + 96, size: 10, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: 96, maxLines: 2, lineHeight: 11 }),
+    rect(MARGIN + 24, 948, contentWidth - 48, 3, "#dce8fa"),
+    line(MARGIN + 24, 950, right - 24, "#00398e", 1),
+    svgText("Junior de Paula", { x: footerContactX.name, y: 984, size: 10, weight: 700, maxWidth: 118 }),
+    svgText(copy.conciergeRole, { x: footerContactX.role, y: 984, size: 10, fill: "#00398e", maxWidth: 150 }),
+    svgText("+55 12 99723 6961", { x: footerContactX.phone, y: 984, size: 10, fill: "#747474", maxWidth: 125 }),
+    svgText("junior@betinhos.com.br", { x: footerContactX.email, y: 984, size: 10, fill: "#747474", maxWidth: 190 }),
+    svgText("Deborah Keila", { x: footerContactX.name, y: 1005, size: 10, weight: 700, maxWidth: 118 }),
+    svgText(copy.operationsManagerRole, { x: footerContactX.role, y: 1005, size: 10, fill: "#00398e", maxWidth: 150 }),
+    svgText("+55 12 99615 9093", { x: footerContactX.phone, y: 1005, size: 10, fill: "#747474", maxWidth: 125 }),
+    svgText("deborah.keila@betinhos.com.br", { x: footerContactX.email, y: 1005, size: 10, fill: "#747474", maxWidth: 190 }),
+    svgText("Juliana Rodrigues", { x: footerContactX.name, y: 1026, size: 10, weight: 700, maxWidth: 118 }),
+    svgText(copy.financeManagerRole, { x: footerContactX.role, y: 1026, size: 10, fill: "#00398e", maxWidth: 150 }),
+    svgText("+55 12 99615 9085", { x: footerContactX.phone, y: 1026, size: 10, fill: "#747474", maxWidth: 125 }),
+    svgText("financeiro@betinhos.com.br", { x: footerContactX.email, y: 1026, size: 10, fill: "#747474", maxWidth: 190 }),
     "</svg>"
   ].join("");
 }
