@@ -16,6 +16,58 @@ type Point = {
   y: number;
 };
 
+const SIGNATURE_EXPORT_WIDTH = 900;
+const SIGNATURE_EXPORT_HEIGHT = 240;
+const SIGNATURE_EXPORT_PADDING_X = 72;
+const SIGNATURE_EXPORT_PADDING_Y = 36;
+
+function exportSignatureDataUrl(source: HTMLCanvasElement) {
+  const sourceContext = source.getContext("2d");
+  if (!sourceContext) return source.toDataURL("image/png");
+
+  const pixels = sourceContext.getImageData(0, 0, source.width, source.height);
+  let minX = source.width;
+  let minY = source.height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < source.height; y += 1) {
+    for (let x = 0; x < source.width; x += 1) {
+      const alpha = pixels.data[(y * source.width + x) * 4 + 3];
+      if (alpha > 0) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return source.toDataURL("image/png");
+
+  const inkWidth = maxX - minX + 1;
+  const inkHeight = maxY - minY + 1;
+  const target = document.createElement("canvas");
+  target.width = SIGNATURE_EXPORT_WIDTH;
+  target.height = SIGNATURE_EXPORT_HEIGHT;
+
+  const targetContext = target.getContext("2d");
+  if (!targetContext) return source.toDataURL("image/png");
+
+  const availableWidth = SIGNATURE_EXPORT_WIDTH - SIGNATURE_EXPORT_PADDING_X * 2;
+  const availableHeight = SIGNATURE_EXPORT_HEIGHT - SIGNATURE_EXPORT_PADDING_Y * 2;
+  const scale = Math.min(availableWidth / inkWidth, availableHeight / inkHeight);
+  const drawWidth = Math.max(1, Math.round(inkWidth * scale));
+  const drawHeight = Math.max(1, Math.round(inkHeight * scale));
+  const drawX = Math.round((SIGNATURE_EXPORT_WIDTH - drawWidth) / 2);
+  const drawY = Math.round((SIGNATURE_EXPORT_HEIGHT - drawHeight) / 2);
+
+  targetContext.imageSmoothingEnabled = true;
+  targetContext.imageSmoothingQuality = "high";
+  targetContext.drawImage(source, minX, minY, inkWidth, inkHeight, drawX, drawY, drawWidth, drawHeight);
+  return target.toDataURL("image/png");
+}
+
 export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const padWrapRef = useRef<HTMLDivElement | null>(null);
@@ -164,7 +216,7 @@ export function SignatureScreen({ onBack, onConfirm }: SignatureScreenProps) {
       }, 40);
       return;
     }
-    onConfirm(signedRef.current ? canvasRef.current?.toDataURL("image/png") ?? null : null);
+    onConfirm(signedRef.current && canvasRef.current ? exportSignatureDataUrl(canvasRef.current) : null);
   };
 
 
