@@ -11600,7 +11600,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.404","builtAt":"2026-06-23T17:16:34.184Z","builtAtLabel":"23/06/2026, 14:16"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.405","builtAt":"2026-06-23T17:41:53.263Z","builtAtLabel":"23/06/2026, 14:41"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -36771,6 +36771,71 @@ select,
   function buildReceiptPendingRecordName(model) {
     return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em gera\xE7\xE3o", 100);
   }
+  function buildReceiptEmailContent(model, receiptIdentifier) {
+    const companyName = "Betinhos Executive Service";
+    const reviewUrl = "https://g.page/r/CQfpe-Ywr1wmEAI/review";
+    const idPagamento = receiptIdentifier || model.idPag;
+    const pagante = model.nomePagante.trim() || "Cliente";
+    const language = normalizeReceiptLanguage(model.idioma);
+    if (language === RECEIPT_LANGUAGE.english) {
+      return {
+        subject: `Receipt - ${idPagamento} | ${companyName}`,
+        body: [
+          `Dear ${pagante},`,
+          "",
+          "Attached is the receipt for executive transportation services provided in Brazil.",
+          "",
+          "To help us evaluate and improve our services, we invite you to review us:",
+          reviewUrl,
+          "",
+          "We remain available for any further information.",
+          "",
+          "Thank you for your preference.",
+          "",
+          "Sincerely,",
+          companyName
+        ].join("\n")
+      };
+    }
+    if (language === RECEIPT_LANGUAGE.spanish) {
+      return {
+        subject: `Recibo - ${idPagamento} | ${companyName}`,
+        body: [
+          `Estimado(a) ${pagante},`,
+          "",
+          "Adjunto, enviamos el recibo correspondiente a los servicios prestados de transporte ejecutivo en Brasil.",
+          "",
+          "Para evaluar y mejorar nuestros servicios, le invitamos a calificarnos:",
+          reviewUrl,
+          "",
+          "Quedamos a su disposici\xF3n para cualquier aclaraci\xF3n.",
+          "",
+          "Agradecemos su preferencia.",
+          "",
+          "Atentamente,",
+          companyName
+        ].join("\n")
+      };
+    }
+    return {
+      subject: `Recibo - ${idPagamento} | ${companyName}`,
+      body: [
+        `Prezado(a) ${pagante},`,
+        "",
+        "Em anexo, segue o recibo referente aos servi\xE7os prestados de transporte executivo no Brasil.",
+        "",
+        "Para avaliarmos e aprimorarmos nossos servi\xE7os, convidamos voc\xEA a nos avaliar:",
+        reviewUrl,
+        "",
+        "Ficamos \xE0 disposi\xE7\xE3o para quaisquer esclarecimentos.",
+        "",
+        "Agradecemos pela prefer\xEAncia.",
+        "",
+        "Atenciosamente,",
+        companyName
+      ].join("\n")
+    };
+  }
   function normalizeReceiptIdentifier(value) {
     const trimmed = String(value ?? "").trim();
     if (!trimmed) return "";
@@ -36941,9 +37006,14 @@ select,
       receiptIdentifier: receiptIdentifier || model.idPag,
       email: targetEmail
     });
+    const emailContent = buildReceiptEmailContent(model, receiptIdentifier);
     onProgress?.("Enviando recibo para o cliente.");
     const flowResult = await runHttpFlow(FLOW_URLS.enviarReciboCliente, {
       emailCliente: targetEmail,
+      assuntoEmail: emailContent.subject,
+      corpoEmail: emailContent.body,
+      emailSubject: emailContent.subject,
+      emailBody: emailContent.body,
       linkRecibo: receiptLink,
       nomeArquivo: fileName || `${sanitizePathSegment(receiptIdentifier || model.idPag, "recibo")}.pdf`,
       mimeType: "application/pdf",

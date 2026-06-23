@@ -3,7 +3,7 @@
 import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
 import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
 import type { PersonalReceiptModel } from "./personalReceipt";
-import { RECEIPT_LANGUAGE } from "./receiptLanguage.ts";
+import { normalizeReceiptLanguage, RECEIPT_LANGUAGE } from "./receiptLanguage.ts";
 
 import { getFieldValue } from "./fieldLookup.ts";
 
@@ -1232,6 +1232,75 @@ function buildReceiptPendingRecordName(model: PersonalReceiptModel) {
   return truncateDataverseText([model.cliente, model.idOp].filter(Boolean).join(" - ") || "Recibo em geração", 100);
 }
 
+export function buildReceiptEmailContent(model: PersonalReceiptModel, receiptIdentifier?: string) {
+  const companyName = "Betinhos Executive Service";
+  const reviewUrl = "https://g.page/r/CQfpe-Ywr1wmEAI/review";
+  const idPagamento = receiptIdentifier || model.idPag;
+  const pagante = model.nomePagante.trim() || "Cliente";
+  const language = normalizeReceiptLanguage(model.idioma);
+
+  if (language === RECEIPT_LANGUAGE.english) {
+    return {
+      subject: `Receipt - ${idPagamento} | ${companyName}`,
+      body: [
+        `Dear ${pagante},`,
+        "",
+        "Attached is the receipt for executive transportation services provided in Brazil.",
+        "",
+        "To help us evaluate and improve our services, we invite you to review us:",
+        reviewUrl,
+        "",
+        "We remain available for any further information.",
+        "",
+        "Thank you for your preference.",
+        "",
+        "Sincerely,",
+        companyName
+      ].join("\n")
+    };
+  }
+
+  if (language === RECEIPT_LANGUAGE.spanish) {
+    return {
+      subject: `Recibo - ${idPagamento} | ${companyName}`,
+      body: [
+        `Estimado(a) ${pagante},`,
+        "",
+        "Adjunto, enviamos el recibo correspondiente a los servicios prestados de transporte ejecutivo en Brasil.",
+        "",
+        "Para evaluar y mejorar nuestros servicios, le invitamos a calificarnos:",
+        reviewUrl,
+        "",
+        "Quedamos a su disposición para cualquier aclaración.",
+        "",
+        "Agradecemos su preferencia.",
+        "",
+        "Atentamente,",
+        companyName
+      ].join("\n")
+    };
+  }
+
+  return {
+    subject: `Recibo - ${idPagamento} | ${companyName}`,
+    body: [
+      `Prezado(a) ${pagante},`,
+      "",
+      "Em anexo, segue o recibo referente aos serviços prestados de transporte executivo no Brasil.",
+      "",
+      "Para avaliarmos e aprimorarmos nossos serviços, convidamos você a nos avaliar:",
+      reviewUrl,
+      "",
+      "Ficamos à disposição para quaisquer esclarecimentos.",
+      "",
+      "Agradecemos pela preferência.",
+      "",
+      "Atenciosamente,",
+      companyName
+    ].join("\n")
+  };
+}
+
 export function normalizeReceiptIdentifier(value: unknown) {
   const trimmed = String(value ?? "").trim();
   if (!trimmed) return "";
@@ -1439,10 +1508,15 @@ export async function sendReceiptEmailRemote({
     receiptIdentifier: receiptIdentifier || model.idPag,
     email: targetEmail
   });
+  const emailContent = buildReceiptEmailContent(model, receiptIdentifier);
 
   onProgress?.("Enviando recibo para o cliente.");
   const flowResult = await runHttpFlow(FLOW_URLS.enviarReciboCliente, {
     emailCliente: targetEmail,
+    assuntoEmail: emailContent.subject,
+    corpoEmail: emailContent.body,
+    emailSubject: emailContent.subject,
+    emailBody: emailContent.body,
     linkRecibo: receiptLink,
     nomeArquivo: fileName || `${sanitizePathSegment(receiptIdentifier || model.idPag, "recibo")}.pdf`,
     mimeType: "application/pdf",

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildMaintenanceRequestRecord, buildMaintenanceRequestVehiclesQuery, normalizeReceiptIdentifier } from "../src/lib/dataverse.ts";
+import { buildMaintenanceRequestRecord, buildMaintenanceRequestVehiclesQuery, buildReceiptEmailContent, normalizeReceiptIdentifier } from "../src/lib/dataverse.ts";
 
 test("solicitacao de manutencao monta apenas campos de requisicao", () => {
   const record = buildMaintenanceRequestRecord({
@@ -69,4 +69,37 @@ test("identificador de recibo usa padrao R-XXXX", () => {
   assert.equal(normalizeReceiptIdentifier("R-7"), "R-0007");
   assert.equal(normalizeReceiptIdentifier("R--123"), "R-0123");
   assert.equal(normalizeReceiptIdentifier("000123"), "R-000123");
+});
+
+test("conteudo de email do recibo segue idioma sem traduzir empresa", () => {
+  const baseModel = {
+    idOp: "OP-1",
+    nomePagante: "Renan",
+    cliente: "Cliente",
+    idPag: "R-0123",
+    dataEmissao: "23/06/2026",
+    metodoPagamento: "Cartão de Crédito",
+    periodo: "23/06/2026 10:00",
+    trajetos: "A -> B",
+    valorTotal: "R$ 12,00",
+    observacoes: "-"
+  };
+
+  const pt = buildReceiptEmailContent({ ...baseModel, idioma: "pt-BR" });
+  assert.equal(pt.subject, "Recibo - R-0123 | Betinhos Executive Service");
+  assert.match(pt.body, /Prezado\(a\) Renan/);
+  assert.match(pt.body, /serviços prestados de transporte executivo no Brasil/);
+  assert.match(pt.body, /Betinhos Executive Service$/);
+
+  const en = buildReceiptEmailContent({ ...baseModel, idioma: "en-US" });
+  assert.equal(en.subject, "Receipt - R-0123 | Betinhos Executive Service");
+  assert.match(en.body, /Dear Renan/);
+  assert.match(en.body, /executive transportation services provided in Brazil/);
+  assert.match(en.body, /Betinhos Executive Service$/);
+
+  const es = buildReceiptEmailContent({ ...baseModel, idioma: "es-ES" });
+  assert.equal(es.subject, "Recibo - R-0123 | Betinhos Executive Service");
+  assert.match(es.body, /Estimado\(a\) Renan/);
+  assert.match(es.body, /transporte ejecutivo en Brasil/);
+  assert.match(es.body, /Betinhos Executive Service$/);
 });
