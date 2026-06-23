@@ -1448,13 +1448,24 @@ svg {
   font-weight: 900;
   line-height: 1.15;
 }
+.receipt-email-copy p {
+  margin: 2px 0 0;
+  color: rgba(0, 14, 35, 0.78);
+  font-family:
+    "Manrope",
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+}
 .receipt-email-copy small {
   color: rgba(0, 14, 35, 0.64);
   font-family:
     "Manrope",
     Arial,
     sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -11600,7 +11611,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.409","builtAt":"2026-06-23T18:06:10.935Z","builtAtLabel":"23/06/2026, 15:06"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.410","builtAt":"2026-06-23T18:11:11.345Z","builtAtLabel":"23/06/2026, 15:11"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -58694,14 +58705,17 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function ReceiptEmailDialog({
     email,
     error: error2,
+    receiptLanguage,
     sendState,
     onEmailChange,
     onCancel,
     onSubmit
   }) {
+    const copy = getReceiptEmailDialogCopy(receiptLanguage);
     return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "receipt-email-overlay", role: "dialog", "aria-modal": "true", "aria-labelledby": "receipt-email-title", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-email-dialog", children: [
       /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "receipt-email-copy", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { id: "receipt-email-title", children: "Enviar para o cliente" }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { id: "receipt-email-title", children: copy.title }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { children: copy.instruction }),
         /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("small", { children: "Informe o email que receber\xE1 o recibo." })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
@@ -58742,6 +58756,20 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         )
       ] })
     ] }) });
+  }
+  function getReceiptEmailDialogCopy(receiptLanguage) {
+    const normalized = normalizeReceiptLanguage(receiptLanguage);
+    const mainLanguage = normalized === RECEIPT_LANGUAGE.portuguese ? RECEIPT_LANGUAGE.english : normalized;
+    if (mainLanguage === RECEIPT_LANGUAGE.spanish) {
+      return {
+        title: "Enviar recibo al cliente",
+        instruction: "Ingrese el email que recibir\xE1 el recibo."
+      };
+    }
+    return {
+      title: "Send receipt to client",
+      instruction: "Enter the email address that will receive the receipt."
+    };
   }
   function clampZoom(value) {
     return Math.min(3.2, Math.max(1, value));
@@ -58960,6 +58988,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         {
           email: receiptEmail,
           error: receiptEmailError,
+          receiptLanguage: model.idioma,
           sendState,
           onEmailChange: (value) => {
             setReceiptEmail(value);

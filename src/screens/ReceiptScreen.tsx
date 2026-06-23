@@ -12,7 +12,7 @@ import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
 import { createReceiptRecordRemote, hasDataverseRuntime, sendReceiptEmailRemote, uploadReceiptPdfRemote, type PreparedReceiptUpload, type ReceiptPdfUploadResult } from "../lib/dataverse";
 import { buildPersonalReceiptDraft, buildPersonalReceiptModel, type PersonalReceiptEditableDraft, type PersonalReceiptModel } from "../lib/personalReceipt";
-import { getReceiptCopy, getReceiptDisplayClient, RECEIPT_LANGUAGE_OPTIONS } from "../lib/receiptLanguage";
+import { getReceiptCopy, getReceiptDisplayClient, normalizeReceiptLanguage, RECEIPT_LANGUAGE, RECEIPT_LANGUAGE_OPTIONS } from "../lib/receiptLanguage";
 import { generateReceiptPdfBlob } from "../lib/receiptPdf";
 import type { DetailData } from "../types";
 
@@ -448,6 +448,7 @@ function ReceiptExpandedPreview({
 function ReceiptEmailDialog({
   email,
   error,
+  receiptLanguage,
   sendState,
   onEmailChange,
   onCancel,
@@ -455,16 +456,20 @@ function ReceiptEmailDialog({
 }: {
   email: string;
   error?: string;
+  receiptLanguage: string;
   sendState: ActionButtonState;
   onEmailChange: (value: string) => void;
   onCancel: () => void;
   onSubmit: () => void;
 }) {
+  const copy = getReceiptEmailDialogCopy(receiptLanguage);
+
   return (
     <div className="receipt-email-overlay" role="dialog" aria-modal="true" aria-labelledby="receipt-email-title">
       <div className="receipt-email-dialog">
         <div className="receipt-email-copy">
-          <span id="receipt-email-title">Enviar para o cliente</span>
+          <span id="receipt-email-title">{copy.title}</span>
+          <p>{copy.instruction}</p>
           <small>Informe o email que receberá o recibo.</small>
         </div>
         <TextInputField
@@ -498,6 +503,23 @@ function ReceiptEmailDialog({
       </div>
     </div>
   );
+}
+
+function getReceiptEmailDialogCopy(receiptLanguage: string) {
+  const normalized = normalizeReceiptLanguage(receiptLanguage);
+  const mainLanguage = normalized === RECEIPT_LANGUAGE.portuguese ? RECEIPT_LANGUAGE.english : normalized;
+
+  if (mainLanguage === RECEIPT_LANGUAGE.spanish) {
+    return {
+      title: "Enviar recibo al cliente",
+      instruction: "Ingrese el email que recibirá el recibo."
+    };
+  }
+
+  return {
+    title: "Send receipt to client",
+    instruction: "Enter the email address that will receive the receipt."
+  };
 }
 
 function clampZoom(value: number) {
@@ -761,6 +783,7 @@ function ReceiptViewport({
         <ReceiptEmailDialog
           email={receiptEmail}
           error={receiptEmailError}
+          receiptLanguage={model.idioma}
           sendState={sendState}
           onEmailChange={(value) => {
             setReceiptEmail(value);

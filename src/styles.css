@@ -1544,10 +1544,19 @@ svg {
   line-height: 1.15;
 }
 
+.receipt-email-copy p {
+  margin: 2px 0 0;
+  color: rgba(0, 14, 35, 0.78);
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .receipt-email-copy small {
   color: rgba(0, 14, 35, 0.64);
   font-family: "Manrope", Arial, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.35;
 }
