@@ -75,7 +75,6 @@ test("voucher exige espera consistente e despesas válidas", () => {
     "Espera Início": "15:00",
     "Espera Final": "Não informado"
   }), [
-    "O início da espera não pode ser maior que o horário inicial.",
     "Preencha o horário final da espera."
   ]);
 
@@ -84,8 +83,6 @@ test("voucher exige espera consistente e despesas válidas", () => {
     "Espera Início": "15:00",
     "Espera Final": "14:55"
   }), [
-    "O início da espera não pode ser maior que o horário inicial.",
-    "O final da espera não pode ser maior que o horário inicial.",
     "O horário final da espera deve ser maior que o inicial."
   ]);
 
@@ -124,10 +121,7 @@ test("voucher trata virada de dia sem comparar horário como string crua", () =>
     "Horário Inicial": "23:50",
     "Espera Início": "00:10",
     "Espera Final": "00:20"
-  }, detail), [
-    "O início da espera não pode ser maior que o horário inicial.",
-    "O final da espera não pode ser maior que o horário inicial."
-  ]);
+  }, detail), []);
 });
 
 test("manutenção exige campos principais antes de finalizar", () => {

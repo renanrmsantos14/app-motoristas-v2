@@ -233,14 +233,6 @@ export function getVoucherValidationResult(fields: Record<string, string>, detai
     fieldErrors.waitStart = "Preencha o horário inicial da espera.";
   }
 
-  if (startMinutes !== null && waitStartMinutes !== null && waitStartMinutes > startMinutes) {
-    fieldErrors.waitStart = "O início da espera não pode ser maior que o horário inicial.";
-  }
-
-  if (startMinutes !== null && waitEndMinutes !== null && waitEndMinutes > startMinutes) {
-    fieldErrors.waitEnd = "O final da espera não pode ser maior que o horário inicial.";
-  }
-
   if (waitStartMinutes !== null && waitEndMinutes !== null && waitEndMinutes <= waitStartMinutes) {
     fieldErrors.waitRange = "O horário final da espera deve ser maior que o inicial.";
   }
