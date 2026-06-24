@@ -1159,6 +1159,11 @@ function App() {
 
   const cancelSelected = async (reason: string) => {
     if (!selectedDetail || remoteOperation) return;
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      setToast("Informe o motivo do cancelamento.");
+      return;
+    }
     const detailToCancel = selectedDetail;
     if (remoteMode) {
       try {
@@ -1168,7 +1173,7 @@ function App() {
           detailId: detailToCancel.id,
           phase: "loading"
         });
-        await cancelServiceRemote(detailToCancel, reason);
+        await cancelServiceRemote(detailToCancel, trimmedReason);
         setRemoteOperation({
           title: "Enviando cancelamento",
           message: "Enviado com sucesso.",
@@ -1216,7 +1221,7 @@ function App() {
         return;
       }
     }
-    const next = cancelDetailLocally(store, detailToCancel, reason);
+    const next = cancelDetailLocally(store, detailToCancel, trimmedReason);
     setStore(next);
     setReceiveProofs((current) => {
       if (!current[detailToCancel.id]) return current;

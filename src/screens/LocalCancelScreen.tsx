@@ -15,11 +15,23 @@ type LocalCancelScreenProps = {
 
 export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState = "idle" }: LocalCancelScreenProps) {
   const [text, setText] = useState("");
+  const [error, setError] = useState("");
   const isSubmitting = submitState !== "idle";
+  const submit = () => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      setError("Informe o motivo do cancelamento.");
+      return;
+    }
+    onSubmit(trimmed);
+  };
 
   return (
     <AppShell screenLabel="TelaCanceladonoLocal">
-      <FormMenu title="Cancelado no Local" onBack={isSubmitting ? undefined : onBack} rightIcon="eraser" rightLabel="Limpar" onRightClick={isSubmitting ? undefined : () => setText("")} />
+      <FormMenu title="Cancelado no Local" onBack={isSubmitting ? undefined : onBack} rightIcon="eraser" rightLabel="Limpar" onRightClick={isSubmitting ? undefined : () => {
+        setText("");
+        setError("");
+      }} />
       <section className="main-panel cancel-main">
         <article className="cancel-card">
           <div className="cancel-title">Descreva detalhadamente:</div>
@@ -28,8 +40,13 @@ export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState 
               <TextAreaField
                 fieldClassName="cancel-input-block"
                 label="Detalhes do Cancelamento"
+                error={error}
+                required
                 value={text}
-                onChange={(event) => setText(event.target.value)}
+                onChange={(event) => {
+                  setText(event.target.value);
+                  if (error && event.target.value.trim()) setError("");
+                }}
                 placeholder="Digite aqui os envolvidos, horários, detalhes, motivos, etc"
                 rows={6}
               />
@@ -37,7 +54,7 @@ export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState 
           </div>
           <ActionBar className="cancel-actions">
             <ActionButton className="cancel-wrong" label="Cliquei errado" disabled={isSubmitting} onClick={onWrongClick} />
-            <ActionButton className="cancel-submit" variant="danger" idleLabel="Enviar" state={submitState} onClick={() => onSubmit(text)} />
+            <ActionButton className="cancel-submit" variant="danger" idleLabel="Enviar" state={submitState} onClick={submit} />
           </ActionBar>
         </article>
       </section>
