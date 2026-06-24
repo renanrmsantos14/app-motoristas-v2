@@ -295,16 +295,79 @@ export function findDetailByParams(items: AgendaItem[], servicoId: string, tipo:
   })?.detail ?? null;
 }
 
+function normalizeClipboardText(value: string) {
+  return String(value ?? "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .trim();
+}
+
+function normalizeClipboardKey(value: string) {
+  return normalizeClipboardText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function getClipboardField(detail: DetailData, ...labels: string[]) {
+  const targetKeys = new Set(labels.map(normalizeClipboardKey));
+  return detail.fields.find((field) => targetKeys.has(normalizeClipboardKey(field.label)))?.value ?? "";
+}
+
+function getClipboardTime(value: string) {
+  const match = normalizeClipboardText(value).match(/\b(\d{2}:\d{2})\b/);
+  return match?.[1] ?? "—";
+}
+
+function getReceiveMarker(value: string) {
+  const normalized = normalizeClipboardText(value).toLowerCase();
+  if (!normalized) return "—";
+  if (["sim", "yes", "true"].includes(normalized)) return "✓";
+  if (["nao", "não", "no", "false"].includes(normalized)) return "✗";
+  return normalizeClipboardText(value);
+}
+
+function splitVehicle(value: string) {
+  const normalized = normalizeClipboardText(value);
+  if (!normalized) return { model: ".", plate: "." };
+
+  const plateMatch = normalized.match(/\b[A-Z]{3}[0-9][A-Z0-9][0-9]{2}\b|\b[A-Z]{3}-?[0-9]{4}\b/i);
+  const plate = plateMatch?.[0]?.toUpperCase().replace("-", "") ?? ".";
+  const model = normalized.replace(plateMatch?.[0] ?? "", "").replace(/\s{2,}/g, " ").trim() || ".";
+  return { model, plate };
+}
+
 export function detailsToClipboardText(detail: DetailData): string {
-  return detail.fields
-    .map((field) => {
-      const value = field.value
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<[^>]+>/g, "")
-        .trim();
-      return `${field.label}: ${value}`;
-    })
-    .join("\n");
+  const date = normalizeClipboardText(getClipboardField(detail, "Data e Horário de Saída", "Data e Horário da Manutenção", "Início da Janela", "Início da Janela de Troca")) || "—";
+  const time = getClipboardTime(date);
+  const passenger = normalizeClipboardText(getClipboardField(detail, "Passageiros e Telefones de Contato", "Passageiros"));
+  const start = normalizeClipboardText(getClipboardField(detail, "Endereço de Saída", "Local de Saída")) || "—";
+  const destination = normalizeClipboardText(getClipboardField(detail, "Destino")) || "—";
+  const observation =
+    normalizeClipboardText(getClipboardField(detail, "Obs ao Motorista", "Comentários ao Motorista", "Obs de Operação", "Observação", "Descrição do Cenário Encontrado")) || "—";
+  const passengerProfile = normalizeClipboardText(getClipboardField(detail, "Perfil do Passageiro")) || "—";
+  const vehicle = splitVehicle(getClipboardField(detail, "Veículo", "Veiculo"));
+  const lines = [
+    `*Data:* ${date}`,
+    `*ID:* ${detail.id || "—"}`,
+    `*Horário:* ${time}`,
+    `*Cliente:* ${normalizeClipboardText(getClipboardField(detail, "Cliente")) || "—"}`,
+    `*Receber:* ${getReceiveMarker(getClipboardField(detail, "Receber"))}`,
+    `*Trajeto:* ${normalizeClipboardText(getClipboardField(detail, "Trajeto", "Descrição", "Descricao")) || "—"}`,
+    `*Passageiro:* ${passenger || "—"}`,
+    `*Local de saída:* ${start}`,
+    `*Destino:* ${destination}`,
+    `*Obs ao motorista:* ${observation}`,
+    "",
+    `Modelo do Carro: ${vehicle.model}`,
+    `Placa do Carro: ${vehicle.plate}`,
+    `*Perfil do Passageiro:* ${passengerProfile}`
+  ];
+
+  return lines.join("\n");
 }
 
 export function buildWhatsAppUrl(phone: string, message: string): string {
