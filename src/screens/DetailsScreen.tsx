@@ -91,6 +91,7 @@ export function DetailsScreen({
   const fieldsWithoutHeaderDate = dateField ? detail.fields.filter((field) => field !== dateField) : detail.fields;
   const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : fieldsWithoutHeaderDate;
   const visibleActions = getVisibleActions(detail);
+  const shouldShowServiceObservation = detail.type === "SERVICO" && !isTenarisClient(detail);
   const canAutosaveObservation = detail.type === "SERVICO" && Boolean(onServiceObservationChange);
 
   const clearSaveTimer = useCallback(() => {
@@ -252,7 +253,7 @@ export function DetailsScreen({
                   <DetailsField key={field.label} field={field} />
                 ))}
 
-                {detail.type === "SERVICO" ? (
+                {shouldShowServiceObservation ? (
                   <TextAreaField
                     id={`service-observation-${detail.id}`}
                     fieldClassName="finalize-input-block shadow service-observation-editor"

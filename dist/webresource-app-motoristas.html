@@ -11817,7 +11817,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.440","builtAt":"2026-06-24T19:16:58.662Z","builtAtLabel":"24/06/2026, 16:16"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.449","builtAt":"2026-06-24T20:16:05.862Z","builtAtLabel":"24/06/2026, 17:16"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -35522,11 +35522,61 @@ select,
       return typeMatches && item.detail.id === normalizedId;
     })?.detail ?? null;
   }
+  function normalizeClipboardText(value) {
+    return String(value ?? "").replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").replace(/\r\n/g, "\n").replace(/\u00a0/g, " ").trim();
+  }
+  function normalizeClipboardKey(value) {
+    return normalizeClipboardText(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+  function getClipboardField(detail, ...labels) {
+    const targetKeys = new Set(labels.map(normalizeClipboardKey));
+    return detail.fields.find((field) => targetKeys.has(normalizeClipboardKey(field.label)))?.value ?? "";
+  }
+  function getClipboardTime(value) {
+    const match = normalizeClipboardText(value).match(/\b(\d{2}:\d{2})\b/);
+    return match?.[1] ?? "\u2014";
+  }
+  function getReceiveMarker(value) {
+    const normalized = normalizeClipboardText(value).toLowerCase();
+    if (!normalized) return "\u2014";
+    if (["sim", "yes", "true"].includes(normalized)) return "\u2713";
+    if (["nao", "n\xE3o", "no", "false"].includes(normalized)) return "\u2717";
+    return normalizeClipboardText(value);
+  }
+  function splitVehicle(value) {
+    const normalized = normalizeClipboardText(value);
+    if (!normalized) return { model: ".", plate: "." };
+    const plateMatch = normalized.match(/\b[A-Z]{3}[0-9][A-Z0-9][0-9]{2}\b|\b[A-Z]{3}-?[0-9]{4}\b/i);
+    const plate = plateMatch?.[0]?.toUpperCase().replace("-", "") ?? ".";
+    const model = normalized.replace(plateMatch?.[0] ?? "", "").replace(/\s{2,}/g, " ").trim() || ".";
+    return { model, plate };
+  }
   function detailsToClipboardText(detail) {
-    return detail.fields.map((field) => {
-      const value = field.value.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").trim();
-      return `${field.label}: ${value}`;
-    }).join("\n");
+    const date = normalizeClipboardText(getClipboardField(detail, "Data e Hor\xE1rio de Sa\xEDda", "Data e Hor\xE1rio da Manuten\xE7\xE3o", "In\xEDcio da Janela", "In\xEDcio da Janela de Troca")) || "\u2014";
+    const time2 = getClipboardTime(date);
+    const passenger = normalizeClipboardText(getClipboardField(detail, "Passageiros e Telefones de Contato", "Passageiros"));
+    const start = normalizeClipboardText(getClipboardField(detail, "Endere\xE7o de Sa\xEDda", "Local de Sa\xEDda")) || "\u2014";
+    const destination = normalizeClipboardText(getClipboardField(detail, "Destino")) || "\u2014";
+    const observation = normalizeClipboardText(getClipboardField(detail, "Obs ao Motorista", "Coment\xE1rios ao Motorista", "Obs de Opera\xE7\xE3o", "Observa\xE7\xE3o", "Descri\xE7\xE3o do Cen\xE1rio Encontrado")) || "\u2014";
+    const passengerProfile = normalizeClipboardText(getClipboardField(detail, "Perfil do Passageiro")) || "\u2014";
+    const vehicle = splitVehicle(getClipboardField(detail, "Ve\xEDculo", "Veiculo"));
+    const lines = [
+      `*Data:* ${date}`,
+      `*ID:* ${detail.id || "\u2014"}`,
+      `*Hor\xE1rio:* ${time2}`,
+      `*Cliente:* ${normalizeClipboardText(getClipboardField(detail, "Cliente")) || "\u2014"}`,
+      `*Receber:* ${getReceiveMarker(getClipboardField(detail, "Receber"))}`,
+      `*Trajeto:* ${normalizeClipboardText(getClipboardField(detail, "Trajeto", "Descri\xE7\xE3o", "Descricao")) || "\u2014"}`,
+      `*Passageiro:* ${passenger || "\u2014"}`,
+      `*Local de sa\xEDda:* ${start}`,
+      `*Destino:* ${destination}`,
+      `*Obs ao motorista:* ${observation}`,
+      "",
+      `Modelo do Carro: ${vehicle.model}`,
+      `Placa do Carro: ${vehicle.plate}`,
+      `*Perfil do Passageiro:* ${passengerProfile}`
+    ];
+    return lines.join("\n");
   }
   function buildWhatsAppUrl(phone, message) {
     const digits = phone.replace(/\D/g, "");
@@ -38224,6 +38274,12 @@ ${text}`);
     const geral = record.__geral ?? record;
     return toDate(geral.cr40f_dataehorriodesada)?.getTime() ?? 0;
   }
+  function shouldKeepCanceledAgendaItem(item, nowMs) {
+    if (item.tipo !== "SERVICO" || !item.canceled) return true;
+    const scheduledAtMs = getItemDateMs(item);
+    if (!scheduledAtMs) return true;
+    return nowMs <= scheduledAtMs + 60 * 60 * 1e3;
+  }
   function addDateHeaders(items) {
     const result = [];
     let lastKey = "";
@@ -38320,7 +38376,7 @@ ${text}`);
       if (isDriver2 && exchange.new_concluidomotorista2 === true) return false;
       return exchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid"));
     }).map((exchange) => mapExchange(exchange, exchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid"))));
-    const serviceItems = await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver)));
+    const serviceItems = (await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver)))).filter((item) => shouldKeepCanceledAgendaItem(item, now2.getTime()));
     const items = [
       ...serviceItems,
       ...maintenanceRows.filter((item) => Boolean(item)),
@@ -40946,6 +41002,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const fieldsWithoutHeaderDate = dateField ? detail.fields.filter((field) => field !== dateField) : detail.fields;
     const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : fieldsWithoutHeaderDate;
     const visibleActions = getVisibleActions(detail);
+    const shouldShowServiceObservation = detail.type === "SERVICO" && !isTenarisClient(detail);
     const canAutosaveObservation = detail.type === "SERVICO" && Boolean(onServiceObservationChange);
     const clearSaveTimer = (0, import_react36.useCallback)(() => {
       if (!saveTimerRef.current) return;
@@ -41085,7 +41142,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             onScroll: updateScrollHint,
             children: /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "details-fields details-fields-v1", children: [
               visibleFields.map((field) => /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(DetailsField, { field }, field.label)),
-              detail.type === "SERVICO" ? /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+              shouldShowServiceObservation ? /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
                 TextAreaField,
                 {
                   id: `service-observation-${detail.id}`,
@@ -41987,11 +42044,39 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/screens/HistoryDetailsScreen.tsx
   var import_react39 = __toESM(require_react(), 1);
   var import_jsx_runtime25 = __toESM(require_jsx_runtime(), 1);
+  function normalizeFieldKey(value) {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+  function getFirstName2(value) {
+    const words = String(value ?? "").trim().split(/\s+/).filter(Boolean);
+    return words[0] ?? "";
+  }
+  function isPhoneLine(value) {
+    const digits = value.replace(/\D/g, "");
+    return digits.length >= 8;
+  }
+  function simplifyPassengerValue(value) {
+    const segments = String(value ?? "").replace(/<br\s*\/?>/gi, "\n").split("\n").map((segment) => segment.trim()).filter(Boolean).filter((segment) => !isPhoneLine(segment)).map((segment) => getFirstName2(segment));
+    return segments.join("<br />");
+  }
+  function sanitizeHistoryField(field) {
+    const key = normalizeFieldKey(field.label);
+    if (key === "enderecodesaida" || key === "obsdeoperacao") return null;
+    if (key === "passageirosetelefonesdecontato" || key === "passageiros") {
+      const value = simplifyPassengerValue(field.value);
+      return value ? { ...field, value, html: value.includes("<br />") } : null;
+    }
+    if (key === "solicitante") {
+      const value = getFirstName2(String(field.value ?? ""));
+      return value ? { ...field, value, html: false } : null;
+    }
+    return field;
+  }
   function HistoryDetailsScreen({ detail, onBack, onRefresh }) {
     const scrollRef = (0, import_react39.useRef)(null);
     const title = detail.type === "SERVICO" ? "Detalhes do Servi\xE7o" : detail.type === "TROCA" ? "Detalhes da Troca" : "Detalhes da Manuten\xE7\xE3o";
     const dateField = detail.fields.find((field) => /data|hora|hor\u00e1rio|janela/i.test(field.label));
-    const fieldsWithoutHeaderDate = detail.fields.filter((field) => field !== dateField);
+    const fieldsWithoutHeaderDate = detail.fields.filter((field) => field !== dateField).map(sanitizeHistoryField).filter((field) => Boolean(field));
     return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(AppShell, { screenLabel: "TelaDetalhesHistorico", children: [
       /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(DetailsMenu, { title, onBack }),
       /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("section", { className: "main-panel details-main details-main-v1 history-details-main", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("article", { className: `details-card details-card-v1 history-detail ${detail.type.toLowerCase()}`, children: [
@@ -42407,7 +42492,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function getBuildInfo2() {
     return window.__APP_BUILD_INFO ?? {};
   }
-  function getFirstName2(name) {
+  function getFirstName3(name) {
     return name?.trim().split(/\s+/)[0] || "Renan";
   }
   function getServiceDate(value) {
@@ -42480,7 +42565,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const shellRef = (0, import_react46.useRef)(null);
     const [now2, setNow] = (0, import_react46.useState)(() => Date.now());
     const [resetConfirmOpen, setResetConfirmOpen] = (0, import_react46.useState)(false);
-    const driverName = getFirstName2(props.driverName ?? props.motoristaNome);
+    const driverName = getFirstName3(props.driverName ?? props.motoristaNome);
     const nextService = (0, import_react46.useMemo)(() => getNextServiceItem(props, now2), [now2, props.nextServiceAt, props.proximoServicoEm, props.services]);
     const nextServiceDate = nextService?.date ?? null;
     const agendaCount = (0, import_react46.useMemo)(() => getTodayAgendaCount(props.services, now2), [now2, props.services]);
@@ -62447,6 +62532,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const finalizeSelected = async (fields) => {
       if (!selectedDetail || remoteOperation) return;
       const detailToFinalize = selectedDetail;
+      const agendaBeforeFinalize = store.agenda;
       const receiveProofCount = receiveProofs[detailToFinalize.id]?.length ?? 0;
       const finalFields = receiveProofCount > 0 ? { ...fields, "Comprovantes de Recebimento": `${receiveProofCount} comprovante(s) anexado(s).` } : fields;
       const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
@@ -62518,37 +62604,64 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
       setSelectedDetail(null);
       setScreen("servicos");
-      finalizeTimerRef.current = window.setTimeout(async () => {
+      finalizeTimerRef.current = window.setTimeout(() => {
         if (remoteMode) {
-          try {
-            const remote = await loadRemoteStore();
-            setStore((current) => ({
-              ...current,
-              agenda: removeAgendaDetail(remote.agenda, detailToFinalize),
-              history: remote.history
-            }));
-          } catch {
-            setStore((current) => finalizeDetailLocally(current, detailToFinalize, finalFields));
-          }
+          setStore((current) => ({
+            ...current,
+            agenda: removeAgendaDetail(current.agenda, detailToFinalize)
+          }));
         } else {
           setStore((current) => finalizeDetailLocally(current, detailToFinalize, finalFields));
+          setReceiveProofs((current) => {
+            if (!current[detailToFinalize.id]) return current;
+            const next = { ...current };
+            delete next[detailToFinalize.id];
+            return next;
+          });
+          setReceiveUploadedCounts((current) => {
+            if (!current[detailToFinalize.id]) return current;
+            const next = { ...current };
+            delete next[detailToFinalize.id];
+            return next;
+          });
         }
-        setReceiveProofs((current) => {
-          if (!current[detailToFinalize.id]) return current;
-          const next = { ...current };
-          delete next[detailToFinalize.id];
-          return next;
-        });
-        setReceiveUploadedCounts((current) => {
-          if (!current[detailToFinalize.id]) return current;
-          const next = { ...current };
-          delete next[detailToFinalize.id];
-          return next;
-        });
         setRemoteOperation(null);
         finalizeTimerRef.current = null;
         setCompletingDetailKey("");
         completingClearTimerRef.current = null;
+        if (!remoteMode) return;
+        void Promise.race([
+          loadRemoteStore(),
+          wait(8e3).then(() => {
+            throw new Error("Falha ao confirmar a atualiza\xE7\xE3o da agenda no Dataverse.");
+          })
+        ]).then((remote) => {
+          setStore((current) => ({
+            ...current,
+            agenda: removeAgendaDetail(remote.agenda, detailToFinalize),
+            history: remote.history
+          }));
+          setReceiveProofs((current) => {
+            if (!current[detailToFinalize.id]) return current;
+            const next = { ...current };
+            delete next[detailToFinalize.id];
+            return next;
+          });
+          setReceiveUploadedCounts((current) => {
+            if (!current[detailToFinalize.id]) return current;
+            const next = { ...current };
+            delete next[detailToFinalize.id];
+            return next;
+          });
+        }).catch((error2) => {
+          setStore((current) => ({
+            ...current,
+            agenda: current.agenda.some((item) => item.detail?.id === detailToFinalize.id && item.detail?.type === detailToFinalize.type) ? current.agenda : agendaBeforeFinalize
+          }));
+          setCriticalError(
+            `${error2 instanceof Error ? error2.message : "Falha ao atualizar a agenda."} O servi\xE7o voltou para a galeria. Finalize novamente.`
+          );
+        });
       }, 1650);
     };
     const cancelSelected = async (reason) => {
