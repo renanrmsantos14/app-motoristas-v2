@@ -2902,7 +2902,7 @@ export async function saveVoucherRemote(payload: FinalizePayload) {
   const flowResult = await runHttpFlow(FLOW_URLS.gerarVoucher, {
     text: record.cr40f_reservadeveculosid ?? dv.id,
     text_1: dataUrlToBase64(payload.signatureDataUrl ?? ""),
-    text_2: String(payload.fields.Desvio ?? "").trim() || "Nao",
+    text_2: String(payload.fields.Desvio ?? "").trim() || "Não",
     text_5: getFieldValue(payload.fields, "Horário Inicial", "Horario Inicial"),
     text_6: getFieldValue(payload.fields, "Espera Início", "Espera Inicio"),
     text_7: getFieldValue(payload.fields, "Espera Final"),
