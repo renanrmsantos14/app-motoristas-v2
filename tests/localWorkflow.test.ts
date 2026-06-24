@@ -75,8 +75,8 @@ test("voucher exige espera consistente e despesas válidas", () => {
     "Espera Início": "15:00",
     "Espera Final": "Não informado"
   }), [
-    "Preencha o horário final da espera.",
-    "O início da espera não pode ser maior que o horário inicial."
+    "O início da espera não pode ser maior que o horário inicial.",
+    "Preencha o horário final da espera."
   ]);
 
   assert.deepEqual(validateVoucherFields({
@@ -108,6 +108,25 @@ test("voucher exige espera consistente e despesas válidas", () => {
     "Pedágio": "12,3,4"
   }), [
     "Preencha despesas com valores válidos."
+  ]);
+});
+
+test("voucher trata virada de dia sem comparar horário como string crua", () => {
+  const detail = {
+    type: "SERVICO" as const,
+    id: "10241",
+    title: "Detalhes do Serviço",
+    fields: [{ label: "Data e Horário de Saída", value: "02/06/2026 23:50" }],
+    actions: []
+  };
+
+  assert.deepEqual(validateVoucherFields({
+    "Horário Inicial": "23:50",
+    "Espera Início": "00:10",
+    "Espera Final": "00:20"
+  }, detail), [
+    "O início da espera não pode ser maior que o horário inicial.",
+    "O final da espera não pode ser maior que o horário inicial."
   ]);
 });
 

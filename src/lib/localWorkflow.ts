@@ -156,34 +156,93 @@ function isMoneyFieldValid(value: string) {
   return Number.isFinite(parsed) && parsed >= 0;
 }
 
-export function validateVoucherFields(fields: Record<string, string>): string[] {
-  const errors: string[] = [];
+export type VoucherValidationField =
+  | "startTime"
+  | "waitStart"
+  | "waitEnd"
+  | "waitRange"
+  | "toll"
+  | "parking"
+  | "fuel"
+  | "hotel"
+  | "others";
+
+export type VoucherValidationResult = {
+  messages: string[];
+  fieldErrors: Partial<Record<VoucherValidationField, string>>;
+};
+
+function parseClockToMinutes(value: string) {
+  const match = String(value ?? "").trim().match(/^(\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
+function getServiceScheduledMinutes(detail?: DetailData) {
+  const fieldValue =
+    detail?.fields.find((field) => /data.*hor[aá]rio.*sa[ií]da/i.test(field.label))?.value ??
+    detail?.fields.find((field) => /data.*hor[aá]rio/i.test(field.label))?.value ??
+    "";
+  const fieldMatch = String(fieldValue).match(/(\d{2}):(\d{2})/);
+  if (fieldMatch) {
+    return Number(fieldMatch[1]) * 60 + Number(fieldMatch[2]);
+  }
+
+  const dataverseValue = String(detail?.dataverse?.record?.cr40f_dataehorriodesada ?? "").trim();
+  if (!dataverseValue) return null;
+  const date = new Date(dataverseValue);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+function resolveChronologicalMinutes(rawMinutes: number | null, referenceMinutes: number | null) {
+  if (rawMinutes === null) return null;
+  if (referenceMinutes === null) return rawMinutes;
+
+  const dayOffset = Math.floor(referenceMinutes / 1440) * 1440;
+  const referenceClock = ((referenceMinutes % 1440) + 1440) % 1440;
+  const candidate = rawMinutes + dayOffset;
+  const crossedMidnight = rawMinutes < referenceClock && referenceClock >= 18 * 60 && rawMinutes <= 6 * 60;
+  return crossedMidnight ? candidate + 1440 : candidate;
+}
+
+export function getVoucherValidationResult(fields: Record<string, string>, detail?: DetailData): VoucherValidationResult {
+  const messages: string[] = [];
+  const fieldErrors: Partial<Record<VoucherValidationField, string>> = {};
   const startTime = getFieldValue(fields, "Horário Inicial", "Horario Inicial");
   const waitStart = getFieldValue(fields, "Espera Início", "Espera Inicio");
   const waitEnd = getFieldValue(fields, "Espera Final");
+  const serviceScheduledMinutes = getServiceScheduledMinutes(detail);
+  const startMinutes = resolveChronologicalMinutes(parseClockToMinutes(startTime), serviceScheduledMinutes);
+  const waitStartMinutes = resolveChronologicalMinutes(parseClockToMinutes(waitStart), startMinutes);
+  const waitEndMinutes = resolveChronologicalMinutes(parseClockToMinutes(waitEnd), waitStartMinutes ?? startMinutes);
 
   if (isBlankOrNotInformed(startTime)) {
-    errors.push("Horário inicial é obrigatório.");
+    fieldErrors.startTime = "Horário inicial é obrigatório.";
   }
 
   if (hasTimeValue(waitStart) && !hasTimeValue(waitEnd)) {
-    errors.push("Preencha o horário final da espera.");
+    fieldErrors.waitEnd = "Preencha o horário final da espera.";
   }
 
   if (!hasTimeValue(waitStart) && hasTimeValue(waitEnd)) {
-    errors.push("Preencha o horário inicial da espera.");
+    fieldErrors.waitStart = "Preencha o horário inicial da espera.";
   }
 
-  if (hasTimeValue(startTime) && hasTimeValue(waitStart) && waitStart > startTime) {
-    errors.push("O início da espera não pode ser maior que o horário inicial.");
+  if (startMinutes !== null && waitStartMinutes !== null && waitStartMinutes > startMinutes) {
+    fieldErrors.waitStart = "O início da espera não pode ser maior que o horário inicial.";
   }
 
-  if (hasTimeValue(startTime) && hasTimeValue(waitEnd) && waitEnd > startTime) {
-    errors.push("O final da espera não pode ser maior que o horário inicial.");
+  if (startMinutes !== null && waitEndMinutes !== null && waitEndMinutes > startMinutes) {
+    fieldErrors.waitEnd = "O final da espera não pode ser maior que o horário inicial.";
   }
 
-  if (hasTimeValue(waitStart) && hasTimeValue(waitEnd) && waitEnd <= waitStart) {
-    errors.push("O horário final da espera deve ser maior que o inicial.");
+  if (waitStartMinutes !== null && waitEndMinutes !== null && waitEndMinutes <= waitStartMinutes) {
+    fieldErrors.waitRange = "O horário final da espera deve ser maior que o inicial.";
   }
 
   const invalidExpenseLabels = [
@@ -197,10 +256,25 @@ export function validateVoucherFields(fields: Record<string, string>): string[] 
   ].filter((label, index, all) => all.indexOf(label) === index && !isMoneyFieldValid(getFieldValue(fields, label)));
 
   if (invalidExpenseLabels.length) {
-    errors.push("Preencha despesas com valores válidos.");
+    const moneyMessage = "Preencha despesas com valores válidos.";
+    if (!isMoneyFieldValid(getFieldValue(fields, "Pedágio", "Pedagio"))) fieldErrors.toll = moneyMessage;
+    if (!isMoneyFieldValid(getFieldValue(fields, "Estacionamento"))) fieldErrors.parking = moneyMessage;
+    if (!isMoneyFieldValid(getFieldValue(fields, "Combustível", "Combustivel"))) fieldErrors.fuel = moneyMessage;
+    if (!isMoneyFieldValid(getFieldValue(fields, "Hospedagem"))) fieldErrors.hotel = moneyMessage;
+    if (!isMoneyFieldValid(getFieldValue(fields, "Outros"))) fieldErrors.others = moneyMessage;
   }
 
-  return errors;
+  const orderedKeys: VoucherValidationField[] = ["startTime", "waitStart", "waitEnd", "waitRange", "toll", "parking", "fuel", "hotel", "others"];
+  orderedKeys.forEach((key) => {
+    const message = fieldErrors[key];
+    if (message && !messages.includes(message)) messages.push(message);
+  });
+
+  return { messages, fieldErrors };
+}
+
+export function validateVoucherFields(fields: Record<string, string>, detail?: DetailData): string[] {
+  return getVoucherValidationResult(fields, detail).messages;
 }
 
 export function validateMaintenanceFields(fields: Record<string, string>): string[] {

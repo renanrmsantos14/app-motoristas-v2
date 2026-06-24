@@ -6,6 +6,7 @@ import { FormMenu } from "../components/navigation/FormMenu";
 import { VoucherInputRow } from "../components/voucher/VoucherInputRow";
 import { VoucherSection } from "../components/voucher/VoucherSection";
 import { reportAppError } from "../lib/appErrorLogger";
+import { getVoucherValidationResult, type VoucherValidationField } from "../lib/localWorkflow";
 import type { DetailData } from "../types";
 
 type VoucherScreenProps = {
@@ -19,17 +20,7 @@ type VoucherScreenProps = {
   submitState?: ActionButtonState;
 };
 
-type VoucherErrorKey =
-  | "startTime"
-  | "waitStart"
-  | "waitEnd"
-  | "waitRange"
-  | "toll"
-  | "parking"
-  | "fuel"
-  | "hotel"
-  | "others"
-  | "signature";
+type VoucherErrorKey = VoucherValidationField | "signature";
 type VoucherErrors = Partial<Record<VoucherErrorKey, string>>;
 
 const hours = ["", "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
@@ -298,26 +289,24 @@ export function VoucherScreen({
     const waitStartTime = waitStartHour && waitStartMinute ? `${waitStartHour}:${waitStartMinute}` : "";
     const waitEndTime = waitEndHour && waitEndMinute ? `${waitEndHour}:${waitEndMinute}` : "";
     const trimmedDeviation = deviation.trim();
-    const nextErrors: VoucherErrors = {};
-
-    if (!startTime) nextErrors.startTime = "Informe hora e minuto inicial.";
-
+    const voucherFieldValues = {
+      "Horário Inicial": startTime || "Não informado",
+      "Espera Início": waitStartTime || "Não informado",
+      "Espera Final": waitEndTime || "Não informado",
+      Desvio: trimmedDeviation,
+      "Observação Voucher": obs || "Sem observação.",
+      Pedágio: toll || "R$ 0,00",
+      Estacionamento: parking || "R$ 0,00",
+      Combustível: fuel || "R$ 0,00",
+      Hospedagem: hotel || "R$ 0,00",
+      Outros: others || "R$ 0,00"
+    };
+    const nextErrors: VoucherErrors = { ...getVoucherValidationResult(voucherFieldValues, detail).fieldErrors };
     const hasPartialWaitStart = Boolean(waitStartHour) !== Boolean(waitStartMinute);
     const hasPartialWaitEnd = Boolean(waitEndHour) !== Boolean(waitEndMinute);
 
     if (hasPartialWaitStart) nextErrors.waitStart = "Preencha hora e minuto do início da espera.";
     if (hasPartialWaitEnd) nextErrors.waitEnd = "Preencha hora e minuto do final da espera.";
-    if (waitStartTime && !waitEndTime && !hasPartialWaitEnd) nextErrors.waitEnd = "Informe o final da espera.";
-    if (!waitStartTime && waitEndTime && !hasPartialWaitStart) nextErrors.waitStart = "Informe o início da espera.";
-    if (startTime && waitStartTime && waitStartTime > startTime) nextErrors.waitStart = "O início da espera não pode ser maior que o horário inicial.";
-    if (startTime && waitEndTime && waitEndTime > startTime) nextErrors.waitEnd = "O final da espera não pode ser maior que o horário inicial.";
-    if (waitStartTime && waitEndTime && waitEndTime <= waitStartTime) nextErrors.waitRange = "O final da espera deve ser maior que o início.";
-
-    if (!isMoneyInputValid(toll)) nextErrors.toll = "Digite um valor válido.";
-    if (!isMoneyInputValid(parking)) nextErrors.parking = "Digite um valor válido.";
-    if (!isMoneyInputValid(fuel)) nextErrors.fuel = "Digite um valor válido.";
-    if (!isMoneyInputValid(hotel)) nextErrors.hotel = "Digite um valor válido.";
-    if (!isMoneyInputValid(others)) nextErrors.others = "Digite um valor válido.";
 
     if (showSignature && !hasSignature) nextErrors.signature = "Colete a assinatura do passageiro.";
 
@@ -361,16 +350,7 @@ export function VoucherScreen({
     }
 
     const fields = {
-      "Horário Inicial": startTime || "Não informado",
-      "Espera Início": waitStartTime || "Não informado",
-      "Espera Final": waitEndTime || "Não informado",
-      Desvio: trimmedDeviation,
-      "Observação Voucher": obs || "Sem observação.",
-      Pedágio: toll || "R$ 0,00",
-      Estacionamento: parking || "R$ 0,00",
-      Combustível: fuel || "R$ 0,00",
-      Hospedagem: hotel || "R$ 0,00",
-      Outros: others || "R$ 0,00",
+      ...voucherFieldValues,
       Assinatura: hasSignature ? "Assinatura registrada localmente." : "Sem assinatura."
     };
 
