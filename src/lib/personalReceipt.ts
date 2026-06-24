@@ -1,5 +1,5 @@
 import type { DetailData } from "../types";
-import { formatReceiptCurrencyByLanguage, formatReceiptDateByLanguage, normalizeReceiptLanguage, RECEIPT_LANGUAGE, type ReceiptLanguage } from "./receiptLanguage.ts";
+import { formatReceiptCurrencyByLanguage, formatReceiptDateByLanguage, getDefaultReceiptPaymentMethod, getReceiptDisplayPaymentMethod, normalizeReceiptLanguage, RECEIPT_LANGUAGE, type ReceiptLanguage } from "./receiptLanguage.ts";
 
 export type PersonalReceiptModel = {
   idOp: string;
@@ -24,8 +24,8 @@ type BuildPersonalReceiptModelOptions = {
   receiptIdentifier?: string;
 };
 
-function getDefaultPaymentMethod() {
-  return "Cartão de Crédito";
+function getDefaultPaymentMethod(language: ReceiptLanguage = RECEIPT_LANGUAGE.portuguese) {
+  return getDefaultReceiptPaymentMethod(language);
 }
 
 function getField(detail: DetailData | undefined, label: string) {
@@ -196,7 +196,7 @@ export function buildPersonalReceiptModel(
     idioma,
     idPag: options.receiptIdentifier?.trim() || getPendingReceiptIdentifier(),
     dataEmissao: formatReceiptDateByLanguage(getTodayDisplayDate(), idioma),
-    metodoPagamento: getDefaultPaymentMethod(),
+    metodoPagamento: getDefaultPaymentMethod(idioma),
     periodo: hasDetail ? buildPeriodText(detail, record) : "",
     trajetos: hasDetail ? buildTrajetos(detail) : "",
     valorTotal,
@@ -208,6 +208,7 @@ export function buildPersonalReceiptModel(
     ...overrides,
     idioma,
     dataEmissao: formatReceiptDateByLanguage(getTodayDisplayDate(), idioma),
+    metodoPagamento: getReceiptDisplayPaymentMethod(overrides.metodoPagamento ?? baseModel.metodoPagamento, idioma),
     valorTotal: overrides.valorTotal !== undefined ? formatReceiptTotalByLanguage(overrides.valorTotal, idioma) : baseModel.valorTotal
   };
 }
@@ -220,7 +221,7 @@ export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptE
       idioma: RECEIPT_LANGUAGE.portuguese,
       valorTotal: "",
       dataEmissao: toYmdDateString(getTodayDisplayDate()),
-      metodoPagamento: getDefaultPaymentMethod(),
+      metodoPagamento: getDefaultPaymentMethod(RECEIPT_LANGUAGE.portuguese),
       observacoes: "-"
     };
   }
@@ -236,7 +237,7 @@ export function buildPersonalReceiptDraft(detail?: DetailData): PersonalReceiptE
     idioma: model.idioma,
     valorTotal: rawValor,
     dataEmissao: toYmdDateString(getTodayDisplayDate()),
-    metodoPagamento: getDefaultPaymentMethod(),
+    metodoPagamento: getDefaultPaymentMethod(model.idioma),
     observacoes: model.observacoes || "-"
   };
 }

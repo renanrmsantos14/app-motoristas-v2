@@ -18,6 +18,7 @@ type FinalizeScreenProps = {
   onPreviewMaintenancePhoto: (kind: MaintenancePhotoKind) => void;
   onClearPhotos?: () => void;
   submitState?: ActionButtonState;
+  initialServiceObservation?: string;
 };
 
 export type MaintenanceFinalizeDraft = {
@@ -98,8 +99,14 @@ function TextAreaBlock({
   );
 }
 
-function ServiceFinalize({ onDone, submitState }: { detail: DetailData; onDone: (fields: Record<string, string>) => void; submitState: ActionButtonState }) {
-  const [obs, setObs] = useState("");
+function ServiceFinalize({ detail, onDone, submitState, initialObservation = "" }: { detail: DetailData; onDone: (fields: Record<string, string>) => void; submitState: ActionButtonState; initialObservation?: string }) {
+  const [obs, setObs] = useState(initialObservation);
+
+  useEffect(() => {
+    setObs(initialObservation);
+  }, [detail.id, initialObservation]);
+
+  const finalObservation = obs.trim() || initialObservation.trim() || "Sem observação.";
 
   return (
     <article className="finalize-card">
@@ -110,14 +117,13 @@ function ServiceFinalize({ onDone, submitState }: { detail: DetailData; onDone: 
         </div>
       </div>
       <FinalizeActions
-        onNone={() => onDone({ "Observação Final": "Sem observação." })}
-        onConfirm={() => onDone({ "Observação Final": obs || "Sem observação." })}
+        onNone={() => onDone({ "Observação Final": finalObservation })}
+        onConfirm={() => onDone({ "Observação Final": finalObservation })}
         submitState={submitState}
       />
     </article>
   );
 }
-
 function ExchangeFinalize({ detail, onDone, submitState }: { detail: DetailData; onDone: (fields: Record<string, string>) => void; submitState: ActionButtonState }) {
   const [obs, setObs] = useState("");
 
@@ -130,8 +136,8 @@ function ExchangeFinalize({ detail, onDone, submitState }: { detail: DetailData;
         </div>
       </div>
       <FinalizeActions
-        onNone={() => onDone({ Observações: "Sem observação." })}
-        onConfirm={() => onDone({ Observações: obs || "Sem observação." })}
+        onNone={() => onDone({ "Observações": "Sem observação." })}
+        onConfirm={() => onDone({ "Observações": obs || "Sem observação." })}
         submitState={submitState}
       />
     </article>
@@ -419,7 +425,8 @@ export function FinalizeScreen({
   onMaintenanceDraftChange,
   onPreviewMaintenancePhoto,
   onClearPhotos,
-  submitState = "idle"
+  submitState = "idle",
+  initialServiceObservation = ""
 }: FinalizeScreenProps) {
   const title = detail.type === "MANUTENCAO" ? "Detalhes da Manutenção" : "Alguma Observação?";
   const isSubmitting = submitState !== "idle";
@@ -429,7 +436,7 @@ export function FinalizeScreen({
       <FormMenu title={title} onBack={isSubmitting ? undefined : onBack} rightIcon="eraser" rightLabel="Limpar campos" onRightClick={isSubmitting ? undefined : onClearPhotos} />
       <section className="main-panel finalize-main">
         {detail.type === "TROCA" ? <ExchangeFinalize detail={detail} onDone={onDone} submitState={submitState} /> : null}
-        {detail.type === "SERVICO" ? <ServiceFinalize detail={detail} onDone={onDone} submitState={submitState} /> : null}
+        {detail.type === "SERVICO" ? <ServiceFinalize detail={detail} onDone={onDone} submitState={submitState} initialObservation={initialServiceObservation} /> : null}
         {detail.type === "MANUTENCAO" ? (
           <MaintenanceFinalize
             detail={detail}
@@ -446,3 +453,6 @@ export function FinalizeScreen({
     </AppShell>
   );
 }
+
+
+

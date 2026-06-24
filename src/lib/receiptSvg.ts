@@ -10,6 +10,7 @@ export type ReceiptSvgAssets = {
   logoPreta: string;
   nlaLogo: string;
   qrCode: string;
+  centabelBook?: string;
 };
 
 type SvgTextOptions = {
@@ -118,6 +119,18 @@ function image(href: string, x: number, y: number, width: number, height: number
   return `<image href="${href}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"/>`;
 }
 
+function embeddedFontStyle(centabelBook?: string) {
+  if (!centabelBook) return "";
+  return `<defs><style><![CDATA[
+@font-face {
+  font-family: "Centabel Book Embedded";
+  src: url("${centabelBook}") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+]]></style></defs>`;
+}
+
 export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: ReceiptSvgAssets) {
   const right = RECEIPT_SVG_WIDTH - MARGIN;
   const contentWidth = RECEIPT_SVG_WIDTH - MARGIN * 2;
@@ -125,15 +138,38 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
   const copy = getReceiptCopy(model.idioma);
   const description = buildReceiptDescription(model, copy.descriptionBody);
   const footerLogoY = 818;
+  const footerLogoRailWidth = 684;
+  const footerLogoRailStartX = (RECEIPT_SVG_WIDTH - footerLogoRailWidth) / 2;
+  const footerLogoColumnWidth = footerLogoRailWidth / 3;
+  const footerLogoCenters = {
+    nla: footerLogoRailStartX + footerLogoColumnWidth * 0.5,
+    preta: footerLogoRailStartX + footerLogoColumnWidth * 1.5,
+    qr: footerLogoRailStartX + footerLogoColumnWidth * 2.5
+  };
+  const footerContactGap = 12;
+  const footerContactColumns = {
+    name: 138,
+    role: 170,
+    phone: 150,
+    email: 190
+  };
+  const footerContactWidth =
+    footerContactColumns.name +
+    footerContactColumns.role +
+    footerContactColumns.phone +
+    footerContactColumns.email +
+    footerContactGap * 3;
+  const footerContactStartX = (RECEIPT_SVG_WIDTH - footerContactWidth) / 2;
   const footerContactX = {
-    name: MARGIN + 8,
-    role: MARGIN + 142,
-    phone: MARGIN + 315,
-    email: MARGIN + 455
+    name: footerContactStartX + footerContactColumns.name / 2,
+    role: footerContactStartX + footerContactColumns.name + footerContactGap + footerContactColumns.role / 2,
+    phone: footerContactStartX + footerContactColumns.name + footerContactColumns.role + footerContactGap * 2 + footerContactColumns.phone / 2,
+    email: footerContactStartX + footerContactColumns.name + footerContactColumns.role + footerContactColumns.phone + footerContactGap * 3 + footerContactColumns.email / 2
   };
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${RECEIPT_SVG_WIDTH}" height="${RECEIPT_SVG_HEIGHT}" viewBox="0 0 ${RECEIPT_SVG_WIDTH} ${RECEIPT_SVG_HEIGHT}">`,
+    embeddedFontStyle(assets.centabelBook),
     rect(0, 0, RECEIPT_SVG_WIDTH, RECEIPT_SVG_HEIGHT, "#ffffff"),
     rect(0, 0, RECEIPT_SVG_WIDTH, 125, "#000e23"),
     svgText(copy.title, {
@@ -142,7 +178,7 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
       size: 70,
       weight: 400,
       fill: "#ffffff",
-      family: "Centabel Book Embedded, Centabel Book, Montserrat, serif"
+      family: "Centabel Book Embedded, Centabel Book, serif"
     }),
     image(assets.logoB, right - 74, 25, 74, 74),
     rect(0, 125, RECEIPT_SVG_WIDTH, 45, "#ebf3ff"),
@@ -189,24 +225,24 @@ export function buildReceiptSvgMarkup(model: PersonalReceiptModel, assets: Recei
     svgText("CNPJ: 24.484.228/0001-62", { x: right, y: 681, size: 11, fill: "#747474", anchor: "end" }),
     svgText("Sede: São José dos Campos, São Paulo - Brasil", { x: right, y: 699, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
     svgText("Filial: Pindamonhangaba, São Paulo - Brasil", { x: right, y: 717, size: 11, fill: "#747474", anchor: "end", maxWidth: 320 }),
-    image(assets.nlaLogo, MARGIN + 10, footerLogoY + 18, colWidth - 36, 64),
-    image(assets.logoPreta, MARGIN + colWidth + 22, footerLogoY, colWidth - 44, 96),
-    image(assets.qrCode, MARGIN + colWidth * 2 + 78, footerLogoY + 10, 70, 70),
-    svgText(copy.qrCaption, { x: MARGIN + colWidth * 2 + 113, y: footerLogoY + 96, size: 10, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: 96, maxLines: 2, lineHeight: 11 }),
+    image(assets.nlaLogo, footerLogoCenters.nla - (colWidth - 36) / 2, footerLogoY + 18, colWidth - 36, 64),
+    image(assets.logoPreta, footerLogoCenters.preta - (colWidth - 44) / 2, footerLogoY, colWidth - 44, 96),
+    image(assets.qrCode, footerLogoCenters.qr - 35, footerLogoY + 10, 70, 70),
+    svgText(copy.qrCaption, { x: footerLogoCenters.qr, y: footerLogoY + 96, size: 10, weight: 700, fill: "#00398e", anchor: "middle", maxWidth: 96, maxLines: 2, lineHeight: 11 }),
     rect(MARGIN + 24, 948, contentWidth - 48, 3, "#dce8fa"),
     line(MARGIN + 24, 950, right - 24, "#00398e", 1),
-    svgText("Junior de Paula", { x: footerContactX.name, y: 984, size: 10, weight: 700, maxWidth: 118 }),
-    svgText(copy.conciergeRole, { x: footerContactX.role, y: 984, size: 10, fill: "#00398e", maxWidth: 150 }),
-    svgText("+55 12 99723 6961", { x: footerContactX.phone, y: 984, size: 10, fill: "#747474", maxWidth: 125 }),
-    svgText("junior@betinhos.com.br", { x: footerContactX.email, y: 984, size: 10, fill: "#747474", maxWidth: 190 }),
-    svgText("Deborah Keila", { x: footerContactX.name, y: 1005, size: 10, weight: 700, maxWidth: 118 }),
-    svgText(copy.operationsManagerRole, { x: footerContactX.role, y: 1005, size: 10, fill: "#00398e", maxWidth: 150 }),
-    svgText("+55 12 99615 9093", { x: footerContactX.phone, y: 1005, size: 10, fill: "#747474", maxWidth: 125 }),
-    svgText("deborah.keila@betinhos.com.br", { x: footerContactX.email, y: 1005, size: 10, fill: "#747474", maxWidth: 190 }),
-    svgText("Juliana Rodrigues", { x: footerContactX.name, y: 1026, size: 10, weight: 700, maxWidth: 118 }),
-    svgText(copy.financeManagerRole, { x: footerContactX.role, y: 1026, size: 10, fill: "#00398e", maxWidth: 150 }),
-    svgText("+55 12 99615 9085", { x: footerContactX.phone, y: 1026, size: 10, fill: "#747474", maxWidth: 125 }),
-    svgText("financeiro@betinhos.com.br", { x: footerContactX.email, y: 1026, size: 10, fill: "#747474", maxWidth: 190 }),
+    svgText("Junior de Paula", { x: footerContactX.name, y: 984, size: 10, weight: 700, anchor: "middle", maxWidth: footerContactColumns.name }),
+    svgText(copy.conciergeRole, { x: footerContactX.role, y: 984, size: 10, fill: "#00398e", anchor: "middle", maxWidth: footerContactColumns.role }),
+    svgText("+55 12 99723 6961", { x: footerContactX.phone, y: 984, size: 10, fill: "#747474", anchor: "middle", maxWidth: footerContactColumns.phone }),
+    svgText("junior@betinhos.com.br", { x: footerContactX.email, y: 984, size: 10, fill: "#747474", anchor: "middle", maxWidth: footerContactColumns.email }),
+    svgText("Deborah Keila", { x: footerContactX.name, y: 1005, size: 10, weight: 700, anchor: "middle", maxWidth: footerContactColumns.name }),
+    svgText(copy.operationsManagerRole, { x: footerContactX.role, y: 1005, size: 10, fill: "#00398e", anchor: "middle", maxWidth: footerContactColumns.role }),
+    svgText("+55 12 99615 9093", { x: footerContactX.phone, y: 1005, size: 10, fill: "#747474", anchor: "middle", maxWidth: footerContactColumns.phone }),
+    svgText("deborah.keila@betinhos.com.br", { x: footerContactX.email, y: 1005, size: 10, fill: "#747474", anchor: "middle", maxWidth: footerContactColumns.email }),
+    svgText("Juliana Rodrigues", { x: footerContactX.name, y: 1026, size: 10, weight: 700, anchor: "middle", maxWidth: footerContactColumns.name }),
+    svgText(copy.financeManagerRole, { x: footerContactX.role, y: 1026, size: 10, fill: "#00398e", anchor: "middle", maxWidth: footerContactColumns.role }),
+    svgText("+55 12 99615 9085", { x: footerContactX.phone, y: 1026, size: 10, fill: "#747474", anchor: "middle", maxWidth: footerContactColumns.phone }),
+    svgText("financeiro@betinhos.com.br", { x: footerContactX.email, y: 1026, size: 10, fill: "#747474", anchor: "middle", maxWidth: footerContactColumns.email }),
     "</svg>"
   ].join("");
 }

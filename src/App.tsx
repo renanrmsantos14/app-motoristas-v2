@@ -50,6 +50,7 @@ import {
   loadRemoteDetailByParams,
   loadRemoteStore,
   markDetailViewedRemote,
+  saveServiceObservationRemote,
   saveVoucherDraftRemote,
   saveVoucherRemote,
   updateOne,
@@ -77,7 +78,7 @@ import {
   findDetailByParams,
   removeAgendaDetail,
   saveMaintenancePhoto,
-  saveSignatureLocally,
+  saveSignatureLocally,
   type LocalStore
 } from "./lib/localWorkflow";
 import { LocalToast, type ToastState, type ToastTone } from "./components/common/LocalToast";
@@ -234,6 +235,28 @@ function inferToastTone(message: string): ToastTone {
   return "info";
 }
 
+const SERVICE_OBSERVATION_DRAFTS_KEY = "app-motoristas-service-observation-drafts-v1";
+
+function getDetailDraftKey(detail: DetailData) {
+  return `${detail.type}:${detail.dataverse?.id ?? detail.id}`;
+}
+
+function loadServiceObservationDrafts(storage: Storage = window.localStorage): Record<string, string> {
+  try {
+    const raw = storage.getItem(SERVICE_OBSERVATION_DRAFTS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed as Record<string, unknown>)
+        .filter(([key, value]) => key && typeof value === "string")
+        .map(([key, value]) => [key, value])
+    );
+  } catch {
+    return {};
+  }
+}
+
 function App() {
   const devMode = useMemo(() => new URLSearchParams(window.location.search).get("dev") ?? "", []);
   const previewHashActive = useMemo(() => /^#\/?preview(?:[/?]|$)/i.test(window.location.hash), []);
@@ -274,6 +297,7 @@ function App() {
   const [remoteMode, setRemoteMode] = useState(false);
   const [driverContext, setDriverContext] = useState<DriverContext | null>(null);
   const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [serviceObservationDrafts, setServiceObservationDrafts] = useState<Record<string, string>>(() => loadServiceObservationDrafts());
   const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
   const [maintenanceCurrentVehicleId, setMaintenanceCurrentVehicleId] = useState("");
   const [maintenanceVehiclesLoading, setMaintenanceVehiclesLoading] = useState(false);
@@ -566,7 +590,7 @@ function App() {
                   detailId: remoteInitialDetail.id,
                   detailType: remoteInitialDetail.type
                 });
-                setToast(error instanceof Error ? error.message : "Falha ao marcar visualizaÃ§Ã£o.");
+                setToast(error instanceof Error ? error.message : "Falha ao marcar visualização.");
               });
               setSelectedDetail(remoteInitialDetail);
               setScreen(routedScreen);
@@ -580,7 +604,7 @@ function App() {
                   if (!detail) {
                     setSelectedDetail(null);
                     setScreen(getHashRouteFallbackScreen(routedScreen));
-                    setToast("ServiÃ§o do link nÃ£o encontrado.");
+                    setToast("Serviço do link não encontrado.");
                     return;
                   }
                   markDetailViewedRemote(detail).catch((error) => {
@@ -593,7 +617,7 @@ function App() {
                       detailId: detail.id,
                       detailType: detail.type
                     });
-                    setToast(error instanceof Error ? error.message : "Falha ao marcar visualizaÃ§Ã£o.");
+                    setToast(error instanceof Error ? error.message : "Falha ao marcar visualização.");
                   });
                   setSelectedDetail(detail);
                   setScreen(routedScreen);
@@ -610,7 +634,7 @@ function App() {
                   });
                   setSelectedDetail(null);
                   setScreen(getHashRouteFallbackScreen(routedScreen));
-                  setToast(error instanceof Error ? error.message : "ServiÃ§o do link nÃ£o encontrado.");
+                  setToast(error instanceof Error ? error.message : "Serviço do link não encontrado.");
                 });
               return;
             }
@@ -1002,6 +1026,15 @@ function App() {
     setToast("Conclua os itens anteriores da fila antes de prosseguir.");
     setScreen("servicos");
     return true;
+  };
+
+  const getServiceObservationDraft = (detail: DetailData | null) => detail ? serviceObservationDrafts[getDetailDraftKey(detail)] ?? "" : "";
+
+  const saveSelectedServiceObservation = async (observation: string) => {
+    if (!selectedDetail || selectedDetail.type !== "SERVICO") return;
+    const draftKey = getDetailDraftKey(selectedDetail);
+    setServiceObservationDrafts((current) => ({ ...current, [draftKey]: observation }));
+    if (remoteMode) await saveServiceObservationRemote(selectedDetail, observation);
   };
 
   const finalizeSelected = async (fields: Record<string, string>) => {
@@ -1875,12 +1908,16 @@ function App() {
     setScreen("voucher");
   };
 
-  const openFinalizeFlow = () => {
+  const openFinalizeFlow = (serviceObservation?: string) => {
     if (!selectedDetail) return;
-    if (blockIfNotFirstPending(selectedDetail)) return;
+    const detailForFlow = selectedDetail;
+    if (selectedDetail.type === "SERVICO" && serviceObservation !== undefined) {
+      setServiceObservationDrafts((current) => ({ ...current, [getDetailDraftKey(selectedDetail)]: serviceObservation }));
+    }
+    if (blockIfNotFirstPending(detailForFlow)) return;
     if (
-      shouldRequireReceiveStep(selectedDetail) &&
-      (!hasReceiveProofs(selectedDetail, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(selectedDetail, receiveProofs, receiveUploadedCounts)))
+      shouldRequireReceiveStep(detailForFlow) &&
+      (!hasReceiveProofs(detailForFlow, receiveProofs) || (remoteMode && !hasUploadedReceiveProofs(detailForFlow, receiveProofs, receiveUploadedCounts)))
     ) {
       setScreen("receber");
       return;
@@ -2384,6 +2421,7 @@ function App() {
         maintenanceDraft={maintenanceFinalizeDraft}
         onMaintenanceDraftChange={setMaintenanceFinalizeDraft}
         submitState={remoteOperation?.phase ?? "idle"}
+        initialServiceObservation={getServiceObservationDraft(selectedDetail)}
         onClearPhotos={() => {
           setStore((current) => clearMaintenancePhotos(current, selectedDetail.id));
           setToast("Fotos locais limpas.");
@@ -2461,6 +2499,8 @@ function App() {
         onOpenReceive={openReceiveFlow}
         onOpenVoucher={openVoucherFlow}
         onOpenFinalize={openFinalizeFlow}
+        onServiceObservationChange={saveSelectedServiceObservation}
+        serviceObservationDraft={getServiceObservationDraft(selectedDetail)}
         onCancelLocal={openLocalCancelFlow}
         onRefresh={() => refreshLocal(selectedDetail)}
         onCopy={() => {
@@ -2535,3 +2575,8 @@ function App() {
 }
 
 export default App;
+
+
+
+
+

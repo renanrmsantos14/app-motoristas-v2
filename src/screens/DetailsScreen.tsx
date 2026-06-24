@@ -3,23 +3,34 @@ import type { DetailAction, DetailData } from "../types";
 import { DetailActionButton } from "../components/details/DetailActionButton";
 import { DetailsField } from "../components/details/DetailsField";
 import { QuestionsBox } from "../components/details/QuestionsBox";
+import { TextAreaField } from "../components/common/FormFields";
 import { PullToRefresh } from "../components/common/PullToRefresh";
 import { AppShell } from "../components/layout/AppShell";
 import { DetailsMenu } from "../components/navigation/DetailsMenu";
+
+type ObservationSaveStatus = "idle" | "saving" | "saved" | "error";
 
 type DetailsScreenProps = {
   detail: DetailData;
   onBack: () => void;
   onOpenReceive: () => void;
   onOpenVoucher: () => void;
-  onOpenFinalize: () => void;
+  onOpenFinalize: (serviceObservation?: string) => void;
   onCancelLocal: () => void;
   onCopy: () => void;
   onRefresh: () => void | Promise<void>;
+  onServiceObservationChange?: (observation: string) => Promise<void>;
+  serviceObservationDraft?: string;
 };
+
+const SERVICE_OBSERVATION_LABEL = "Observação do Motorista";
+const SERVICE_OBSERVATION_SAVE_DELAY_MS = 900;
+const SAVE_STATUS_VISIBLE_MS = 1600;
 
 const getFieldValue = (detail: DetailData, label: string) =>
   detail.fields.find((field) => field.label.toLowerCase() === label.toLowerCase())?.value ?? "";
+
+const isServiceObservationField = (label: string) => label.toLowerCase() === SERVICE_OBSERVATION_LABEL.toLowerCase();
 
 const isTenarisClient = (detail: DetailData) => /tenn?aris/i.test(getFieldValue(detail, "Cliente"));
 const isTrueLike = (value: unknown) => value === true || value === 1 || value === "true";
@@ -37,6 +48,21 @@ const getVisibleActions = (detail: DetailData): DetailAction[] => {
     : detail.actions.filter((action) => action !== "voucher");
 };
 
+function ObservationStatus({ status }: { status: ObservationSaveStatus }) {
+  if (status === "idle") return null;
+
+  const label = status === "saving" ? "Salvando" : status === "saved" ? "Salvo" : "Falha ao salvar";
+  return (
+    <span className={`service-observation-status is-${status}`} aria-live="polite" aria-label={label} title={label}>
+      <span className="service-observation-orb" aria-hidden="true">
+        <span className="service-observation-ring" />
+        <span className="service-observation-checkmark" />
+        <span className="service-observation-error-mark" />
+      </span>
+    </span>
+  );
+}
+
 export function DetailsScreen({
   detail,
   onBack,
@@ -45,16 +71,88 @@ export function DetailsScreen({
   onOpenFinalize,
   onCancelLocal,
   onCopy,
-  onRefresh
+  onRefresh,
+  onServiceObservationChange,
+  serviceObservationDraft = ""
 }: DetailsScreenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const saveTimerRef = useRef<number | null>(null);
+  const statusResetTimerRef = useRef<number | null>(null);
+  const saveSequenceRef = useRef(0);
+  const initialServiceObservation = serviceObservationDraft;
+  const savedObservationRef = useRef(initialServiceObservation);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [hasMoreContent, setHasMoreContent] = useState(false);
   const [shouldRenderScrollHint, setShouldRenderScrollHint] = useState(false);
   const [isScrollHintExiting, setIsScrollHintExiting] = useState(false);
-  const dateField = detail.fields.find((field) => /data|hora|hor\u00e1rio|janela/i.test(field.label));
+  const [serviceObservation, setServiceObservation] = useState(initialServiceObservation);
+  const [serviceObservationStatus, setServiceObservationStatus] = useState<ObservationSaveStatus>("idle");
+  const dateField = detail.fields.find((field) => /data|hora|horário|janela/i.test(field.label));
   const fieldsWithoutHeaderDate = dateField ? detail.fields.filter((field) => field !== dateField) : detail.fields;
+  const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : fieldsWithoutHeaderDate;
   const visibleActions = getVisibleActions(detail);
+  const canAutosaveObservation = detail.type === "SERVICO" && Boolean(onServiceObservationChange);
+
+  const clearSaveTimer = useCallback(() => {
+    if (!saveTimerRef.current) return;
+    window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = null;
+  }, []);
+
+  const clearStatusResetTimer = useCallback(() => {
+    if (!statusResetTimerRef.current) return;
+    window.clearTimeout(statusResetTimerRef.current);
+    statusResetTimerRef.current = null;
+  }, []);
+
+  const saveServiceObservation = useCallback(async (nextObservation: string) => {
+    if (!canAutosaveObservation || !onServiceObservationChange) return;
+    clearSaveTimer();
+    if (nextObservation === savedObservationRef.current) return;
+
+    const sequence = saveSequenceRef.current + 1;
+    saveSequenceRef.current = sequence;
+    clearStatusResetTimer();
+    setServiceObservationStatus("saving");
+    try {
+      await onServiceObservationChange(nextObservation);
+      if (saveSequenceRef.current !== sequence) return;
+      savedObservationRef.current = nextObservation;
+      setServiceObservationStatus("saved");
+      statusResetTimerRef.current = window.setTimeout(() => {
+        if (saveSequenceRef.current === sequence) setServiceObservationStatus("idle");
+        statusResetTimerRef.current = null;
+      }, SAVE_STATUS_VISIBLE_MS);
+    } catch {
+      if (saveSequenceRef.current !== sequence) return;
+      setServiceObservationStatus("error");
+    }
+  }, [canAutosaveObservation, clearSaveTimer, clearStatusResetTimer, onServiceObservationChange]);
+
+  const scheduleServiceObservationSave = useCallback((nextObservation: string) => {
+    if (!canAutosaveObservation) return;
+    clearSaveTimer();
+    if (nextObservation === savedObservationRef.current) {
+      setServiceObservationStatus("saved");
+      return;
+    }
+    saveTimerRef.current = window.setTimeout(() => {
+      void saveServiceObservation(nextObservation);
+    }, SERVICE_OBSERVATION_SAVE_DELAY_MS);
+  }, [canAutosaveObservation, clearSaveTimer, saveServiceObservation]);
+
+  useEffect(() => {
+    clearSaveTimer();
+    savedObservationRef.current = initialServiceObservation;
+    setServiceObservation(initialServiceObservation);
+    clearStatusResetTimer();
+    setServiceObservationStatus("idle");
+  }, [clearSaveTimer, clearStatusResetTimer, detail.id, detail.type, initialServiceObservation]);
+
+  useEffect(() => () => {
+    clearSaveTimer();
+    clearStatusResetTimer();
+  }, [clearSaveTimer, clearStatusResetTimer]);
 
   const updateScrollHint = useCallback(() => {
     const element = scrollRef.current;
@@ -72,7 +170,7 @@ export function DetailsScreen({
 
   useLayoutEffect(() => {
     scheduleScrollHintUpdate();
-  }, [detail.id, fieldsWithoutHeaderDate.length, scheduleScrollHintUpdate]);
+  }, [detail.id, visibleFields.length, scheduleScrollHintUpdate]);
 
   useEffect(() => {
     scheduleScrollHintUpdate();
@@ -119,6 +217,20 @@ export function DetailsScreen({
     setConfirmCancel(true);
   };
 
+  const handleServiceObservationChange = (value: string) => {
+    setServiceObservation(value);
+    scheduleServiceObservationSave(value);
+  };
+
+  const handleOpenFinalize = () => {
+    if (detail.type === "SERVICO") {
+      void saveServiceObservation(serviceObservation);
+      onOpenFinalize(serviceObservation);
+      return;
+    }
+    onOpenFinalize();
+  };
+
   return (
     <AppShell screenLabel="TelaDetalhes">
       <DetailsMenu title={detail.title} onBack={onBack} onCopy={onCopy} />
@@ -136,9 +248,28 @@ export function DetailsScreen({
               onScroll={updateScrollHint}
             >
               <div className="details-fields details-fields-v1">
-                {fieldsWithoutHeaderDate.map((field) => (
+                {visibleFields.map((field) => (
                   <DetailsField key={field.label} field={field} />
                 ))}
+
+                {detail.type === "SERVICO" ? (
+                  <TextAreaField
+                    id={`service-observation-${detail.id}`}
+                    fieldClassName="finalize-input-block shadow service-observation-editor"
+                    label={
+                      <span className="service-observation-label-content">
+                        <span>Observação do motorista</span>
+                        <ObservationStatus status={serviceObservationStatus} />
+                      </span>
+                    }
+                    rows={4}
+                    value={serviceObservation}
+                    placeholder="Digite aqui"
+                    disabled={!canAutosaveObservation}
+                    onChange={(event) => handleServiceObservationChange(event.target.value)}
+                    onBlur={() => void saveServiceObservation(serviceObservation)}
+                  />
+                ) : null}
 
                 {detail.type === "MANUTENCAO" ? <QuestionsBox /> : null}
               </div>
@@ -158,7 +289,7 @@ export function DetailsScreen({
                 <DetailActionButton
                   key={action}
                   action={action}
-                  onClick={action === "receber" ? onOpenReceive : action === "voucher" ? onOpenVoucher : action === "finalizar" ? onOpenFinalize : handleCancel}
+                  onClick={action === "receber" ? onOpenReceive : action === "voucher" ? onOpenVoucher : action === "finalizar" ? handleOpenFinalize : handleCancel}
                 />
               ))}
             </div>

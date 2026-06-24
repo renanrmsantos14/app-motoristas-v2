@@ -1,4 +1,4 @@
-﻿import type { AgendaItem, DetailAction, DetailData, DetailField, MaintenancePhotoKind } from "../types";
+import type { AgendaItem, DetailAction, DetailData, DetailField, MaintenancePhotoKind } from "../types";
 
 import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
 import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
@@ -218,7 +218,7 @@ const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> =
 };
 
 const GERAL_SELECT =
-  "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,modifiedon";
+  "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,modifiedon";
 
 const MAINTENANCE_SELECT =
   "$select=cr40f_manutencoesid,cr40f_id,cr40f_descricao,cr40f_comentariosaomotorista,cr40f_graudamanutencao,cr40f_tipodoreparo,cr40f_status,cr40f_servicorealizado,cr40f_estabelecimento,cr40f_valor,cr40f_pagamento,_cr40f_placa_carro_value,_cr40f_realizado_por_nome_value,new_comentariosdocolaborador,cr40f_foto01,cr40f_linkdaevidencia,cr40f_foto03,new_linkdanotafiscal,new_linkdafotofinal1,new_linkdafotofinal2,new_linkdafotofinal3";
@@ -2334,6 +2334,7 @@ async function buildSolicitanteHtml(record: DataverseRecord, serviceDate: Date |
 
 function buildFields(record: DataverseRecord, passengerHtml = "", solicitanteHtml = ""): DetailField[] {
   const date = toDate(record.cr40f_dataehorriodesada);
+  const finalizedAt = toDate(record.new_datadefinalizacao);
   return [
     { label: "Data e Horário de Saída", value: formatDetailDateTime(date) },
     { label: "Cliente", value: getLookupName(record, "cr40f_cliente") || getFormatted(record, "cr40f_cliente") },
@@ -2343,6 +2344,7 @@ function buildFields(record: DataverseRecord, passengerHtml = "", solicitanteHtm
     { label: "Endereço de Saída", value: String(record.cr40f_endereodesada ?? "") },
     { label: "Destino", value: String(record.cr40f_destino ?? "") },
     { label: "Obs de Operação", value: String(record.cr40f_obsdeoperao ?? "") },
+    { label: "Data de Finalização", value: formatDetailDateTime(finalizedAt) },
     { label: "Perfil do Passageiro", value: String(record.cr40f_perfildopassageiro ?? "") },
     { label: "Solicitante", value: solicitanteHtml || getLookupName(record, "cr40f_solicitante"), html: Boolean(solicitanteHtml) },
     { label: "Veículo", value: getLookupName(record, "cr40f_veiculo") }
@@ -2564,7 +2566,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   dataverseLog("Janela da agenda calculada.", { start, end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
 
   const geralSelect =
-    "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,modifiedon";
+    "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,modifiedon";
 
   const servicesResult = await retrieveMultiple(
     DATAVERSE.geral,
@@ -2956,15 +2958,40 @@ export async function saveVoucherDraftRemote(detail: DetailData, fields: Record<
   });
 }
 
+const MOTORIST_OBSERVATION_PREFIX = "OBS do motorista:";
+const MOTORIST_OBSERVATION_PATTERN = /(?:\r?\n){0,2}OBS do motorista:\s*[\s\S]*$/i;
+
+function cleanMotoristObservation(value: string) {
+  return String(value ?? "")
+    .replace(/^\s*OBS do motorista:\s*/i, "")
+    .trim();
+}
+
+function mergeMotoristObservation(existingValue: unknown, observation: string) {
+  const existing = String(existingValue ?? "").trim();
+  const managerText = existing.replace(MOTORIST_OBSERVATION_PATTERN, "").trim();
+  const cleanObservation = cleanMotoristObservation(observation);
+  const motoristText = cleanObservation ? `${MOTORIST_OBSERVATION_PREFIX} ${cleanObservation}` : "";
+  return [managerText, motoristText].filter(Boolean).join("\n");
+}
+
 export async function finalizeServiceRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
   if (!dv?.id) throw new Error("Serviço sem referência Dataverse.");
   dataverseLog("Finalização simples de serviço iniciada.", { detailId: payload.detail.id, dataverseId: dv.id });
   payload.onProgress?.("Atualizando serviço no Dataverse.");
   await updateOne(DATAVERSE.geral, dv.id, {
-    new_observacaofinal: getFieldValue(payload.fields, "Observação Final", "Observacao Final"),
+    new_observacaofinal: mergeMotoristObservation(dv.record?.new_observacaofinal, getFieldValue(payload.fields, "Observação Final", "Observacao Final")),
     cr40f_status: OPERATION_STATUS.concluido,
     new_datadefinalizacao: new Date().toISOString()
+  });
+}
+
+export async function saveServiceObservationRemote(detail: DetailData, observation: string) {
+  const dv = detail.dataverse;
+  if (!dv?.id) throw new Error("Serviço sem referência Dataverse.");
+  await updateOne(DATAVERSE.geral, dv.id, {
+    new_observacaofinal: mergeMotoristObservation(dv.record?.new_observacaofinal, observation)
   });
 }
 
@@ -3242,6 +3269,8 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
     });
   }
 }
+
+
 
 
 

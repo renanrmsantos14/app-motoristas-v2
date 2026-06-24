@@ -3,6 +3,7 @@ import logoBetinhosBUrl from "../../Logo Betinhos B.png";
 import logoBetinhosPretaUrl from "../../Logo Betinhos Preta.png";
 import nlaLogoUrl from "../../NLA.jpg";
 import qrCodeAvaliacaoUrl from "../../QrCode-Avaliação.png";
+import centabelBookUrl from "../assets/fonts/Centabel-Book.ttf";
 import type { PersonalReceiptModel } from "./personalReceipt";
 import { buildReceiptSvgDataUrlFromMarkup, buildReceiptSvgMarkup, RECEIPT_SVG_HEIGHT, RECEIPT_SVG_WIDTH } from "./receiptSvg";
 
@@ -32,18 +33,20 @@ async function urlToDataUrl(url: string) {
 }
 
 export async function buildReceiptSvg(model: PersonalReceiptModel) {
-  const [logoB, logoPreta, nlaLogo, qrCode] = await Promise.all([
+  const [logoB, logoPreta, nlaLogo, qrCode, centabelBook] = await Promise.all([
     urlToDataUrl(logoBetinhosBUrl),
     urlToDataUrl(logoBetinhosPretaUrl),
     urlToDataUrl(nlaLogoUrl),
-    urlToDataUrl(qrCodeAvaliacaoUrl)
+    urlToDataUrl(qrCodeAvaliacaoUrl),
+    urlToDataUrl(centabelBookUrl)
   ]);
 
   return buildReceiptSvgMarkup(model, {
     logoB,
     logoPreta,
     nlaLogo,
-    qrCode
+    qrCode,
+    centabelBook
   });
 }
 

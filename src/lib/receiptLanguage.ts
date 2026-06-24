@@ -128,6 +128,37 @@ export function getReceiptDisplayClient(cliente: string, language: string | null
   return "Particular";
 }
 
+const CREDIT_CARD_PAYMENT_METHOD_BY_LANGUAGE: Record<ReceiptLanguage, string> = {
+  "pt-BR": "Cartão de Crédito",
+  "en-US": "Credit Card",
+  "es-ES": "Tarjeta de Crédito"
+};
+
+function normalizeReceiptComparableText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isCreditCardPaymentMethod(value: string) {
+  const normalized = normalizeReceiptComparableText(value);
+  return ["cartao de credito", "cartaoo de credito", "credit card", "tarjeta de credito"].includes(normalized);
+}
+
+export function getDefaultReceiptPaymentMethod(language: string | null | undefined) {
+  return CREDIT_CARD_PAYMENT_METHOD_BY_LANGUAGE[normalizeReceiptLanguage(language)];
+}
+
+export function getReceiptDisplayPaymentMethod(value: string, language: string | null | undefined) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (isCreditCardPaymentMethod(trimmed)) return getDefaultReceiptPaymentMethod(language);
+  return trimmed;
+}
+
 export function formatReceiptDateByLanguage(value: string, language: string | null | undefined) {
   const trimmed = value.trim();
   if (!trimmed) return "";
