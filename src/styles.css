@@ -10819,13 +10819,13 @@ select,
 }
 
 .action-button--secondary {
-  border-color: #d8dde4 !important;
+  border-color: #1f6c9f !important;
   background: linear-gradient(180deg, #f7f8f8, #eff1f3) !important;
   color: #1f2328 !important;
 }
 
 .action-button--secondary:not(:disabled):hover {
-  border-color: #ccd2d9 !important;
+  border-color: #1f6c9f !important;
   background: linear-gradient(180deg, #fafbfb, #eceff2) !important;
 }
 
