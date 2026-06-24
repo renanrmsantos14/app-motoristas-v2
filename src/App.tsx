@@ -235,6 +235,7 @@ function inferToastTone(message: string): ToastTone {
   return "info";
 }
 
+const VOUCHER_DRAFTS_STORAGE_KEY = "app-motoristas-voucher-drafts-v1";
 const SERVICE_OBSERVATION_DRAFTS_KEY = "app-motoristas-service-observation-drafts-v1";
 
 function getDetailDraftKey(detail: DetailData) {
@@ -252,6 +253,28 @@ function loadServiceObservationDrafts(storage: Storage = window.localStorage): R
         .filter(([key, value]) => key && typeof value === "string")
         .map(([key, value]) => [key, value])
     );
+  } catch {
+    return {};
+  }
+}
+
+function loadVoucherDrafts(storage: Storage = window.localStorage): Record<string, Record<string, string>> {
+  try {
+    const raw = storage.getItem(VOUCHER_DRAFTS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const entries = Object.entries(parsed as Record<string, unknown>)
+      .filter(([key, value]) => key && value && typeof value === "object" && !Array.isArray(value))
+      .map(([key, value]) => {
+        const draftEntries = Object.entries(value as Record<string, unknown>)
+          .filter(([fieldKey, fieldValue]) => fieldKey && typeof fieldValue === "string")
+          .map(([fieldKey, fieldValue]) => [fieldKey, fieldValue] as const);
+        return [key, Object.fromEntries(draftEntries) as Record<string, string>] as const;
+      });
+    return Object.fromEntries(
+      entries
+    ) as Record<string, Record<string, string>>;
   } catch {
     return {};
   }
@@ -296,7 +319,7 @@ function App() {
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
   const [remoteMode, setRemoteMode] = useState(false);
   const [driverContext, setDriverContext] = useState<DriverContext | null>(null);
-  const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>(() => loadVoucherDrafts());
   const [serviceObservationDrafts, setServiceObservationDrafts] = useState<Record<string, string>>(() => loadServiceObservationDrafts());
   const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
   const [maintenanceCurrentVehicleId, setMaintenanceCurrentVehicleId] = useState("");
@@ -552,6 +575,21 @@ function App() {
       });
     }
   }, [isButtonPreviewMode, isReceiptPreviewMode, remoteMode, screen, store]);
+
+  useEffect(() => {
+    if (isButtonPreviewMode || isReceiptPreviewMode) return;
+    try {
+      localStorage.setItem(VOUCHER_DRAFTS_STORAGE_KEY, JSON.stringify(voucherDrafts));
+    } catch (error) {
+      reportAppError(error, {
+        severity: "warning",
+        source: "app",
+        action: "persistVoucherDrafts",
+        phase: "localStorage",
+        screen
+      });
+    }
+  }, [isButtonPreviewMode, isReceiptPreviewMode, screen, voucherDrafts]);
 
   useEffect(() => {
     if (isButtonPreviewMode || isReceiptPreviewMode) return;
@@ -1046,6 +1084,7 @@ function App() {
         ? { ...fields, "Comprovantes de Recebimento": `${receiveProofCount} comprovante(s) anexado(s).` }
         : fields;
     const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
+    const voucherDraftKey = getVoucherDraftKey(detailToFinalize);
     if (blockIfNotFirstPending(detailToFinalize)) return;
 
     if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);
@@ -1115,6 +1154,12 @@ function App() {
     }
 
     setCompletingDetailKey(detailKey);
+    setVoucherDrafts((current) => {
+      if (!current[voucherDraftKey]) return current;
+      const next = { ...current };
+      delete next[voucherDraftKey];
+      return next;
+    });
     if (detailToFinalize.type === "MANUTENCAO") {
       setMaintenanceFinalizeDraft({ serviceDone: "", value: "", payment: "", establishment: "", notes: "" });
     }
@@ -1150,10 +1195,8 @@ function App() {
       });
       setRemoteOperation(null);
       finalizeTimerRef.current = null;
-      completingClearTimerRef.current = window.setTimeout(() => {
-        setCompletingDetailKey("");
-        completingClearTimerRef.current = null;
-      }, 620);
+      setCompletingDetailKey("");
+      completingClearTimerRef.current = null;
     }, 1650);
   };
 
@@ -1243,10 +1286,19 @@ function App() {
   const saveVoucherDraft = (fields: Record<string, string>) => {
     if (!selectedDetail || selectedDetail.type !== "SERVICO") return;
     const detail = selectedDetail;
-    setVoucherDrafts((current) => ({
-      ...current,
-      [getVoucherDraftKey(detail)]: fields
-    }));
+    setVoucherDrafts((current) => {
+      const draftKey = getVoucherDraftKey(detail);
+      if (Object.keys(fields).length === 0) {
+        if (!current[draftKey]) return current;
+        const next = { ...current };
+        delete next[draftKey];
+        return next;
+      }
+      return {
+        ...current,
+        [draftKey]: fields
+      };
+    });
 
     if (!remoteMode) return;
     if (voucherDraftTimerRef.current) window.clearTimeout(voucherDraftTimerRef.current);

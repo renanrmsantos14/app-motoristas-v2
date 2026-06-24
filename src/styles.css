@@ -9762,10 +9762,10 @@ button:disabled {
 .details-card-v1 .detail-inline-link{display:inline!important;width:auto!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:#000e23!important;font:inherit!important;text-align:left!important;text-decoration:underline!important;cursor:pointer!important}
 
 /* Services completion animation - minimal translucent confirmation */
-.services-panel .agenda-card.is-completing{position:relative!important;z-index:6!important;pointer-events:none!important;overflow:hidden!important;animation:service-card-complete 1650ms cubic-bezier(.32,.72,0,1) forwards!important;will-change:transform,opacity!important;transform-origin:center top!important}
+.services-panel .agenda-card.is-completing{position:relative!important;pointer-events:none!important;overflow:hidden!important;animation:service-card-complete 1650ms cubic-bezier(.32,.72,0,1) forwards!important;will-change:transform,opacity!important;transform-origin:center top!important}
 .services-panel .agenda-card.is-completing .agenda-card-inner{animation:service-card-content-complete 1650ms cubic-bezier(.32,.72,0,1) forwards!important;will-change:opacity,filter!important}
 .services-panel .agenda-layout-item{width:100%!important;min-width:0!important;flex:0 0 auto!important}
-.services-panel .agenda-layout-item.is-completing-shell{position:relative!important;z-index:6!important;overflow:visible!important;pointer-events:none!important}
+.services-panel .agenda-layout-item.is-completing-shell{position:relative!important;overflow:visible!important;pointer-events:none!important}
 .services-panel .agenda-layout-item .agenda-card{margin-bottom:0!important}
 .services-panel .pull-refresh,.services-panel .pull-refresh-content{overflow:visible!important}
 .services-panel .agenda-list{gap:0!important;overflow-x:visible!important;padding:14px 0 max(28px,calc(env(safe-area-inset-bottom) + 46px))!important}

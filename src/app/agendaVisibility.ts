@@ -50,5 +50,20 @@ export function shouldShowAgendaItemInGallery(item: AgendaItem, now = Date.now()
 }
 
 export function filterAgendaGalleryItems(items: AgendaItem[], now = Date.now()) {
-  return items.filter((item) => shouldShowAgendaItemInGallery(item, now));
+  const visibleItems = items.filter((item) => shouldShowAgendaItemInGallery(item, now));
+  const result: AgendaItem[] = [];
+
+  for (let index = 0; index < visibleItems.length; index += 1) {
+    const item = visibleItems[index];
+
+    if (item.tipo !== "HEADER") {
+      result.push(item);
+      continue;
+    }
+
+    const nextItem = visibleItems[index + 1];
+    if (nextItem && nextItem.tipo !== "HEADER") result.push(item);
+  }
+
+  return result;
 }

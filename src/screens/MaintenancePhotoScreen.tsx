@@ -315,7 +315,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
         screen: "TelaCameraMidia",
         payload: { fileName: file.name, fileType: file.type }
       });
-      setCameraError(error instanceof Error ? error.message : "NÃ£o foi possÃ­vel preparar a foto.");
+      setCameraError(error instanceof Error ? error.message : "Não foi possível preparar a foto.");
     } finally {
       event.target.value = "";
     }
@@ -345,7 +345,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
         if (event.data.size > 0) recordedChunksRef.current.push(event.data);
       };
       recorder.onerror = () => {
-        reportAppError(new Error("Falha durante a gravaÃ§Ã£o do vÃ­deo."), {
+        reportAppError(new Error("Falha durante a gravação do vídeo."), {
           severity: "error",
           source: "maintenance-photo",
           action: "record-video",
