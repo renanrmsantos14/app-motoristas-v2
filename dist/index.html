@@ -11817,7 +11817,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.440","builtAt":"2026-06-24T19:10:09.498Z","builtAtLabel":"24/06/2026, 16:10"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.440","builtAt":"2026-06-24T19:16:58.662Z","builtAtLabel":"24/06/2026, 16:16"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -59434,7 +59434,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     generateState,
     receiptLink,
     clienteOptions,
-    metodoPagamentoOptions,
     toast,
     documentRef,
     sendState = "idle",
@@ -59531,7 +59530,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     detail,
     onBack,
     clienteOptions = [],
-    metodoPagamentoOptions = [],
     onProgress
   }) {
     const [draft, setDraft] = (0, import_react51.useState)(() => buildPersonalReceiptDraft(detail));
@@ -59726,7 +59724,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         errors,
         generateState,
         clienteOptions,
-        metodoPagamentoOptions,
         receiptLink,
         toast,
         documentRef: receiptDocumentRef,
@@ -61708,9 +61705,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (!raw) return {};
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-      return Object.fromEntries(
-        Object.entries(parsed).filter(([key, value]) => key && typeof value === "string").map(([key, value]) => [key, value])
-      );
+      const entries = Object.entries(parsed).filter(([key, value]) => key && typeof value === "string").map(([key, value]) => [key, value]);
+      return Object.fromEntries(entries);
     } catch {
       return {};
     }
@@ -63713,7 +63709,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             detail: receiptDetail,
             onBack: () => setScreen(receiptEntrySource === "service" && selectedDetail ? "receber" : "inicio"),
             clienteOptions: receiptClienteOptions,
-            metodoPagamentoOptions: expenseReferenceData.paymentMethods.map((method) => method.name),
             onProgress: (progress2) => {
               if (!progress2) {
                 setRemoteOperation(null);

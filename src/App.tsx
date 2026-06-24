@@ -248,11 +248,10 @@ function loadServiceObservationDrafts(storage: Storage = window.localStorage): R
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    return Object.fromEntries(
-      Object.entries(parsed as Record<string, unknown>)
-        .filter(([key, value]) => key && typeof value === "string")
-        .map(([key, value]) => [key, value])
-    );
+    const entries = Object.entries(parsed as Record<string, unknown>)
+      .filter(([key, value]) => key && typeof value === "string")
+      .map(([key, value]) => [key, value] as const);
+    return Object.fromEntries(entries) as Record<string, string>;
   } catch {
     return {};
   }
@@ -2386,7 +2385,6 @@ function App() {
         detail={receiptDetail}
         onBack={() => setScreen(receiptEntrySource === "service" && selectedDetail ? "receber" : "inicio")}
         clienteOptions={receiptClienteOptions}
-        metodoPagamentoOptions={expenseReferenceData.paymentMethods.map((method) => method.name)}
         onProgress={(progress) => {
           if (!progress) {
             setRemoteOperation(null);

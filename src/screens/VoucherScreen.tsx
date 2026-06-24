@@ -103,28 +103,11 @@ function normalizeDeviationDraft(value: unknown) {
   return trimmed;
 }
 
-function parseCurrencyInput(value = "") {
-  const normalized = value
-    .replace("R$", "")
-    .replace(/\./g, "")
-    .replace(",", ".")
-    .trim();
-  return Number(normalized || "0");
-}
-
 function isCurrencyFormatValid(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return true;
   const normalized = trimmed.replace(/^R\$\s*/i, "");
   return /^(\d+|\d{1,3}(\.\d{3})+)(,\d{0,2})?$/.test(normalized);
-}
-
-function isMoneyInputValid(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return true;
-  if (!isCurrencyFormatValid(trimmed)) return false;
-  const parsed = parseCurrencyInput(trimmed);
-  return Number.isFinite(parsed) && parsed >= 0;
 }
 
 function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, string>) {

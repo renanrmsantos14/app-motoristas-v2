@@ -268,6 +268,9 @@ function getRelativeDateFromTimeLabel(item: AgendaItem, now: number) {
   return date;
 }
 
+void getServiceDateFromAgendaItem;
+void getRelativeDateFromTimeLabel;
+
 function resolveAgendaDate(item: AgendaItem, now: number) {
   const date = getAgendaItemStartDate(item, now);
   if (date && date.getTime() >= now) return date;

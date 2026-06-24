@@ -19,7 +19,6 @@ import type { DetailData } from "../types";
 type ReceiptScreenProps = {
   detail?: DetailData;
   clienteOptions?: string[];
-  metodoPagamentoOptions?: string[];
   onBack: () => void;
   onProgress?: (progress: { message: string; phase?: string } | null) => void;
 };
@@ -676,7 +675,6 @@ function ReceiptViewport({
   generateState,
   receiptLink,
   clienteOptions,
-  metodoPagamentoOptions,
   toast,
   documentRef,
   sendState = "idle",
@@ -801,7 +799,6 @@ export function ReceiptScreen({
   detail,
   onBack,
   clienteOptions = [],
-  metodoPagamentoOptions = [],
   onProgress
 }: ReceiptScreenProps) {
   const [draft, setDraft] = useState<PersonalReceiptEditableDraft>(() => buildPersonalReceiptDraft(detail));
@@ -1013,7 +1010,6 @@ export function ReceiptScreen({
       errors={errors}
       generateState={generateState}
       clienteOptions={clienteOptions}
-      metodoPagamentoOptions={metodoPagamentoOptions}
       receiptLink={receiptLink}
       toast={toast}
       documentRef={receiptDocumentRef}
