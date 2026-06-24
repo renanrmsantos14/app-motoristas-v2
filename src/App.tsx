@@ -1077,6 +1077,7 @@ function App() {
   const finalizeSelected = async (fields: Record<string, string>) => {
     if (!selectedDetail || remoteOperation) return;
     const detailToFinalize = selectedDetail;
+    const agendaBeforeFinalize = store.agenda;
     const receiveProofCount = receiveProofs[detailToFinalize.id]?.length ?? 0;
     const finalFields =
       receiveProofCount > 0
@@ -1165,37 +1166,70 @@ function App() {
     setSelectedDetail(null);
     setScreen("servicos");
 
-    finalizeTimerRef.current = window.setTimeout(async () => {
+    finalizeTimerRef.current = window.setTimeout(() => {
       if (remoteMode) {
-        try {
-          const remote = await loadRemoteStore();
+        setStore((current) => ({
+          ...current,
+          agenda: removeAgendaDetail(current.agenda, detailToFinalize)
+        }));
+      } else {
+        setStore((current) => finalizeDetailLocally(current, detailToFinalize, finalFields));
+        setReceiveProofs((current) => {
+          if (!current[detailToFinalize.id]) return current;
+          const next = { ...current };
+          delete next[detailToFinalize.id];
+          return next;
+        });
+        setReceiveUploadedCounts((current) => {
+          if (!current[detailToFinalize.id]) return current;
+          const next = { ...current };
+          delete next[detailToFinalize.id];
+          return next;
+        });
+      }
+      setRemoteOperation(null);
+      finalizeTimerRef.current = null;
+      setCompletingDetailKey("");
+      completingClearTimerRef.current = null;
+
+      if (!remoteMode) return;
+
+      void Promise.race([
+        loadRemoteStore(),
+        wait(8000).then(() => {
+          throw new Error("Falha ao confirmar a atualização da agenda no Dataverse.");
+        })
+      ])
+        .then((remote) => {
           setStore((current) => ({
             ...current,
             agenda: removeAgendaDetail(remote.agenda, detailToFinalize),
             history: remote.history
           }));
-        } catch {
-          setStore((current) => finalizeDetailLocally(current, detailToFinalize, finalFields));
-        }
-      } else {
-        setStore((current) => finalizeDetailLocally(current, detailToFinalize, finalFields));
-      }
-      setReceiveProofs((current) => {
-        if (!current[detailToFinalize.id]) return current;
-        const next = { ...current };
-        delete next[detailToFinalize.id];
-        return next;
-      });
-      setReceiveUploadedCounts((current) => {
-        if (!current[detailToFinalize.id]) return current;
-        const next = { ...current };
-        delete next[detailToFinalize.id];
-        return next;
-      });
-      setRemoteOperation(null);
-      finalizeTimerRef.current = null;
-      setCompletingDetailKey("");
-      completingClearTimerRef.current = null;
+          setReceiveProofs((current) => {
+            if (!current[detailToFinalize.id]) return current;
+            const next = { ...current };
+            delete next[detailToFinalize.id];
+            return next;
+          });
+          setReceiveUploadedCounts((current) => {
+            if (!current[detailToFinalize.id]) return current;
+            const next = { ...current };
+            delete next[detailToFinalize.id];
+            return next;
+          });
+        })
+        .catch((error) => {
+          setStore((current) => ({
+            ...current,
+            agenda: current.agenda.some((item) => item.detail?.id === detailToFinalize.id && item.detail?.type === detailToFinalize.type)
+              ? current.agenda
+              : agendaBeforeFinalize
+          }));
+          setCriticalError(
+            `${error instanceof Error ? error.message : "Falha ao atualizar a agenda."} O serviço voltou para a galeria. Finalize novamente.`
+          );
+        });
     }, 1650);
   };
 
