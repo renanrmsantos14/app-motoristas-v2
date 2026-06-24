@@ -10159,14 +10159,14 @@ button:disabled {
 /* Keep scroll height stable when "Mais detalhes abaixo" disappears. */
 .details-card-v1 .details-scroll-v1{padding-bottom:48px!important}
 .field-error,.signature-error{width:100%!important;margin-top:7px!important;color:rgb(157,38,42)!important;font-family:Manrope,Arial,sans-serif!important;font-size:12px!important;font-weight:900!important;line-height:1.2!important;animation:field-error-enter 180ms cubic-bezier(.23,1,.32,1) both!important}
-.voucher-row.is-invalid,.finalize-input-block.is-invalid{position:relative!important;border-radius:15px!important;background:rgba(255,246,246,.86)!important;box-shadow:inset 0 0 0 1px rgba(180,48,52,.26),0 10px 24px rgba(125,34,38,.07)!important}
+.voucher-row.is-invalid,.finalize-input-block.is-invalid,.cancel-input-block.is-invalid{position:relative!important;border-radius:15px!important;background:rgba(255,246,246,.86)!important;box-shadow:inset 0 0 0 1px rgba(180,48,52,.26),0 10px 24px rgba(125,34,38,.07)!important}
 .voucher-row.is-invalid{padding:10px!important}
-.finalize-input-block.is-invalid{padding:12px!important}
-.voucher-row.is-invalid .voucher-row-label,.finalize-input-block.is-invalid label{color:rgb(125,34,38)!important}
-.voucher-row-control input.is-invalid,.voucher-time.is-invalid select,.finalize-input-block.is-invalid input,.finalize-input-block.is-invalid textarea,.finalize-input-block.is-invalid select,.signature-pad-wrap.is-invalid{border-color:rgba(180,48,52,.58)!important;box-shadow:0 0 0 3px rgba(180,48,52,.14),inset 0 0 0 1px rgba(180,48,52,.16)!important;background:rgb(255,252,252)!important}
+.finalize-input-block.is-invalid,.cancel-input-block.is-invalid{padding:12px!important}
+.voucher-row.is-invalid .voucher-row-label,.finalize-input-block.is-invalid label,.cancel-input-block.is-invalid label{color:rgb(125,34,38)!important}
+.voucher-row-control input.is-invalid,.voucher-time.is-invalid select,.finalize-input-block.is-invalid input,.finalize-input-block.is-invalid textarea,.finalize-input-block.is-invalid select,.cancel-input-block.is-invalid textarea,.signature-pad-wrap.is-invalid{border-color:rgba(180,48,52,.58)!important;box-shadow:0 0 0 3px rgba(180,48,52,.14),inset 0 0 0 1px rgba(180,48,52,.16)!important;background:rgb(255,252,252)!important}
 .voucher-sign.is-invalid{background:rgb(255,246,246)!important;color:rgb(125,34,38)!important;border:1px solid rgba(180,48,52,.42)!important;box-shadow:0 0 0 3px rgba(180,48,52,.14)!important}
 .action-error{padding:0 4px 2px!important;text-align:left!important}
-.voucher-row-control input.is-invalid:focus,.voucher-time.is-invalid select:focus,.finalize-input-block.is-invalid input:focus,.finalize-input-block.is-invalid textarea:focus,.finalize-input-block.is-invalid select:focus,.signature-pad:focus{outline:0!important;box-shadow:0 0 0 4px rgba(180,48,52,.18),0 10px 22px rgba(125,34,38,.10)!important}
+.voucher-row-control input.is-invalid:focus,.voucher-time.is-invalid select:focus,.finalize-input-block.is-invalid input:focus,.finalize-input-block.is-invalid textarea:focus,.finalize-input-block.is-invalid select:focus,.cancel-input-block.is-invalid textarea:focus,.signature-pad:focus{outline:0!important;box-shadow:0 0 0 4px rgba(180,48,52,.18),0 10px 22px rgba(125,34,38,.10)!important}
 .signature-pad-wrap.is-invalid::after{content:"Assinatura obrigatoria"!important;color:rgba(125,34,38,.58)!important}
 .signature-error{position:absolute!important;left:18px!important;right:18px!important;top:16px!important;width:auto!important;margin:0!important;padding:9px 11px!important;border-radius:12px!important;background:rgba(255,246,246,.92)!important;box-shadow:0 8px 18px rgba(125,34,38,.08)!important}
 @keyframes field-error-enter{from{opacity:0;transform:translate3d(0,-4px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
@@ -10830,6 +10830,7 @@ select,
 }
 
 .action-button--primary {
+  border-color: transparent !important;
   background: linear-gradient(180deg, #23262d, #14161b) !important;
   color: #ffffff !important;
 }

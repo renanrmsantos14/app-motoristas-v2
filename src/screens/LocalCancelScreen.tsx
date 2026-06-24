@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { TextAreaField } from "../components/common/FormFields";
 import { AppShell } from "../components/layout/AppShell";
@@ -16,11 +16,13 @@ type LocalCancelScreenProps = {
 export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState = "idle" }: LocalCancelScreenProps) {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const isSubmitting = submitState !== "idle";
   const submit = () => {
     const trimmed = text.trim();
     if (!trimmed) {
       setError("Informe o motivo do cancelamento.");
+      textAreaRef.current?.focus();
       return;
     }
     onSubmit(trimmed);
@@ -38,6 +40,7 @@ export function LocalCancelScreen({ onBack, onWrongClick, onSubmit, submitState 
           <div className="cancel-scroll">
             <div className="cancel-form">
               <TextAreaField
+                ref={textAreaRef}
                 fieldClassName="cancel-input-block"
                 label="Detalhes do Cancelamento"
                 error={error}
