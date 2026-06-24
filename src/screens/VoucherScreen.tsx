@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type Ref } from "react";
 import { AppShell } from "../components/layout/AppShell";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
-import { CheckboxControl, SelectControl, TextAreaControl, TextInputControl } from "../components/common/FormFields";
+import { TextAreaControl, TextInputControl, SelectControl } from "../components/common/FormFields";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { VoucherInputRow } from "../components/voucher/VoucherInputRow";
 import { VoucherSection } from "../components/voucher/VoucherSection";
@@ -19,7 +19,17 @@ type VoucherScreenProps = {
   submitState?: ActionButtonState;
 };
 
-type VoucherErrorKey = "startTime" | "signature";
+type VoucherErrorKey =
+  | "startTime"
+  | "waitStart"
+  | "waitEnd"
+  | "waitRange"
+  | "toll"
+  | "parking"
+  | "fuel"
+  | "hotel"
+  | "others"
+  | "signature";
 type VoucherErrors = Partial<Record<VoucherErrorKey, string>>;
 
 const hours = ["", "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
@@ -64,6 +74,7 @@ function TimeSelects({
     <div className={`voucher-time ${error ? "is-invalid" : ""}`}>
       <SelectControl
         ref={hourRef}
+        className="time-select-fixed"
         value={hour}
         options={hourOptions}
         placeholder="Hora"
@@ -75,6 +86,7 @@ function TimeSelects({
       <span>:</span>
       <SelectControl
         ref={minuteRef}
+        className="time-select-fixed"
         value={minute}
         options={minuteOptions}
         placeholder="Min"
@@ -92,6 +104,38 @@ function splitTime(value = "") {
   return { hour, minute };
 }
 
+function normalizeDeviationDraft(value: unknown) {
+  const trimmed = String(value ?? "").trim();
+  const normalized = trimmed.toLowerCase();
+  if (!trimmed || normalized === "não" || normalized === "nao" || normalized === "false") return "";
+  if (normalized === "sim" || normalized === "true") return "Sim";
+  return trimmed;
+}
+
+function parseCurrencyInput(value = "") {
+  const normalized = value
+    .replace("R$", "")
+    .replace(/\./g, "")
+    .replace(",", ".")
+    .trim();
+  return Number(normalized || "0");
+}
+
+function isCurrencyFormatValid(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  const normalized = trimmed.replace(/^R\$\s*/i, "");
+  return /^(\d+|\d{1,3}(\.\d{3})+)(,\d{0,2})?$/.test(normalized);
+}
+
+function isMoneyInputValid(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  if (!isCurrencyFormatValid(trimmed)) return false;
+  const parsed = parseCurrencyInput(trimmed);
+  return Number.isFinite(parsed) && parsed >= 0;
+}
+
 function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, string>) {
   if (initialDraft) {
     const start = splitTime(initialDraft["Horário Inicial"] ?? initialDraft["Horario Inicial"]);
@@ -104,11 +148,11 @@ function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, stri
       espera_ini_min: waitStart.minute,
       espera_fim_hora: waitEnd.hour,
       espera_fim_min: waitEnd.minute,
-      desvio: initialDraft.Desvio ?? "Não",
+      desvio: normalizeDeviationDraft(initialDraft.Desvio),
       obs: initialDraft["Observação Voucher"] ?? initialDraft["Observacao Voucher"] ?? "",
-      pedagio: initialDraft.Pedagio ?? "",
+      pedagio: initialDraft.Pedagio ?? initialDraft["Pedágio"] ?? "",
       estacionamento: initialDraft.Estacionamento ?? "",
-      combustivel: initialDraft.Combustivel ?? "",
+      combustivel: initialDraft.Combustivel ?? initialDraft["Combustível"] ?? "",
       hospedagem: initialDraft.Hospedagem ?? "",
       outros: initialDraft.Outros ?? ""
     };
@@ -117,7 +161,11 @@ function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, stri
   const raw = String(detail.dataverse?.record?.new_rascunhovoucher ?? "");
   if (!raw) return {};
   try {
-    return JSON.parse(raw) as Record<string, string>;
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return {
+      ...parsed,
+      desvio: normalizeDeviationDraft(parsed.desvio)
+    };
   } catch (error) {
     reportAppError(error, {
       severity: "warning",
@@ -132,13 +180,31 @@ function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, stri
   }
 }
 
-export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOpenSignature, onFinalize, onDraftChange, submitState = "idle" }: VoucherScreenProps) {
+export function VoucherScreen({
+  detail,
+  hasSignature,
+  initialDraft,
+  onBack,
+  onOpenSignature,
+  onFinalize,
+  onDraftChange,
+  submitState = "idle"
+}: VoucherScreenProps) {
   const isSubmitting = submitState !== "idle";
   const clientName = detail.fields.find((field) => field.label === "Cliente")?.value ?? "";
   const showSignature = /tenn?aris/i.test(clientName);
   const draftRef = useRef(readVoucherDraft(detail, initialDraft));
   const startHourRef = useRef<HTMLButtonElement | null>(null);
   const startMinuteRef = useRef<HTMLButtonElement | null>(null);
+  const waitStartHourRef = useRef<HTMLButtonElement | null>(null);
+  const waitStartMinuteRef = useRef<HTMLButtonElement | null>(null);
+  const waitEndHourRef = useRef<HTMLButtonElement | null>(null);
+  const waitEndMinuteRef = useRef<HTMLButtonElement | null>(null);
+  const tollRef = useRef<HTMLInputElement | null>(null);
+  const parkingRef = useRef<HTMLInputElement | null>(null);
+  const fuelRef = useRef<HTMLInputElement | null>(null);
+  const hotelRef = useRef<HTMLInputElement | null>(null);
+  const othersRef = useRef<HTMLInputElement | null>(null);
   const signatureButtonRef = useRef<HTMLButtonElement | null>(null);
   const [startHour, setStartHour] = useState(() => draftRef.current.hora_saida ?? "");
   const [startMinute, setStartMinute] = useState(() => draftRef.current.min_saida ?? "");
@@ -146,7 +212,7 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
   const [waitStartMinute, setWaitStartMinute] = useState(() => draftRef.current.espera_ini_min ?? "");
   const [waitEndHour, setWaitEndHour] = useState(() => draftRef.current.espera_fim_hora ?? "");
   const [waitEndMinute, setWaitEndMinute] = useState(() => draftRef.current.espera_fim_min ?? "");
-  const [deviation, setDeviation] = useState(() => draftRef.current.desvio === "Sim" || draftRef.current.desvio === "true");
+  const [deviation, setDeviation] = useState(() => draftRef.current.desvio ?? "");
   const [obs, setObs] = useState(() => draftRef.current.obs ?? "");
   const [toll, setToll] = useState(() => draftRef.current.pedagio ?? "");
   const [parking, setParking] = useState(() => draftRef.current.estacionamento ?? "");
@@ -160,6 +226,36 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
     setErrors((current) => ({ ...current, [key]: undefined }));
   };
 
+  const setFieldError = (key: VoucherErrorKey, message: string) => {
+    setErrors((current) => ({ ...current, [key]: message }));
+  };
+
+  const handleExpenseChange = (
+    key: VoucherErrorKey,
+    setter: (value: string) => void,
+    draftLabel: "Pedágio" | "Estacionamento" | "Combustível" | "Hospedagem" | "Outros",
+    value: string
+  ) => {
+    const trimmed = value.trim();
+    const hasLetters = /[A-Za-z]/.test(value);
+    const normalized = trimmed.replace(/^R\$\s*/i, "");
+    const hasAmbiguousSeparators = /,.*,.*/.test(normalized) || /\.\d{1,2}\./.test(normalized) || /,\d{1,2},/.test(normalized);
+
+    if (hasLetters) {
+      setFieldError(key, "Use apenas números.");
+      return;
+    }
+
+    if (trimmed && (hasAmbiguousSeparators || !isCurrencyFormatValid(trimmed))) {
+      setFieldError(key, "Formato inválido. Use exemplo: 12,34");
+      return;
+    }
+
+    setter(value);
+    clearError(key);
+    emitDraft({ [draftLabel]: value });
+  };
+
   const clear = () => {
     setStartHour("");
     setStartMinute("");
@@ -167,7 +263,7 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
     setWaitStartMinute("");
     setWaitEndHour("");
     setWaitEndMinute("");
-    setDeviation(false);
+    setDeviation("");
     setObs("");
     setToll("");
     setParking("");
@@ -183,11 +279,11 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
       "Horário Inicial": startHour && startMinute ? `${startHour}:${startMinute}` : "",
       "Espera Início": waitStartHour && waitStartMinute ? `${waitStartHour}:${waitStartMinute}` : "",
       "Espera Final": waitEndHour && waitEndMinute ? `${waitEndHour}:${waitEndMinute}` : "",
-      Desvio: deviation ? "Sim" : "Não",
+      Desvio: deviation.trim(),
       "Observação Voucher": obs,
-      Pedagio: toll,
+      Pedágio: toll,
       Estacionamento: parking,
-      Combustivel: fuel,
+      Combustível: fuel,
       Hospedagem: hotel,
       Outros: others,
       ...updates
@@ -197,22 +293,32 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
 
   const finish = () => {
     if (isSubmitting) return;
-    const fields = {
-      "Horário Inicial": startHour && startMinute ? `${startHour}:${startMinute}` : "Não informado",
-      "Espera Início": waitStartHour && waitStartMinute ? `${waitStartHour}:${waitStartMinute}` : "Não informado",
-      "Espera Final": waitEndHour && waitEndMinute ? `${waitEndHour}:${waitEndMinute}` : "Não informado",
-      Desvio: deviation ? "Sim" : "Não",
-      "Observação Voucher": obs || "Sem observação.",
-      Pedágio: toll || "R$ 0,00",
-      Estacionamento: parking || "R$ 0,00",
-      Combustível: fuel || "R$ 0,00",
-      Hospedagem: hotel || "R$ 0,00",
-      Outros: others || "R$ 0,00",
-      Assinatura: hasSignature ? "Assinatura registrada localmente." : "Sem assinatura."
-    };
 
+    const startTime = startHour && startMinute ? `${startHour}:${startMinute}` : "";
+    const waitStartTime = waitStartHour && waitStartMinute ? `${waitStartHour}:${waitStartMinute}` : "";
+    const waitEndTime = waitEndHour && waitEndMinute ? `${waitEndHour}:${waitEndMinute}` : "";
+    const trimmedDeviation = deviation.trim();
     const nextErrors: VoucherErrors = {};
-    if (!startHour || !startMinute) nextErrors.startTime = "Informe hora e minuto inicial.";
+
+    if (!startTime) nextErrors.startTime = "Informe hora e minuto inicial.";
+
+    const hasPartialWaitStart = Boolean(waitStartHour) !== Boolean(waitStartMinute);
+    const hasPartialWaitEnd = Boolean(waitEndHour) !== Boolean(waitEndMinute);
+
+    if (hasPartialWaitStart) nextErrors.waitStart = "Preencha hora e minuto do início da espera.";
+    if (hasPartialWaitEnd) nextErrors.waitEnd = "Preencha hora e minuto do final da espera.";
+    if (waitStartTime && !waitEndTime && !hasPartialWaitEnd) nextErrors.waitEnd = "Informe o final da espera.";
+    if (!waitStartTime && waitEndTime && !hasPartialWaitStart) nextErrors.waitStart = "Informe o início da espera.";
+    if (startTime && waitStartTime && waitStartTime > startTime) nextErrors.waitStart = "O início da espera não pode ser maior que o horário inicial.";
+    if (startTime && waitEndTime && waitEndTime > startTime) nextErrors.waitEnd = "O final da espera não pode ser maior que o horário inicial.";
+    if (waitStartTime && waitEndTime && waitEndTime <= waitStartTime) nextErrors.waitRange = "O final da espera deve ser maior que o início.";
+
+    if (!isMoneyInputValid(toll)) nextErrors.toll = "Digite um valor válido.";
+    if (!isMoneyInputValid(parking)) nextErrors.parking = "Digite um valor válido.";
+    if (!isMoneyInputValid(fuel)) nextErrors.fuel = "Digite um valor válido.";
+    if (!isMoneyInputValid(hotel)) nextErrors.hotel = "Digite um valor válido.";
+    if (!isMoneyInputValid(others)) nextErrors.others = "Digite um valor válido.";
+
     if (showSignature && !hasSignature) nextErrors.signature = "Colete a assinatura do passageiro.";
 
     setErrors(nextErrors);
@@ -221,10 +327,52 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
       focusField(startHour ? startMinuteRef : startHourRef);
       return;
     }
+    if (nextErrors.waitStart) {
+      focusField(waitStartHour ? waitStartMinuteRef : waitStartHourRef);
+      return;
+    }
+    if (nextErrors.waitEnd || nextErrors.waitRange) {
+      focusField(waitEndHour ? waitEndMinuteRef : waitEndHourRef);
+      return;
+    }
+    if (nextErrors.toll) {
+      focusField(tollRef);
+      return;
+    }
+    if (nextErrors.parking) {
+      focusField(parkingRef);
+      return;
+    }
+    if (nextErrors.fuel) {
+      focusField(fuelRef);
+      return;
+    }
+    if (nextErrors.hotel) {
+      focusField(hotelRef);
+      return;
+    }
+    if (nextErrors.others) {
+      focusField(othersRef);
+      return;
+    }
     if (nextErrors.signature) {
       focusField(signatureButtonRef);
       return;
     }
+
+    const fields = {
+      "Horário Inicial": startTime || "Não informado",
+      "Espera Início": waitStartTime || "Não informado",
+      "Espera Final": waitEndTime || "Não informado",
+      Desvio: trimmedDeviation,
+      "Observação Voucher": obs || "Sem observação.",
+      Pedágio: toll || "R$ 0,00",
+      Estacionamento: parking || "R$ 0,00",
+      Combustível: fuel || "R$ 0,00",
+      Hospedagem: hotel || "R$ 0,00",
+      Outros: others || "R$ 0,00",
+      Assinatura: hasSignature ? "Assinatura registrada localmente." : "Sem assinatura."
+    };
 
     onFinalize(fields);
   };
@@ -265,32 +413,46 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
               </VoucherSection>
 
               <VoucherSection title="Espera">
-                <VoucherInputRow label="Início">
+                <VoucherInputRow label="Início" error={errors.waitStart || errors.waitRange}>
                   <TimeSelects
                     prefix="espera-inicio"
                     hour={waitStartHour}
                     minute={waitStartMinute}
+                    error={errors.waitStart || errors.waitRange}
+                    hourRef={waitStartHourRef}
+                    minuteRef={waitStartMinuteRef}
                     onHourChange={(value) => {
                       setWaitStartHour(value);
+                      clearError("waitStart");
+                      clearError("waitRange");
                       emitDraft({ "Espera Início": value && waitStartMinute ? `${value}:${waitStartMinute}` : "" });
                     }}
                     onMinuteChange={(value) => {
                       setWaitStartMinute(value);
+                      clearError("waitStart");
+                      clearError("waitRange");
                       emitDraft({ "Espera Início": waitStartHour && value ? `${waitStartHour}:${value}` : "" });
                     }}
                   />
                 </VoucherInputRow>
-                <VoucherInputRow label="Final">
+                <VoucherInputRow label="Final" error={errors.waitEnd || errors.waitRange}>
                   <TimeSelects
                     prefix="espera-final"
                     hour={waitEndHour}
                     minute={waitEndMinute}
+                    error={errors.waitEnd || errors.waitRange}
+                    hourRef={waitEndHourRef}
+                    minuteRef={waitEndMinuteRef}
                     onHourChange={(value) => {
                       setWaitEndHour(value);
+                      clearError("waitEnd");
+                      clearError("waitRange");
                       emitDraft({ "Espera Final": value && waitEndMinute ? `${value}:${waitEndMinute}` : "" });
                     }}
                     onMinuteChange={(value) => {
                       setWaitEndMinute(value);
+                      clearError("waitEnd");
+                      clearError("waitRange");
                       emitDraft({ "Espera Final": waitEndHour && value ? `${waitEndHour}:${value}` : "" });
                     }}
                   />
@@ -299,13 +461,13 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
 
               <VoucherSection title="Informações Adicionais">
                 <VoucherInputRow label="Desvio">
-                  <CheckboxControl
-                    className="voucher-checkbox"
-                    aria-label="Desvio"
-                    checked={deviation}
+                  <TextAreaControl
+                    rows={3}
+                    placeholder="Descreva o desvio, se houve"
+                    value={deviation}
                     onChange={(event) => {
-                      setDeviation(event.target.checked);
-                      emitDraft({ Desvio: event.target.checked ? "Sim" : "Não" });
+                      setDeviation(event.target.value);
+                      emitDraft({ Desvio: event.target.value });
                     }}
                   />
                 </VoucherInputRow>
@@ -323,59 +485,54 @@ export function VoucherScreen({ detail, hasSignature, initialDraft, onBack, onOp
               </VoucherSection>
 
               <VoucherSection title="Despesas">
-                <VoucherInputRow label="Pedágio">
+                <VoucherInputRow label="Pedágio" error={errors.toll}>
                   <TextInputControl
+                    ref={tollRef}
                     inputMode="decimal"
+                    className={errors.toll ? "is-invalid" : ""}
                     placeholder="R$ 0,00"
                     value={toll}
-                    onChange={(event) => {
-                      setToll(event.target.value);
-                      emitDraft({ Pedagio: event.target.value });
-                    }}
+                    onChange={(event) => handleExpenseChange("toll", setToll, "Pedágio", event.target.value)}
                   />
                 </VoucherInputRow>
-                <VoucherInputRow label="Estacionamento">
+                <VoucherInputRow label="Estacionamento" error={errors.parking}>
                   <TextInputControl
+                    ref={parkingRef}
                     inputMode="decimal"
+                    className={errors.parking ? "is-invalid" : ""}
                     placeholder="R$ 0,00"
                     value={parking}
-                    onChange={(event) => {
-                      setParking(event.target.value);
-                      emitDraft({ Estacionamento: event.target.value });
-                    }}
+                    onChange={(event) => handleExpenseChange("parking", setParking, "Estacionamento", event.target.value)}
                   />
                 </VoucherInputRow>
-                <VoucherInputRow label="Combustível">
+                <VoucherInputRow label="Combustível" error={errors.fuel}>
                   <TextInputControl
+                    ref={fuelRef}
                     inputMode="decimal"
+                    className={errors.fuel ? "is-invalid" : ""}
                     placeholder="R$ 0,00"
                     value={fuel}
-                    onChange={(event) => {
-                      setFuel(event.target.value);
-                      emitDraft({ Combustivel: event.target.value });
-                    }}
+                    onChange={(event) => handleExpenseChange("fuel", setFuel, "Combustível", event.target.value)}
                   />
                 </VoucherInputRow>
-                <VoucherInputRow label="Hospedagem">
+                <VoucherInputRow label="Hospedagem" error={errors.hotel}>
                   <TextInputControl
+                    ref={hotelRef}
                     inputMode="decimal"
+                    className={errors.hotel ? "is-invalid" : ""}
                     placeholder="R$ 0,00"
                     value={hotel}
-                    onChange={(event) => {
-                      setHotel(event.target.value);
-                      emitDraft({ Hospedagem: event.target.value });
-                    }}
+                    onChange={(event) => handleExpenseChange("hotel", setHotel, "Hospedagem", event.target.value)}
                   />
                 </VoucherInputRow>
-                <VoucherInputRow label="Outros">
+                <VoucherInputRow label="Outros" error={errors.others}>
                   <TextInputControl
+                    ref={othersRef}
                     inputMode="decimal"
+                    className={errors.others ? "is-invalid" : ""}
                     placeholder="R$ 0,00"
                     value={others}
-                    onChange={(event) => {
-                      setOthers(event.target.value);
-                      emitDraft({ Outros: event.target.value });
-                    }}
+                    onChange={(event) => handleExpenseChange("others", setOthers, "Outros", event.target.value)}
                   />
                 </VoucherInputRow>
               </VoucherSection>

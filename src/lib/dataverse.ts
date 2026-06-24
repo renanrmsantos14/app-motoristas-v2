@@ -2902,7 +2902,7 @@ export async function saveVoucherRemote(payload: FinalizePayload) {
   const flowResult = await runHttpFlow(FLOW_URLS.gerarVoucher, {
     text: record.cr40f_reservadeveculosid ?? dv.id,
     text_1: dataUrlToBase64(payload.signatureDataUrl ?? ""),
-    text_2: payload.fields.Desvio === "Não" ? "Nao" : payload.fields.Desvio ?? "Nao",
+    text_2: String(payload.fields.Desvio ?? "").trim() || "Nao",
     text_5: getFieldValue(payload.fields, "Horário Inicial", "Horario Inicial"),
     text_6: getFieldValue(payload.fields, "Espera Início", "Espera Inicio"),
     text_7: getFieldValue(payload.fields, "Espera Final"),
@@ -2944,7 +2944,7 @@ export async function saveVoucherDraftRemote(detail: DetailData, fields: Record<
     espera_ini_min: esperaIniMin,
     espera_fim_hora: esperaFimHora,
     espera_fim_min: esperaFimMin,
-    desvio: getFieldValue(fields, "Desvio") || "Não",
+    desvio: getFieldValue(fields, "Desvio"),
     obs: getFieldValue(fields, "Observação Voucher", "Observacao Voucher"),
     pedagio: getFieldValue(fields, "Pedágio", "Pedagio"),
     estacionamento: getFieldValue(fields, "Estacionamento"),

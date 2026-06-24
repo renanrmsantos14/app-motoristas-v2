@@ -636,7 +636,7 @@ export function ButtonPreviewScreen({ onShowToast }: ButtonPreviewScreenProps) {
             "Horário Inicial": "08:30",
             "Espera Início": "09:00",
             "Espera Final": "09:25",
-            Desvio: "Nao",
+            Desvio: "Parada rápida na recepção do cliente.",
             "Observação Voucher": "Cliente solicitou parada rapida na recepcao.",
             Pedagio: "R$ 32,40",
             Estacionamento: "R$ 28,00"

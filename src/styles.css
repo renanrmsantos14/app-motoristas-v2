@@ -11098,6 +11098,17 @@ select,
   position: relative !important;
 }
 
+.searchable-select.time-select-fixed {
+  width: 118px !important;
+  min-width: 118px !important;
+  flex: 0 0 118px !important;
+}
+
+.searchable-select.time-select-fixed .searchable-select-trigger {
+  width: 118px !important;
+  min-width: 118px !important;
+}
+
 .searchable-select-trigger {
   position: relative !important;
   width: 100% !important;

@@ -69,6 +69,48 @@ test("voucher exige horário inicial", () => {
   }), []);
 });
 
+test("voucher exige espera consistente e despesas válidas", () => {
+  assert.deepEqual(validateVoucherFields({
+    "Horário Inicial": "14:30",
+    "Espera Início": "15:00",
+    "Espera Final": "Não informado"
+  }), [
+    "Preencha o horário final da espera.",
+    "O início da espera não pode ser maior que o horário inicial."
+  ]);
+
+  assert.deepEqual(validateVoucherFields({
+    "Horário Inicial": "14:30",
+    "Espera Início": "15:00",
+    "Espera Final": "14:55"
+  }), [
+    "O início da espera não pode ser maior que o horário inicial.",
+    "O final da espera não pode ser maior que o horário inicial.",
+    "O horário final da espera deve ser maior que o inicial."
+  ]);
+
+  assert.deepEqual(validateVoucherFields({
+    "Horário Inicial": "14:30",
+    "Pedágio": "abc"
+  }), [
+    "Preencha despesas com valores válidos."
+  ]);
+
+  assert.deepEqual(validateVoucherFields({
+    "Horário Inicial": "14:30",
+    "Pedágio": "12,345"
+  }), [
+    "Preencha despesas com valores válidos."
+  ]);
+
+  assert.deepEqual(validateVoucherFields({
+    "Horário Inicial": "14:30",
+    "Pedágio": "12,3,4"
+  }), [
+    "Preencha despesas com valores válidos."
+  ]);
+});
+
 test("manutenção exige campos principais antes de finalizar", () => {
   assert.deepEqual(validateMaintenanceFields({
     "Serviço Realizado": "",

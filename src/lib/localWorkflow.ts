@@ -136,12 +136,68 @@ function parseLocalNumber(value: string | undefined) {
   return Number(normalized || "0");
 }
 
+function hasTimeValue(value: string) {
+  return !isBlankOrNotInformed(value);
+}
+
+function isCurrencyFormatValid(value: string) {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return true;
+
+  const normalized = trimmed.replace(/^R\$\s*/i, "");
+  return /^(\d+|\d{1,3}(\.\d{3})+)(,\d{1,2})?$/.test(normalized);
+}
+
+function isMoneyFieldValid(value: string) {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return true;
+  if (!isCurrencyFormatValid(trimmed)) return false;
+  const parsed = parseLocalNumber(trimmed);
+  return Number.isFinite(parsed) && parsed >= 0;
+}
+
 export function validateVoucherFields(fields: Record<string, string>): string[] {
   const errors: string[] = [];
   const startTime = getFieldValue(fields, "Horário Inicial", "Horario Inicial");
+  const waitStart = getFieldValue(fields, "Espera Início", "Espera Inicio");
+  const waitEnd = getFieldValue(fields, "Espera Final");
 
   if (isBlankOrNotInformed(startTime)) {
     errors.push("Horário inicial é obrigatório.");
+  }
+
+  if (hasTimeValue(waitStart) && !hasTimeValue(waitEnd)) {
+    errors.push("Preencha o horário final da espera.");
+  }
+
+  if (!hasTimeValue(waitStart) && hasTimeValue(waitEnd)) {
+    errors.push("Preencha o horário inicial da espera.");
+  }
+
+  if (hasTimeValue(startTime) && hasTimeValue(waitStart) && waitStart > startTime) {
+    errors.push("O início da espera não pode ser maior que o horário inicial.");
+  }
+
+  if (hasTimeValue(startTime) && hasTimeValue(waitEnd) && waitEnd > startTime) {
+    errors.push("O final da espera não pode ser maior que o horário inicial.");
+  }
+
+  if (hasTimeValue(waitStart) && hasTimeValue(waitEnd) && waitEnd <= waitStart) {
+    errors.push("O horário final da espera deve ser maior que o inicial.");
+  }
+
+  const invalidExpenseLabels = [
+    "Pedágio",
+    "Pedagio",
+    "Estacionamento",
+    "Combustível",
+    "Combustivel",
+    "Hospedagem",
+    "Outros"
+  ].filter((label, index, all) => all.indexOf(label) === index && !isMoneyFieldValid(getFieldValue(fields, label)));
+
+  if (invalidExpenseLabels.length) {
+    errors.push("Preencha despesas com valores válidos.");
   }
 
   return errors;
