@@ -2525,6 +2525,13 @@ function getItemDateMs(item: AgendaItem) {
   return toDate(geral.cr40f_dataehorriodesada)?.getTime() ?? 0;
 }
 
+function shouldKeepCanceledAgendaItem(item: AgendaItem, nowMs: number) {
+  if (item.tipo !== "SERVICO" || !item.canceled) return true;
+  const scheduledAtMs = getItemDateMs(item);
+  if (!scheduledAtMs) return true;
+  return nowMs <= scheduledAtMs + 60 * 60 * 1000;
+}
+
 function addDateHeaders(items: AgendaItem[]) {
   const result: AgendaItem[] = [];
   let lastKey = "";
@@ -2635,7 +2642,8 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     })
     .map((exchange) => mapExchange(exchange, exchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid"))));
 
-  const serviceItems = await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver)));
+  const serviceItems = (await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver))))
+    .filter((item) => shouldKeepCanceledAgendaItem(item, now.getTime()));
 
   const items = [
     ...serviceItems,
