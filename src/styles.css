@@ -10819,18 +10819,17 @@ select,
 }
 
 .action-button--secondary {
-  border-color: #1f6c9f !important;
-  background: linear-gradient(180deg, #f7f8f8, #eff1f3) !important;
-  color: #1f2328 !important;
+  border-color: #14161b !important;
+  background: transparent !important;
+  color: #14161b !important;
 }
 
 .action-button--secondary:not(:disabled):hover {
-  border-color: #1f6c9f !important;
-  background: linear-gradient(180deg, #fafbfb, #eceff2) !important;
+  border-color: #14161b !important;
+  background: rgba(20, 22, 27, 0.05) !important;
 }
 
 .action-button--primary {
-  border-color: #16171a !important;
   background: linear-gradient(180deg, #23262d, #14161b) !important;
   color: #ffffff !important;
 }
