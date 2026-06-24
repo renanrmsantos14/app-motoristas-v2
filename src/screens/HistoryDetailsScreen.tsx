@@ -5,12 +5,61 @@ import { QuestionsBox } from "../components/details/QuestionsBox";
 import { PullToRefresh } from "../components/common/PullToRefresh";
 import { AppShell } from "../components/layout/AppShell";
 import { DetailsMenu } from "../components/navigation/DetailsMenu";
+import type { DetailField } from "../types";
 
 type HistoryDetailsScreenProps = {
   detail: DetailData;
   onBack: () => void;
   onRefresh: () => void | Promise<void>;
 };
+
+function normalizeFieldKey(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function getFirstName(value: string) {
+  const words = String(value ?? "").trim().split(/\s+/).filter(Boolean);
+  return words[0] ?? "";
+}
+
+function isPhoneLine(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 8;
+}
+
+function simplifyPassengerValue(value: string) {
+  const segments = String(value ?? "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .split("\n")
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .filter((segment) => !isPhoneLine(segment))
+    .map((segment) => getFirstName(segment));
+
+  return segments.join("<br />");
+}
+
+function sanitizeHistoryField(field: DetailField): DetailField | null {
+  const key = normalizeFieldKey(field.label);
+
+  if (key === "enderecodesaida" || key === "obsdeoperacao") return null;
+
+  if (key === "passageirosetelefonesdecontato" || key === "passageiros") {
+    const value = simplifyPassengerValue(field.value);
+    return value ? { ...field, value, html: value.includes("<br />") } : null;
+  }
+
+  if (key === "solicitante") {
+    const value = getFirstName(String(field.value ?? ""));
+    return value ? { ...field, value, html: false } : null;
+  }
+
+  return field;
+}
 
 export function HistoryDetailsScreen({ detail, onBack, onRefresh }: HistoryDetailsScreenProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -22,7 +71,10 @@ export function HistoryDetailsScreen({ detail, onBack, onRefresh }: HistoryDetai
         : "Detalhes da Manuten\u00e7\u00e3o";
 
   const dateField = detail.fields.find((field) => /data|hora|hor\u00e1rio|janela/i.test(field.label));
-  const fieldsWithoutHeaderDate = detail.fields.filter((field) => field !== dateField);
+  const fieldsWithoutHeaderDate = detail.fields
+    .filter((field) => field !== dateField)
+    .map(sanitizeHistoryField)
+    .filter((field): field is DetailField => Boolean(field));
 
   return (
     <AppShell screenLabel="TelaDetalhesHistorico">
