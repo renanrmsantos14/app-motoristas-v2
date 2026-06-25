@@ -1905,7 +1905,7 @@ export async function assertExpenseSchemaReadyRemote(options: { includeManutenca
     "cr40f_kminformado",
     "cr40f_litros"
   ];
-  if (options.includeManutencao) expenseFields.push("cr40f_manutencao");
+  if (options.includeManutencao) expenseFields.push("_cr40f_manutencao_value");
 
   await Promise.all([
     assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", expenseFields),

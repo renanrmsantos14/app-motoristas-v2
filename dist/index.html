@@ -11821,7 +11821,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.498","builtAt":"2026-06-25T17:39:25.738Z","builtAtLabel":"25/06/2026, 14:39"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.503","builtAt":"2026-06-25T18:24:14.663Z","builtAtLabel":"25/06/2026, 15:24"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -37956,7 +37956,7 @@ ${text}`);
       "cr40f_kminformado",
       "cr40f_litros"
     ];
-    if (options.includeManutencao) expenseFields.push("cr40f_manutencao");
+    if (options.includeManutencao) expenseFields.push("_cr40f_manutencao_value");
     await Promise.all([
       assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", expenseFields),
       assertEntityHasAttributes(DATAVERSE.anexosDespesasOperacionais, "Anexos de Despesas", [
@@ -41163,6 +41163,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   var SAVE_STATUS_VISIBLE_MS = 1600;
   var getFieldValue2 = (detail, label) => detail.fields.find((field) => field.label.toLowerCase() === label.toLowerCase())?.value ?? "";
   var isServiceObservationField = (label) => label.toLowerCase() === SERVICE_OBSERVATION_LABEL.toLowerCase();
+  var normalizeFieldKey = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  var isOperationObservationField = (label) => normalizeFieldKey(label) === "obsdeoperacao";
   var isTenarisClient = (detail) => /tenn?aris/i.test(getFieldValue2(detail, "Cliente"));
   var isTrueLike2 = (value) => value === true || value === 1 || value === "true";
   var shouldRequireReceive = (detail) => detail.type === "SERVICO" && (isTrueLike2(detail.dataverse?.record?.cr40f_receber) || getFieldValue2(detail, "Receber").trim().toLowerCase() === "sim");
@@ -41208,7 +41210,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [serviceObservationStatus, setServiceObservationStatus] = (0, import_react36.useState)("idle");
     const dateField = detail.fields.find((field) => /data|hora|horário|janela/i.test(field.label));
     const fieldsWithoutHeaderDate = dateField ? detail.fields.filter((field) => field !== dateField) : detail.fields;
-    const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : fieldsWithoutHeaderDate;
+    const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : detail.type === "MANUTENCAO" ? fieldsWithoutHeaderDate.filter((field) => !isOperationObservationField(field.label)) : fieldsWithoutHeaderDate;
     const visibleActions = getVisibleActions(detail);
     const shouldShowServiceObservation = detail.type === "SERVICO" && !isTenarisClient(detail);
     const canAutosaveObservation = detail.type === "SERVICO" && Boolean(onServiceObservationChange);
@@ -42158,7 +42160,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/screens/HistoryDetailsScreen.tsx
   var import_react39 = __toESM(require_react(), 1);
   var import_jsx_runtime25 = __toESM(require_jsx_runtime(), 1);
-  function normalizeFieldKey(value) {
+  function normalizeFieldKey2(value) {
     return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
   }
   function getFirstName2(value) {
@@ -42182,7 +42184,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return segments.join("<br />");
   }
   function sanitizeHistoryField(field) {
-    const key = normalizeFieldKey(field.label);
+    const key = normalizeFieldKey2(field.label);
     if (key === "enderecodesaida" || key === "obsdeoperacao") return null;
     if (key === "passageirosetelefonesdecontato" || key === "passageiros") {
       const value = simplifyPassengerValue(field.value);

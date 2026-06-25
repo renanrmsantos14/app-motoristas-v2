@@ -31,6 +31,13 @@ const getFieldValue = (detail: DetailData, label: string) =>
   detail.fields.find((field) => field.label.toLowerCase() === label.toLowerCase())?.value ?? "";
 
 const isServiceObservationField = (label: string) => label.toLowerCase() === SERVICE_OBSERVATION_LABEL.toLowerCase();
+const normalizeFieldKey = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+const isOperationObservationField = (label: string) => normalizeFieldKey(label) === "obsdeoperacao";
 
 const isTenarisClient = (detail: DetailData) => /tenn?aris/i.test(getFieldValue(detail, "Cliente"));
 const isTrueLike = (value: unknown) => value === true || value === 1 || value === "true";
@@ -89,7 +96,12 @@ export function DetailsScreen({
   const [serviceObservationStatus, setServiceObservationStatus] = useState<ObservationSaveStatus>("idle");
   const dateField = detail.fields.find((field) => /data|hora|horário|janela/i.test(field.label));
   const fieldsWithoutHeaderDate = dateField ? detail.fields.filter((field) => field !== dateField) : detail.fields;
-  const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : fieldsWithoutHeaderDate;
+  const visibleFields =
+    detail.type === "SERVICO"
+      ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label))
+      : detail.type === "MANUTENCAO"
+        ? fieldsWithoutHeaderDate.filter((field) => !isOperationObservationField(field.label))
+        : fieldsWithoutHeaderDate;
   const visibleActions = getVisibleActions(detail);
   const shouldShowServiceObservation = detail.type === "SERVICO" && !isTenarisClient(detail);
   const canAutosaveObservation = detail.type === "SERVICO" && Boolean(onServiceObservationChange);

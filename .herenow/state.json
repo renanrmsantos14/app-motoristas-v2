@@ -1,0 +1,10 @@
+﻿{
+    "publishes":  {
+                      "ebony-breeze-h2rm":  {
+                                                "siteUrl":  "https://ebony-breeze-h2rm.here.now/",
+                                                "claimToken":  "8966b4f631f6bc766df7f91dfa8f44231e6e2417535acdbb89fd1891ec939883",
+                                                "claimUrl":  "https://here.now/claim?slug=ebony-breeze-h2rm\u0026token=8966b4f631f6bc766df7f91dfa8f44231e6e2417535acdbb89fd1891ec939883",
+                                                "expiresAt":  "2026-06-26T18:12:35.929Z"
+                                            }
+                  }
+}
