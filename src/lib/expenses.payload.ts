@@ -44,16 +44,6 @@ export function buildExpenseCreatePayload({
   const fields = normalizeExpenseFields(draft, photos, referenceData);
   const vehicleToBind = fields.veiculoId || veiculoId || "";
   const name = `${fields.categoria.name} - ${formatDateLabel(fields.dataGasto)}`;
-  const observation = [
-    fields.descricao ? `Descri\u00e7\u00e3o: ${fields.descricao}` : "",
-    fields.estabelecimento ? `Estabelecimento: ${fields.estabelecimento}` : "",
-    `Cidade: ${fields.cidade.name}`,
-    `Pa\u00eds: ${fields.cidade.pais || "Brasil"}`,
-    fields.litros ? `Litros: ${fields.litros.toLocaleString("pt-BR")} L` : "",
-    `Forma de pagamento: ${fields.formaPagamento.name}`,
-    `Categoria: ${fields.categoria.name}`,
-    photos.length ? `Comprovantes: ${photos.length}` : ""
-  ].filter(Boolean).join("\n");
 
   const payload: Record<string, unknown> = {
     cr40f_nome: name,
@@ -63,7 +53,7 @@ export function buildExpenseCreatePayload({
     cr40f_statusfinanceiro: 100000000,
     cr40f_statusanexo: photos.length ? 100000001 : 100000000,
     cr40f_origem: 100000000,
-    cr40f_observacao: observation,
+    cr40f_observacao: fields.descricao ?? "",
     [`${lookupNavigationNames.motorista}@odata.bind`]: `/${motoristaEntitySet}(${motoristaId})`,
     [`${lookupNavigationNames.categoria}@odata.bind`]: `/${categoryEntitySet}(${fields.categoria.id})`,
     [`${lookupNavigationNames.formaPagamento}@odata.bind`]: `/${paymentMethodEntitySet}(${fields.formaPagamento.id})`,

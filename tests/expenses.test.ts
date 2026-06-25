@@ -165,11 +165,7 @@ test("buildExpenseCreatePayload monta payload Dataverse novo sem reembolso", () 
   assert.equal(payload.cr40f_reembolsavel, undefined);
   assert.equal(payload.cr40f_statusfinanceiro, 100000000);
   assert.equal(payload.cr40f_statusanexo, 100000001);
-  assert.match(String(payload.cr40f_observacao), /Forma de pagamento: Particular \(Reembolso\)/);
-  assert.match(String(payload.cr40f_observacao), /Cidade: Campinas - SP/);
-  assert.match(String(payload.cr40f_observacao), /País: Brasil/);
-  assert.match(String(payload.cr40f_observacao), /Litros: 42,5 L/);
-  assert.match(String(payload.cr40f_observacao), /Comprovantes: 1/);
+  assert.equal(payload.cr40f_observacao, "Abastecimento no retorno da agenda");
   assert.equal(payload["nav_motorista@odata.bind"], "/cr40f_funcionarioses(driver-1)");
   assert.equal(payload["nav_veiculo@odata.bind"], "/cr40f_veiculoses(vehicle-1)");
   assert.equal(payload["nav_categoria@odata.bind"], "/cr40f_categoriadespesaoperacionals(cat-abastecimento)");

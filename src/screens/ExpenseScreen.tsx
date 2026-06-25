@@ -300,7 +300,7 @@ export function ExpenseScreen({
               />
 
               <TextAreaField
-                label="Descrição opcional"
+                label="Descrição"
                 placeholder="Opcional"
                 rows={3}
                 value={draft.descricao}
