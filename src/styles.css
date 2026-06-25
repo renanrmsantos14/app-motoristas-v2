@@ -7006,6 +7006,11 @@ button:disabled {
   white-space: normal;
 }
 
+.voucher-header-v1 {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+}
+
 .voucher-scroll,
 .signature-body,
 .finalize-scroll,

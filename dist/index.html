@@ -6380,6 +6380,10 @@ button:disabled {
   text-transform: uppercase;
   white-space: normal;
 }
+.voucher-header-v1 {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+}
 .voucher-scroll,
 .signature-body,
 .finalize-scroll,
@@ -11817,7 +11821,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.449","builtAt":"2026-06-24T20:16:05.862Z","builtAtLabel":"24/06/2026, 17:16"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.455","builtAt":"2026-06-25T12:08:29.218Z","builtAtLabel":"25/06/2026, 09:08"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -42049,14 +42053,22 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   }
   function getFirstName2(value) {
     const words = String(value ?? "").trim().split(/\s+/).filter(Boolean);
-    return words[0] ?? "";
+    const first = words[0]?.replace(/^[^A-Za-zÀ-ÿ]+|[^A-Za-zÀ-ÿ]+$/g, "") ?? "";
+    return /[A-Za-zÀ-ÿ]/.test(first) && !/\d/.test(first) ? first : "";
   }
-  function isPhoneLine(value) {
-    const digits = value.replace(/\D/g, "");
-    return digits.length >= 8;
+  function decodeBasicHtmlEntities(value) {
+    return value.replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;/gi, '"').replace(/&#039;|&apos;/gi, "'");
+  }
+  function stripPhoneTail(value) {
+    return value.replace(/\b(?:sem\s+telefone|telefone|whats(?:app)?|celular|contato)\b.*$/i, "").replace(/(?:^|[\s:;,\-|])\+?\d[\d\s().-]{7,}\d.*$/g, "").replace(/[\s:;,\-|]+$/g, "").trim();
+  }
+  function getSafeFirstName(value) {
+    const withoutLinks = String(value ?? "").replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ");
+    const withoutTags = withoutLinks.replace(/<[^>]+>/g, " ");
+    return getFirstName2(stripPhoneTail(decodeBasicHtmlEntities(withoutTags).replace(/\s+/g, " ")));
   }
   function simplifyPassengerValue(value) {
-    const segments = String(value ?? "").replace(/<br\s*\/?>/gi, "\n").split("\n").map((segment) => segment.trim()).filter(Boolean).filter((segment) => !isPhoneLine(segment)).map((segment) => getFirstName2(segment));
+    const segments = String(value ?? "").replace(/<br\s*\/?>/gi, "\n").split(/[\n;]+/).map((segment) => segment.trim()).filter(Boolean).map((segment) => getSafeFirstName(segment)).filter(Boolean);
     return segments.join("<br />");
   }
   function sanitizeHistoryField(field) {
@@ -42067,7 +42079,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return value ? { ...field, value, html: value.includes("<br />") } : null;
     }
     if (key === "solicitante") {
-      const value = getFirstName2(String(field.value ?? ""));
+      const value = getSafeFirstName(field.value);
       return value ? { ...field, value, html: false } : null;
     }
     return field;
@@ -60213,6 +60225,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const normalized = trimmed.replace(/^R\$\s*/i, "");
     return /^(\d+|\d{1,3}(\.\d{3})+)(,\d{0,2})?$/.test(normalized);
   }
+  function formatVoucherFinishTime(date = /* @__PURE__ */ new Date()) {
+    return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
+  }
   function readVoucherDraft(detail, initialDraft) {
     if (initialDraft) {
       const start = splitTime(initialDraft["Hor\xE1rio Inicial"] ?? initialDraft["Horario Inicial"]);
@@ -60268,6 +60283,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const isSubmitting = submitState !== "idle";
     const clientName = detail.fields.find((field) => field.label === "Cliente")?.value ?? "";
     const showSignature = /tenn?aris/i.test(clientName);
+    const dateField = detail.fields.find((field) => /data|hora|hor\u00e1rio|janela/i.test(field.label));
     const draftRef = (0, import_react55.useRef)(readVoucherDraft(detail, initialDraft));
     const startHourRef = (0, import_react55.useRef)(null);
     const startMinuteRef = (0, import_react55.useRef)(null);
@@ -60413,19 +60429,24 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         focusField(signatureButtonRef);
         return;
       }
+      const finishTime = formatVoucherFinishTime();
       const fields = {
         ...voucherFieldValues,
+        "Hor\xE1rio Final": finishTime,
         Assinatura: hasSignature ? "Assinatura registrada localmente." : "Sem assinatura."
       };
       onFinalize(fields);
     };
     const errorCount = Object.values(errors).filter(Boolean).length;
     return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(AppShell, { screenLabel: "TelaVoucher", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(FormMenu, { title: "Preencha as Informa\xE7\xF5es", onBack: isSubmitting ? void 0 : onBack, rightIcon: "eraser", rightLabel: "Limpar rascunho", onRightClick: isSubmitting ? void 0 : clear }),
+      /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(FormMenu, { title: "Formul\xE1rio de Voucher", onBack: isSubmitting ? void 0 : onBack, rightIcon: "eraser", rightLabel: "Limpar rascunho", onRightClick: isSubmitting ? void 0 : clear }),
       /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("section", { className: "main-panel voucher-main", children: /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("article", { className: "voucher-card", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "voucher-title", children: [
-          "Voucher - ",
-          detail.id
+        /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "details-header-v1 voucher-header-v1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "details-date-v1", children: dateField?.value ?? "Sem data" }),
+          /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "details-code-v1", children: [
+            "#",
+            detail.id
+          ] })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "voucher-scroll", children: /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "voucher-form", children: [
           errorCount ? /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "form-error-summary", children: [

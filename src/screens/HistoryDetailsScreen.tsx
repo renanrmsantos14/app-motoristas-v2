@@ -23,22 +23,42 @@ function normalizeFieldKey(value: string) {
 
 function getFirstName(value: string) {
   const words = String(value ?? "").trim().split(/\s+/).filter(Boolean);
-  return words[0] ?? "";
+  const first = words[0]?.replace(/^[^A-Za-zÀ-ÿ]+|[^A-Za-zÀ-ÿ]+$/g, "") ?? "";
+  return /[A-Za-zÀ-ÿ]/.test(first) && !/\d/.test(first) ? first : "";
 }
 
-function isPhoneLine(value: string) {
-  const digits = value.replace(/\D/g, "");
-  return digits.length >= 8;
+function decodeBasicHtmlEntities(value: string) {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;|&apos;/gi, "'");
+}
+
+function stripPhoneTail(value: string) {
+  return value
+    .replace(/\b(?:sem\s+telefone|telefone|whats(?:app)?|celular|contato)\b.*$/i, "")
+    .replace(/(?:^|[\s:;,\-|])\+?\d[\d\s().-]{7,}\d.*$/g, "")
+    .replace(/[\s:;,\-|]+$/g, "")
+    .trim();
+}
+
+function getSafeFirstName(value: string) {
+  const withoutLinks = String(value ?? "").replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ");
+  const withoutTags = withoutLinks.replace(/<[^>]+>/g, " ");
+  return getFirstName(stripPhoneTail(decodeBasicHtmlEntities(withoutTags).replace(/\s+/g, " ")));
 }
 
 function simplifyPassengerValue(value: string) {
   const segments = String(value ?? "")
     .replace(/<br\s*\/?>/gi, "\n")
-    .split("\n")
+    .split(/[\n;]+/)
     .map((segment) => segment.trim())
     .filter(Boolean)
-    .filter((segment) => !isPhoneLine(segment))
-    .map((segment) => getFirstName(segment));
+    .map((segment) => getSafeFirstName(segment))
+    .filter(Boolean);
 
   return segments.join("<br />");
 }
@@ -54,7 +74,7 @@ function sanitizeHistoryField(field: DetailField): DetailField | null {
   }
 
   if (key === "solicitante") {
-    const value = getFirstName(String(field.value ?? ""));
+    const value = getSafeFirstName(field.value);
     return value ? { ...field, value, html: false } : null;
   }
 

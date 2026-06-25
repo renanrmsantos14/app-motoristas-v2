@@ -110,6 +110,10 @@ function isCurrencyFormatValid(value: string) {
   return /^(\d+|\d{1,3}(\.\d{3})+)(,\d{0,2})?$/.test(normalized);
 }
 
+function formatVoucherFinishTime(date = new Date()) {
+  return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
 function readVoucherDraft(detail: DetailData, initialDraft?: Record<string, string>) {
   if (initialDraft) {
     const start = splitTime(initialDraft["Horário Inicial"] ?? initialDraft["Horario Inicial"]);
@@ -167,6 +171,7 @@ export function VoucherScreen({
   const isSubmitting = submitState !== "idle";
   const clientName = detail.fields.find((field) => field.label === "Cliente")?.value ?? "";
   const showSignature = /tenn?aris/i.test(clientName);
+  const dateField = detail.fields.find((field) => /data|hora|hor\u00e1rio|janela/i.test(field.label));
   const draftRef = useRef(readVoucherDraft(detail, initialDraft));
   const startHourRef = useRef<HTMLButtonElement | null>(null);
   const startMinuteRef = useRef<HTMLButtonElement | null>(null);
@@ -332,8 +337,10 @@ export function VoucherScreen({
       return;
     }
 
+    const finishTime = formatVoucherFinishTime();
     const fields = {
       ...voucherFieldValues,
+      "Horário Final": finishTime,
       Assinatura: hasSignature ? "Assinatura registrada localmente." : "Sem assinatura."
     };
 
@@ -344,10 +351,13 @@ export function VoucherScreen({
 
   return (
     <AppShell screenLabel="TelaVoucher">
-      <FormMenu title="Preencha as Informações" onBack={isSubmitting ? undefined : onBack} rightIcon="eraser" rightLabel="Limpar rascunho" onRightClick={isSubmitting ? undefined : clear} />
+      <FormMenu title="Formulário de Voucher" onBack={isSubmitting ? undefined : onBack} rightIcon="eraser" rightLabel="Limpar rascunho" onRightClick={isSubmitting ? undefined : clear} />
       <section className="main-panel voucher-main">
         <article className="voucher-card">
-          <div className="voucher-title">Voucher - {detail.id}</div>
+          <div className="details-header-v1 voucher-header-v1">
+            <div className="details-date-v1">{dateField?.value ?? "Sem data"}</div>
+            <div className="details-code-v1">#{detail.id}</div>
+          </div>
           <div className="voucher-scroll">
             <div className="voucher-form">
               {errorCount ? <div className="form-error-summary">Revise {errorCount} campo(s) destacado(s).</div> : null}
