@@ -50,6 +50,7 @@ import {
   loadRemoteDetailByParams,
   loadRemoteStore,
   markDetailViewedRemote,
+  prefetchExpenseReferenceDataRemote,
   saveServiceObservationRemote,
   saveVoucherDraftRemote,
   saveVoucherRemote,
@@ -829,6 +830,11 @@ function App() {
   }, [hashRoutingActive, receiptDetail, screen, selectedDetail]);
 
   useEffect(() => {
+    if (!remoteMode || !driverContext) return;
+    prefetchExpenseReferenceDataRemote();
+  }, [driverContext, remoteMode]);
+
+  useEffect(() => {
     if ((screen !== "solicitarManutencao" && screen !== "gastos" && screen !== "colisoes") || !remoteMode) return;
     let alive = true;
     setMaintenanceVehiclesLoading(true);
@@ -869,9 +875,12 @@ function App() {
   useEffect(() => {
     if (screen !== "gastos" || !remoteMode) return;
     let alive = true;
-    setExpenseReferenceLoading(true);
+    const hasReferenceData =
+      expenseReferenceData.categories.length > 0 &&
+      expenseReferenceData.paymentMethods.length > 0 &&
+      expenseReferenceData.cities.length > 0;
+    setExpenseReferenceLoading(!hasReferenceData);
     setExpenseReferenceError("");
-    setExpenseReferenceData({ categories: [], paymentMethods: [], cities: [] });
     loadExpenseReferenceDataRemote()
       .then((referenceData) => {
         if (!alive) return;

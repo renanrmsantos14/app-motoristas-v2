@@ -230,6 +230,8 @@ const EXCHANGE_SELECT =
 
 const DV_LOG_PREFIX = "[AppMotoristas:Dataverse]";
 let lastRuntimeLogKey = "";
+let expenseReferenceDataCache: ExpenseReferenceData | null = null;
+let expenseReferenceDataPromise: Promise<ExpenseReferenceData> | null = null;
 
 function isLocalhostRuntime() {
   if (typeof window === "undefined") return false;
@@ -638,7 +640,11 @@ async function retrieveExpenseReferenceRecords(entitySetName: string, label: str
   }
 }
 
-export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReferenceData> {
+function hasCompleteExpenseReferenceData(referenceData: ExpenseReferenceData) {
+  return referenceData.categories.length > 0 && referenceData.paymentMethods.length > 0 && referenceData.cities.length > 0;
+}
+
+async function fetchExpenseReferenceDataRemote(): Promise<ExpenseReferenceData> {
   const [categoryResult, paymentResult, cityResult] = await Promise.all([
     retrieveExpenseReferenceRecords(
       DATAVERSE.categoriasDespesasOperacionais,
@@ -696,6 +702,48 @@ export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReference
       })
       .filter((city) => Boolean(city.id && city.name))
   };
+}
+
+export async function loadExpenseReferenceDataRemote(): Promise<ExpenseReferenceData> {
+  if (expenseReferenceDataCache) {
+    dataverseLog("Referencia de despesa carregada do cache em memoria.", {
+      categories: expenseReferenceDataCache.categories.length,
+      paymentMethods: expenseReferenceDataCache.paymentMethods.length,
+      cities: expenseReferenceDataCache.cities.length
+    });
+    return expenseReferenceDataCache;
+  }
+
+  if (expenseReferenceDataPromise) {
+    dataverseLog("Referencia de despesa reaproveitando consulta em andamento.");
+    return expenseReferenceDataPromise;
+  }
+
+  const startedAt = performance.now();
+  expenseReferenceDataPromise = fetchExpenseReferenceDataRemote()
+    .then((referenceData) => {
+      const complete = hasCompleteExpenseReferenceData(referenceData);
+      if (complete) expenseReferenceDataCache = referenceData;
+      dataverseLog("Referencia de despesa carregada.", {
+        durationMs: Math.round(performance.now() - startedAt),
+        categories: referenceData.categories.length,
+        paymentMethods: referenceData.paymentMethods.length,
+        cities: referenceData.cities.length,
+        cached: complete
+      });
+      return referenceData;
+    })
+    .finally(() => {
+      expenseReferenceDataPromise = null;
+    });
+
+  return expenseReferenceDataPromise;
+}
+
+export function prefetchExpenseReferenceDataRemote() {
+  void loadExpenseReferenceDataRemote().catch((error) => {
+    dataverseWarn("Pre-carga de referencia de despesa falhou.", describeDataverseError(error));
+  });
 }
 
 export async function loadReceiptClienteOptionsRemote(): Promise<string[]> {
