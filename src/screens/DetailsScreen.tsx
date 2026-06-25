@@ -99,7 +99,7 @@ export function DetailsScreen({
   const visibleFields =
     detail.type === "SERVICO"
       ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label))
-      : detail.type === "MANUTENCAO"
+      : detail.type === "MANUTENCAO" || detail.type === "TROCA"
         ? fieldsWithoutHeaderDate.filter((field) => !isOperationObservationField(field.label))
         : fieldsWithoutHeaderDate;
   const visibleActions = getVisibleActions(detail);

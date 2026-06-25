@@ -2307,6 +2307,165 @@ function getLookupId(record: DataverseRecord, logicalName: string) {
   return cleanODataGuid(record[`_${logicalName}_value`]);
 }
 
+export function isBaseExchange(record: DataverseRecord) {
+  const exchangeTypeValue = Number(record.new_tipodetroca);
+  const exchangeType = normalizeText(getFormatted(record, "new_tipodetroca"));
+  return (
+    exchangeTypeValue === EXCHANGE_TYPE.retiradaBase ||
+    exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase ||
+    exchangeType.includes("retirada") ||
+    exchangeType.includes("devolucao") ||
+    exchangeType.includes("devolu")
+  );
+}
+
+export function getExchangeCompletionState(record: DataverseRecord, isDriver1: boolean, isDriver2: boolean) {
+  const driver1Done = isDriver1 ? true : record.new_concluidomotorista1 === true;
+  const driver2Done = isDriver2 ? true : record.new_concluidomotorista2 === true;
+  const baseExchange = isBaseExchange(record);
+  return {
+    driver1Done,
+    driver2Done,
+    baseExchange,
+    closesExchange: baseExchange ? driver1Done : driver1Done && driver2Done
+  };
+}
+
+function assertExchangePossessionData(record: DataverseRecord) {
+  const driver1Id = getLookupId(record, "cr40f_motorista1");
+  const driver2Id = getLookupId(record, "cr40f_motorista2");
+  const vehicle1Id = getLookupId(record, "cr40f_veiculo1antesdatroca");
+  const vehicle2Id = getLookupId(record, "cr40f_veiculo2antesdatroca");
+  const exchangeTypeValue = Number(record.new_tipodetroca);
+  const exchangeType = normalizeText(getFormatted(record, "new_tipodetroca"));
+
+  if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) {
+    if (!driver1Id || !vehicle2Id) throw new Error("Troca de retirada da base sem motorista principal ou veiculo recebido.");
+    return;
+  }
+
+  if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) {
+    if (!driver1Id || !vehicle1Id) throw new Error("Troca de devolucao a base sem motorista principal ou veiculo entregue.");
+    return;
+  }
+
+  if (!driver1Id || !driver2Id || !vehicle1Id || !vehicle2Id) {
+    throw new Error("Troca entre motoristas sem motoristas ou veiculos obrigatorios.");
+  }
+}
+
+type ExchangeKind = "troca" | "devolucaoBase" | "retiradaBase";
+
+function getExchangeKind(record: DataverseRecord): ExchangeKind {
+  const exchangeTypeValue = Number(record.new_tipodetroca);
+  const exchangeType = normalizeText(getFormatted(record, "new_tipodetroca"));
+  if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) return "retiradaBase";
+  if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) return "devolucaoBase";
+  return "troca";
+}
+
+function joinDateRange(start: Date | null, end: Date | null) {
+  const startText = start
+    ? start.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    : "";
+  const endText = end ? end.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+  return [startText, endText].filter(Boolean).join(" - ");
+}
+
+function notInformed(value: string, fallback = "Não informado") {
+  return value.trim() || fallback;
+}
+
+export function buildExchangeDisplay(exchange: DataverseRecord, driver?: DriverContext | null) {
+  const kind = getExchangeKind(exchange);
+  const start = toDate(exchange.cr40f_iniciodajaneladetroca);
+  const end = toDate(exchange.cr40f_fimdajaneladetroca);
+  const driverId = cleanGuid(driver?.id ?? "");
+  const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === driverId;
+  const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === driverId;
+  const driver1 = getLookupName(exchange, "cr40f_motorista1");
+  const driver2 = getLookupName(exchange, "cr40f_motorista2");
+  const vehicle1 = getLookupName(exchange, "cr40f_veiculo1antesdatroca");
+  const vehicle2 = getLookupName(exchange, "cr40f_veiculo2antesdatroca");
+  const currentVehicle = isDriver2 ? vehicle2 : vehicle1;
+  const nextVehicle = isDriver2 ? vehicle1 : vehicle2;
+  const otherDriver = isDriver2 ? driver1 : driver2;
+
+  if (kind === "retiradaBase") {
+    const receiving = notInformed(vehicle2);
+    return {
+      label: "Retirada na Base",
+      title: "Retirada na Base",
+      description: `Retirar ${receiving} na base`,
+      summary: `Retire ${receiving} na base operacional.`,
+      window: joinDateRange(start, end),
+      fields: [
+        { label: "O que fazer", value: `Retirar veículo na base`, strong: true },
+        { label: "Você recebe", value: receiving, strong: true },
+        { label: "Local", value: "Base operacional" },
+        { label: "Motorista", value: notInformed(driver1) }
+      ]
+    };
+  }
+
+  if (kind === "devolucaoBase") {
+    const delivering = notInformed(vehicle1);
+    return {
+      label: "Devolução à Base",
+      title: "Devolução à Base",
+      description: `Devolver ${delivering} na base`,
+      summary: `Devolva ${delivering} na base operacional.`,
+      window: joinDateRange(start, end),
+      fields: [
+        { label: "O que fazer", value: `Devolver veículo na base`, strong: true },
+        { label: "Você entrega", value: delivering, strong: true },
+        { label: "Local", value: "Base operacional" },
+        { label: "Motorista", value: notInformed(driver1) }
+      ]
+    };
+  }
+
+  if (isDriver1 || isDriver2) {
+    const delivering = notInformed(currentVehicle);
+    const receiving = notInformed(nextVehicle);
+    const contact = notInformed(otherDriver, "Outro motorista não informado");
+    return {
+      label: "Troca entre Motoristas",
+      title: "Troca entre Motoristas",
+      description: `Entregar ${delivering} e receber ${receiving}`,
+      summary: `Troque com ${contact}. Entregue ${delivering} e receba ${receiving}.`,
+      window: joinDateRange(start, end),
+      fields: [
+        { label: "O que fazer", value: `Trocar veículo com ${contact}`, strong: true },
+        { label: "Você entrega", value: delivering, strong: true },
+        { label: "Você recebe", value: receiving, strong: true },
+        { label: "Encontrar com", value: contact }
+      ]
+    };
+  }
+
+  return {
+    label: "Troca entre Motoristas",
+    title: "Troca entre Motoristas",
+    description: `${notInformed(vehicle1)} por ${notInformed(vehicle2)}`,
+    summary: `Troca entre ${notInformed(driver1)} e ${notInformed(driver2)}.`,
+    window: joinDateRange(start, end),
+    fields: [
+      { label: "O que fazer", value: `Trocar veículos`, strong: true },
+      { label: "Motorista 1 entrega", value: notInformed(vehicle1), strong: true },
+      { label: "Motorista 2 entrega", value: notInformed(vehicle2), strong: true },
+      { label: "Motorista 1", value: notInformed(driver1) },
+      { label: "Motorista 2", value: notInformed(driver2) }
+    ]
+  };
+}
+
 function cleanPhoneDigits(value: string) {
   return value.replace(/\D/g, "");
 }
@@ -2554,36 +2713,30 @@ function mapMaintenance(geral: DataverseRecord, maintenance: DataverseRecord): A
   };
 }
 
-function buildExchangeFields(exchange: DataverseRecord, geral?: DataverseRecord): DetailField[] {
-  const start = toDate(exchange.cr40f_iniciodajaneladetroca);
-  const end = toDate(exchange.cr40f_fimdajaneladetroca);
+function buildExchangeFields(exchange: DataverseRecord, geral?: DataverseRecord, driver?: DriverContext | null): DetailField[] {
+  const display = buildExchangeDisplay(exchange, driver);
   return [
-    { label: "Início da Janela", value: start ? start.toLocaleString("pt-BR") : "" },
-    { label: "Fim da Janela", value: end ? end.toLocaleString("pt-BR") : "" },
-    { label: "Motorista 1", value: getLookupName(exchange, "cr40f_motorista1") },
-    { label: "Motorista 2", value: getLookupName(exchange, "cr40f_motorista2") },
-    { label: "Veículo 1 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo1antesdatroca") },
-    { label: "Veículo 2 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo2antesdatroca") },
+    { label: "Janela da Troca", value: display.window },
+    { label: "Resumo", value: display.summary, strong: true },
+    ...display.fields,
     { label: "Tipo de Troca", value: getFormatted(exchange, "new_tipodetroca") },
     { label: "Observação", value: String(exchange.cr40f_observacao ?? "") },
     { label: "Obs de Operação", value: String(geral?.cr40f_obsdeoperao ?? "") }
   ].filter((field) => field.value);
 }
 
-function mapExchange(exchange: DataverseRecord, geral: DataverseRecord | undefined): AgendaItem {
+function mapExchange(exchange: DataverseRecord, geral: DataverseRecord | undefined, driver?: DriverContext | null): AgendaItem {
   const start = toDate(exchange.cr40f_iniciodajaneladetroca);
   const exchangeId = getRecordId(exchange, "cr40f_trocasdecarroid");
   const businessId = getBusinessId(exchange, exchangeId);
   const geralId = geral ? getGeralId(geral) : "";
-  const description =
-    `${getLookupName(exchange, "cr40f_veiculo1antesdatroca")} <> ${getLookupName(exchange, "cr40f_veiculo2antesdatroca")}`.trim() ||
-    String(exchange.cr40f_id ?? "Troca de Carro");
+  const display = buildExchangeDisplay(exchange, driver);
   const detail: DetailData = {
     type: "TROCA",
     id: businessId,
-    title: "Detalhes da Troca",
+    title: display.title,
     actions: ["cancel", "finalizar"],
-    fields: buildExchangeFields(exchange, geral),
+    fields: buildExchangeFields(exchange, geral, driver),
     dataverse: {
       entitySetName: DATAVERSE.trocas,
       id: exchangeId,
@@ -2594,11 +2747,11 @@ function mapExchange(exchange: DataverseRecord, geral: DataverseRecord | undefin
   return {
     id: `trc-${exchangeId}`,
     tipo: "TROCA",
-    label: "Troca de Carro",
+    label: display.label,
     time: formatAgendaTime(start),
-    description,
+    description: display.description,
     priority: 0,
-    searchText: `${businessId} ${exchangeId} ${description} ${getLookupName(exchange, "cr40f_motorista1")} ${getLookupName(exchange, "cr40f_motorista2")}`.toLowerCase(),
+    searchText: `${businessId} ${exchangeId} ${display.label} ${display.description} ${display.summary} ${getLookupName(exchange, "cr40f_motorista1")} ${getLookupName(exchange, "cr40f_motorista2")}`.toLowerCase(),
     detail
   };
 }
@@ -2739,7 +2892,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
       if (isDriver2 && exchange.new_concluidomotorista2 === true) return false;
       return exchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid"));
     })
-    .map((exchange) => mapExchange(exchange, exchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid"))));
+    .map((exchange) => mapExchange(exchange, exchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver));
 
   const serviceItems = (await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver))))
     .filter((item) => shouldKeepCanceledAgendaItem(item, now.getTime()));
@@ -2813,7 +2966,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     ...historyMaintenanceRows.filter((item): item is AgendaItem => Boolean(item)),
     ...historyExchangeResult.entities
       .filter((exchange) => historyExchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid")))
-      .map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid"))))
+      .map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver))
   ].sort((a, b) => getItemDateMs(b) - getItemDateMs(a)).map(asHistoryItem);
   const history = addHistoryDateHeaders(historyItems);
 
@@ -2874,7 +3027,7 @@ export async function loadRemoteDetailByParams(servicoId: string, tipo = ""): Pr
           "$top=1"
         ].join("&")
       );
-      return mapExchange(exchange, linkedGeral.entities[0]).detail ?? null;
+      return mapExchange(exchange, linkedGeral.entities[0], driver).detail ?? null;
     } catch (error) {
       dataverseWarn("Busca direta como TROCA falhou.", { id, error });
     }
@@ -3233,9 +3386,7 @@ async function findExistingMaintenanceExpense(maintenanceId: string) {
 }
 
 async function upsertMaintenanceExpense({
-  detail,
   fields,
-  record,
   maintenanceId,
   motoristaId,
   vehicleId,
@@ -3243,9 +3394,7 @@ async function upsertMaintenanceExpense({
   finalizedAt,
   onProgress
 }: {
-  detail: DetailData;
   fields: Record<string, string>;
-  record: DataverseRecord;
   maintenanceId: string;
   motoristaId: string;
   vehicleId: string;
@@ -3271,7 +3420,17 @@ async function upsertMaintenanceExpense({
   const categoryId = getRequiredMaintenanceExpenseOptionId(category?.id ?? "", "Categoria Manutencao");
   const paymentMethodId = getRequiredMaintenanceExpenseOptionId(paymentMethod?.id ?? "", "Forma de pagamento do gasto");
 
-  const maintenanceBusinessId = String(record.cr40f_id ?? detail.id ?? "").trim();
+  const motoristObservation =
+    getFieldValue(
+      fields,
+      "Comentários do Colaborador",
+      "Comentarios do Colaborador",
+      "Comentários do Motorista",
+      "Comentarios do Motorista",
+      "Observações da Manutenção",
+      "Observacoes da Manutencao"
+    ) ||
+    "Sem comentarios.";
   const draft: ExpenseDraft = {
     categoriaId: categoryId,
     veiculoId: vehicleId,
@@ -3280,7 +3439,7 @@ async function upsertMaintenanceExpense({
     formaPagamentoId: paymentMethodId,
     cidadeId: cityId,
     estabelecimento: getFieldValue(fields, "Estabelecimento"),
-    descricao: `Manutencao ${maintenanceBusinessId}: ${getFieldValue(fields, "Serviço Realizado", "Servico Realizado")}`,
+    descricao: motoristObservation,
     kmInformado: "",
     litros: ""
   };
@@ -3349,7 +3508,7 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
     cr40f_datamanutencao: finalizedAt,
     cr40f_estabelecimento: getFieldValue(payload.fields, "Estabelecimento"),
     cr40f_valor: parseCurrencyNumber(getFieldValue(payload.fields, "Valor") || "0"),
-    new_comentariosdocolaborador: getFieldValue(payload.fields, "Comentários do Motorista", "Comentarios do Motorista"),
+    new_comentariosdocolaborador: getFieldValue(payload.fields, "Comentários do Colaborador", "Comentarios do Colaborador", "Comentários do Motorista", "Comentarios do Motorista"),
     cr40f_servicorealizado: getFieldValue(payload.fields, "Serviço Realizado", "Servico Realizado")
   };
   if (paymentValue !== undefined) maintenancePatch.cr40f_pagamento = paymentValue;
@@ -3436,9 +3595,7 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   }
 
   await upsertMaintenanceExpense({
-    detail: payload.detail,
     fields: payload.fields,
-    record,
     maintenanceId: dv.id,
     motoristaId,
     vehicleId,
@@ -3456,7 +3613,7 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   if (geralId) {
     payload.onProgress?.("Concluindo item da agenda.");
     await updateOne(DATAVERSE.geral, geralId, {
-      new_observacaofinal: getFieldValue(payload.fields, "Comentários do Motorista", "Comentarios do Motorista", "Observações", "Observacoes"),
+      new_observacaofinal: getFieldValue(payload.fields, "Comentários do Colaborador", "Comentarios do Colaborador", "Comentários do Motorista", "Comentarios do Motorista", "Observações", "Observacoes"),
       cr40f_status: OPERATION_STATUS.concluido,
       new_datadefinalizacao: finalizedAt
     });
@@ -3483,23 +3640,26 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
     exchangePatch.new_observacaodomotorista2 = observation;
   }
 
-  const driver1Done = isDriver1 ? true : record.new_concluidomotorista1 === true;
-  const driver2Done = isDriver2 ? true : record.new_concluidomotorista2 === true;
-  if (driver1Done && driver2Done) exchangePatch.cr40f_statusdatroca = EXCHANGE_STATUS.concluida;
+  const completion = getExchangeCompletionState(record, isDriver1, isDriver2);
+  if (completion.closesExchange) {
+    assertExchangePossessionData(record);
+    exchangePatch.cr40f_statusdatroca = EXCHANGE_STATUS.concluida;
+  }
 
   dataverseLog("Finalização de troca iniciada.", {
     detailId: payload.detail.id,
     dataverseId: dv.id,
     isDriver1,
     isDriver2,
-    closesExchange: driver1Done && driver2Done
+    baseExchange: completion.baseExchange,
+    closesExchange: completion.closesExchange
   });
 
   payload.onProgress?.("Atualizando troca no Dataverse.");
   await updateOne(DATAVERSE.trocas, dv.id, exchangePatch);
 
   const geralId = cleanODataGuid(record.__geralId);
-  if (geralId && driver1Done && driver2Done) {
+  if (geralId && completion.closesExchange) {
     payload.onProgress?.("Atualizando posse dos veículos.");
     await applyExchangePossessionRemote(record, dv.id);
     payload.onProgress?.("Concluindo item da agenda.");

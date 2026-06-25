@@ -288,7 +288,7 @@ function MaintenanceFinalize({
       "Forma de Pagamento": payment || "Não informado",
       Cidade: cidadeId,
       Estabelecimento: establishment || "Não informado",
-      "Comentários do Motorista": notes || "Sem comentários.",
+      "Comentários do Colaborador": notes || "Sem comentários.",
       Fotos: confirmedPhotos.length ? `${confirmedPhotos.length} foto(s) confirmada(s)` : "Nenhuma foto confirmada"
     };
 

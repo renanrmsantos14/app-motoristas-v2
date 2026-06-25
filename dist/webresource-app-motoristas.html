@@ -11821,7 +11821,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.503","builtAt":"2026-06-25T18:24:14.663Z","builtAtLabel":"25/06/2026, 15:24"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.512","builtAt":"2026-06-25T19:02:00.466Z","builtAtLabel":"25/06/2026, 16:02"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -34701,24 +34701,53 @@ select,
     {
       id: "troca-381",
       tipo: "TROCA",
-      label: "Troca de Carro",
+      label: "Troca entre Motoristas",
       time: "HOJE entre 16:00 e 17:00",
-      description: "Trocar de carro com Carlos Andrade",
+      description: "Entregar Corolla ABC1D23 e receber Civic XYZ9A87",
       priority: 3,
-      searchText: "381 troca de carro carlos andrade hoje 16:00 17:00",
+      searchText: "381 troca entre motoristas carlos andrade corolla abc1d23 civic xyz9a87 hoje 16:00 17:00",
       detail: {
         type: "TROCA",
         id: "381",
-        title: "Detalhes da Troca",
+        title: "Troca entre Motoristas",
         actions: ["finalizar"],
         fields: [
-          { label: "In\xEDcio da Janela de Troca", value: "02/06/2026 16:00" },
-          { label: "Fim da Janela de Troca", value: "02/06/2026 17:00" },
-          { label: "Voc\xEA ir\xE1 trocar de carro com:", value: "Carlos Andrade", strong: true },
+          { label: "Janela da Troca", value: "02/06/2026 16:00 - 17:00" },
+          { label: "Resumo", value: "Troque com Carlos Andrade. Entregue Corolla Preto ABC1D23 e receba Civic Prata XYZ9A87.", strong: true },
+          { label: "O que fazer", value: "Trocar ve\xEDculo com Carlos Andrade", strong: true },
+          { label: "Voc\xEA entrega", value: "Corolla Preto ABC1D23", strong: true },
+          { label: "Voc\xEA recebe", value: "Civic Prata XYZ9A87", strong: true },
+          { label: "Encontrar com", value: "Carlos Andrade" },
           { label: "Telefone", value: "+55 (12) 99723-6961" },
-          { label: "Whatsapp", value: "Abrir conversa" },
-          { label: "Ve\xEDculos envolvidos:", value: "Voc\xEA entrega:\nCorolla Preto | ABC1D23\nVoc\xEA recebe:\nCivic Prata | XYZ9A87", strong: true },
-          { label: "Observa\xE7\xF5es", value: "Troca combinada na base operacional. Conferir pertences antes da entrega." }
+          { label: "Tipo de Troca", value: "Troca" },
+          { label: "Observa\xE7\xE3o", value: "Troca combinada na base operacional. Conferir pertences, documentos e chaves antes da entrega." },
+          { label: "Obs de Opera\xE7\xE3o", value: "Ponto de encontro na portaria da base. Confirmar fotos do ve\xEDculo antes da sa\xEDda." }
+        ]
+      }
+    },
+    {
+      id: "troca-382",
+      tipo: "TROCA",
+      label: "Retirada na Base",
+      time: "HOJE entre 17:20 e 18:00",
+      description: "Retirar Spin Preta FGH4J21 na base",
+      priority: 1,
+      searchText: "382 retirada na base spin preta fgh4j21 hoje 17:20 18:00",
+      detail: {
+        type: "TROCA",
+        id: "382",
+        title: "Retirada na Base",
+        actions: ["finalizar"],
+        fields: [
+          { label: "Janela da Troca", value: "02/06/2026 17:20 - 18:00" },
+          { label: "Resumo", value: "Retire Spin Preta FGH4J21 na base operacional.", strong: true },
+          { label: "O que fazer", value: "Retirar ve\xEDculo na base", strong: true },
+          { label: "Voc\xEA recebe", value: "Spin Preta FGH4J21", strong: true },
+          { label: "Local", value: "Base operacional" },
+          { label: "Motorista", value: "Voc\xEA" },
+          { label: "Tipo de Troca", value: "Retirada da base" },
+          { label: "Observa\xE7\xE3o", value: "Ve\xEDculo separado para servi\xE7o noturno. Conferir combust\xEDvel, TAG e documentos." },
+          { label: "Obs de Opera\xE7\xE3o", value: "Chave com a opera\xE7\xE3o. Ve\xEDculo estacionado na vaga 04." }
         ]
       }
     },
@@ -34775,22 +34804,26 @@ select,
     {
       id: "troca-384",
       tipo: "TROCA",
-      label: "Troca de Carro",
+      label: "Devolu\xE7\xE3o \xE0 Base",
       time: "AMANH\xC3 entre 11:00 e 12:00",
-      description: "Deixar o carro na base",
+      description: "Devolver Civic Prata XYZ9A87 na base",
       priority: 0,
-      searchText: "384 troca carro base amanha 11:00 12:00",
+      searchText: "384 devolucao a base civic prata xyz9a87 amanha 11:00 12:00",
       detail: {
         type: "TROCA",
         id: "384",
-        title: "Detalhes da Troca",
+        title: "Devolu\xE7\xE3o \xE0 Base",
         actions: ["finalizar"],
         fields: [
-          { label: "In\xEDcio da Janela de Troca", value: "03/06/2026 11:00" },
-          { label: "Fim da Janela de Troca", value: "03/06/2026 12:00" },
-          { label: "Voc\xEA ir\xE1 trocar de carro com:", value: "Base Operacional (Voc\xEA devolver\xE1 um ve\xEDculo.)", strong: true },
-          { label: "Ve\xEDculos envolvidos:", value: "Voc\xEA entrega: Civic Prata | XYZ9A87", strong: true },
-          { label: "Observa\xE7\xF5es", value: "Devolver ve\xEDculo limpo e com checklist preenchido." }
+          { label: "Janela da Troca", value: "03/06/2026 11:00 - 12:00" },
+          { label: "Resumo", value: "Devolva Civic Prata XYZ9A87 na base operacional.", strong: true },
+          { label: "O que fazer", value: "Devolver ve\xEDculo na base", strong: true },
+          { label: "Voc\xEA entrega", value: "Civic Prata XYZ9A87", strong: true },
+          { label: "Local", value: "Base operacional" },
+          { label: "Motorista", value: "Voc\xEA" },
+          { label: "Tipo de Troca", value: "Devolu\xE7\xE3o \xE0 base" },
+          { label: "Observa\xE7\xE3o", value: "Devolver ve\xEDculo limpo, sem objetos pessoais e com checklist preenchido." },
+          { label: "Obs de Opera\xE7\xE3o", value: "Ap\xF3s a devolu\xE7\xE3o, entregar chave e documento ao respons\xE1vel da base." }
         ]
       }
     }
@@ -38332,6 +38365,141 @@ ${text}`);
   function getLookupId(record, logicalName) {
     return cleanODataGuid(record[`_${logicalName}_value`]);
   }
+  function isBaseExchange(record) {
+    const exchangeTypeValue = Number(record.new_tipodetroca);
+    const exchangeType = normalizeText2(getFormatted(record, "new_tipodetroca"));
+    return exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("retirada") || exchangeType.includes("devolucao") || exchangeType.includes("devolu");
+  }
+  function getExchangeCompletionState(record, isDriver1, isDriver2) {
+    const driver1Done = isDriver1 ? true : record.new_concluidomotorista1 === true;
+    const driver2Done = isDriver2 ? true : record.new_concluidomotorista2 === true;
+    const baseExchange = isBaseExchange(record);
+    return {
+      driver1Done,
+      driver2Done,
+      baseExchange,
+      closesExchange: baseExchange ? driver1Done : driver1Done && driver2Done
+    };
+  }
+  function assertExchangePossessionData(record) {
+    const driver1Id = getLookupId(record, "cr40f_motorista1");
+    const driver2Id = getLookupId(record, "cr40f_motorista2");
+    const vehicle1Id = getLookupId(record, "cr40f_veiculo1antesdatroca");
+    const vehicle2Id = getLookupId(record, "cr40f_veiculo2antesdatroca");
+    const exchangeTypeValue = Number(record.new_tipodetroca);
+    const exchangeType = normalizeText2(getFormatted(record, "new_tipodetroca"));
+    if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) {
+      if (!driver1Id || !vehicle2Id) throw new Error("Troca de retirada da base sem motorista principal ou veiculo recebido.");
+      return;
+    }
+    if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) {
+      if (!driver1Id || !vehicle1Id) throw new Error("Troca de devolucao a base sem motorista principal ou veiculo entregue.");
+      return;
+    }
+    if (!driver1Id || !driver2Id || !vehicle1Id || !vehicle2Id) {
+      throw new Error("Troca entre motoristas sem motoristas ou veiculos obrigatorios.");
+    }
+  }
+  function getExchangeKind(record) {
+    const exchangeTypeValue = Number(record.new_tipodetroca);
+    const exchangeType = normalizeText2(getFormatted(record, "new_tipodetroca"));
+    if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) return "retiradaBase";
+    if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) return "devolucaoBase";
+    return "troca";
+  }
+  function joinDateRange(start, end) {
+    const startText = start ? start.toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }) : "";
+    const endText2 = end ? end.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+    return [startText, endText2].filter(Boolean).join(" - ");
+  }
+  function notInformed(value, fallback = "N\xE3o informado") {
+    return value.trim() || fallback;
+  }
+  function buildExchangeDisplay(exchange, driver) {
+    const kind = getExchangeKind(exchange);
+    const start = toDate(exchange.cr40f_iniciodajaneladetroca);
+    const end = toDate(exchange.cr40f_fimdajaneladetroca);
+    const driverId = cleanGuid2(driver?.id ?? "");
+    const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === driverId;
+    const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === driverId;
+    const driver1 = getLookupName(exchange, "cr40f_motorista1");
+    const driver2 = getLookupName(exchange, "cr40f_motorista2");
+    const vehicle1 = getLookupName(exchange, "cr40f_veiculo1antesdatroca");
+    const vehicle2 = getLookupName(exchange, "cr40f_veiculo2antesdatroca");
+    const currentVehicle = isDriver2 ? vehicle2 : vehicle1;
+    const nextVehicle = isDriver2 ? vehicle1 : vehicle2;
+    const otherDriver = isDriver2 ? driver1 : driver2;
+    if (kind === "retiradaBase") {
+      const receiving = notInformed(vehicle2);
+      return {
+        label: "Retirada na Base",
+        title: "Retirada na Base",
+        description: `Retirar ${receiving} na base`,
+        summary: `Retire ${receiving} na base operacional.`,
+        window: joinDateRange(start, end),
+        fields: [
+          { label: "O que fazer", value: `Retirar ve\xEDculo na base`, strong: true },
+          { label: "Voc\xEA recebe", value: receiving, strong: true },
+          { label: "Local", value: "Base operacional" },
+          { label: "Motorista", value: notInformed(driver1) }
+        ]
+      };
+    }
+    if (kind === "devolucaoBase") {
+      const delivering = notInformed(vehicle1);
+      return {
+        label: "Devolu\xE7\xE3o \xE0 Base",
+        title: "Devolu\xE7\xE3o \xE0 Base",
+        description: `Devolver ${delivering} na base`,
+        summary: `Devolva ${delivering} na base operacional.`,
+        window: joinDateRange(start, end),
+        fields: [
+          { label: "O que fazer", value: `Devolver ve\xEDculo na base`, strong: true },
+          { label: "Voc\xEA entrega", value: delivering, strong: true },
+          { label: "Local", value: "Base operacional" },
+          { label: "Motorista", value: notInformed(driver1) }
+        ]
+      };
+    }
+    if (isDriver1 || isDriver2) {
+      const delivering = notInformed(currentVehicle);
+      const receiving = notInformed(nextVehicle);
+      const contact = notInformed(otherDriver, "Outro motorista n\xE3o informado");
+      return {
+        label: "Troca entre Motoristas",
+        title: "Troca entre Motoristas",
+        description: `Entregar ${delivering} e receber ${receiving}`,
+        summary: `Troque com ${contact}. Entregue ${delivering} e receba ${receiving}.`,
+        window: joinDateRange(start, end),
+        fields: [
+          { label: "O que fazer", value: `Trocar ve\xEDculo com ${contact}`, strong: true },
+          { label: "Voc\xEA entrega", value: delivering, strong: true },
+          { label: "Voc\xEA recebe", value: receiving, strong: true },
+          { label: "Encontrar com", value: contact }
+        ]
+      };
+    }
+    return {
+      label: "Troca entre Motoristas",
+      title: "Troca entre Motoristas",
+      description: `${notInformed(vehicle1)} por ${notInformed(vehicle2)}`,
+      summary: `Troca entre ${notInformed(driver1)} e ${notInformed(driver2)}.`,
+      window: joinDateRange(start, end),
+      fields: [
+        { label: "O que fazer", value: `Trocar ve\xEDculos`, strong: true },
+        { label: "Motorista 1 entrega", value: notInformed(vehicle1), strong: true },
+        { label: "Motorista 2 entrega", value: notInformed(vehicle2), strong: true },
+        { label: "Motorista 1", value: notInformed(driver1) },
+        { label: "Motorista 2", value: notInformed(driver2) }
+      ]
+    };
+  }
   function cleanPhoneDigits(value) {
     return value.replace(/\D/g, "");
   }
@@ -38545,33 +38713,29 @@ ${text}`);
       detail
     };
   }
-  function buildExchangeFields(exchange, geral) {
-    const start = toDate(exchange.cr40f_iniciodajaneladetroca);
-    const end = toDate(exchange.cr40f_fimdajaneladetroca);
+  function buildExchangeFields(exchange, geral, driver) {
+    const display = buildExchangeDisplay(exchange, driver);
     return [
-      { label: "In\xEDcio da Janela", value: start ? start.toLocaleString("pt-BR") : "" },
-      { label: "Fim da Janela", value: end ? end.toLocaleString("pt-BR") : "" },
-      { label: "Motorista 1", value: getLookupName(exchange, "cr40f_motorista1") },
-      { label: "Motorista 2", value: getLookupName(exchange, "cr40f_motorista2") },
-      { label: "Ve\xEDculo 1 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo1antesdatroca") },
-      { label: "Ve\xEDculo 2 Antes da Troca", value: getLookupName(exchange, "cr40f_veiculo2antesdatroca") },
+      { label: "Janela da Troca", value: display.window },
+      { label: "Resumo", value: display.summary, strong: true },
+      ...display.fields,
       { label: "Tipo de Troca", value: getFormatted(exchange, "new_tipodetroca") },
       { label: "Observa\xE7\xE3o", value: String(exchange.cr40f_observacao ?? "") },
       { label: "Obs de Opera\xE7\xE3o", value: String(geral?.cr40f_obsdeoperao ?? "") }
     ].filter((field) => field.value);
   }
-  function mapExchange(exchange, geral) {
+  function mapExchange(exchange, geral, driver) {
     const start = toDate(exchange.cr40f_iniciodajaneladetroca);
     const exchangeId = getRecordId(exchange, "cr40f_trocasdecarroid");
     const businessId = getBusinessId(exchange, exchangeId);
     const geralId = geral ? getGeralId(geral) : "";
-    const description = `${getLookupName(exchange, "cr40f_veiculo1antesdatroca")} <> ${getLookupName(exchange, "cr40f_veiculo2antesdatroca")}`.trim() || String(exchange.cr40f_id ?? "Troca de Carro");
+    const display = buildExchangeDisplay(exchange, driver);
     const detail = {
       type: "TROCA",
       id: businessId,
-      title: "Detalhes da Troca",
+      title: display.title,
       actions: ["cancel", "finalizar"],
-      fields: buildExchangeFields(exchange, geral),
+      fields: buildExchangeFields(exchange, geral, driver),
       dataverse: {
         entitySetName: DATAVERSE.trocas,
         id: exchangeId,
@@ -38581,11 +38745,11 @@ ${text}`);
     return {
       id: `trc-${exchangeId}`,
       tipo: "TROCA",
-      label: "Troca de Carro",
+      label: display.label,
       time: formatAgendaTime(start),
-      description,
+      description: display.description,
       priority: 0,
-      searchText: `${businessId} ${exchangeId} ${description} ${getLookupName(exchange, "cr40f_motorista1")} ${getLookupName(exchange, "cr40f_motorista2")}`.toLowerCase(),
+      searchText: `${businessId} ${exchangeId} ${display.label} ${display.description} ${display.summary} ${getLookupName(exchange, "cr40f_motorista1")} ${getLookupName(exchange, "cr40f_motorista2")}`.toLowerCase(),
       detail
     };
   }
@@ -38709,7 +38873,7 @@ ${text}`);
       if (isDriver1 && exchange.new_concluidomotorista1 === true) return false;
       if (isDriver2 && exchange.new_concluidomotorista2 === true) return false;
       return exchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid"));
-    }).map((exchange) => mapExchange(exchange, exchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid"))));
+    }).map((exchange) => mapExchange(exchange, exchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver));
     const serviceItems = (await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver)))).filter((item) => shouldKeepCanceledAgendaItem(item, now2.getTime()));
     const items = [
       ...serviceItems,
@@ -38772,7 +38936,7 @@ ${text}`);
     const historyItems = [
       ...historyServiceItems,
       ...historyMaintenanceRows.filter((item) => Boolean(item)),
-      ...historyExchangeResult.entities.filter((exchange) => historyExchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid"))).map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid"))))
+      ...historyExchangeResult.entities.filter((exchange) => historyExchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid"))).map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver))
     ].sort((a, b) => getItemDateMs(b) - getItemDateMs(a)).map(asHistoryItem);
     const history = addHistoryDateHeaders(historyItems);
     dataverseLog("Carga remota concluida.", {
@@ -38827,7 +38991,7 @@ ${text}`);
             "$top=1"
           ].join("&")
         );
-        return mapExchange(exchange, linkedGeral.entities[0]).detail ?? null;
+        return mapExchange(exchange, linkedGeral.entities[0], driver).detail ?? null;
       } catch (error2) {
         dataverseWarn("Busca direta como TROCA falhou.", { id: id3, error: error2 });
       }
@@ -39156,9 +39320,7 @@ ${text}`);
     return result.entities[0] ?? null;
   }
   async function upsertMaintenanceExpense({
-    detail,
     fields,
-    record,
     maintenanceId,
     motoristaId,
     vehicleId,
@@ -39181,7 +39343,15 @@ ${text}`);
     );
     const categoryId = getRequiredMaintenanceExpenseOptionId(category?.id ?? "", "Categoria Manutencao");
     const paymentMethodId = getRequiredMaintenanceExpenseOptionId(paymentMethod?.id ?? "", "Forma de pagamento do gasto");
-    const maintenanceBusinessId = String(record.cr40f_id ?? detail.id ?? "").trim();
+    const motoristObservation = getFieldValue(
+      fields,
+      "Coment\xE1rios do Colaborador",
+      "Comentarios do Colaborador",
+      "Coment\xE1rios do Motorista",
+      "Comentarios do Motorista",
+      "Observa\xE7\xF5es da Manuten\xE7\xE3o",
+      "Observacoes da Manutencao"
+    ) || "Sem comentarios.";
     const draft = {
       categoriaId: categoryId,
       veiculoId: vehicleId,
@@ -39190,7 +39360,7 @@ ${text}`);
       formaPagamentoId: paymentMethodId,
       cidadeId: cityId,
       estabelecimento: getFieldValue(fields, "Estabelecimento"),
-      descricao: `Manutencao ${maintenanceBusinessId}: ${getFieldValue(fields, "Servi\xE7o Realizado", "Servico Realizado")}`,
+      descricao: motoristObservation,
       kmInformado: "",
       litros: ""
     };
@@ -39255,7 +39425,7 @@ ${text}`);
       cr40f_datamanutencao: finalizedAt,
       cr40f_estabelecimento: getFieldValue(payload.fields, "Estabelecimento"),
       cr40f_valor: parseCurrencyNumber(getFieldValue(payload.fields, "Valor") || "0"),
-      new_comentariosdocolaborador: getFieldValue(payload.fields, "Coment\xE1rios do Motorista", "Comentarios do Motorista"),
+      new_comentariosdocolaborador: getFieldValue(payload.fields, "Coment\xE1rios do Colaborador", "Comentarios do Colaborador", "Coment\xE1rios do Motorista", "Comentarios do Motorista"),
       cr40f_servicorealizado: getFieldValue(payload.fields, "Servi\xE7o Realizado", "Servico Realizado")
     };
     if (paymentValue !== void 0) maintenancePatch.cr40f_pagamento = paymentValue;
@@ -39333,9 +39503,7 @@ ${text}`);
       throw new Error(`Manuten\xE7\xE3o salva, mas ${failedUploads} de ${uploadEntries.length} arquivo(s) falharam no upload.`);
     }
     await upsertMaintenanceExpense({
-      detail: payload.detail,
       fields: payload.fields,
-      record,
       maintenanceId: dv.id,
       motoristaId,
       vehicleId,
@@ -39352,7 +39520,7 @@ ${text}`);
     if (geralId) {
       payload.onProgress?.("Concluindo item da agenda.");
       await updateOne(DATAVERSE.geral, geralId, {
-        new_observacaofinal: getFieldValue(payload.fields, "Coment\xE1rios do Motorista", "Comentarios do Motorista", "Observa\xE7\xF5es", "Observacoes"),
+        new_observacaofinal: getFieldValue(payload.fields, "Coment\xE1rios do Colaborador", "Comentarios do Colaborador", "Coment\xE1rios do Motorista", "Comentarios do Motorista", "Observa\xE7\xF5es", "Observacoes"),
         cr40f_status: OPERATION_STATUS.concluido,
         new_datadefinalizacao: finalizedAt
       });
@@ -39376,20 +39544,23 @@ ${text}`);
       exchangePatch.new_concluidomotorista2 = true;
       exchangePatch.new_observacaodomotorista2 = observation;
     }
-    const driver1Done = isDriver1 ? true : record.new_concluidomotorista1 === true;
-    const driver2Done = isDriver2 ? true : record.new_concluidomotorista2 === true;
-    if (driver1Done && driver2Done) exchangePatch.cr40f_statusdatroca = EXCHANGE_STATUS.concluida;
+    const completion = getExchangeCompletionState(record, isDriver1, isDriver2);
+    if (completion.closesExchange) {
+      assertExchangePossessionData(record);
+      exchangePatch.cr40f_statusdatroca = EXCHANGE_STATUS.concluida;
+    }
     dataverseLog("Finaliza\xE7\xE3o de troca iniciada.", {
       detailId: payload.detail.id,
       dataverseId: dv.id,
       isDriver1,
       isDriver2,
-      closesExchange: driver1Done && driver2Done
+      baseExchange: completion.baseExchange,
+      closesExchange: completion.closesExchange
     });
     payload.onProgress?.("Atualizando troca no Dataverse.");
     await updateOne(DATAVERSE.trocas, dv.id, exchangePatch);
     const geralId = cleanODataGuid(record.__geralId);
-    if (geralId && driver1Done && driver2Done) {
+    if (geralId && completion.closesExchange) {
       payload.onProgress?.("Atualizando posse dos ve\xEDculos.");
       await applyExchangePossessionRemote(record, dv.id);
       payload.onProgress?.("Concluindo item da agenda.");
@@ -41210,7 +41381,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [serviceObservationStatus, setServiceObservationStatus] = (0, import_react36.useState)("idle");
     const dateField = detail.fields.find((field) => /data|hora|horário|janela/i.test(field.label));
     const fieldsWithoutHeaderDate = dateField ? detail.fields.filter((field) => field !== dateField) : detail.fields;
-    const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : detail.type === "MANUTENCAO" ? fieldsWithoutHeaderDate.filter((field) => !isOperationObservationField(field.label)) : fieldsWithoutHeaderDate;
+    const visibleFields = detail.type === "SERVICO" ? fieldsWithoutHeaderDate.filter((field) => !isServiceObservationField(field.label)) : detail.type === "MANUTENCAO" || detail.type === "TROCA" ? fieldsWithoutHeaderDate.filter((field) => !isOperationObservationField(field.label)) : fieldsWithoutHeaderDate;
     const visibleActions = getVisibleActions(detail);
     const shouldShowServiceObservation = detail.type === "SERVICO" && !isTenarisClient(detail);
     const canAutosaveObservation = detail.type === "SERVICO" && Boolean(onServiceObservationChange);
@@ -41929,7 +42100,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         "Forma de Pagamento": payment || "N\xE3o informado",
         Cidade: cidadeId,
         Estabelecimento: establishment || "N\xE3o informado",
-        "Coment\xE1rios do Motorista": notes || "Sem coment\xE1rios.",
+        "Coment\xE1rios do Colaborador": notes || "Sem coment\xE1rios.",
         Fotos: confirmedPhotos.length ? `${confirmedPhotos.length} foto(s) confirmada(s)` : "Nenhuma foto confirmada"
       };
       const nextErrors = validateMaintenanceFinalizeFields({

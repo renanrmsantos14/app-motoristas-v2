@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildMaintenanceRequestAssignedVehiclesQuery,
+  buildExchangeDisplay,
   buildMaintenanceRequestRecord,
   buildMaintenanceRequestVehiclesQuery,
   buildReceiptEmailContent,
+  getExchangeCompletionState,
   normalizeReceiptIdentifier
 } from "../src/lib/dataverse.ts";
 
@@ -101,6 +103,118 @@ test("fallback de veiculos da manutencao busca veiculo atual ou atribuido ao mot
     "statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq 202410001 and (_cr40f_motoristaatual_value eq 22222222-2222-2222-2222-222222222222 or cr40f_veiculosid eq 11111111-1111-1111-1111-111111111111)"
   );
   assert.equal(params.get("$top"), "20");
+});
+
+test("troca entre motoristas fecha somente quando os dois confirmam", () => {
+  const waiting = getExchangeCompletionState(
+    {
+      new_tipodetroca: 100000000,
+      new_concluidomotorista1: false,
+      new_concluidomotorista2: false
+    },
+    true,
+    false
+  );
+
+  assert.equal(waiting.driver1Done, true);
+  assert.equal(waiting.driver2Done, false);
+  assert.equal(waiting.closesExchange, false);
+
+  const closing = getExchangeCompletionState(
+    {
+      new_tipodetroca: 100000000,
+      new_concluidomotorista1: false,
+      new_concluidomotorista2: true
+    },
+    true,
+    false
+  );
+
+  assert.equal(closing.closesExchange, true);
+});
+
+test("troca com base fecha com confirmacao do motorista principal", () => {
+  const retiradaBase = getExchangeCompletionState(
+    {
+      new_tipodetroca: 100000002,
+      new_concluidomotorista1: false,
+      new_concluidomotorista2: false
+    },
+    true,
+    false
+  );
+
+  assert.equal(retiradaBase.baseExchange, true);
+  assert.equal(retiradaBase.driver1Done, true);
+  assert.equal(retiradaBase.driver2Done, false);
+  assert.equal(retiradaBase.closesExchange, true);
+
+  const devolucaoBase = getExchangeCompletionState(
+    {
+      new_tipodetroca: 100000001,
+      new_concluidomotorista1: false,
+      new_concluidomotorista2: false
+    },
+    true,
+    false
+  );
+
+  assert.equal(devolucaoBase.baseExchange, true);
+  assert.equal(devolucaoBase.closesExchange, true);
+});
+
+test("descricao da troca entre motoristas usa perspectiva do motorista logado", () => {
+  const display = buildExchangeDisplay(
+    {
+      new_tipodetroca: 100000000,
+      cr40f_iniciodajaneladetroca: "2026-06-03T11:00:45",
+      cr40f_fimdajaneladetroca: "2026-06-03T12:00:30",
+      _cr40f_motorista1_value: "driver-1",
+      "_cr40f_motorista1_value@OData.Community.Display.V1.FormattedValue": "Ana",
+      _cr40f_motorista2_value: "driver-2",
+      "_cr40f_motorista2_value@OData.Community.Display.V1.FormattedValue": "Bruno",
+      "_cr40f_veiculo1antesdatroca_value@OData.Community.Display.V1.FormattedValue": "Corolla ABC1D23",
+      "_cr40f_veiculo2antesdatroca_value@OData.Community.Display.V1.FormattedValue": "Civic XYZ9A87"
+    },
+    { id: "driver-1", email: "", fullName: "Ana", funcionario: {} }
+  );
+
+  assert.equal(display.label, "Troca entre Motoristas");
+  assert.match(display.description, /Entregar Corolla ABC1D23/);
+  assert.match(display.description, /receber Civic XYZ9A87/);
+  assert.match(display.summary, /Bruno/);
+  assert.match(display.window, /11:00 - 12:00/);
+  assert.doesNotMatch(display.window, /:\d{2}:/);
+});
+
+test("descricao de retirada e devolucao na base usa acao certa", () => {
+  const retirada = buildExchangeDisplay(
+    {
+      new_tipodetroca: 100000002,
+      _cr40f_motorista1_value: "driver-1",
+      "_cr40f_motorista1_value@OData.Community.Display.V1.FormattedValue": "Ana",
+      "_cr40f_veiculo2antesdatroca_value@OData.Community.Display.V1.FormattedValue": "Civic XYZ9A87"
+    },
+    { id: "driver-1", email: "", fullName: "Ana", funcionario: {} }
+  );
+
+  assert.equal(retirada.label, "Retirada na Base");
+  assert.match(retirada.description, /Retirar Civic XYZ9A87/);
+  assert.equal(retirada.fields.some((field) => field.label === "Você recebe" && field.value === "Civic XYZ9A87"), true);
+
+  const devolucao = buildExchangeDisplay(
+    {
+      new_tipodetroca: 100000001,
+      _cr40f_motorista1_value: "driver-1",
+      "_cr40f_motorista1_value@OData.Community.Display.V1.FormattedValue": "Ana",
+      "_cr40f_veiculo1antesdatroca_value@OData.Community.Display.V1.FormattedValue": "Corolla ABC1D23"
+    },
+    { id: "driver-1", email: "", fullName: "Ana", funcionario: {} }
+  );
+
+  assert.match(devolucao.label, /Base/);
+  assert.match(devolucao.description, /Devolver Corolla ABC1D23/);
+  assert.equal(devolucao.fields.some((field) => field.label === "Você entrega" && field.value === "Corolla ABC1D23"), true);
 });
 
 test("identificador de recibo usa padrao R-XXXX", () => {

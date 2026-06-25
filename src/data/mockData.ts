@@ -44,24 +44,53 @@ export const agendaMock: AgendaItem[] = [
   {
     id: "troca-381",
     tipo: "TROCA",
-    label: "Troca de Carro",
+    label: "Troca entre Motoristas",
     time: "HOJE entre 16:00 e 17:00",
-    description: "Trocar de carro com Carlos Andrade",
+    description: "Entregar Corolla ABC1D23 e receber Civic XYZ9A87",
     priority: 3,
-    searchText: "381 troca de carro carlos andrade hoje 16:00 17:00",
+    searchText: "381 troca entre motoristas carlos andrade corolla abc1d23 civic xyz9a87 hoje 16:00 17:00",
     detail: {
       type: "TROCA",
       id: "381",
-      title: "Detalhes da Troca",
+      title: "Troca entre Motoristas",
       actions: ["finalizar"],
       fields: [
-        { label: "Início da Janela de Troca", value: "02/06/2026 16:00" },
-        { label: "Fim da Janela de Troca", value: "02/06/2026 17:00" },
-        { label: "Você irá trocar de carro com:", value: "Carlos Andrade", strong: true },
+        { label: "Janela da Troca", value: "02/06/2026 16:00 - 17:00" },
+        { label: "Resumo", value: "Troque com Carlos Andrade. Entregue Corolla Preto ABC1D23 e receba Civic Prata XYZ9A87.", strong: true },
+        { label: "O que fazer", value: "Trocar veículo com Carlos Andrade", strong: true },
+        { label: "Você entrega", value: "Corolla Preto ABC1D23", strong: true },
+        { label: "Você recebe", value: "Civic Prata XYZ9A87", strong: true },
+        { label: "Encontrar com", value: "Carlos Andrade" },
         { label: "Telefone", value: "+55 (12) 99723-6961" },
-        { label: "Whatsapp", value: "Abrir conversa" },
-        { label: "Veículos envolvidos:", value: "Você entrega:\nCorolla Preto | ABC1D23\nVocê recebe:\nCivic Prata | XYZ9A87", strong: true },
-        { label: "Observações", value: "Troca combinada na base operacional. Conferir pertences antes da entrega." }
+        { label: "Tipo de Troca", value: "Troca" },
+        { label: "Observação", value: "Troca combinada na base operacional. Conferir pertences, documentos e chaves antes da entrega." },
+        { label: "Obs de Operação", value: "Ponto de encontro na portaria da base. Confirmar fotos do veículo antes da saída." }
+      ]
+    }
+  },
+  {
+    id: "troca-382",
+    tipo: "TROCA",
+    label: "Retirada na Base",
+    time: "HOJE entre 17:20 e 18:00",
+    description: "Retirar Spin Preta FGH4J21 na base",
+    priority: 1,
+    searchText: "382 retirada na base spin preta fgh4j21 hoje 17:20 18:00",
+    detail: {
+      type: "TROCA",
+      id: "382",
+      title: "Retirada na Base",
+      actions: ["finalizar"],
+      fields: [
+        { label: "Janela da Troca", value: "02/06/2026 17:20 - 18:00" },
+        { label: "Resumo", value: "Retire Spin Preta FGH4J21 na base operacional.", strong: true },
+        { label: "O que fazer", value: "Retirar veículo na base", strong: true },
+        { label: "Você recebe", value: "Spin Preta FGH4J21", strong: true },
+        { label: "Local", value: "Base operacional" },
+        { label: "Motorista", value: "Você" },
+        { label: "Tipo de Troca", value: "Retirada da base" },
+        { label: "Observação", value: "Veículo separado para serviço noturno. Conferir combustível, TAG e documentos." },
+        { label: "Obs de Operação", value: "Chave com a operação. Veículo estacionado na vaga 04." }
       ]
     }
   },
@@ -118,22 +147,26 @@ export const agendaMock: AgendaItem[] = [
   {
     id: "troca-384",
     tipo: "TROCA",
-    label: "Troca de Carro",
+    label: "Devolução à Base",
     time: "AMANHÃ entre 11:00 e 12:00",
-    description: "Deixar o carro na base",
+    description: "Devolver Civic Prata XYZ9A87 na base",
     priority: 0,
-    searchText: "384 troca carro base amanha 11:00 12:00",
+    searchText: "384 devolucao a base civic prata xyz9a87 amanha 11:00 12:00",
     detail: {
       type: "TROCA",
       id: "384",
-      title: "Detalhes da Troca",
+      title: "Devolução à Base",
       actions: ["finalizar"],
       fields: [
-        { label: "Início da Janela de Troca", value: "03/06/2026 11:00" },
-        { label: "Fim da Janela de Troca", value: "03/06/2026 12:00" },
-        { label: "Você irá trocar de carro com:", value: "Base Operacional (Você devolverá um veículo.)", strong: true },
-        { label: "Veículos envolvidos:", value: "Você entrega: Civic Prata | XYZ9A87", strong: true },
-        { label: "Observações", value: "Devolver veículo limpo e com checklist preenchido." }
+        { label: "Janela da Troca", value: "03/06/2026 11:00 - 12:00" },
+        { label: "Resumo", value: "Devolva Civic Prata XYZ9A87 na base operacional.", strong: true },
+        { label: "O que fazer", value: "Devolver veículo na base", strong: true },
+        { label: "Você entrega", value: "Civic Prata XYZ9A87", strong: true },
+        { label: "Local", value: "Base operacional" },
+        { label: "Motorista", value: "Você" },
+        { label: "Tipo de Troca", value: "Devolução à base" },
+        { label: "Observação", value: "Devolver veículo limpo, sem objetos pessoais e com checklist preenchido." },
+        { label: "Obs de Operação", value: "Após a devolução, entregar chave e documento ao responsável da base." }
       ]
     }
   }
