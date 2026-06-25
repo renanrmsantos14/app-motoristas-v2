@@ -11821,7 +11821,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.512","builtAt":"2026-06-25T19:02:00.466Z","builtAtLabel":"25/06/2026, 16:02"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.515","builtAt":"2026-06-25T19:16:22.268Z","builtAtLabel":"25/06/2026, 16:16"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -36922,12 +36922,14 @@ select,
   }
   function getVehicleLabel(record) {
     const placa = String(record.cr40f_placa ?? "").trim();
-    const modelo = [record.cr40f_marca, record.cr40f_modelo].map((value) => String(value ?? "").trim()).filter(Boolean).join(" ");
-    return [placa, modelo].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
+    const modelo = String(record.cr40f_modelo ?? "").trim();
+    const cor = String(record.cr40f_cor ?? "").trim();
+    const identity = [modelo, cor].filter(Boolean).join(" ");
+    return [identity, placa].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
   }
   function buildMaintenanceRequestVehiclesQuery(options = {}) {
     const query = [
-      "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
+      "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,cr40f_cor,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
     ];
     if (options.onlyOwnCategory) {
       query.push(`$filter=${ACTIVE_OWN_VEHICLE_FILTER}`);
@@ -36942,7 +36944,7 @@ select,
     const driverFilter = `_cr40f_motoristaatual_value eq ${cleanGuid2(driver.id)}`;
     const currentVehicleFilter = currentVehicleId ? ` or cr40f_veiculosid eq ${currentVehicleId}` : "";
     return [
-      "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode",
+      "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,cr40f_cor,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode",
       `$filter=statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and (${driverFilter}${currentVehicleFilter})`,
       "$orderby=cr40f_placa asc",
       "$top=20"
@@ -38365,6 +38367,45 @@ ${text}`);
   function getLookupId(record, logicalName) {
     return cleanODataGuid(record[`_${logicalName}_value`]);
   }
+  function getExchangeVehicleLabel(exchange, logicalName) {
+    return String(exchange[`__${logicalName}Label`] ?? getLookupName(exchange, logicalName));
+  }
+  async function hydrateExchangeVehicleLabels(exchanges) {
+    const vehicleIds = Array.from(
+      new Set(
+        exchanges.flatMap((exchange) => [
+          getLookupId(exchange, "cr40f_veiculo1antesdatroca"),
+          getLookupId(exchange, "cr40f_veiculo2antesdatroca")
+        ]).filter(Boolean)
+      )
+    );
+    if (vehicleIds.length === 0) return exchanges;
+    try {
+      const vehicleResult = await retrieveMultiple(
+        DATAVERSE.veiculos,
+        [
+          "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,cr40f_cor",
+          `$filter=${vehicleIds.map((id3) => `cr40f_veiculosid eq ${id3}`).join(" or ")}`,
+          `$top=${vehicleIds.length}`
+        ].join("&")
+      );
+      const vehicleLabelById = new Map(
+        vehicleResult.entities.map((vehicle) => [cleanODataGuid(vehicle.cr40f_veiculosid), getVehicleLabel(vehicle)]).filter(([id3]) => Boolean(id3))
+      );
+      return exchanges.map((exchange) => {
+        const vehicle1Id = getLookupId(exchange, "cr40f_veiculo1antesdatroca");
+        const vehicle2Id = getLookupId(exchange, "cr40f_veiculo2antesdatroca");
+        return {
+          ...exchange,
+          __cr40f_veiculo1antesdatrocaLabel: vehicleLabelById.get(vehicle1Id) ?? getLookupName(exchange, "cr40f_veiculo1antesdatroca"),
+          __cr40f_veiculo2antesdatrocaLabel: vehicleLabelById.get(vehicle2Id) ?? getLookupName(exchange, "cr40f_veiculo2antesdatroca")
+        };
+      });
+    } catch (error2) {
+      dataverseWarn("Falha ao enriquecer labels dos veiculos da troca.", { error: error2 });
+      return exchanges;
+    }
+  }
   function isBaseExchange(record) {
     const exchangeTypeValue = Number(record.new_tipodetroca);
     const exchangeType = normalizeText2(getFormatted(record, "new_tipodetroca"));
@@ -38430,8 +38471,8 @@ ${text}`);
     const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === driverId;
     const driver1 = getLookupName(exchange, "cr40f_motorista1");
     const driver2 = getLookupName(exchange, "cr40f_motorista2");
-    const vehicle1 = getLookupName(exchange, "cr40f_veiculo1antesdatroca");
-    const vehicle2 = getLookupName(exchange, "cr40f_veiculo2antesdatroca");
+    const vehicle1 = getExchangeVehicleLabel(exchange, "cr40f_veiculo1antesdatroca");
+    const vehicle2 = getExchangeVehicleLabel(exchange, "cr40f_veiculo2antesdatroca");
     const currentVehicle = isDriver2 ? vehicle2 : vehicle1;
     const nextVehicle = isDriver2 ? vehicle1 : vehicle2;
     const otherDriver = isDriver2 ? driver1 : driver2;
@@ -38867,7 +38908,8 @@ ${text}`);
         "$top=80"
       ].join("&")
     );
-    const exchangeItems = exchangeResult.entities.filter((exchange) => {
+    const exchangeRows = await hydrateExchangeVehicleLabels(exchangeResult.entities);
+    const exchangeItems = exchangeRows.filter((exchange) => {
       const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === cleanGuid2(driver.id);
       const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === cleanGuid2(driver.id);
       if (isDriver1 && exchange.new_concluidomotorista1 === true) return false;
@@ -38936,7 +38978,7 @@ ${text}`);
     const historyItems = [
       ...historyServiceItems,
       ...historyMaintenanceRows.filter((item) => Boolean(item)),
-      ...historyExchangeResult.entities.filter((exchange) => historyExchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid"))).map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver))
+      ...(await hydrateExchangeVehicleLabels(historyExchangeResult.entities)).filter((exchange) => historyExchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid"))).map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver))
     ].sort((a, b) => getItemDateMs(b) - getItemDateMs(a)).map(asHistoryItem);
     const history = addHistoryDateHeaders(historyItems);
     dataverseLog("Carga remota concluida.", {
@@ -38982,7 +39024,7 @@ ${text}`);
     }
     if (!normalizedType || normalizedType === "TROCA") {
       try {
-        const exchange = await retrieveOne(DATAVERSE.trocas, id3, EXCHANGE_SELECT);
+        const [exchange] = await hydrateExchangeVehicleLabels([await retrieveOne(DATAVERSE.trocas, id3, EXCHANGE_SELECT)]);
         const linkedGeral = await retrieveMultiple(
           DATAVERSE.geral,
           [

@@ -173,15 +173,17 @@ test("descricao da troca entre motoristas usa perspectiva do motorista logado", 
       "_cr40f_motorista1_value@OData.Community.Display.V1.FormattedValue": "Ana",
       _cr40f_motorista2_value: "driver-2",
       "_cr40f_motorista2_value@OData.Community.Display.V1.FormattedValue": "Bruno",
-      "_cr40f_veiculo1antesdatroca_value@OData.Community.Display.V1.FormattedValue": "Corolla ABC1D23",
-      "_cr40f_veiculo2antesdatroca_value@OData.Community.Display.V1.FormattedValue": "Civic XYZ9A87"
+      "_cr40f_veiculo1antesdatroca_value@OData.Community.Display.V1.FormattedValue": "ABC1D23",
+      "_cr40f_veiculo2antesdatroca_value@OData.Community.Display.V1.FormattedValue": "XYZ9A87",
+      __cr40f_veiculo1antesdatrocaLabel: "Corolla Preto - ABC1D23",
+      __cr40f_veiculo2antesdatrocaLabel: "Civic Prata - XYZ9A87"
     },
     { id: "driver-1", email: "", fullName: "Ana", funcionario: {} }
   );
 
   assert.equal(display.label, "Troca entre Motoristas");
-  assert.match(display.description, /Entregar Corolla ABC1D23/);
-  assert.match(display.description, /receber Civic XYZ9A87/);
+  assert.match(display.description, /Entregar Corolla Preto - ABC1D23/);
+  assert.match(display.description, /receber Civic Prata - XYZ9A87/);
   assert.match(display.summary, /Bruno/);
   assert.match(display.window, /11:00 - 12:00/);
   assert.doesNotMatch(display.window, /:\d{2}:/);

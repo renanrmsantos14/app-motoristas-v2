@@ -570,13 +570,15 @@ export function getDriverCurrentVehicleId(driver: DriverContext | null) {
 
 function getVehicleLabel(record: DataverseRecord) {
   const placa = String(record.cr40f_placa ?? "").trim();
-  const modelo = [record.cr40f_marca, record.cr40f_modelo].map((value) => String(value ?? "").trim()).filter(Boolean).join(" ");
-  return [placa, modelo].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
+  const modelo = String(record.cr40f_modelo ?? "").trim();
+  const cor = String(record.cr40f_cor ?? "").trim();
+  const identity = [modelo, cor].filter(Boolean).join(" ");
+  return [identity, placa].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
 }
 
 export function buildMaintenanceRequestVehiclesQuery(options: { onlyOwnCategory?: boolean; activeOnly?: boolean } = {}) {
   const query = [
-    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
+    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,cr40f_cor,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
   ];
   if (options.onlyOwnCategory) {
     query.push(`$filter=${ACTIVE_OWN_VEHICLE_FILTER}`);
@@ -592,7 +594,7 @@ export function buildMaintenanceRequestAssignedVehiclesQuery(driver: DriverConte
   const driverFilter = `_cr40f_motoristaatual_value eq ${cleanGuid(driver.id)}`;
   const currentVehicleFilter = currentVehicleId ? ` or cr40f_veiculosid eq ${currentVehicleId}` : "";
   return [
-    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode",
+    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,cr40f_cor,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode",
     `$filter=statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and (${driverFilter}${currentVehicleFilter})`,
     "$orderby=cr40f_placa asc",
     "$top=20"
@@ -2307,6 +2309,53 @@ function getLookupId(record: DataverseRecord, logicalName: string) {
   return cleanODataGuid(record[`_${logicalName}_value`]);
 }
 
+function getExchangeVehicleLabel(exchange: DataverseRecord, logicalName: string) {
+  return String(exchange[`__${logicalName}Label`] ?? getLookupName(exchange, logicalName));
+}
+
+async function hydrateExchangeVehicleLabels(exchanges: DataverseRecord[]) {
+  const vehicleIds = Array.from(
+    new Set(
+      exchanges
+        .flatMap((exchange) => [
+          getLookupId(exchange, "cr40f_veiculo1antesdatroca"),
+          getLookupId(exchange, "cr40f_veiculo2antesdatroca")
+        ])
+        .filter(Boolean)
+    )
+  );
+  if (vehicleIds.length === 0) return exchanges;
+
+  try {
+    const vehicleResult = await retrieveMultiple(
+      DATAVERSE.veiculos,
+      [
+        "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,cr40f_cor",
+        `$filter=${vehicleIds.map((id) => `cr40f_veiculosid eq ${id}`).join(" or ")}`,
+        `$top=${vehicleIds.length}`
+      ].join("&")
+    );
+    const vehicleLabelById = new Map(
+      vehicleResult.entities
+        .map((vehicle) => [cleanODataGuid(vehicle.cr40f_veiculosid), getVehicleLabel(vehicle)] as const)
+        .filter(([id]) => Boolean(id))
+    );
+
+    return exchanges.map((exchange) => {
+      const vehicle1Id = getLookupId(exchange, "cr40f_veiculo1antesdatroca");
+      const vehicle2Id = getLookupId(exchange, "cr40f_veiculo2antesdatroca");
+      return {
+        ...exchange,
+        __cr40f_veiculo1antesdatrocaLabel: vehicleLabelById.get(vehicle1Id) ?? getLookupName(exchange, "cr40f_veiculo1antesdatroca"),
+        __cr40f_veiculo2antesdatrocaLabel: vehicleLabelById.get(vehicle2Id) ?? getLookupName(exchange, "cr40f_veiculo2antesdatroca")
+      };
+    });
+  } catch (error) {
+    dataverseWarn("Falha ao enriquecer labels dos veiculos da troca.", { error });
+    return exchanges;
+  }
+}
+
 export function isBaseExchange(record: DataverseRecord) {
   const exchangeTypeValue = Number(record.new_tipodetroca);
   const exchangeType = normalizeText(getFormatted(record, "new_tipodetroca"));
@@ -2391,8 +2440,8 @@ export function buildExchangeDisplay(exchange: DataverseRecord, driver?: DriverC
   const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === driverId;
   const driver1 = getLookupName(exchange, "cr40f_motorista1");
   const driver2 = getLookupName(exchange, "cr40f_motorista2");
-  const vehicle1 = getLookupName(exchange, "cr40f_veiculo1antesdatroca");
-  const vehicle2 = getLookupName(exchange, "cr40f_veiculo2antesdatroca");
+  const vehicle1 = getExchangeVehicleLabel(exchange, "cr40f_veiculo1antesdatroca");
+  const vehicle2 = getExchangeVehicleLabel(exchange, "cr40f_veiculo2antesdatroca");
   const currentVehicle = isDriver2 ? vehicle2 : vehicle1;
   const nextVehicle = isDriver2 ? vehicle1 : vehicle2;
   const otherDriver = isDriver2 ? driver1 : driver2;
@@ -2884,7 +2933,9 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     ].join("&")
   );
 
-  const exchangeItems = exchangeResult.entities
+  const exchangeRows = await hydrateExchangeVehicleLabels(exchangeResult.entities);
+
+  const exchangeItems = exchangeRows
     .filter((exchange) => {
       const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === cleanGuid(driver.id);
       const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === cleanGuid(driver.id);
@@ -2964,7 +3015,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   const historyItems = [
     ...historyServiceItems,
     ...historyMaintenanceRows.filter((item): item is AgendaItem => Boolean(item)),
-    ...historyExchangeResult.entities
+    ...(await hydrateExchangeVehicleLabels(historyExchangeResult.entities))
       .filter((exchange) => historyExchangeGeralById.has(getRecordId(exchange, "cr40f_trocasdecarroid")))
       .map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver))
   ].sort((a, b) => getItemDateMs(b) - getItemDateMs(a)).map(asHistoryItem);
@@ -3018,7 +3069,7 @@ export async function loadRemoteDetailByParams(servicoId: string, tipo = ""): Pr
 
   if (!normalizedType || normalizedType === "TROCA") {
     try {
-      const exchange = await retrieveOne(DATAVERSE.trocas, id, EXCHANGE_SELECT);
+      const [exchange] = await hydrateExchangeVehicleLabels([await retrieveOne(DATAVERSE.trocas, id, EXCHANGE_SELECT)]);
       const linkedGeral = await retrieveMultiple(
         DATAVERSE.geral,
         [
