@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildExpenseCreatePayload,
+  findExpensePaymentMethodByName,
+  mapMaintenancePaymentToExpensePaymentNames,
   matchesExpenseCitySearch,
   parseCurrencyInput,
+  shouldUploadMaintenanceExpenseInvoices,
   validateExpenseDraft,
   type ExpenseDraft,
   type ExpensePhoto,
@@ -38,6 +41,15 @@ const referenceData: ExpenseReferenceData = {
       exigeReserva: false,
       exigeKm: false,
       exigeLitros: false
+    },
+    {
+      id: "cat-manutencao",
+      name: "Manuten\u00e7\u00e3o",
+      order: 120,
+      exigeVeiculo: true,
+      exigeReserva: false,
+      exigeKm: false,
+      exigeLitros: false
     }
   ],
   paymentMethods: [
@@ -52,6 +64,12 @@ const referenceData: ExpenseReferenceData = {
       name: "Particular (Reembolso)",
       order: 20,
       tipo: "Reembolso"
+    },
+    {
+      id: "pay-faturado",
+      name: "Faturado (Plano mensal)",
+      order: 30,
+      tipo: "Faturado"
     }
   ],
   cities: [
@@ -193,4 +211,63 @@ test("matchesExpenseCitySearch aceita sigla como sjc", () => {
   assert.equal(matchesExpenseCitySearch(city, "sjc"), true);
   assert.equal(matchesExpenseCitySearch(city, "sao jose"), true);
   assert.equal(matchesExpenseCitySearch(city, "3549904"), true);
+});
+
+test("buildExpenseCreatePayload vincula gasto automatico a manutencao", () => {
+  const payload = buildExpenseCreatePayload({
+    draft: baseDraft({
+      categoriaId: "cat-manutencao",
+      formaPagamentoId: "pay-faturado",
+      cidadeId: "city-sao-jose-dos-campos",
+      veiculoId: "vehicle-1",
+      dataGasto: "2026-06-25",
+      valor: "R$ 480,00",
+      estabelecimento: "Auto Center",
+      descricao: "Manutencao MNT-123"
+    }),
+    photos,
+    referenceData,
+    motoristaId: "driver-1",
+    veiculoId: "vehicle-1",
+    manutencaoId: "maintenance-1",
+    dataGastoIso: "2026-06-25T15:30:00.000Z",
+    categoryEntitySet: "cr40f_categoriadespesaoperacionals",
+    paymentMethodEntitySet: "cr40f_formapagamentodespesas",
+    cityEntitySet: "cr40f_cidades",
+    motoristaEntitySet: "cr40f_funcionarioses",
+    veiculoEntitySet: "cr40f_veiculoses",
+    reservaEntitySet: "cr40f_reservadeveculoses",
+    maintenanceEntitySet: "cr40f_manutencoeses",
+    lookupNavigationNames: {
+      motorista: "nav_motorista",
+      categoria: "nav_categoria",
+      formaPagamento: "nav_formapagamento",
+      cidade: "nav_cidade",
+      veiculo: "nav_veiculo",
+      manutencao: "nav_manutencao"
+    }
+  });
+
+  assert.equal(payload.cr40f_nome, "Manuten\u00e7\u00e3o - 25/06/2026");
+  assert.equal(payload.cr40f_datagasto, "2026-06-25T15:30:00.000Z");
+  assert.equal(payload.cr40f_valor, 480);
+  assert.equal(payload.cr40f_statusanexo, 100000001);
+  assert.equal(payload.cr40f_estabelecimento, "Auto Center");
+  assert.equal(payload["nav_manutencao@odata.bind"], "/cr40f_manutencoeses(maintenance-1)");
+  assert.equal(payload["nav_veiculo@odata.bind"], "/cr40f_veiculoses(vehicle-1)");
+});
+
+test("mapeia pagamento de manutencao para formas existentes de despesas", () => {
+  const pedidoNames = mapMaintenancePaymentToExpensePaymentNames("Pedido de compra");
+  const pixNames = mapMaintenancePaymentToExpensePaymentNames("Pix");
+
+  assert.equal(findExpensePaymentMethodByName(referenceData, pedidoNames)?.id, "pay-faturado");
+  assert.equal(findExpensePaymentMethodByName(referenceData, pixNames)?.id, "pay-particular-reembolso");
+  assert.deepEqual(mapMaintenancePaymentToExpensePaymentNames("Cart\u00e3o de cr\u00e9dito")[0], "Cartao de credito");
+});
+
+test("retry de manutencao reutiliza gasto completo sem reenviar anexos", () => {
+  assert.equal(shouldUploadMaintenanceExpenseInvoices(100000002), false);
+  assert.equal(shouldUploadMaintenanceExpenseInvoices(100000003), true);
+  assert.equal(shouldUploadMaintenanceExpenseInvoices(undefined), true);
 });

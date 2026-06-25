@@ -57,6 +57,14 @@ let flushing = false;
 let originalConsoleError: typeof console.error | null = null;
 let userContextPromise: Promise<RuntimeUserContext> | null = null;
 
+const REDACTED = "[redacted]";
+const REDACTED_EMAIL = "[redacted-email]";
+const REDACTED_PHONE = "[redacted-phone]";
+const REDACTED_BASE64 = "[redacted-base64]";
+const REDACTED_URL = "[redacted-url]";
+const SENSITIVE_KEY_PATTERN = /(base64|conteudo|content|signature|assinatura|photo|foto|image|imagem|telefone|phone|email|mail|token|secret|senha|password|authorization|sharelink|link)/i;
+const SENSITIVE_URL_HOST_PATTERN = /(sharepoint|onedrive|1drv|powerautomate|logic\.azure|flow\.microsoft|blob\.core\.windows)/i;
+
 type RuntimeUserContext = {
   userId: string;
   userName: string;
@@ -88,10 +96,52 @@ function getXrm(): XrmLike | null {
   return null;
 }
 
+function redactUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    if (SENSITIVE_URL_HOST_PATTERN.test(parsed.hostname)) return `${parsed.origin}/${REDACTED_URL}`;
+    const query = parsed.search ? "?[redacted-query]" : "";
+    const hash = parsed.hash ? "#[redacted-hash]" : "";
+    return `${parsed.origin}${parsed.pathname}${query}${hash}`;
+  } catch {
+    return REDACTED_URL;
+  }
+}
+
+export function redactSensitiveLogValue(value: unknown, key = "", depth = 0): unknown {
+  if (value === null || value === undefined) return value;
+  if (SENSITIVE_KEY_PATTERN.test(key)) return REDACTED;
+  if (depth > 8) return "[MaxDepth]";
+
+  if (typeof value === "string") {
+    return value
+      .replace(/data:[^;,]+;base64,[A-Za-z0-9+/=\s]{40,}/gi, `data:${REDACTED_BASE64}`)
+      .replace(/\b[A-Za-z0-9+/]{160,}={0,2}\b/g, REDACTED_BASE64)
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_EMAIL)
+      .replace(/(^|[^\d])((?:\+?55[\s.-]?)?(?:\(?\d{2}\)?[\s.-]?)?9?\d{4}[\s.-]?\d{4})(?=$|[^\d])/g, (_match, prefix) => `${prefix}${REDACTED_PHONE}`)
+      .replace(/https?:\/\/[^\s"'<>)]*/gi, (url) => redactUrl(url));
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitiveLogValue(item, key, depth + 1));
+  }
+
+  if (typeof value === "object") {
+    const redacted: Record<string, unknown> = {};
+    Object.entries(value as Record<string, unknown>).forEach(([entryKey, entryValue]) => {
+      redacted[entryKey] = redactSensitiveLogValue(entryValue, entryKey, depth + 1);
+    });
+    return redacted;
+  }
+
+  return value;
+}
+
 function safeStringify(value: unknown, maxLength = MAX_TEXT) {
   try {
     const seen = new WeakSet<object>();
-    const json = JSON.stringify(value, (_key, item) => {
+    const redactedValue = redactSensitiveLogValue(value);
+    const json = JSON.stringify(redactedValue, (_key, item) => {
       if (typeof item === "object" && item !== null) {
         if (seen.has(item)) return "[Circular]";
         seen.add(item);
@@ -110,8 +160,8 @@ function normalizeError(error: unknown) {
     const record = error as Error & { code?: unknown; errorCode?: unknown };
     return {
       name: error.name,
-      message: error.message,
-      stack: error.stack ?? "",
+      message: String(redactSensitiveLogValue(error.message)),
+      stack: String(redactSensitiveLogValue(error.stack ?? "")),
       code: String(record.errorCode ?? record.code ?? ""),
       rawJson: safeStringify(error, MAX_TEXT)
     };
@@ -120,8 +170,8 @@ function normalizeError(error: unknown) {
   const record = (error ?? {}) as Record<string, unknown>;
   return {
     name: String(record.name ?? typeof error),
-    message: String(record.message ?? error ?? "Erro desconhecido"),
-    stack: String(record.stack ?? ""),
+    message: String(redactSensitiveLogValue(record.message ?? error ?? "Erro desconhecido")),
+    stack: String(redactSensitiveLogValue(record.stack ?? "")),
     code: String(record.errorCode ?? record.code ?? ""),
     rawJson: safeStringify(error, MAX_TEXT)
   };
@@ -173,7 +223,7 @@ async function getRuntimeUserContext(): Promise<RuntimeUserContext> {
 }
 
 function truncate(value: unknown, maxLength = MAX_TEXT) {
-  return String(value ?? "").slice(0, maxLength);
+  return String(redactSensitiveLogValue(value) ?? "").slice(0, maxLength);
 }
 
 function buildNoticeId(source: string, message: string, action: string, phase: string) {

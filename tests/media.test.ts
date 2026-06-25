@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { dataUrlToBase64, formatVideoDuration, readBlobAsDataUrl } from "../src/lib/photoOrientation.ts";
+import { dataUrlToBase64, formatVideoDuration, getDeviceOrientationAngle, readBlobAsDataUrl } from "../src/lib/photoOrientation.ts";
 
 test("readBlobAsDataUrl gera Data URL de video com base64 decodificavel", async () => {
   const dataUrl = await readBlobAsDataUrl(new Blob([new Uint8Array([0, 1, 2, 253, 254, 255])], { type: "video/webm" }));
@@ -22,4 +22,11 @@ test("formatVideoDuration gera badge compacto", () => {
   assert.equal(formatVideoDuration(4.9), "0:04");
   assert.equal(formatVideoDuration(72), "1:12");
   assert.equal(formatVideoDuration(3725), "1:02:05");
+});
+
+test("getDeviceOrientationAngle corrige retrato de cabeca para baixo", () => {
+  assert.equal(getDeviceOrientationAngle({ beta: 150, gamma: 2 }, 0), 180);
+  assert.equal(getDeviceOrientationAngle({ beta: -150, gamma: 2 }, 0), 180);
+  assert.equal(getDeviceOrientationAngle({ beta: 8, gamma: 76 }, 0), 90);
+  assert.equal(getDeviceOrientationAngle({ beta: 8, gamma: -76 }, 0), 270);
 });

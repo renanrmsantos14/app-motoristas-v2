@@ -34,6 +34,7 @@ export type ExpenseLookupNavigationNames = {
   cidade: string;
   veiculo?: string;
   reserva?: string;
+  manutencao?: string;
 };
 
 export type ExpenseDraft = {

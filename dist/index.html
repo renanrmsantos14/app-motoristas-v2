@@ -11821,7 +11821,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.455","builtAt":"2026-06-25T12:08:29.218Z","builtAtLabel":"25/06/2026, 09:08"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.498","builtAt":"2026-06-25T17:39:25.738Z","builtAtLabel":"25/06/2026, 14:39"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -12945,7 +12945,7 @@ select,
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
-          function useMemo18(create, deps) {
+          function useMemo19(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useMemo(create, deps);
           }
@@ -13717,7 +13717,7 @@ select,
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect4;
           exports.useLayoutEffect = useLayoutEffect7;
-          exports.useMemo = useMemo18;
+          exports.useMemo = useMemo19;
           exports.useReducer = useReducer;
           exports.useRef = useRef26;
           exports.useState = useState26;
@@ -35005,6 +35005,13 @@ select,
   var flushing = false;
   var originalConsoleError = null;
   var userContextPromise = null;
+  var REDACTED = "[redacted]";
+  var REDACTED_EMAIL = "[redacted-email]";
+  var REDACTED_PHONE = "[redacted-phone]";
+  var REDACTED_BASE64 = "[redacted-base64]";
+  var REDACTED_URL = "[redacted-url]";
+  var SENSITIVE_KEY_PATTERN = /(base64|conteudo|content|signature|assinatura|photo|foto|image|imagem|telefone|phone|email|mail|token|secret|senha|password|authorization|sharelink|link)/i;
+  var SENSITIVE_URL_HOST_PATTERN = /(sharepoint|onedrive|1drv|powerautomate|logic\.azure|flow\.microsoft|blob\.core\.windows)/i;
   function createSessionId() {
     const cryptoApi = globalThis.crypto;
     if (cryptoApi?.randomUUID) return cryptoApi.randomUUID();
@@ -35026,10 +35033,41 @@ select,
     }
     return null;
   }
+  function redactUrl(value) {
+    try {
+      const parsed = new URL(value);
+      if (SENSITIVE_URL_HOST_PATTERN.test(parsed.hostname)) return `${parsed.origin}/${REDACTED_URL}`;
+      const query = parsed.search ? "?[redacted-query]" : "";
+      const hash = parsed.hash ? "#[redacted-hash]" : "";
+      return `${parsed.origin}${parsed.pathname}${query}${hash}`;
+    } catch {
+      return REDACTED_URL;
+    }
+  }
+  function redactSensitiveLogValue(value, key = "", depth = 0) {
+    if (value === null || value === void 0) return value;
+    if (SENSITIVE_KEY_PATTERN.test(key)) return REDACTED;
+    if (depth > 8) return "[MaxDepth]";
+    if (typeof value === "string") {
+      return value.replace(/data:[^;,]+;base64,[A-Za-z0-9+/=\s]{40,}/gi, `data:${REDACTED_BASE64}`).replace(/\b[A-Za-z0-9+/]{160,}={0,2}\b/g, REDACTED_BASE64).replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_EMAIL).replace(/(^|[^\d])((?:\+?55[\s.-]?)?(?:\(?\d{2}\)?[\s.-]?)?9?\d{4}[\s.-]?\d{4})(?=$|[^\d])/g, (_match, prefix) => `${prefix}${REDACTED_PHONE}`).replace(/https?:\/\/[^\s"'<>)]*/gi, (url) => redactUrl(url));
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => redactSensitiveLogValue(item, key, depth + 1));
+    }
+    if (typeof value === "object") {
+      const redacted = {};
+      Object.entries(value).forEach(([entryKey, entryValue]) => {
+        redacted[entryKey] = redactSensitiveLogValue(entryValue, entryKey, depth + 1);
+      });
+      return redacted;
+    }
+    return value;
+  }
   function safeStringify(value, maxLength = MAX_TEXT) {
     try {
       const seen = /* @__PURE__ */ new WeakSet();
-      const json = JSON.stringify(value, (_key, item) => {
+      const redactedValue = redactSensitiveLogValue(value);
+      const json = JSON.stringify(redactedValue, (_key, item) => {
         if (typeof item === "object" && item !== null) {
           if (seen.has(item)) return "[Circular]";
           seen.add(item);
@@ -35047,8 +35085,8 @@ select,
       const record2 = error2;
       return {
         name: error2.name,
-        message: error2.message,
-        stack: error2.stack ?? "",
+        message: String(redactSensitiveLogValue(error2.message)),
+        stack: String(redactSensitiveLogValue(error2.stack ?? "")),
         code: String(record2.errorCode ?? record2.code ?? ""),
         rawJson: safeStringify(error2, MAX_TEXT)
       };
@@ -35056,8 +35094,8 @@ select,
     const record = error2 ?? {};
     return {
       name: String(record.name ?? typeof error2),
-      message: String(record.message ?? error2 ?? "Erro desconhecido"),
-      stack: String(record.stack ?? ""),
+      message: String(redactSensitiveLogValue(record.message ?? error2 ?? "Erro desconhecido")),
+      stack: String(redactSensitiveLogValue(record.stack ?? "")),
       code: String(record.errorCode ?? record.code ?? ""),
       rawJson: safeStringify(error2, MAX_TEXT)
     };
@@ -35101,7 +35139,7 @@ select,
     return userContextPromise;
   }
   function truncate(value, maxLength = MAX_TEXT) {
-    return String(value ?? "").slice(0, maxLength);
+    return String(redactSensitiveLogValue(value) ?? "").slice(0, maxLength);
   }
   function buildNoticeId(source, message, action, phase) {
     return `${source}|${action}|${phase}|${message}`.slice(0, 500);
@@ -36063,6 +36101,222 @@ select,
     };
   }
 
+  // src/lib/expenses.defaults.ts
+  var DEFAULT_EXPENSE_REFERENCE_DATA = {
+    categories: [
+      { id: "local-abastecimento", name: "Abastecimento", order: 10, exigeVeiculo: true, exigeReserva: false, exigeKm: true, exigeLitros: true },
+      { id: "local-almoco", name: "Almo\xE7o", order: 20, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-aplicativos", name: "Aplicativos", order: 30, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-cafe", name: "Caf\xE9", order: 40, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-estacionamento", name: "Estacionamento", order: 50, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-gastos-cliente", name: "Gastos a pedido do cliente", order: 60, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-hospedagem", name: "Hospedagem", order: 70, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-jantar", name: "Jantar", order: 80, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-lanche", name: "Lanche", order: 90, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-lavagem", name: "Lavagem", order: 100, exigeVeiculo: true, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-locacao-carro", name: "Loca\xE7\xE3o de carro", order: 110, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-manutencao", name: "Manuten\xE7\xE3o", order: 120, exigeVeiculo: true, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-outros", name: "Outros", order: 130, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "local-pedagio", name: "Ped\xE1gio", order: 140, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false }
+    ],
+    paymentMethods: [
+      { id: "local-cartao-credito", name: "Cart\xE3o de cr\xE9dito", order: 10, tipo: "Cart\xE3o" },
+      { id: "local-ctf-sem-parar", name: "CTF (Sem parar)", order: 20, tipo: "Tag" },
+      { id: "local-ticketlog", name: "TicketLog", order: 30, tipo: "Cart\xE3o" },
+      { id: "local-particular-reembolso", name: "Particular (Reembolso)", order: 40, tipo: "Reembolso" },
+      { id: "local-dinheiro-corporativo", name: "Dinheiro (Corporativo)", order: 50, tipo: "Dinheiro" },
+      { id: "local-faturado-plano-mensal", name: "Faturado (Plano mensal)", order: 60, tipo: "Faturado" }
+    ],
+    cities: []
+  };
+
+  // src/lib/expenses.reference.ts
+  var FALLBACK_CATEGORY_RULES = {
+    abastecimento: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
+    lavagem: { exigeVeiculo: true },
+    manutencao: { exigeVeiculo: true }
+  };
+  var CITY_ABBREVIATION_STOP_WORDS = /* @__PURE__ */ new Set(["de", "da", "do", "das", "dos", "e"]);
+  function normalizeText(value) {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+  function buildExpenseCityAbbreviation(value) {
+    const baseName = value.split(" - ")[0] ?? value;
+    return normalizeText(baseName).split(/\s+/).filter((part) => part && !CITY_ABBREVIATION_STOP_WORDS.has(part)).map((part) => part[0]).join("");
+  }
+  function findExpenseCategory(referenceData, id3) {
+    return referenceData.categories.find((category) => category.id === id3) ?? null;
+  }
+  function findExpensePaymentMethod(referenceData, id3) {
+    return referenceData.paymentMethods.find((method) => method.id === id3) ?? null;
+  }
+  function findExpenseCity(referenceData, id3) {
+    return referenceData.cities.find((city) => city.id === id3) ?? null;
+  }
+  function findExpenseCategoryByName(referenceData, names) {
+    const wanted = new Set(names.map(normalizeText));
+    return referenceData.categories.find((category) => wanted.has(normalizeText(category.name))) ?? null;
+  }
+  function findExpensePaymentMethodByName(referenceData, names) {
+    const wanted = new Set(names.map(normalizeText));
+    return referenceData.paymentMethods.find((method) => wanted.has(normalizeText(method.name))) ?? null;
+  }
+  function mapMaintenancePaymentToExpensePaymentNames(value) {
+    const normalized = normalizeText(value);
+    if (normalized.includes("pedido")) return ["Faturado (Plano mensal)", "Faturado"];
+    if (normalized.includes("pix")) return ["Particular (Reembolso)", "Particular"];
+    return ["Cartao de credito", "Cart\xE3o de cr\xE9dito"];
+  }
+  function shouldUploadMaintenanceExpenseInvoices(statusAnexo) {
+    return Number(statusAnexo) !== 100000002;
+  }
+  function matchesExpenseCitySearch(city, query) {
+    const normalizedQuery = normalizeText(query);
+    if (!normalizedQuery) return false;
+    const searchableText = normalizeText(`${city.name} ${city.uf} ${city.pais} ${city.codigoIbge}`);
+    if (searchableText.includes(normalizedQuery)) return true;
+    return buildExpenseCityAbbreviation(city.name) === normalizedQuery;
+  }
+  function getExpenseCategoryRules(category) {
+    if (!category) {
+      return {
+        exigeVeiculo: false,
+        exigeReserva: false,
+        exigeKm: false,
+        exigeLitros: false
+      };
+    }
+    const fallback = FALLBACK_CATEGORY_RULES[normalizeText(category.name)] ?? {};
+    return {
+      exigeVeiculo: category.exigeVeiculo || fallback.exigeVeiculo || false,
+      exigeReserva: category.exigeReserva || fallback.exigeReserva || false,
+      exigeKm: category.exigeKm || fallback.exigeKm || false,
+      exigeLitros: category.exigeLitros || fallback.exigeLitros || false
+    };
+  }
+  function parseCurrencyInput(value) {
+    const cleaned = String(value ?? "").replace("R$", "").replace(/\s/g, "").trim();
+    if (!cleaned) return 0;
+    if (cleaned.includes(",")) return Number(cleaned.replace(/\./g, "").replace(",", "."));
+    return Number(cleaned.replace(/,/g, ""));
+  }
+  function parseIntegerInput(value) {
+    const parsed = Number(String(value ?? "").replace(/[^\d]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  function parseDecimalInput(value) {
+    const cleaned = String(value ?? "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".").trim();
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  function validateExpenseDraft(draft, photos, referenceData) {
+    const errors = {};
+    const category = findExpenseCategory(referenceData, draft.categoriaId);
+    const paymentMethod = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
+    const city = findExpenseCity(referenceData, draft.cidadeId);
+    const rules = getExpenseCategoryRules(category);
+    const valor = parseCurrencyInput(draft.valor);
+    if (!category) errors.categoriaId = "Selecione a categoria.";
+    if (rules.exigeVeiculo && !draft.veiculoId.trim()) errors.veiculoId = "Selecione o ve\xEDculo.";
+    if (!Number.isFinite(valor) || valor <= 0) errors.valor = "Informe um valor maior que zero.";
+    if (!draft.dataGasto) errors.dataGasto = "Informe a data do gasto.";
+    if (!paymentMethod) errors.formaPagamentoId = "Selecione a forma de pagamento.";
+    if (!city) errors.cidadeId = "Selecione a cidade.";
+    if (rules.exigeKm && parseIntegerInput(draft.kmInformado) <= 0) errors.kmInformado = "Informe o KM.";
+    if (rules.exigeLitros && parseDecimalInput(draft.litros) <= 0) errors.litros = "Informe os litros.";
+    if (photos.length === 0) errors.photos = "Adicione ao menos uma foto do comprovante.";
+    return errors;
+  }
+  function normalizeExpenseFields(draft, photos, referenceData) {
+    const errors = validateExpenseDraft(draft, photos, referenceData);
+    if (Object.keys(errors).length) throw new Error(Object.values(errors).filter(Boolean).join(" "));
+    const categoria = findExpenseCategory(referenceData, draft.categoriaId);
+    const formaPagamento = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
+    const cidade = findExpenseCity(referenceData, draft.cidadeId);
+    if (!categoria || !formaPagamento || !cidade) {
+      throw new Error("Categoria, forma de pagamento ou cidade n\xE3o carregada.");
+    }
+    const rules = getExpenseCategoryRules(categoria);
+    const kmInformado = parseIntegerInput(draft.kmInformado);
+    const litros = parseDecimalInput(draft.litros);
+    return {
+      categoria,
+      formaPagamento,
+      cidade,
+      valor: parseCurrencyInput(draft.valor),
+      dataGasto: draft.dataGasto,
+      estabelecimento: draft.estabelecimento.trim() || void 0,
+      descricao: draft.descricao.trim() || void 0,
+      kmInformado: rules.exigeKm && kmInformado > 0 ? kmInformado : void 0,
+      litros: rules.exigeLitros && litros > 0 ? litros : void 0,
+      veiculoId: draft.veiculoId.trim() || void 0
+    };
+  }
+
+  // src/lib/expenses.payload.ts
+  function formatDateLabel(value) {
+    const [year, month, day] = value.split("-");
+    return year && month && day ? `${day}/${month}/${year}` : value;
+  }
+  function toDataverseDate(value) {
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) return new Date(value).toISOString();
+    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0)).toISOString();
+  }
+  function buildExpenseCreatePayload({
+    draft,
+    photos,
+    referenceData,
+    motoristaId,
+    veiculoId,
+    reservaId,
+    manutencaoId,
+    dataGastoIso,
+    categoryEntitySet,
+    paymentMethodEntitySet,
+    cityEntitySet,
+    motoristaEntitySet,
+    veiculoEntitySet,
+    reservaEntitySet,
+    maintenanceEntitySet,
+    lookupNavigationNames
+  }) {
+    const fields = normalizeExpenseFields(draft, photos, referenceData);
+    const vehicleToBind = fields.veiculoId || veiculoId || "";
+    const name = `${fields.categoria.name} - ${formatDateLabel(fields.dataGasto)}`;
+    const payload = {
+      cr40f_nome: name,
+      cr40f_datagasto: dataGastoIso ?? toDataverseDate(fields.dataGasto),
+      cr40f_valor: fields.valor,
+      cr40f_statusoperacional: 1e8,
+      cr40f_statusfinanceiro: 1e8,
+      cr40f_statusanexo: photos.length ? 100000001 : 1e8,
+      cr40f_origem: 1e8,
+      cr40f_observacao: fields.descricao ?? "",
+      [`${lookupNavigationNames.motorista}@odata.bind`]: `/${motoristaEntitySet}(${motoristaId})`,
+      [`${lookupNavigationNames.categoria}@odata.bind`]: `/${categoryEntitySet}(${fields.categoria.id})`,
+      [`${lookupNavigationNames.formaPagamento}@odata.bind`]: `/${paymentMethodEntitySet}(${fields.formaPagamento.id})`,
+      [`${lookupNavigationNames.cidade}@odata.bind`]: `/${cityEntitySet}(${fields.cidade.id})`
+    };
+    if (fields.kmInformado) payload.cr40f_kminformado = Math.trunc(fields.kmInformado);
+    if (fields.litros) payload.cr40f_litros = fields.litros;
+    if (fields.estabelecimento) payload.cr40f_estabelecimento = fields.estabelecimento;
+    if (vehicleToBind) {
+      if (!lookupNavigationNames.veiculo) throw new Error("Navigation property de ve\xEDculo n\xE3o resolvido para despesa.");
+      payload[`${lookupNavigationNames.veiculo}@odata.bind`] = `/${veiculoEntitySet}(${vehicleToBind})`;
+    }
+    if (reservaId) {
+      if (!lookupNavigationNames.reserva) throw new Error("Navigation property de reserva n\xE3o resolvido para despesa.");
+      payload[`${lookupNavigationNames.reserva}@odata.bind`] = `/${reservaEntitySet}(${reservaId})`;
+    }
+    if (manutencaoId) {
+      if (!lookupNavigationNames.manutencao) throw new Error("Navigation property de manutencao nao resolvido para despesa.");
+      if (!maintenanceEntitySet) throw new Error("Entity set de manutencao nao informado para despesa.");
+      payload[`${lookupNavigationNames.manutencao}@odata.bind`] = `/${maintenanceEntitySet}(${manutencaoId})`;
+    }
+    return payload;
+  }
+
   // src/lib/receiptLanguage.ts
   var RECEIPT_LANGUAGE = {
     portuguese: "pt-BR",
@@ -36246,10 +36500,11 @@ select,
   var VEHICLE_STATUS = {
     ativo: 202410001
   };
-  var ACTIVE_VEHICLE_FILTER = [
-    "statecode eq 0",
-    "statuscode eq 1",
-    `cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo}`,
+  var ACTIVE_VEHICLE_FILTERS = [
+    `cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo}`
+  ];
+  var ACTIVE_OWN_VEHICLE_FILTER = [
+    ...ACTIVE_VEHICLE_FILTERS,
     `new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}`
   ].join(" and ");
   var COLLISION_DATAVERSE_ATTACHMENT_TYPE = {
@@ -36335,6 +36590,8 @@ select,
   var EXCHANGE_SELECT = "$select=cr40f_trocasdecarroid,cr40f_id,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,_cr40f_motorista1_value,_cr40f_motorista2_value,_cr40f_veiculo1antesdatroca_value,_cr40f_veiculo2antesdatroca_value,cr40f_observacao,cr40f_statusdatroca,new_tipodetroca,new_concluidomotorista1,new_concluidomotorista2,new_observacaodomotorista1,new_observacaodomotorista2";
   var DV_LOG_PREFIX = "[AppMotoristas:Dataverse]";
   var lastRuntimeLogKey = "";
+  var expenseReferenceDataCache = null;
+  var expenseReferenceDataPromise = null;
   function isLocalhostRuntime() {
     if (typeof window === "undefined") return false;
     return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
@@ -36640,15 +36897,26 @@ select,
       "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
     ];
     if (options.onlyOwnCategory) {
-      query.push(`$filter=${ACTIVE_VEHICLE_FILTER}`);
+      query.push(`$filter=${ACTIVE_OWN_VEHICLE_FILTER}`);
+    } else if (options.activeOnly) {
+      query.push(`$filter=${ACTIVE_VEHICLE_FILTERS.join(" and ")}`);
     }
     query.push("$orderby=cr40f_placa asc", "$top=200");
     return query.join("&");
   }
-  async function loadMaintenanceRequestVehiclesRemote(driver, options = {}) {
+  function buildMaintenanceRequestAssignedVehiclesQuery(driver) {
     const currentVehicleId = getDriverCurrentVehicleId(driver);
-    const result = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestVehiclesQuery(options));
-    return result.entities.map((record) => {
+    const driverFilter = `_cr40f_motoristaatual_value eq ${cleanGuid2(driver.id)}`;
+    const currentVehicleFilter = currentVehicleId ? ` or cr40f_veiculosid eq ${currentVehicleId}` : "";
+    return [
+      "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode",
+      `$filter=statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and (${driverFilter}${currentVehicleFilter})`,
+      "$orderby=cr40f_placa asc",
+      "$top=20"
+    ].join("&");
+  }
+  function mapMaintenanceRequestVehicles(records, currentVehicleId) {
+    return records.map((record) => {
       const id3 = cleanODataGuid(record.cr40f_veiculosid);
       return {
         id: id3,
@@ -36656,6 +36924,18 @@ select,
         isCurrent: Boolean(currentVehicleId && id3 === currentVehicleId)
       };
     }).filter((vehicle) => Boolean(vehicle.id && vehicle.label));
+  }
+  async function loadMaintenanceRequestVehiclesRemote(driver, options = {}) {
+    const currentVehicleId = getDriverCurrentVehicleId(driver);
+    const result = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestVehiclesQuery(options));
+    const vehicles = mapMaintenanceRequestVehicles(result.entities, currentVehicleId);
+    if (vehicles.length || !options.onlyOwnCategory) return vehicles;
+    dataverseWarn("Consulta de veiculos proprios ativos vazia. Tentando veiculo atual/atribuido ao motorista.", {
+      driverId: driver.id,
+      currentVehicleId
+    });
+    const fallbackResult = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestAssignedVehiclesQuery(driver));
+    return mapMaintenanceRequestVehicles(fallbackResult.entities, currentVehicleId);
   }
   function getBooleanValue(record, logicalName) {
     const value = record[logicalName];
@@ -36694,7 +36974,10 @@ select,
       throw activeError ?? error2;
     }
   }
-  async function loadExpenseReferenceDataRemote() {
+  function hasCompleteExpenseReferenceData(referenceData) {
+    return referenceData.categories.length > 0 && referenceData.paymentMethods.length > 0 && referenceData.cities.length > 0;
+  }
+  async function fetchExpenseReferenceDataRemote() {
     const [categoryResult, paymentResult, cityResult] = await Promise.all([
       retrieveExpenseReferenceRecords(
         DATAVERSE.categoriasDespesasOperacionais,
@@ -36745,6 +37028,41 @@ select,
         };
       }).filter((city) => Boolean(city.id && city.name))
     };
+  }
+  async function loadExpenseReferenceDataRemote() {
+    if (expenseReferenceDataCache) {
+      dataverseLog("Referencia de despesa carregada do cache em memoria.", {
+        categories: expenseReferenceDataCache.categories.length,
+        paymentMethods: expenseReferenceDataCache.paymentMethods.length,
+        cities: expenseReferenceDataCache.cities.length
+      });
+      return expenseReferenceDataCache;
+    }
+    if (expenseReferenceDataPromise) {
+      dataverseLog("Referencia de despesa reaproveitando consulta em andamento.");
+      return expenseReferenceDataPromise;
+    }
+    const startedAt = performance.now();
+    expenseReferenceDataPromise = fetchExpenseReferenceDataRemote().then((referenceData) => {
+      const complete = hasCompleteExpenseReferenceData(referenceData);
+      if (complete) expenseReferenceDataCache = referenceData;
+      dataverseLog("Referencia de despesa carregada.", {
+        durationMs: Math.round(performance.now() - startedAt),
+        categories: referenceData.categories.length,
+        paymentMethods: referenceData.paymentMethods.length,
+        cities: referenceData.cities.length,
+        cached: complete
+      });
+      return referenceData;
+    }).finally(() => {
+      expenseReferenceDataPromise = null;
+    });
+    return expenseReferenceDataPromise;
+  }
+  function prefetchExpenseReferenceDataRemote() {
+    void loadExpenseReferenceDataRemote().catch((error2) => {
+      dataverseWarn("Pre-carga de referencia de despesa falhou.", describeDataverseError(error2));
+    });
   }
   async function loadReceiptClienteOptionsRemote() {
     let activeError = null;
@@ -36894,16 +37212,16 @@ select,
     }
     return "";
   }
-  function normalizeText(value) {
+  function normalizeText2(value) {
     return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
   function isMaintenanceDoneStatus(record) {
-    const statusLabel = normalizeText(getFormatted(record, "cr40f_status"));
+    const statusLabel = normalizeText2(getFormatted(record, "cr40f_status"));
     return statusLabel === "realizado" || statusLabel === "realizada";
   }
   function shouldShowCanceledOverlay(record) {
     if (!getBooleanValue(record, "new_foiprogramado")) return false;
-    const statusLabel = normalizeText(getFormatted(record, "cr40f_status"));
+    const statusLabel = normalizeText2(getFormatted(record, "cr40f_status"));
     const statusValue = Number(record.cr40f_status);
     return statusValue === OPERATION_STATUS.requerAnalise || statusLabel.includes("cancel") || statusLabel.includes("requer analise");
   }
@@ -37561,7 +37879,7 @@ select,
     const record = result ?? {};
     const rawStatus = String(record.status ?? record.Status ?? record.resultado ?? record.Resultado ?? "").trim();
     if (!rawStatus) return;
-    const status = normalizeText(rawStatus);
+    const status = normalizeText2(rawStatus);
     if (status === "sucesso" || status === "success" || status === "ok") return;
     const message = String(record.message ?? record.mensagem ?? record.error ?? record.erro ?? `${flowName} retornou status ${rawStatus}`);
     dataverseError(`${flowName} retornou falha.`, {
@@ -37624,21 +37942,23 @@ ${text}`);
       );
     }
   }
-  async function assertExpenseSchemaReadyRemote() {
+  async function assertExpenseSchemaReadyRemote(options = {}) {
+    const expenseFields = [
+      "cr40f_nome",
+      "cr40f_datagasto",
+      "cr40f_valor",
+      "cr40f_statusoperacional",
+      "cr40f_statusfinanceiro",
+      "cr40f_statusanexo",
+      "cr40f_origem",
+      "cr40f_observacao",
+      "cr40f_estabelecimento",
+      "cr40f_kminformado",
+      "cr40f_litros"
+    ];
+    if (options.includeManutencao) expenseFields.push("cr40f_manutencao");
     await Promise.all([
-      assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", [
-        "cr40f_nome",
-        "cr40f_datagasto",
-        "cr40f_valor",
-        "cr40f_statusoperacional",
-        "cr40f_statusfinanceiro",
-        "cr40f_statusanexo",
-        "cr40f_origem",
-        "cr40f_observacao",
-        "cr40f_estabelecimento",
-        "cr40f_kminformado",
-        "cr40f_litros"
-      ]),
+      assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", expenseFields),
       assertEntityHasAttributes(DATAVERSE.anexosDespesasOperacionais, "Anexos de Despesas", [
         "cr40f_nome",
         "cr40f_nomearquivo",
@@ -37797,6 +38117,15 @@ ${text}`);
         label: "Despesa.Reserva"
       });
     }
+    if (options.includeManutencao) {
+      requests.push({
+        key: "manutencao",
+        referencingEntitySetName: DATAVERSE.despesasOperacionais,
+        referencedEntitySetName: DATAVERSE.manutencoes,
+        referencingAttribute: "cr40f_manutencao",
+        label: "Despesa.Manutencao"
+      });
+    }
     const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
     const names = {};
     const failures = [];
@@ -37820,7 +38149,8 @@ ${text}`);
       formaPagamento: names.formaPagamento,
       cidade: names.cidade,
       veiculo: names.veiculo,
-      reserva: names.reserva
+      reserva: names.reserva,
+      manutencao: names.manutencao
     };
   }
   async function loadCollisionLookupNavigationNamesRemote() {
@@ -38788,7 +39118,7 @@ ${text}`);
     const vehicle1Id = getLookupId(exchange, "cr40f_veiculo1antesdatroca");
     const vehicle2Id = getLookupId(exchange, "cr40f_veiculo2antesdatroca");
     const exchangeTypeValue = Number(exchange.new_tipodetroca);
-    const exchangeType = normalizeText(getFormatted(exchange, "new_tipodetroca"));
+    const exchangeType = normalizeText2(getFormatted(exchange, "new_tipodetroca"));
     dataverseLog("Aplicando posse da troca concluida.", {
       exchangeId,
       exchangeTypeValue,
@@ -38813,12 +39143,108 @@ ${text}`);
     await createPossession(vehicle2Id, driver1Id, exchangeId);
     await createPossession(vehicle1Id, driver2Id, exchangeId);
   }
+  function getRequiredMaintenanceExpenseOptionId(value, label) {
+    if (!value) throw new Error(`${label} obrigatorio para registrar gasto da manutencao.`);
+    return value;
+  }
+  async function findExistingMaintenanceExpense(maintenanceId) {
+    const filter2 = `_cr40f_manutencao_value eq ${cleanGuid2(maintenanceId)}`;
+    const result = await retrieveMultiple(
+      DATAVERSE.despesasOperacionais,
+      `$select=cr40f_despesaoperacionalid,cr40f_nome,cr40f_statusanexo&$filter=${filter2}&$orderby=modifiedon desc&$top=1`
+    );
+    return result.entities[0] ?? null;
+  }
+  async function upsertMaintenanceExpense({
+    detail,
+    fields,
+    record,
+    maintenanceId,
+    motoristaId,
+    vehicleId,
+    invoicePhotos,
+    finalizedAt,
+    onProgress
+  }) {
+    const cityId = getRequiredMaintenanceExpenseOptionId(getFieldValue(fields, "Cidade"), "Cidade");
+    if (!invoicePhotos.length) throw new Error("Adicione a foto da nota fiscal para registrar o gasto da manutencao.");
+    onProgress?.("Conferindo schema de despesas.");
+    await assertExpenseSchemaReadyRemote({ includeManutencao: true });
+    const [referenceData, lookupNavigationNames] = await Promise.all([
+      loadExpenseReferenceDataRemote(),
+      loadExpenseLookupNavigationNamesRemote({ includeVeiculo: true, includeManutencao: true })
+    ]);
+    const category = findExpenseCategoryByName(referenceData, ["Manutencao", "Manuten\xE7\xE3o"]);
+    const paymentMethod = findExpensePaymentMethodByName(
+      referenceData,
+      mapMaintenancePaymentToExpensePaymentNames(getFieldValue(fields, "Forma de Pagamento"))
+    );
+    const categoryId = getRequiredMaintenanceExpenseOptionId(category?.id ?? "", "Categoria Manutencao");
+    const paymentMethodId = getRequiredMaintenanceExpenseOptionId(paymentMethod?.id ?? "", "Forma de pagamento do gasto");
+    const maintenanceBusinessId = String(record.cr40f_id ?? detail.id ?? "").trim();
+    const draft = {
+      categoriaId: categoryId,
+      veiculoId: vehicleId,
+      valor: getFieldValue(fields, "Valor") || "0",
+      dataGasto: finalizedAt.slice(0, 10),
+      formaPagamentoId: paymentMethodId,
+      cidadeId: cityId,
+      estabelecimento: getFieldValue(fields, "Estabelecimento"),
+      descricao: `Manutencao ${maintenanceBusinessId}: ${getFieldValue(fields, "Servi\xE7o Realizado", "Servico Realizado")}`,
+      kmInformado: "",
+      litros: ""
+    };
+    const expensePayload = buildExpenseCreatePayload({
+      draft,
+      photos: invoicePhotos,
+      referenceData,
+      motoristaId,
+      veiculoId: vehicleId,
+      manutencaoId: maintenanceId,
+      dataGastoIso: finalizedAt,
+      categoryEntitySet: DATAVERSE.categoriasDespesasOperacionais,
+      paymentMethodEntitySet: DATAVERSE.formasPagamentoDespesas,
+      cityEntitySet: DATAVERSE.cidades,
+      motoristaEntitySet: DATAVERSE.funcionarios,
+      veiculoEntitySet: DATAVERSE.veiculos,
+      reservaEntitySet: DATAVERSE.geral,
+      maintenanceEntitySet: DATAVERSE.manutencoes,
+      lookupNavigationNames
+    });
+    onProgress?.("Criando ou atualizando gasto da manutencao.");
+    const existingExpense = await findExistingMaintenanceExpense(maintenanceId);
+    const existingExpenseId = cleanODataGuid(existingExpense?.cr40f_despesaoperacionalid);
+    const expenseId = existingExpenseId || cleanODataGuid((await createOne(DATAVERSE.despesasOperacionais, expensePayload)).id);
+    if (existingExpenseId) await updateOne(DATAVERSE.despesasOperacionais, existingExpenseId, expensePayload);
+    const shouldUploadInvoices = shouldUploadMaintenanceExpenseInvoices(existingExpense?.cr40f_statusanexo);
+    if (shouldUploadInvoices) {
+      try {
+        await Promise.all(invoicePhotos.map((photo, index) => uploadExpenseInvoiceRemote({
+          expenseId,
+          expenseName: String(expensePayload.cr40f_nome ?? "Manutencao"),
+          motoristaId,
+          dataUrl: photo.dataUrl,
+          fileName: `nota-fiscal-manutencao-${index + 1}`,
+          order: index + 1,
+          onProgress
+        })));
+        await updateOne(DATAVERSE.despesasOperacionais, expenseId, { cr40f_statusanexo: 100000002 });
+      } catch (error2) {
+        await updateOne(DATAVERSE.despesasOperacionais, expenseId, { cr40f_statusanexo: 100000003 });
+        throw error2;
+      }
+    } else {
+      await updateOne(DATAVERSE.despesasOperacionais, expenseId, { cr40f_statusanexo: 100000002 });
+    }
+    return expenseId;
+  }
   async function finalizeMaintenanceRemote(payload) {
     const dv = payload.detail.dataverse;
     if (!dv?.id) throw new Error("Manuten\xE7\xE3o sem refer\xEAncia Dataverse.");
     const record = dv.record ?? {};
     const geralId = cleanODataGuid(record.__geralId);
-    const paymentKey = normalizeText(getFieldValue(payload.fields, "Forma de Pagamento"));
+    const finalizedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const paymentKey = normalizeText2(getFieldValue(payload.fields, "Forma de Pagamento"));
     const paymentValue = MAINTENANCE_PAYMENT[paymentKey];
     dataverseLog("Finaliza\xE7\xE3o de manuten\xE7\xE3o iniciada.", {
       detailId: payload.detail.id,
@@ -38826,7 +39252,7 @@ ${text}`);
       photoKinds: Object.keys(payload.photos ?? {})
     });
     const maintenancePatch = {
-      cr40f_datamanutencao: (/* @__PURE__ */ new Date()).toISOString(),
+      cr40f_datamanutencao: finalizedAt,
       cr40f_estabelecimento: getFieldValue(payload.fields, "Estabelecimento"),
       cr40f_valor: parseCurrencyNumber(getFieldValue(payload.fields, "Valor") || "0"),
       new_comentariosdocolaborador: getFieldValue(payload.fields, "Coment\xE1rios do Motorista", "Comentarios do Motorista"),
@@ -38834,6 +39260,9 @@ ${text}`);
     };
     if (paymentValue !== void 0) maintenancePatch.cr40f_pagamento = paymentValue;
     const motoristaId = cleanODataGuid(record.__geral?._cr40f_motorista_value);
+    const vehicleId = cleanODataGuid(record._cr40f_placa_carro_value);
+    if (!motoristaId) throw new Error("Motorista da manutencao nao encontrado para registrar gasto.");
+    if (!vehicleId) throw new Error("Veiculo da manutencao nao encontrado para registrar gasto.");
     if (motoristaId) maintenancePatch["cr40f_Realizado_por_nome@odata.bind"] = bind(DATAVERSE.funcionarios, motoristaId);
     payload.onProgress?.("Salvando dados da manuten\xE7\xE3o.");
     await updateOne(DATAVERSE.manutencoes, dv.id, maintenancePatch);
@@ -38843,8 +39272,9 @@ ${text}`);
       const leftIndex = left === "NOTAFISCAL" ? 1 : Number(left.replace("NOTAFISCAL_", ""));
       const rightIndex = right === "NOTAFISCAL" ? 1 : Number(right.replace("NOTAFISCAL_", ""));
       return leftIndex - rightIndex;
-    }).map(([kind], index) => ({
+    }).map(([kind, dataUrl], index) => ({
       kind,
+      dataUrl: dataUrl ?? "",
       fileName: `nota-fiscal-${index + 1}`,
       targetField: "new_linkdanotafiscal"
     }));
@@ -38902,6 +39332,20 @@ ${text}`);
       }
       throw new Error(`Manuten\xE7\xE3o salva, mas ${failedUploads} de ${uploadEntries.length} arquivo(s) falharam no upload.`);
     }
+    await upsertMaintenanceExpense({
+      detail: payload.detail,
+      fields: payload.fields,
+      record,
+      maintenanceId: dv.id,
+      motoristaId,
+      vehicleId,
+      invoicePhotos: invoiceEntries.map((entry, index) => ({
+        id: `${entry.kind}-${index + 1}`,
+        dataUrl: entry.dataUrl
+      })),
+      finalizedAt,
+      onProgress: payload.onProgress
+    });
     photoPatch.cr40f_status = MAINTENANCE_STATUS.realizado;
     payload.onProgress?.("Gravando links das fotos no Dataverse.");
     await updateOne(DATAVERSE.manutencoes, dv.id, photoPatch);
@@ -38910,7 +39354,7 @@ ${text}`);
       await updateOne(DATAVERSE.geral, geralId, {
         new_observacaofinal: getFieldValue(payload.fields, "Coment\xE1rios do Motorista", "Comentarios do Motorista", "Observa\xE7\xF5es", "Observacoes"),
         cr40f_status: OPERATION_STATUS.concluido,
-        new_datadefinalizacao: (/* @__PURE__ */ new Date()).toISOString()
+        new_datadefinalizacao: finalizedAt
       });
     }
   }
@@ -38954,217 +39398,6 @@ ${text}`);
         cr40f_status: OPERATION_STATUS.concluido,
         new_datadefinalizacao: (/* @__PURE__ */ new Date()).toISOString()
       });
-    }
-  }
-
-  // src/lib/photoOrientation.ts
-  function isLandscapeViewport() {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth / Math.max(window.innerHeight, 1) >= 1.45;
-  }
-  function getViewportOrientationAngle() {
-    if (typeof window === "undefined") return 0;
-    const angle = Number(window.screen?.orientation?.angle ?? 0);
-    if (isLandscapeViewport() && (angle === 90 || angle === -270)) return 90;
-    if (isLandscapeViewport() && (angle === 270 || angle === -90)) return 270;
-    if (!isLandscapeViewport() && Math.abs(angle) === 180) return 180;
-    return isLandscapeViewport() ? 90 : 0;
-  }
-  function normalizeAngle(angle) {
-    const normalized = (Math.round(angle / 90) * 90 % 360 + 360) % 360;
-    return normalized;
-  }
-  function drawRotated(image2, sourceWidth, sourceHeight, angle) {
-    const canvas = document.createElement("canvas");
-    canvas.width = angle === 90 || angle === 270 ? sourceHeight : sourceWidth;
-    canvas.height = angle === 90 || angle === 270 ? sourceWidth : sourceHeight;
-    const context = canvas.getContext("2d");
-    if (!context) return null;
-    context.translate(canvas.width / 2, canvas.height / 2);
-    context.rotate(angle * Math.PI / 180);
-    context.drawImage(image2, -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight);
-    return canvas.toDataURL("image/jpeg", 0.92);
-  }
-  function getRotationForOrientation(sourceWidth, sourceHeight, orientationAngle) {
-    const sourceIsLandscape = sourceWidth >= sourceHeight;
-    if (orientationAngle === 0) return 0;
-    if (orientationAngle === 180) return 180;
-    if (orientationAngle === 90) return sourceIsLandscape ? 0 : 90;
-    return sourceIsLandscape ? 180 : 270;
-  }
-  function captureVideoFrameDataUrl(video, orientationAngle = getViewportOrientationAngle()) {
-    const sourceWidth = video.videoWidth;
-    const sourceHeight = video.videoHeight;
-    const normalizedAngle = normalizeAngle(orientationAngle);
-    const rotation = getRotationForOrientation(sourceWidth, sourceHeight, normalizedAngle);
-    if (rotation) {
-      const rotated = drawRotated(video, sourceWidth, sourceHeight, rotation);
-      if (rotated) return rotated;
-    }
-    const canvas = document.createElement("canvas");
-    canvas.width = sourceWidth;
-    canvas.height = sourceHeight;
-    const context = canvas.getContext("2d");
-    if (!context) return "";
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.92);
-  }
-  function readFileAsDataUrl(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-  }
-  function bytesToBase64(bytes) {
-    let binary = "";
-    const chunkSize = 32768;
-    for (let index = 0; index < bytes.length; index += chunkSize) {
-      const chunk = bytes.subarray(index, index + chunkSize);
-      binary += String.fromCharCode(...chunk);
-    }
-    return btoa(binary);
-  }
-  async function readBlobAsDataUrl(blob) {
-    const mimeType = blob.type || "application/octet-stream";
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    return `data:${mimeType};base64,${bytesToBase64(bytes)}`;
-  }
-  function formatVideoDuration(totalSeconds) {
-    const safeSeconds = Math.max(0, Math.floor(Number.isFinite(totalSeconds) ? totalSeconds : 0));
-    const hours2 = Math.floor(safeSeconds / 3600);
-    const minutes2 = Math.floor(safeSeconds % 3600 / 60);
-    const seconds = safeSeconds % 60;
-    if (hours2 > 0) {
-      return `${hours2}:${String(minutes2).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-    }
-    return `${minutes2}:${String(seconds).padStart(2, "0")}`;
-  }
-  function getVideoDurationLabelFromUrl(sourceUrl) {
-    if (typeof document === "undefined" || !sourceUrl) return Promise.resolve("");
-    return new Promise((resolve) => {
-      const video = document.createElement("video");
-      let settled = false;
-      let timeoutId = 0;
-      const finish = (value) => {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timeoutId);
-        video.pause();
-        video.removeAttribute("src");
-        video.load();
-        resolve(value);
-      };
-      timeoutId = window.setTimeout(() => finish(""), 4500);
-      video.muted = true;
-      video.playsInline = true;
-      video.preload = "metadata";
-      video.addEventListener("loadedmetadata", () => {
-        finish(Number.isFinite(video.duration) && video.duration > 0 ? formatVideoDuration(video.duration) : "");
-      }, { once: true });
-      video.addEventListener("error", () => finish(""), { once: true });
-      video.src = sourceUrl;
-      video.load();
-    });
-  }
-  function createVideoPosterDataUrl(sourceUrl) {
-    if (typeof document === "undefined" || !sourceUrl) return Promise.resolve("");
-    return new Promise((resolve) => {
-      const video = document.createElement("video");
-      let settled = false;
-      let timeoutId = 0;
-      const finish = (value) => {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timeoutId);
-        video.pause();
-        video.removeAttribute("src");
-        video.load();
-        resolve(value);
-      };
-      const draw = () => {
-        const sourceWidth = video.videoWidth;
-        const sourceHeight = video.videoHeight;
-        if (!sourceWidth || !sourceHeight) return finish("");
-        const canvas = document.createElement("canvas");
-        const targetWidth = Math.min(sourceWidth, 640);
-        const ratio = targetWidth / sourceWidth;
-        canvas.width = targetWidth;
-        canvas.height = Math.max(1, Math.round(sourceHeight * ratio));
-        const context = canvas.getContext("2d");
-        if (!context) return finish("");
-        try {
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          finish(canvas.toDataURL("image/jpeg", 0.82));
-        } catch {
-          finish("");
-        }
-      };
-      const drawAfterSeek = () => {
-        if (settled) return;
-        if (Number.isFinite(video.duration) && video.duration > 0.2) {
-          const seekTime = Math.min(0.12, video.duration / 2);
-          const handleSeeked = () => draw();
-          video.addEventListener("seeked", handleSeeked, { once: true });
-          try {
-            video.currentTime = seekTime;
-            window.setTimeout(() => {
-              if (!settled) draw();
-            }, 700);
-            return;
-          } catch {
-            video.removeEventListener("seeked", handleSeeked);
-          }
-        }
-        draw();
-      };
-      timeoutId = window.setTimeout(() => finish(""), 4500);
-      video.muted = true;
-      video.playsInline = true;
-      video.preload = "auto";
-      video.addEventListener("loadeddata", drawAfterSeek, { once: true });
-      video.addEventListener("error", () => finish(""), { once: true });
-      video.src = sourceUrl;
-      video.load();
-    });
-  }
-  function dataUrlToBase642(value = "") {
-    const marker = ";base64,";
-    const markerIndex = value.toLowerCase().indexOf(marker);
-    const raw = markerIndex >= 0 ? value.slice(markerIndex + marker.length) : value.slice(value.lastIndexOf(",") + 1);
-    return raw.replace(/\s/g, "");
-  }
-  function dataUrlToObjectUrl(dataUrl) {
-    const markerIndex = dataUrl.toLowerCase().indexOf(";base64,");
-    const commaIndex = dataUrl.lastIndexOf(",");
-    const header = markerIndex >= 0 ? dataUrl.slice(0, markerIndex) : commaIndex >= 0 ? dataUrl.slice(0, commaIndex) : "";
-    const payload = dataUrlToBase642(dataUrl);
-    if (!header || !payload) return dataUrl;
-    const mimeType = header.match(/^data:([^;,]+)/)?.[1] || "application/octet-stream";
-    const binary = markerIndex >= 0 ? atob(payload) : decodeURIComponent(payload);
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index += 1) {
-      bytes[index] = binary.charCodeAt(index);
-    }
-    return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
-  }
-  async function readPhotoFileAsDataUrl(file, orientationAngle = getViewportOrientationAngle()) {
-    const fallbackDataUrl = await readFileAsDataUrl(file);
-    const normalizedAngle = normalizeAngle(orientationAngle);
-    if (normalizedAngle === 0) return fallbackDataUrl;
-    try {
-      const image2 = await createImageBitmap(file);
-      const rotation = getRotationForOrientation(image2.width, image2.height, normalizedAngle);
-      if (!rotation) {
-        image2.close();
-        return fallbackDataUrl;
-      }
-      const rotated = drawRotated(image2, image2.width, image2.height, rotation);
-      image2.close();
-      return rotated || fallbackDataUrl;
-    } catch {
-      return fallbackDataUrl;
     }
   }
 
@@ -40428,35 +40661,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/assets/icons/invoice-receipt.svg
   var invoice_receipt_default = 'data:image/svg+xml,<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->%0D%0A<svg fill="%23000000" width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15,8a1,1,0,0,1-1,1H6A1,1,0,0,1,6,7h8A1,1,0,0,1,15,8Zm-1,3H6a1,1,0,0,0,0,2h8a1,1,0,0,0,0-2Zm-4,4H6a1,1,0,0,0,0,2h4a1,1,0,0,0,0-2Zm13-3v8a3,3,0,0,1-3,3H4a3,3,0,0,1-3-3V4A3,3,0,0,1,4,1H16a3,3,0,0,1,3,3v7h3A1,1,0,0,1,23,12ZM17,4a1,1,0,0,0-1-1H4A1,1,0,0,0,3,4V20a1,1,0,0,0,1,1H17Zm4,9H19v8h1a1,1,0,0,0,1-1Z"/></svg>';
 
-  // src/lib/expenses.defaults.ts
-  var DEFAULT_EXPENSE_REFERENCE_DATA = {
-    categories: [
-      { id: "local-abastecimento", name: "Abastecimento", order: 10, exigeVeiculo: true, exigeReserva: false, exigeKm: true, exigeLitros: true },
-      { id: "local-almoco", name: "Almo\xE7o", order: 20, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-aplicativos", name: "Aplicativos", order: 30, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-cafe", name: "Caf\xE9", order: 40, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-estacionamento", name: "Estacionamento", order: 50, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-gastos-cliente", name: "Gastos a pedido do cliente", order: 60, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-hospedagem", name: "Hospedagem", order: 70, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-jantar", name: "Jantar", order: 80, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-lanche", name: "Lanche", order: 90, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-lavagem", name: "Lavagem", order: 100, exigeVeiculo: true, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-locacao-carro", name: "Loca\xE7\xE3o de carro", order: 110, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-manutencao", name: "Manuten\xE7\xE3o", order: 120, exigeVeiculo: true, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-outros", name: "Outros", order: 130, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
-      { id: "local-pedagio", name: "Ped\xE1gio", order: 140, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false }
-    ],
-    paymentMethods: [
-      { id: "local-cartao-credito", name: "Cart\xE3o de cr\xE9dito", order: 10, tipo: "Cart\xE3o" },
-      { id: "local-ctf-sem-parar", name: "CTF (Sem parar)", order: 20, tipo: "Tag" },
-      { id: "local-ticketlog", name: "TicketLog", order: 30, tipo: "Cart\xE3o" },
-      { id: "local-particular-reembolso", name: "Particular (Reembolso)", order: 40, tipo: "Reembolso" },
-      { id: "local-dinheiro-corporativo", name: "Dinheiro (Corporativo)", order: 50, tipo: "Dinheiro" },
-      { id: "local-faturado-plano-mensal", name: "Faturado (Plano mensal)", order: 60, tipo: "Faturado" }
-    ],
-    cities: []
-  };
-
   // src/screens/CollisionStartScreen.tsx
   var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
   function CollisionStartScreen({ onBack, onSelect }) {
@@ -40582,11 +40786,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   var streetOrPlacePattern = /(?:\b(?:rua|avenida|av|alameda|rodovia|estrada|pra[çc]a|travessa|terminal|aeroporto|airport|hotel|condom[ií]nio|residencial|edif[ií]cio|shopping|hospital|base)\b|\br\.|\bav\.)/i;
   var cityOrStatePattern = /(?:,\s*[^,\n]{2,}\s*-\s*[A-Z]{2}\b)|\b(S[ãa]o Paulo|Barueri|Campinas|Guarulhos|Congonhas|Viracopos|Jundia[ií]|Santos|Sorocaba)\b/i;
   var streetNumberPattern = /(?:,\s*\d{1,6}\b|\b\d{1,6}\s*-|\bs\/n\b)/i;
-  function normalizeText2(value) {
+  function normalizeText3(value) {
     return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
   }
   function isAddressFieldLabel(label) {
-    return addressLabels.has(normalizeText2(label));
+    return addressLabels.has(normalizeText3(label));
   }
   function isConfidentMapAddress(label, value) {
     const cleanValue = value.trim();
@@ -41185,180 +41389,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
 
   // src/screens/ExpenseScreen.tsx
   var import_react37 = __toESM(require_react(), 1);
-
-  // src/lib/expenses.reference.ts
-  var FALLBACK_CATEGORY_RULES = {
-    abastecimento: { exigeVeiculo: true, exigeKm: true, exigeLitros: true },
-    lavagem: { exigeVeiculo: true },
-    manutencao: { exigeVeiculo: true }
-  };
-  var CITY_ABBREVIATION_STOP_WORDS = /* @__PURE__ */ new Set(["de", "da", "do", "das", "dos", "e"]);
-  function normalizeText3(value) {
-    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  }
-  function buildExpenseCityAbbreviation(value) {
-    const baseName = value.split(" - ")[0] ?? value;
-    return normalizeText3(baseName).split(/\s+/).filter((part) => part && !CITY_ABBREVIATION_STOP_WORDS.has(part)).map((part) => part[0]).join("");
-  }
-  function findExpenseCategory(referenceData, id3) {
-    return referenceData.categories.find((category) => category.id === id3) ?? null;
-  }
-  function findExpensePaymentMethod(referenceData, id3) {
-    return referenceData.paymentMethods.find((method) => method.id === id3) ?? null;
-  }
-  function findExpenseCity(referenceData, id3) {
-    return referenceData.cities.find((city) => city.id === id3) ?? null;
-  }
-  function matchesExpenseCitySearch(city, query) {
-    const normalizedQuery = normalizeText3(query);
-    if (!normalizedQuery) return false;
-    const searchableText = normalizeText3(`${city.name} ${city.uf} ${city.pais} ${city.codigoIbge}`);
-    if (searchableText.includes(normalizedQuery)) return true;
-    return buildExpenseCityAbbreviation(city.name) === normalizedQuery;
-  }
-  function getExpenseCategoryRules(category) {
-    if (!category) {
-      return {
-        exigeVeiculo: false,
-        exigeReserva: false,
-        exigeKm: false,
-        exigeLitros: false
-      };
-    }
-    const fallback = FALLBACK_CATEGORY_RULES[normalizeText3(category.name)] ?? {};
-    return {
-      exigeVeiculo: category.exigeVeiculo || fallback.exigeVeiculo || false,
-      exigeReserva: category.exigeReserva || fallback.exigeReserva || false,
-      exigeKm: category.exigeKm || fallback.exigeKm || false,
-      exigeLitros: category.exigeLitros || fallback.exigeLitros || false
-    };
-  }
-  function parseCurrencyInput(value) {
-    const cleaned = String(value ?? "").replace("R$", "").replace(/\s/g, "").trim();
-    if (!cleaned) return 0;
-    if (cleaned.includes(",")) return Number(cleaned.replace(/\./g, "").replace(",", "."));
-    return Number(cleaned.replace(/,/g, ""));
-  }
-  function parseIntegerInput(value) {
-    const parsed = Number(String(value ?? "").replace(/[^\d]/g, ""));
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  function parseDecimalInput(value) {
-    const cleaned = String(value ?? "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".").trim();
-    const parsed = Number(cleaned);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  function validateExpenseDraft(draft, photos, referenceData) {
-    const errors = {};
-    const category = findExpenseCategory(referenceData, draft.categoriaId);
-    const paymentMethod = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
-    const city = findExpenseCity(referenceData, draft.cidadeId);
-    const rules = getExpenseCategoryRules(category);
-    const valor = parseCurrencyInput(draft.valor);
-    if (!category) errors.categoriaId = "Selecione a categoria.";
-    if (rules.exigeVeiculo && !draft.veiculoId.trim()) errors.veiculoId = "Selecione o ve\xEDculo.";
-    if (!Number.isFinite(valor) || valor <= 0) errors.valor = "Informe um valor maior que zero.";
-    if (!draft.dataGasto) errors.dataGasto = "Informe a data do gasto.";
-    if (!paymentMethod) errors.formaPagamentoId = "Selecione a forma de pagamento.";
-    if (!city) errors.cidadeId = "Selecione a cidade.";
-    if (rules.exigeKm && parseIntegerInput(draft.kmInformado) <= 0) errors.kmInformado = "Informe o KM.";
-    if (rules.exigeLitros && parseDecimalInput(draft.litros) <= 0) errors.litros = "Informe os litros.";
-    if (photos.length === 0) errors.photos = "Adicione ao menos uma foto do comprovante.";
-    return errors;
-  }
-  function normalizeExpenseFields(draft, photos, referenceData) {
-    const errors = validateExpenseDraft(draft, photos, referenceData);
-    if (Object.keys(errors).length) throw new Error(Object.values(errors).filter(Boolean).join(" "));
-    const categoria = findExpenseCategory(referenceData, draft.categoriaId);
-    const formaPagamento = findExpensePaymentMethod(referenceData, draft.formaPagamentoId);
-    const cidade = findExpenseCity(referenceData, draft.cidadeId);
-    if (!categoria || !formaPagamento || !cidade) {
-      throw new Error("Categoria, forma de pagamento ou cidade n\xE3o carregada.");
-    }
-    const rules = getExpenseCategoryRules(categoria);
-    const kmInformado = parseIntegerInput(draft.kmInformado);
-    const litros = parseDecimalInput(draft.litros);
-    return {
-      categoria,
-      formaPagamento,
-      cidade,
-      valor: parseCurrencyInput(draft.valor),
-      dataGasto: draft.dataGasto,
-      estabelecimento: draft.estabelecimento.trim() || void 0,
-      descricao: draft.descricao.trim() || void 0,
-      kmInformado: rules.exigeKm && kmInformado > 0 ? kmInformado : void 0,
-      litros: rules.exigeLitros && litros > 0 ? litros : void 0,
-      veiculoId: draft.veiculoId.trim() || void 0
-    };
-  }
-
-  // src/lib/expenses.payload.ts
-  function formatDateLabel(value) {
-    const [year, month, day] = value.split("-");
-    return year && month && day ? `${day}/${month}/${year}` : value;
-  }
-  function toDataverseDate(value) {
-    const [year, month, day] = value.split("-").map(Number);
-    if (!year || !month || !day) return new Date(value).toISOString();
-    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0)).toISOString();
-  }
-  function buildExpenseCreatePayload({
-    draft,
-    photos,
-    referenceData,
-    motoristaId,
-    veiculoId,
-    reservaId,
-    categoryEntitySet,
-    paymentMethodEntitySet,
-    cityEntitySet,
-    motoristaEntitySet,
-    veiculoEntitySet,
-    reservaEntitySet,
-    lookupNavigationNames
-  }) {
-    const fields = normalizeExpenseFields(draft, photos, referenceData);
-    const vehicleToBind = fields.veiculoId || veiculoId || "";
-    const name = `${fields.categoria.name} - ${formatDateLabel(fields.dataGasto)}`;
-    const observation = [
-      fields.descricao ? `Descri\xE7\xE3o: ${fields.descricao}` : "",
-      fields.estabelecimento ? `Estabelecimento: ${fields.estabelecimento}` : "",
-      `Cidade: ${fields.cidade.name}`,
-      `Pa\xEDs: ${fields.cidade.pais || "Brasil"}`,
-      fields.litros ? `Litros: ${fields.litros.toLocaleString("pt-BR")} L` : "",
-      `Forma de pagamento: ${fields.formaPagamento.name}`,
-      `Categoria: ${fields.categoria.name}`,
-      photos.length ? `Comprovantes: ${photos.length}` : ""
-    ].filter(Boolean).join("\n");
-    const payload = {
-      cr40f_nome: name,
-      cr40f_datagasto: toDataverseDate(fields.dataGasto),
-      cr40f_valor: fields.valor,
-      cr40f_statusoperacional: 1e8,
-      cr40f_statusfinanceiro: 1e8,
-      cr40f_statusanexo: photos.length ? 100000001 : 1e8,
-      cr40f_origem: 1e8,
-      cr40f_observacao: observation,
-      [`${lookupNavigationNames.motorista}@odata.bind`]: `/${motoristaEntitySet}(${motoristaId})`,
-      [`${lookupNavigationNames.categoria}@odata.bind`]: `/${categoryEntitySet}(${fields.categoria.id})`,
-      [`${lookupNavigationNames.formaPagamento}@odata.bind`]: `/${paymentMethodEntitySet}(${fields.formaPagamento.id})`,
-      [`${lookupNavigationNames.cidade}@odata.bind`]: `/${cityEntitySet}(${fields.cidade.id})`
-    };
-    if (fields.kmInformado) payload.cr40f_kminformado = Math.trunc(fields.kmInformado);
-    if (fields.litros) payload.cr40f_litros = fields.litros;
-    if (fields.estabelecimento) payload.cr40f_estabelecimento = fields.estabelecimento;
-    if (vehicleToBind) {
-      if (!lookupNavigationNames.veiculo) throw new Error("Navigation property de ve\xEDculo n\xE3o resolvido para despesa.");
-      payload[`${lookupNavigationNames.veiculo}@odata.bind`] = `/${veiculoEntitySet}(${vehicleToBind})`;
-    }
-    if (reservaId) {
-      if (!lookupNavigationNames.reserva) throw new Error("Navigation property de reserva n\xE3o resolvido para despesa.");
-      payload[`${lookupNavigationNames.reserva}@odata.bind`] = `/${reservaEntitySet}(${reservaId})`;
-    }
-    return payload;
-  }
-
-  // src/screens/ExpenseScreen.tsx
   var import_jsx_runtime23 = __toESM(require_jsx_runtime(), 1);
   function focusInvalidField2(element) {
     element?.focus({ preventScroll: false });
@@ -41628,7 +41658,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(
             TextAreaField,
             {
-              label: "Descri\xE7\xE3o opcional",
+              label: "Descri\xE7\xE3o",
               placeholder: "Opcional",
               rows: 3,
               value: draft.descricao,
@@ -41672,10 +41702,35 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
 
   // src/screens/FinalizeScreen.tsx
   var import_react38 = __toESM(require_react(), 1);
-  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
-  function parseCurrencyNumber2(value) {
+
+  // src/lib/maintenanceFinalize.ts
+  function parseMaintenanceCurrency(value) {
     return Number(value.replace("R$", "").replace(/\./g, "").replace(",", ".").trim() || "0");
   }
+  function validateMaintenanceFinalizeFields({
+    serviceDone,
+    value,
+    payment,
+    cidadeId,
+    validCityIds,
+    establishment,
+    confirmedPhotos
+  }) {
+    const errors = {};
+    if (!serviceDone.trim()) errors.serviceDone = "Descreva a manutencao realizada.";
+    if (parseMaintenanceCurrency(value) <= 0) errors.value = "Informe um valor maior que zero.";
+    if (!payment) errors.payment = "Selecione a forma de pagamento.";
+    if (!cidadeId || !validCityIds.has(cidadeId)) errors.cidadeId = "Selecione a cidade.";
+    if (!establishment.trim()) errors.establishment = "Informe o estabelecimento.";
+    if (!confirmedPhotos.some((kind) => kind.startsWith("NOTAFISCAL"))) errors.invoicePhoto = "Adicione a foto da nota fiscal.";
+    if (!confirmedPhotos.some((kind) => kind === "FOTO1" || kind === "FOTO2" || kind === "FOTO3")) {
+      errors.maintenancePhoto = "Adicione pelo menos uma foto da manutencao.";
+    }
+    return errors;
+  }
+
+  // src/screens/FinalizeScreen.tsx
+  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
   function focusInvalidField3(element) {
     window.setTimeout(() => {
       element?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -41819,6 +41874,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     maintenancePhotos,
     draft,
     onDraftChange,
+    expenseReferenceData,
+    expenseReferenceLoading,
+    expenseReferenceError = "",
     onPreviewMaintenancePhoto,
     submitState
   }) {
@@ -41826,10 +41884,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const serviceDoneRef = (0, import_react38.useRef)(null);
     const valueRef = (0, import_react38.useRef)(null);
     const paymentRef = (0, import_react38.useRef)(null);
+    const cityRef = (0, import_react38.useRef)(null);
     const establishmentRef = (0, import_react38.useRef)(null);
     const [serviceDone, setServiceDone] = (0, import_react38.useState)(draft?.serviceDone ?? "");
     const [value, setValue] = (0, import_react38.useState)(draft?.value ?? "");
     const [payment, setPayment] = (0, import_react38.useState)(draft?.payment ?? "");
+    const [cidadeId, setCidadeId] = (0, import_react38.useState)(draft?.cidadeId ?? "");
     const [establishment, setEstablishment] = (0, import_react38.useState)(draft?.establishment ?? "");
     const [notes, setNotes] = (0, import_react38.useState)(draft?.notes ?? "");
     const [errors, setErrors] = (0, import_react38.useState)({});
@@ -41838,8 +41898,21 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       { value: "Cart\xE3o de cr\xE9dito", label: "Cart\xE3o de cr\xE9dito" },
       { value: "Pix", label: "Pix" }
     ];
+    const cityOptions = (0, import_react38.useMemo)(
+      () => expenseReferenceData.cities.map((city) => ({
+        value: city.id,
+        label: city.name,
+        subtitle: city.codigoIbge ? `${city.pais} - ${city.codigoIbge}` : city.pais,
+        searchText: `${city.name} ${city.uf} ${city.pais} ${city.codigoIbge}`
+      })),
+      [expenseReferenceData.cities]
+    );
+    const cityById = (0, import_react38.useMemo)(
+      () => new Map(expenseReferenceData.cities.map((city) => [city.id, city])),
+      [expenseReferenceData.cities]
+    );
     const updateDraft = (updates) => {
-      const nextDraft = { serviceDone, value, payment, establishment, notes, ...updates };
+      const nextDraft = { serviceDone, value, payment, cidadeId, establishment, notes, ...updates };
       onDraftChange?.(nextDraft);
     };
     const clearError = (key) => {
@@ -41852,21 +41925,25 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         "Servi\xE7o Realizado": serviceDone || "Servi\xE7o registrado localmente.",
         Valor: value ? `R$ ${value}` : "R$ 0,00",
         "Forma de Pagamento": payment || "N\xE3o informado",
+        Cidade: cidadeId,
         Estabelecimento: establishment || "N\xE3o informado",
         "Coment\xE1rios do Motorista": notes || "Sem coment\xE1rios.",
         Fotos: confirmedPhotos.length ? `${confirmedPhotos.length} foto(s) confirmada(s)` : "Nenhuma foto confirmada"
       };
-      const nextErrors = {};
-      if (!serviceDone.trim()) nextErrors.serviceDone = "Descreva a manuten\xE7\xE3o realizada.";
-      if (parseCurrencyNumber2(value) <= 0) nextErrors.value = "Informe um valor maior que zero.";
-      if (!payment) nextErrors.payment = "Selecione a forma de pagamento.";
-      if (!establishment.trim()) nextErrors.establishment = "Informe o estabelecimento.";
-      if (!confirmedPhotos.some((kind) => kind.startsWith("NOTAFISCAL"))) nextErrors.invoicePhoto = "Adicione a foto da nota fiscal.";
-      if (!confirmedPhotos.some((kind) => kind === "FOTO1" || kind === "FOTO2" || kind === "FOTO3")) nextErrors.maintenancePhoto = "Adicione pelo menos uma foto da manuten\xE7\xE3o.";
+      const nextErrors = validateMaintenanceFinalizeFields({
+        serviceDone,
+        value,
+        payment,
+        cidadeId,
+        validCityIds: new Set(expenseReferenceData.cities.map((city) => city.id)),
+        establishment,
+        confirmedPhotos
+      });
       setErrors(nextErrors);
       if (nextErrors.serviceDone) return focusInvalidField3(serviceDoneRef.current);
       if (nextErrors.value) return focusInvalidField3(valueRef.current);
       if (nextErrors.payment) return focusInvalidField3(paymentRef.current);
+      if (nextErrors.cidadeId) return focusInvalidField3(cityRef.current);
       if (nextErrors.establishment) return focusInvalidField3(establishmentRef.current);
       onDone(fields);
     };
@@ -41929,6 +42006,33 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               setPayment(nextValue);
               updateDraft({ payment: nextValue });
               clearError("payment");
+            }
+          }
+        ),
+        expenseReferenceLoading ? /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "form-error-summary", children: "Carregando cidades." }) : null,
+        !expenseReferenceLoading && expenseReferenceError ? /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "form-error-summary", children: expenseReferenceError }) : null,
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          SelectField,
+          {
+            ref: cityRef,
+            required: true,
+            label: "Cidade",
+            error: errors.cidadeId,
+            value: cidadeId,
+            options: cityOptions,
+            placeholder: "Digite cidade, UF ou IBGE",
+            ariaLabel: "Selecionar cidade",
+            disabled: isSubmitting || expenseReferenceLoading,
+            emptyLabel: "Nenhuma cidade encontrada.",
+            maxVisible: 50,
+            filterOption: (option, normalizedQuery) => {
+              const city = cityById.get(option.value);
+              return city ? matchesExpenseCitySearch(city, normalizedQuery) : false;
+            },
+            onChange: (nextValue) => {
+              setCidadeId(nextValue);
+              updateDraft({ cidadeId: nextValue });
+              clearError("cidadeId");
             }
           }
         ),
@@ -42016,6 +42120,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     maintenancePhotos,
     maintenanceDraft,
     onMaintenanceDraftChange,
+    expenseReferenceData,
+    expenseReferenceLoading,
+    expenseReferenceError,
     onPreviewMaintenancePhoto,
     onClearPhotos,
     submitState = "idle",
@@ -42037,6 +42144,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             maintenancePhotos,
             draft: maintenanceDraft,
             onDraftChange: onMaintenanceDraftChange,
+            expenseReferenceData,
+            expenseReferenceLoading,
+            expenseReferenceError,
             onPreviewMaintenancePhoto,
             submitState
           }
@@ -42748,6 +42858,234 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
 
   // src/screens/MaintenancePhotoPreviewScreen.tsx
   var import_react48 = __toESM(require_react(), 1);
+
+  // src/lib/photoOrientation.ts
+  function isLandscapeViewport() {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth / Math.max(window.innerHeight, 1) >= 1.45;
+  }
+  function getViewportOrientationAngle() {
+    if (typeof window === "undefined") return 0;
+    const angle = Number(window.screen?.orientation?.angle ?? 0);
+    if (isLandscapeViewport() && (angle === 90 || angle === -270)) return 90;
+    if (isLandscapeViewport() && (angle === 270 || angle === -90)) return 270;
+    if (!isLandscapeViewport() && Math.abs(angle) === 180) return 180;
+    return isLandscapeViewport() ? 90 : 0;
+  }
+  function normalizeAngle(angle) {
+    const normalized = (Math.round(angle / 90) * 90 % 360 + 360) % 360;
+    return normalized;
+  }
+  var PHOTO_OUTPUT_MIME_TYPE = "image/png";
+  function getDeviceOrientationAngle(event, currentAngle = getViewportOrientationAngle()) {
+    const beta = Number(event.beta);
+    const gamma = Number(event.gamma);
+    if (!Number.isFinite(beta) || !Number.isFinite(gamma)) return normalizeAngle(currentAngle);
+    const current = normalizeAngle(currentAngle);
+    const tiltX = Math.abs(gamma);
+    const enterLandscapeAt = 72;
+    const exitLandscapeAt = 58;
+    if (tiltX >= enterLandscapeAt) return gamma > 0 ? 90 : 270;
+    if (Math.abs(beta) >= 125) return 180;
+    if ((current === 90 || current === 270) && tiltX > exitLandscapeAt) return current;
+    if (tiltX <= exitLandscapeAt && beta > -25) return 0;
+    return current;
+  }
+  function drawRotated(image2, sourceWidth, sourceHeight, angle) {
+    const canvas = document.createElement("canvas");
+    canvas.width = angle === 90 || angle === 270 ? sourceHeight : sourceWidth;
+    canvas.height = angle === 90 || angle === 270 ? sourceWidth : sourceHeight;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate(angle * Math.PI / 180);
+    context.drawImage(image2, -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight);
+    return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE);
+  }
+  function getRotationForOrientation(sourceWidth, sourceHeight, orientationAngle) {
+    const sourceIsLandscape = sourceWidth >= sourceHeight;
+    if (orientationAngle === 0) return 0;
+    if (orientationAngle === 180) return 180;
+    if (orientationAngle === 90) return sourceIsLandscape ? 0 : 90;
+    return sourceIsLandscape ? 180 : 270;
+  }
+  function captureVideoFrameDataUrl(video, orientationAngle = getViewportOrientationAngle()) {
+    const sourceWidth = video.videoWidth;
+    const sourceHeight = video.videoHeight;
+    const normalizedAngle = normalizeAngle(orientationAngle);
+    const rotation = getRotationForOrientation(sourceWidth, sourceHeight, normalizedAngle);
+    if (rotation) {
+      const rotated = drawRotated(video, sourceWidth, sourceHeight, rotation);
+      if (rotated) return rotated;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = sourceWidth;
+    canvas.height = sourceHeight;
+    const context = canvas.getContext("2d");
+    if (!context) return "";
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE);
+  }
+  function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+  function bytesToBase64(bytes) {
+    let binary = "";
+    const chunkSize = 32768;
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+      const chunk = bytes.subarray(index, index + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
+  }
+  async function readBlobAsDataUrl(blob) {
+    const mimeType = blob.type || "application/octet-stream";
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    return `data:${mimeType};base64,${bytesToBase64(bytes)}`;
+  }
+  function formatVideoDuration(totalSeconds) {
+    const safeSeconds = Math.max(0, Math.floor(Number.isFinite(totalSeconds) ? totalSeconds : 0));
+    const hours2 = Math.floor(safeSeconds / 3600);
+    const minutes2 = Math.floor(safeSeconds % 3600 / 60);
+    const seconds = safeSeconds % 60;
+    if (hours2 > 0) {
+      return `${hours2}:${String(minutes2).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+    return `${minutes2}:${String(seconds).padStart(2, "0")}`;
+  }
+  function getVideoDurationLabelFromUrl(sourceUrl) {
+    if (typeof document === "undefined" || !sourceUrl) return Promise.resolve("");
+    return new Promise((resolve) => {
+      const video = document.createElement("video");
+      let settled = false;
+      let timeoutId = 0;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        resolve(value);
+      };
+      timeoutId = window.setTimeout(() => finish(""), 4500);
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      video.addEventListener("loadedmetadata", () => {
+        finish(Number.isFinite(video.duration) && video.duration > 0 ? formatVideoDuration(video.duration) : "");
+      }, { once: true });
+      video.addEventListener("error", () => finish(""), { once: true });
+      video.src = sourceUrl;
+      video.load();
+    });
+  }
+  function createVideoPosterDataUrl(sourceUrl) {
+    if (typeof document === "undefined" || !sourceUrl) return Promise.resolve("");
+    return new Promise((resolve) => {
+      const video = document.createElement("video");
+      let settled = false;
+      let timeoutId = 0;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        resolve(value);
+      };
+      const draw = () => {
+        const sourceWidth = video.videoWidth;
+        const sourceHeight = video.videoHeight;
+        if (!sourceWidth || !sourceHeight) return finish("");
+        const canvas = document.createElement("canvas");
+        const targetWidth = Math.min(sourceWidth, 640);
+        const ratio = targetWidth / sourceWidth;
+        canvas.width = targetWidth;
+        canvas.height = Math.max(1, Math.round(sourceHeight * ratio));
+        const context = canvas.getContext("2d");
+        if (!context) return finish("");
+        try {
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          finish(canvas.toDataURL("image/jpeg", 0.82));
+        } catch {
+          finish("");
+        }
+      };
+      const drawAfterSeek = () => {
+        if (settled) return;
+        if (Number.isFinite(video.duration) && video.duration > 0.2) {
+          const seekTime = Math.min(0.12, video.duration / 2);
+          const handleSeeked = () => draw();
+          video.addEventListener("seeked", handleSeeked, { once: true });
+          try {
+            video.currentTime = seekTime;
+            window.setTimeout(() => {
+              if (!settled) draw();
+            }, 700);
+            return;
+          } catch {
+            video.removeEventListener("seeked", handleSeeked);
+          }
+        }
+        draw();
+      };
+      timeoutId = window.setTimeout(() => finish(""), 4500);
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "auto";
+      video.addEventListener("loadeddata", drawAfterSeek, { once: true });
+      video.addEventListener("error", () => finish(""), { once: true });
+      video.src = sourceUrl;
+      video.load();
+    });
+  }
+  function dataUrlToBase642(value = "") {
+    const marker = ";base64,";
+    const markerIndex = value.toLowerCase().indexOf(marker);
+    const raw = markerIndex >= 0 ? value.slice(markerIndex + marker.length) : value.slice(value.lastIndexOf(",") + 1);
+    return raw.replace(/\s/g, "");
+  }
+  function dataUrlToObjectUrl(dataUrl) {
+    const markerIndex = dataUrl.toLowerCase().indexOf(";base64,");
+    const commaIndex = dataUrl.lastIndexOf(",");
+    const header = markerIndex >= 0 ? dataUrl.slice(0, markerIndex) : commaIndex >= 0 ? dataUrl.slice(0, commaIndex) : "";
+    const payload = dataUrlToBase642(dataUrl);
+    if (!header || !payload) return dataUrl;
+    const mimeType = header.match(/^data:([^;,]+)/)?.[1] || "application/octet-stream";
+    const binary = markerIndex >= 0 ? atob(payload) : decodeURIComponent(payload);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+  }
+  async function readPhotoFileAsDataUrl(file, orientationAngle = getViewportOrientationAngle()) {
+    const fallbackDataUrl = await readFileAsDataUrl(file);
+    const normalizedAngle = normalizeAngle(orientationAngle);
+    if (normalizedAngle === 0) return fallbackDataUrl;
+    try {
+      const image2 = await createImageBitmap(file);
+      const rotation = getRotationForOrientation(image2.width, image2.height, normalizedAngle);
+      if (!rotation) {
+        image2.close();
+        return fallbackDataUrl;
+      }
+      const rotated = drawRotated(image2, image2.width, image2.height, rotation);
+      image2.close();
+      return rotated || fallbackDataUrl;
+    } catch {
+      return fallbackDataUrl;
+    }
+  }
+
+  // src/screens/MaintenancePhotoPreviewScreen.tsx
   var import_jsx_runtime33 = __toESM(require_jsx_runtime(), 1);
   function getTitleByKind(kind) {
     if (kind.startsWith("NOTAFISCAL")) return "Foto da nota fiscal";
@@ -60915,6 +61253,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       serviceDone: "Troca das pastilhas dianteiras e alinhamento rapido.",
       value: "480,00",
       payment: "Cartao de credito",
+      cidadeId: "city-sp",
       establishment: "Auto Center Vila Olimpia",
       notes: "Sem pendencias apos o teste."
     });
@@ -61147,6 +61486,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             maintenancePhotos: activeFinalizeKind === "maintenance" ? maintenancePhotos : {},
             maintenanceDraft: maintenanceFinalizeDraft,
             onMaintenanceDraftChange: setMaintenanceFinalizeDraft,
+            expenseReferenceData: PREVIEW_EXPENSE_REFERENCE_DATA,
+            expenseReferenceLoading: false,
+            expenseReferenceError: "",
             submitState,
             onClearPhotos: () => emitToast("Fotos locais limpas no preview.", "warning"),
             onPreviewMaintenancePhoto: () => openDemo("photo-preview")
@@ -61332,11 +61674,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return "Tire a foto 3 de 3";
   }
   function getCameraVideoConstraints(mode) {
-    const landscape = isLandscapeViewport();
     return {
-      facingMode: { ideal: mode },
-      width: { ideal: landscape ? 1920 : 1280 },
-      height: { ideal: landscape ? 1080 : 720 }
+      facingMode: { ideal: mode }
     };
   }
   function getPreferredVideoMimeType() {
@@ -61350,6 +61689,29 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   }
   function revokeObjectPreviewUrl(url) {
     if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+  }
+  function getBrowserImageCapture() {
+    return globalThis.ImageCapture;
+  }
+  function getMaxPhotoSettings(capabilities) {
+    const imageWidth = Math.floor(Number(capabilities?.imageWidth?.max ?? 0));
+    const imageHeight = Math.floor(Number(capabilities?.imageHeight?.max ?? 0));
+    if (imageWidth > 0) return { imageWidth };
+    if (imageHeight > 0) return { imageHeight };
+    return void 0;
+  }
+  async function captureTrackPhotoDataUrl(track) {
+    const ImageCapture = getBrowserImageCapture();
+    if (!ImageCapture) return "";
+    const imageCapture = new ImageCapture(track);
+    let photoSettings;
+    try {
+      photoSettings = getMaxPhotoSettings(await imageCapture.getPhotoCapabilities?.());
+    } catch {
+      photoSettings = void 0;
+    }
+    const blob = await imageCapture.takePhoto(photoSettings);
+    return blob.size ? readBlobAsDataUrl(blob) : "";
   }
   function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }) {
     const videoRef = (0, import_react57.useRef)(null);
@@ -61369,6 +61731,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [flashSupported, setFlashSupported] = (0, import_react57.useState)(false);
     const [flashOn, setFlashOn] = (0, import_react57.useState)(false);
     const [recording, setRecording] = (0, import_react57.useState)(false);
+    const [capturingPhoto, setCapturingPhoto] = (0, import_react57.useState)(false);
     const [processing, setProcessing] = (0, import_react57.useState)(false);
     const [recordingSeconds, setRecordingSeconds] = (0, import_react57.useState)(0);
     const stopStream = () => {
@@ -61407,22 +61770,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       const syncDeviceOrientation = (event) => {
         if (typeof event.gamma !== "number" || typeof event.beta !== "number") return;
         lastDeviceOrientationAtRef.current = Date.now();
-        const currentAngle = orientationAngleRef.current;
-        const tiltX = Math.abs(event.gamma);
-        const enterLandscapeAt = 72;
-        const exitLandscapeAt = 58;
-        if (tiltX >= enterLandscapeAt) {
-          orientationAngleRef.current = event.gamma > 0 ? 90 : 270;
-          return;
-        }
-        if (event.beta < -125) {
-          orientationAngleRef.current = 180;
-          return;
-        }
-        if ((currentAngle === 90 || currentAngle === 270) && tiltX > exitLandscapeAt) return;
-        if (tiltX <= exitLandscapeAt && event.beta > -25) {
-          orientationAngleRef.current = 0;
-        }
+        orientationAngleRef.current = getDeviceOrientationAngle(event, orientationAngleRef.current);
       };
       syncViewportOrientation();
       window.addEventListener("resize", syncViewportOrientation);
@@ -61483,18 +61831,35 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setStarting(false);
       }
     };
-    const capture = () => {
+    const capture = async () => {
       const video = videoRef.current;
-      if (recording || processing) return;
+      if (recording || processing || capturingPhoto) return;
       if (!video || !ready || video.videoWidth === 0 || video.videoHeight === 0) {
         setCameraError("C\xE2mera ainda n\xE3o est\xE1 pronta. Toque em Abrir c\xE2mera ou use c\xE2mera nativa.");
         return;
       }
-      const photoDataUrl = captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
-      if (photoDataUrl) onCapture(photoDataUrl);
+      setCapturingPhoto(true);
+      try {
+        const videoTrack = streamRef.current?.getVideoTracks()[0];
+        const stillPhotoDataUrl = videoTrack ? await captureTrackPhotoDataUrl(videoTrack) : "";
+        const photoDataUrl = stillPhotoDataUrl || captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
+        if (photoDataUrl) onCapture(photoDataUrl);
+      } catch (error2) {
+        reportAppError(error2, {
+          severity: "warning",
+          source: "maintenance-photo",
+          action: "capture-photo",
+          component: "MaintenancePhotoScreen",
+          screen: "TelaCameraMidia"
+        });
+        const photoDataUrl = captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
+        if (photoDataUrl) onCapture(photoDataUrl);
+      } finally {
+        setCapturingPhoto(false);
+      }
     };
     const switchCamera = () => {
-      if (recording || processing) return;
+      if (recording || processing || capturingPhoto) return;
       const next = facingMode === "environment" ? "user" : "environment";
       setFacingMode(next);
       onSwitchCamera();
@@ -61681,7 +62046,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("section", { className: "main-panel photo-main", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("article", { className: "photo-card camera-capture-card", children: [
         /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-title camera-capture-title", children: [
           /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: title ?? getTitleByKind2(kind) }),
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando v\xEDdeo" : "Foto ou v\xEDdeo" })
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando v\xEDdeo" : capturingPhoto ? "Capturando foto" : "Foto ou v\xEDdeo" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-body", children: [
           /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-view real-camera-view", children: [
@@ -61691,6 +62056,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: formatVideoDuration(recordingSeconds) })
             ] }) : null,
             processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: "Preparando v\xEDdeo..." }) : null,
+            capturingPhoto ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: "Capturando foto..." }) : null,
             !startedByUser && !starting && !cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel", children: [
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Abra a c\xE2mera" }),
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "Use foto ou v\xEDdeo no mesmo fluxo." }),
@@ -61724,22 +62090,22 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
                 className: `photo-flash ${flashOn ? "is-active" : ""}`,
                 onClick: toggleFlash,
                 "aria-label": flashOn ? "Desativar flash" : "Ativar flash",
-                disabled: !ready || !flashSupported || recording || processing,
+                disabled: !ready || !flashSupported || recording || processing || capturingPhoto,
                 children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "flash" })
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-capture", onClick: capture, "aria-label": "Tirar foto", disabled: !ready || recording || processing, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "camera" }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-capture", onClick: capture, "aria-label": "Tirar foto", disabled: !ready || recording || processing || capturingPhoto, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "camera" }) }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
               "button",
               {
                 className: `photo-record ${recording ? "is-recording" : ""}`,
                 onClick: recording ? stopRecording : startRecording,
                 "aria-label": recording ? "Parar grava\xE7\xE3o" : "Gravar v\xEDdeo",
-                disabled: processing || !ready && !recording,
+                disabled: processing || capturingPhoto || !ready && !recording,
                 children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "video" })
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-switch", onClick: switchCamera, "aria-label": "Mudar c\xE2mera", disabled: recording || processing, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "sync" }) })
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-switch", onClick: switchCamera, "aria-label": "Mudar c\xE2mera", disabled: recording || processing || capturingPhoto, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "sync" }) })
           ] })
         ] })
       ] }) })
@@ -61768,9 +62134,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   }
   function wait(ms) {
     return new Promise((resolve) => window.setTimeout(resolve, ms));
-  }
-  function isVideoCaptureFile(file) {
-    return file.type.startsWith("video/") || /\.(mov|mp4|webm|m4v)$/i.test(file.name);
   }
   var DATA_LOADING_SUCCESS_DURATION_MS = 420;
   function isTrueLike3(value) {
@@ -61840,11 +62203,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const isButtonPreviewMode = devMode === "preview" || previewHashActive;
     const isReceiptPreviewMode = devMode === "recibo";
     const isLocalhostRuntime2 = (0, import_react58.useMemo)(() => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname), []);
-    const isIosRuntime = (0, import_react58.useMemo)(() => {
-      if (typeof navigator === "undefined") return false;
-      const userAgent = navigator.userAgent ?? "";
-      return /iPad|iPhone|iPod/i.test(userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-    }, []);
     const hashRoutingActive = (0, import_react58.useMemo)(
       () => isHashRoutingEnabled() && !isButtonPreviewMode && !isReceiptPreviewMode,
       [isButtonPreviewMode, isReceiptPreviewMode]
@@ -61930,6 +62288,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       serviceDone: "",
       value: "",
       payment: "",
+      cidadeId: "",
       establishment: "",
       notes: ""
     });
@@ -61937,8 +62296,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const completingClearTimerRef = (0, import_react58.useRef)(null);
     const queueHighlightTimerRef = (0, import_react58.useRef)(null);
     const voucherDraftTimerRef = (0, import_react58.useRef)(null);
-    const nativeCaptureInputRef = (0, import_react58.useRef)(null);
-    const nativeCaptureTargetRef = (0, import_react58.useRef)(null);
     const lastGlobalErrorRef = (0, import_react58.useRef)({ id: "", at: 0 });
     const logAppError = (error2, action, phase = "") => {
       reportAppError(error2, {
@@ -61975,130 +62332,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       });
       await wait(DATA_LOADING_SUCCESS_DURATION_MS);
       setDataLoadingState(null);
-    };
-    const openIosNativeCapture = (target) => {
-      if (!isIosRuntime || !nativeCaptureInputRef.current) return false;
-      nativeCaptureTargetRef.current = target;
-      nativeCaptureInputRef.current.click();
-      return true;
-    };
-    const handleAppNativeCapture = async (event) => {
-      const target = nativeCaptureTargetRef.current;
-      const file = event.target.files?.[0];
-      if (!target || !file) {
-        event.target.value = "";
-        return;
-      }
-      const isVideo = isVideoCaptureFile(file);
-      const previewUrl = isVideo ? URL.createObjectURL(file) : "";
-      try {
-        if (isVideo) {
-          const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
-            readBlobAsDataUrl(file),
-            createVideoPosterDataUrl(previewUrl),
-            getVideoDurationLabelFromUrl(previewUrl)
-          ]);
-          switch (target.flow) {
-            case "maintenanceRequest":
-              setMaintenanceRequestPhotoDraft(videoDataUrl);
-              setMaintenanceRequestPhotoPreviewUrl("");
-              setMaintenanceRequestPhotoPosterUrl(posterUrl);
-              setMaintenanceRequestPhotoDurationLabel(durationLabel);
-              setMaintenanceRequestPreviewPhotoId("");
-              setScreen("previewFotoSolicitacaoManutencao");
-              break;
-            case "expense":
-              setExpensePhotoDraft(videoDataUrl);
-              setExpensePhotoPreviewUrl("");
-              setExpensePhotoPosterUrl(posterUrl);
-              setExpensePhotoDurationLabel(durationLabel);
-              setExpensePreviewPhotoId("");
-              setScreen("previewFotoGasto");
-              break;
-            case "receive":
-              setReceivePhotoDraft(videoDataUrl);
-              setReceivePhotoPreviewUrl("");
-              setReceivePhotoPosterUrl(posterUrl);
-              setReceivePhotoDurationLabel(durationLabel);
-              setReceivePreviewPhotoId("");
-              setScreen("previewFotoReceber");
-              break;
-            case "collision":
-              setCollisionPhotoKind(target.photoKind);
-              setCollisionPhotoDraft(videoDataUrl);
-              setCollisionPhotoPreviewUrl("");
-              setCollisionPhotoPosterUrl(posterUrl);
-              setCollisionPhotoDurationLabel(durationLabel);
-              setCollisionPreviewPhotoId("");
-              setScreen("previewFotoColisao");
-              break;
-            case "maintenanceFinalize":
-              setMaintenancePhotoKind(target.photoKind);
-              setPhotoDraft(videoDataUrl);
-              setPhotoDraftPreviewUrl("");
-              setMaintenanceExistingPreview(false);
-              setScreen("previewFotoManutencao");
-              break;
-          }
-        } else {
-          const dataUrl = await readPhotoFileAsDataUrl(file, normalizeAngle(getViewportOrientationAngle()));
-          switch (target.flow) {
-            case "maintenanceRequest":
-              setMaintenanceRequestPhotoDraft(dataUrl);
-              setMaintenanceRequestPhotoPreviewUrl("");
-              setMaintenanceRequestPhotoPosterUrl("");
-              setMaintenanceRequestPhotoDurationLabel("");
-              setMaintenanceRequestPreviewPhotoId("");
-              setScreen("previewFotoSolicitacaoManutencao");
-              break;
-            case "expense":
-              setExpensePhotoDraft(dataUrl);
-              setExpensePhotoPreviewUrl("");
-              setExpensePhotoPosterUrl("");
-              setExpensePhotoDurationLabel("");
-              setExpensePreviewPhotoId("");
-              setScreen("previewFotoGasto");
-              break;
-            case "receive":
-              setReceivePhotoDraft(dataUrl);
-              setReceivePhotoPreviewUrl("");
-              setReceivePhotoPosterUrl("");
-              setReceivePhotoDurationLabel("");
-              setReceivePreviewPhotoId("");
-              setScreen("previewFotoReceber");
-              break;
-            case "collision":
-              setCollisionPhotoKind(target.photoKind);
-              setCollisionPhotoDraft(dataUrl);
-              setCollisionPhotoPreviewUrl("");
-              setCollisionPhotoPosterUrl("");
-              setCollisionPhotoDurationLabel("");
-              setCollisionPreviewPhotoId("");
-              setScreen("previewFotoColisao");
-              break;
-            case "maintenanceFinalize":
-              setMaintenancePhotoKind(target.photoKind);
-              setPhotoDraft(dataUrl);
-              setPhotoDraftPreviewUrl("");
-              setMaintenanceExistingPreview(false);
-              setScreen("previewFotoManutencao");
-              break;
-          }
-        }
-      } catch (error2) {
-        reportAppError(error2, {
-          severity: "error",
-          source: "app",
-          action: "handle-app-native-capture",
-          phase: target.flow,
-          screen
-        });
-        setToast(error2 instanceof Error ? error2.message : "Nao foi possivel preparar a captura.");
-      } finally {
-        nativeCaptureTargetRef.current = null;
-        if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
-        event.target.value = "";
-      }
     };
     (0, import_react58.useEffect)(() => {
       if (isButtonPreviewMode || isReceiptPreviewMode) return;
@@ -62342,11 +62575,18 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${nextHash}`);
     }, [hashRoutingActive, receiptDetail, screen, selectedDetail]);
     (0, import_react58.useEffect)(() => {
+      if (!remoteMode || !driverContext) return;
+      prefetchExpenseReferenceDataRemote();
+    }, [driverContext, remoteMode]);
+    (0, import_react58.useEffect)(() => {
       if (screen !== "solicitarManutencao" && screen !== "gastos" && screen !== "colisoes" || !remoteMode) return;
       let alive = true;
       setMaintenanceVehiclesLoading(true);
       getDriverContext().then(async (driver) => {
-        const vehicles = await loadMaintenanceRequestVehiclesRemote(driver, { onlyOwnCategory: screen === "solicitarManutencao" });
+        const vehicles = await loadMaintenanceRequestVehiclesRemote(driver, {
+          onlyOwnCategory: screen === "solicitarManutencao",
+          activeOnly: screen === "colisoes"
+        });
         if (!alive) return;
         setDriverContext(driver);
         const currentVehicleId = getDriverCurrentVehicleId(driver);
@@ -62372,11 +62612,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       };
     }, [screen, remoteMode]);
     (0, import_react58.useEffect)(() => {
-      if (screen !== "gastos" || !remoteMode) return;
+      const shouldLoadExpenseReference = screen === "gastos" || screen === "finalizar" && selectedDetail?.type === "MANUTENCAO";
+      if (!shouldLoadExpenseReference || !remoteMode) return;
       let alive = true;
-      setExpenseReferenceLoading(true);
+      const hasReferenceData = expenseReferenceData.categories.length > 0 && expenseReferenceData.paymentMethods.length > 0 && expenseReferenceData.cities.length > 0;
+      setExpenseReferenceLoading(!hasReferenceData);
       setExpenseReferenceError("");
-      setExpenseReferenceData({ categories: [], paymentMethods: [], cities: [] });
       loadExpenseReferenceDataRemote().then((referenceData) => {
         if (!alive) return;
         setExpenseReferenceData(referenceData);
@@ -62387,7 +62628,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           severity: "error",
           source: "app",
           action: "loadExpenseReferenceDataRemote",
-          phase: "expense-form",
+          phase: screen === "finalizar" ? "maintenance-finalize" : "expense-form",
           screen
         });
         const message = error2 instanceof Error ? error2.message : "Falha ao carregar categorias de despesas.";
@@ -62399,7 +62640,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return () => {
         alive = false;
       };
-    }, [screen, remoteMode]);
+    }, [screen, remoteMode, selectedDetail?.type]);
     (0, import_react58.useEffect)(() => {
       if (screen !== "reciboPersonalizado") {
         setReceiptClienteOptions([]);
@@ -62446,17 +62687,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(LocalToast, { toast: dataLoading ? null : toast, onDismiss: () => setToastState(null) }),
       /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(LoadingOverlay, { loading: dataLoading }),
       remoteOperation ? /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(FlowProgressOverlay, { operation: remoteOperation }) : null,
-      /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
-        "input",
-        {
-          ref: nativeCaptureInputRef,
-          className: "native-camera-input",
-          type: "file",
-          accept: "image/*,video/*,.mov,video/quicktime",
-          capture: "environment",
-          onChange: handleAppNativeCapture
-        }
-      ),
       criticalError ? /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "critical-error-overlay", role: "dialog", "aria-modal": "true", "aria-labelledby": "critical-error-title", children: /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)("div", { className: "critical-error-card", children: [
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "critical-error-kicker", children: "Falha no envio" }),
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("h2", { id: "critical-error-title", children: "Processo n\xE3o foi conclu\xEDdo" }),
@@ -62621,7 +62851,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         return next;
       });
       if (detailToFinalize.type === "MANUTENCAO") {
-        setMaintenanceFinalizeDraft({ serviceDone: "", value: "", payment: "", establishment: "", notes: "" });
+        setMaintenanceFinalizeDraft({ serviceDone: "", value: "", payment: "", cidadeId: "", establishment: "", notes: "" });
       }
       setSelectedDetail(null);
       setScreen("servicos");
@@ -63103,7 +63333,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
     };
     const openMaintenanceRequestCamera = () => {
-      if (openIosNativeCapture({ flow: "maintenanceRequest" })) return;
       setMaintenanceRequestPhotoDraft("");
       setMaintenanceRequestPhotoPreviewUrl("");
       setMaintenanceRequestPhotoPosterUrl("");
@@ -63174,7 +63403,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setScreen("solicitarManutencao");
     };
     const openExpenseCamera = () => {
-      if (openIosNativeCapture({ flow: "expense" })) return;
       setExpensePhotoDraft("");
       setExpensePhotoPreviewUrl("");
       setExpensePhotoPosterUrl("");
@@ -63245,7 +63473,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setScreen("gastos");
     };
     const openReceiveCamera = () => {
-      if (openIosNativeCapture({ flow: "receive" })) return;
       setReceivePhotoDraft("");
       setReceivePhotoPreviewUrl("");
       setReceivePhotoPosterUrl("");
@@ -63453,7 +63680,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setScreen("colisoes");
     };
     const openCollisionCamera = (kind) => {
-      if (openIosNativeCapture({ flow: "collision", photoKind: kind })) return;
       setCollisionPhotoKind(kind);
       setCollisionPhotoDraft("");
       setCollisionPhotoPreviewUrl("");
@@ -63463,7 +63689,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setScreen("fotoColisao");
     };
     const openMaintenanceFinalizeCamera = (kind) => {
-      if (openIosNativeCapture({ flow: "maintenanceFinalize", photoKind: kind })) return;
       setMaintenancePhotoKind(kind);
       setPhotoDraft(null);
       setPhotoDraftPreviewUrl("");
@@ -63939,6 +64164,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             maintenancePhotos: store.photos[selectedDetail.id] ?? {},
             maintenanceDraft: maintenanceFinalizeDraft,
             onMaintenanceDraftChange: setMaintenanceFinalizeDraft,
+            expenseReferenceData,
+            expenseReferenceLoading,
+            expenseReferenceError,
             submitState: remoteOperation?.phase ?? "idle",
             initialServiceObservation: getServiceObservationDraft(selectedDetail),
             onClearPhotos: () => {

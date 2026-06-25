@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, ActionButton, type ActionButtonState } from "../components/common/ActionButton";
 import { FieldError, MoneyInputField, SelectField, TextAreaField } from "../components/common/FormFields";
 import { PhotoAddButton } from "../components/common/PhotoAddButton";
 import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
+import { matchesExpenseCitySearch, type ExpenseReferenceData } from "../lib/expenses";
 import { buildWhatsAppUrl, openExternalUrl } from "../lib/localWorkflow";
+import { validateMaintenanceFinalizeFields, type MaintenanceFinalizeErrors } from "../lib/maintenanceFinalize";
 import type { DetailData, MaintenancePhotoKind } from "../types";
 
 type FinalizeScreenProps = {
@@ -15,6 +17,9 @@ type FinalizeScreenProps = {
   maintenancePhotos: Partial<Record<MaintenancePhotoKind, string>>;
   maintenanceDraft?: MaintenanceFinalizeDraft;
   onMaintenanceDraftChange?: (draft: MaintenanceFinalizeDraft) => void;
+  expenseReferenceData: ExpenseReferenceData;
+  expenseReferenceLoading: boolean;
+  expenseReferenceError?: string;
   onPreviewMaintenancePhoto: (kind: MaintenancePhotoKind) => void;
   onClearPhotos?: () => void;
   submitState?: ActionButtonState;
@@ -25,16 +30,10 @@ export type MaintenanceFinalizeDraft = {
   serviceDone: string;
   value: string;
   payment: string;
+  cidadeId: string;
   establishment: string;
   notes: string;
 };
-
-type MaintenanceErrorKey = "serviceDone" | "value" | "payment" | "establishment" | "invoicePhoto" | "maintenancePhoto";
-type MaintenanceErrors = Partial<Record<MaintenanceErrorKey, string>>;
-
-function parseCurrencyNumber(value: string) {
-  return Number(value.replace("R$", "").replace(/\./g, "").replace(",", ".").trim() || "0");
-}
 
 function focusInvalidField(element: HTMLElement | null) {
   window.setTimeout(() => {
@@ -218,6 +217,9 @@ function MaintenanceFinalize({
   maintenancePhotos,
   draft,
   onDraftChange,
+  expenseReferenceData,
+  expenseReferenceLoading,
+  expenseReferenceError = "",
   onPreviewMaintenancePhoto,
   submitState
 }: {
@@ -227,6 +229,9 @@ function MaintenanceFinalize({
   maintenancePhotos: Partial<Record<MaintenancePhotoKind, string>>;
   draft?: MaintenanceFinalizeDraft;
   onDraftChange?: (draft: MaintenanceFinalizeDraft) => void;
+  expenseReferenceData: ExpenseReferenceData;
+  expenseReferenceLoading: boolean;
+  expenseReferenceError?: string;
   onPreviewMaintenancePhoto: (kind: MaintenancePhotoKind) => void;
   submitState: ActionButtonState;
 }) {
@@ -234,13 +239,15 @@ function MaintenanceFinalize({
   const serviceDoneRef = useRef<HTMLTextAreaElement | null>(null);
   const valueRef = useRef<HTMLInputElement | null>(null);
   const paymentRef = useRef<HTMLButtonElement | null>(null);
+  const cityRef = useRef<HTMLButtonElement | null>(null);
   const establishmentRef = useRef<HTMLTextAreaElement | null>(null);
   const [serviceDone, setServiceDone] = useState(draft?.serviceDone ?? "");
   const [value, setValue] = useState(draft?.value ?? "");
   const [payment, setPayment] = useState(draft?.payment ?? "");
+  const [cidadeId, setCidadeId] = useState(draft?.cidadeId ?? "");
   const [establishment, setEstablishment] = useState(draft?.establishment ?? "");
   const [notes, setNotes] = useState(draft?.notes ?? "");
-  const [errors, setErrors] = useState<MaintenanceErrors>({});
+  const [errors, setErrors] = useState<MaintenanceFinalizeErrors>({});
 
   const paymentOptions = [
     { value: "Pedido de compra", label: "Pedido de compra" },
@@ -248,12 +255,26 @@ function MaintenanceFinalize({
     { value: "Pix", label: "Pix" }
   ];
 
+  const cityOptions = useMemo(
+    () => expenseReferenceData.cities.map((city) => ({
+      value: city.id,
+      label: city.name,
+      subtitle: city.codigoIbge ? `${city.pais} - ${city.codigoIbge}` : city.pais,
+      searchText: `${city.name} ${city.uf} ${city.pais} ${city.codigoIbge}`
+    })),
+    [expenseReferenceData.cities]
+  );
+  const cityById = useMemo(
+    () => new Map(expenseReferenceData.cities.map((city) => [city.id, city])),
+    [expenseReferenceData.cities]
+  );
+
   const updateDraft = (updates: Partial<MaintenanceFinalizeDraft>) => {
-    const nextDraft = { serviceDone, value, payment, establishment, notes, ...updates };
+    const nextDraft = { serviceDone, value, payment, cidadeId, establishment, notes, ...updates };
     onDraftChange?.(nextDraft);
   };
 
-  const clearError = (key: MaintenanceErrorKey) => {
+  const clearError = (key: keyof MaintenanceFinalizeErrors) => {
     if (!errors[key]) return;
     setErrors((current) => ({ ...current, [key]: undefined }));
   };
@@ -265,24 +286,28 @@ function MaintenanceFinalize({
       "Serviço Realizado": serviceDone || "Serviço registrado localmente.",
       Valor: value ? `R$ ${value}` : "R$ 0,00",
       "Forma de Pagamento": payment || "Não informado",
+      Cidade: cidadeId,
       Estabelecimento: establishment || "Não informado",
       "Comentários do Motorista": notes || "Sem comentários.",
       Fotos: confirmedPhotos.length ? `${confirmedPhotos.length} foto(s) confirmada(s)` : "Nenhuma foto confirmada"
     };
 
-    const nextErrors: MaintenanceErrors = {};
-    if (!serviceDone.trim()) nextErrors.serviceDone = "Descreva a manutenção realizada.";
-    if (parseCurrencyNumber(value) <= 0) nextErrors.value = "Informe um valor maior que zero.";
-    if (!payment) nextErrors.payment = "Selecione a forma de pagamento.";
-    if (!establishment.trim()) nextErrors.establishment = "Informe o estabelecimento.";
-    if (!confirmedPhotos.some((kind) => kind.startsWith("NOTAFISCAL"))) nextErrors.invoicePhoto = "Adicione a foto da nota fiscal.";
-    if (!confirmedPhotos.some((kind) => kind === "FOTO1" || kind === "FOTO2" || kind === "FOTO3")) nextErrors.maintenancePhoto = "Adicione pelo menos uma foto da manutenção.";
+    const nextErrors = validateMaintenanceFinalizeFields({
+      serviceDone,
+      value,
+      payment,
+      cidadeId,
+      validCityIds: new Set(expenseReferenceData.cities.map((city) => city.id)),
+      establishment,
+      confirmedPhotos
+    });
 
     setErrors(nextErrors);
 
     if (nextErrors.serviceDone) return focusInvalidField(serviceDoneRef.current);
     if (nextErrors.value) return focusInvalidField(valueRef.current);
     if (nextErrors.payment) return focusInvalidField(paymentRef.current);
+    if (nextErrors.cidadeId) return focusInvalidField(cityRef.current);
     if (nextErrors.establishment) return focusInvalidField(establishmentRef.current);
 
     onDone(fields);
@@ -341,6 +366,31 @@ function MaintenanceFinalize({
               setPayment(nextValue);
               updateDraft({ payment: nextValue });
               clearError("payment");
+            }}
+          />
+
+          {expenseReferenceLoading ? <div className="form-error-summary">Carregando cidades.</div> : null}
+          {!expenseReferenceLoading && expenseReferenceError ? <div className="form-error-summary">{expenseReferenceError}</div> : null}
+          <SelectField
+            ref={cityRef}
+            required
+            label="Cidade"
+            error={errors.cidadeId}
+            value={cidadeId}
+            options={cityOptions}
+            placeholder="Digite cidade, UF ou IBGE"
+            ariaLabel="Selecionar cidade"
+            disabled={isSubmitting || expenseReferenceLoading}
+            emptyLabel="Nenhuma cidade encontrada."
+            maxVisible={50}
+            filterOption={(option, normalizedQuery) => {
+              const city = cityById.get(option.value);
+              return city ? matchesExpenseCitySearch(city, normalizedQuery) : false;
+            }}
+            onChange={(nextValue) => {
+              setCidadeId(nextValue);
+              updateDraft({ cidadeId: nextValue });
+              clearError("cidadeId");
             }}
           />
 
@@ -423,6 +473,9 @@ export function FinalizeScreen({
   maintenancePhotos,
   maintenanceDraft,
   onMaintenanceDraftChange,
+  expenseReferenceData,
+  expenseReferenceLoading,
+  expenseReferenceError,
   onPreviewMaintenancePhoto,
   onClearPhotos,
   submitState = "idle",
@@ -445,6 +498,9 @@ export function FinalizeScreen({
             maintenancePhotos={maintenancePhotos}
             draft={maintenanceDraft}
             onDraftChange={onMaintenanceDraftChange}
+            expenseReferenceData={expenseReferenceData}
+            expenseReferenceLoading={expenseReferenceLoading}
+            expenseReferenceError={expenseReferenceError}
             onPreviewMaintenancePhoto={onPreviewMaintenancePhoto}
             submitState={submitState}
           />

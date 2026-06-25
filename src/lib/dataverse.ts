@@ -1,7 +1,17 @@
 import type { AgendaItem, DetailAction, DetailData, DetailField, MaintenancePhotoKind } from "../types";
 
 import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
-import type { ExpenseLookupNavigationNames, ExpenseReferenceData } from "./expenses";
+import {
+  buildExpenseCreatePayload,
+  findExpenseCategoryByName,
+  findExpensePaymentMethodByName,
+  mapMaintenancePaymentToExpensePaymentNames,
+  shouldUploadMaintenanceExpenseInvoices,
+  type ExpenseDraft,
+  type ExpenseLookupNavigationNames,
+  type ExpensePhoto,
+  type ExpenseReferenceData
+} from "./expenses.ts";
 import type { PersonalReceiptModel } from "./personalReceipt";
 import { normalizeReceiptLanguage, RECEIPT_LANGUAGE } from "./receiptLanguage.ts";
 
@@ -126,10 +136,12 @@ const VEHICLE_STATUS = {
   ativo: 202410001
 } as const;
 
-const ACTIVE_VEHICLE_FILTER = [
-  "statecode eq 0",
-  "statuscode eq 1",
-  `cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo}`,
+const ACTIVE_VEHICLE_FILTERS = [
+  `cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo}`
+];
+
+const ACTIVE_OWN_VEHICLE_FILTER = [
+  ...ACTIVE_VEHICLE_FILTERS,
   `new_categoriadoveiculo eq ${VEHICLE_CATEGORY.proprio}`
 ].join(" and ");
 
@@ -562,21 +574,33 @@ function getVehicleLabel(record: DataverseRecord) {
   return [placa, modelo].filter(Boolean).join(" - ") || cleanODataGuid(record.cr40f_veiculosid);
 }
 
-export function buildMaintenanceRequestVehiclesQuery(options: { onlyOwnCategory?: boolean } = {}) {
+export function buildMaintenanceRequestVehiclesQuery(options: { onlyOwnCategory?: boolean; activeOnly?: boolean } = {}) {
   const query = [
     "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode"
   ];
   if (options.onlyOwnCategory) {
-    query.push(`$filter=${ACTIVE_VEHICLE_FILTER}`);
+    query.push(`$filter=${ACTIVE_OWN_VEHICLE_FILTER}`);
+  } else if (options.activeOnly) {
+    query.push(`$filter=${ACTIVE_VEHICLE_FILTERS.join(" and ")}`);
   }
   query.push("$orderby=cr40f_placa asc", "$top=200");
   return query.join("&");
 }
 
-export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext, options: { onlyOwnCategory?: boolean } = {}) {
+export function buildMaintenanceRequestAssignedVehiclesQuery(driver: DriverContext) {
   const currentVehicleId = getDriverCurrentVehicleId(driver);
-  const result = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestVehiclesQuery(options));
-  return result.entities
+  const driverFilter = `_cr40f_motoristaatual_value eq ${cleanGuid(driver.id)}`;
+  const currentVehicleFilter = currentVehicleId ? ` or cr40f_veiculosid eq ${currentVehicleId}` : "";
+  return [
+    "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,_cr40f_motoristaatual_value,cr40f_statusdoveiculo,new_categoriadoveiculo,statecode,statuscode",
+    `$filter=statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq ${VEHICLE_STATUS.ativo} and (${driverFilter}${currentVehicleFilter})`,
+    "$orderby=cr40f_placa asc",
+    "$top=20"
+  ].join("&");
+}
+
+function mapMaintenanceRequestVehicles(records: DataverseRecord[], currentVehicleId: string): MaintenanceRequestVehicleOption[] {
+  return records
     .map((record): MaintenanceRequestVehicleOption => {
       const id = cleanODataGuid(record.cr40f_veiculosid);
       return {
@@ -586,6 +610,20 @@ export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext
       };
     })
     .filter((vehicle) => Boolean(vehicle.id && vehicle.label));
+}
+
+export async function loadMaintenanceRequestVehiclesRemote(driver: DriverContext, options: { onlyOwnCategory?: boolean; activeOnly?: boolean } = {}) {
+  const currentVehicleId = getDriverCurrentVehicleId(driver);
+  const result = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestVehiclesQuery(options));
+  const vehicles = mapMaintenanceRequestVehicles(result.entities, currentVehicleId);
+  if (vehicles.length || !options.onlyOwnCategory) return vehicles;
+
+  dataverseWarn("Consulta de veiculos proprios ativos vazia. Tentando veiculo atual/atribuido ao motorista.", {
+    driverId: driver.id,
+    currentVehicleId
+  });
+  const fallbackResult = await retrieveMultiple(DATAVERSE.veiculos, buildMaintenanceRequestAssignedVehiclesQuery(driver));
+  return mapMaintenanceRequestVehicles(fallbackResult.entities, currentVehicleId);
 }
 
 function getBooleanValue(record: DataverseRecord, logicalName: string) {
@@ -1853,21 +1891,24 @@ async function assertEntityHasAttributes(entitySetName: string, label: string, r
   }
 }
 
-export async function assertExpenseSchemaReadyRemote() {
+export async function assertExpenseSchemaReadyRemote(options: { includeManutencao?: boolean } = {}) {
+  const expenseFields = [
+    "cr40f_nome",
+    "cr40f_datagasto",
+    "cr40f_valor",
+    "cr40f_statusoperacional",
+    "cr40f_statusfinanceiro",
+    "cr40f_statusanexo",
+    "cr40f_origem",
+    "cr40f_observacao",
+    "cr40f_estabelecimento",
+    "cr40f_kminformado",
+    "cr40f_litros"
+  ];
+  if (options.includeManutencao) expenseFields.push("cr40f_manutencao");
+
   await Promise.all([
-    assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", [
-      "cr40f_nome",
-      "cr40f_datagasto",
-      "cr40f_valor",
-      "cr40f_statusoperacional",
-      "cr40f_statusfinanceiro",
-      "cr40f_statusanexo",
-      "cr40f_origem",
-      "cr40f_observacao",
-      "cr40f_estabelecimento",
-      "cr40f_kminformado",
-      "cr40f_litros"
-    ]),
+    assertEntityHasAttributes(DATAVERSE.despesasOperacionais, "Despesas", expenseFields),
     assertEntityHasAttributes(DATAVERSE.anexosDespesasOperacionais, "Anexos de Despesas", [
       "cr40f_nome",
       "cr40f_nomearquivo",
@@ -1981,7 +2022,7 @@ async function resolveLookupNavigationName({
   return navigationName;
 }
 
-export async function loadExpenseLookupNavigationNamesRemote(options: { includeVeiculo?: boolean; includeReserva?: boolean } = {}): Promise<ExpenseLookupNavigationNames> {
+export async function loadExpenseLookupNavigationNamesRemote(options: { includeVeiculo?: boolean; includeReserva?: boolean; includeManutencao?: boolean } = {}): Promise<ExpenseLookupNavigationNames> {
   const requests: Array<LookupNavigationRequest & { key: keyof ExpenseLookupNavigationNames }> = [
     {
       key: "motorista",
@@ -2035,6 +2076,15 @@ export async function loadExpenseLookupNavigationNamesRemote(options: { includeV
         label: "Despesa.Reserva"
     });
   }
+  if (options.includeManutencao) {
+    requests.push({
+      key: "manutencao",
+      referencingEntitySetName: DATAVERSE.despesasOperacionais,
+      referencedEntitySetName: DATAVERSE.manutencoes,
+      referencingAttribute: "cr40f_manutencao",
+      label: "Despesa.Manutencao"
+    });
+  }
 
   const settled = await Promise.allSettled(requests.map((request) => resolveLookupNavigationName(request)));
   const names: Partial<ExpenseLookupNavigationNames> = {};
@@ -2059,7 +2109,8 @@ export async function loadExpenseLookupNavigationNamesRemote(options: { includeV
     formaPagamento: names.formaPagamento,
     cidade: names.cidade,
     veiculo: names.veiculo,
-    reserva: names.reserva
+    reserva: names.reserva,
+    manutencao: names.manutencao
   };
 }
 
@@ -3167,11 +3218,126 @@ async function applyExchangePossessionRemote(exchange: DataverseRecord, exchange
   await createPossession(vehicle1Id, driver2Id, exchangeId);
 }
 
+function getRequiredMaintenanceExpenseOptionId(value: string, label: string) {
+  if (!value) throw new Error(`${label} obrigatorio para registrar gasto da manutencao.`);
+  return value;
+}
+
+async function findExistingMaintenanceExpense(maintenanceId: string) {
+  const filter = `_cr40f_manutencao_value eq ${cleanGuid(maintenanceId)}`;
+  const result = await retrieveMultiple(
+    DATAVERSE.despesasOperacionais,
+    `$select=cr40f_despesaoperacionalid,cr40f_nome,cr40f_statusanexo&$filter=${filter}&$orderby=modifiedon desc&$top=1`
+  );
+  return result.entities[0] ?? null;
+}
+
+async function upsertMaintenanceExpense({
+  detail,
+  fields,
+  record,
+  maintenanceId,
+  motoristaId,
+  vehicleId,
+  invoicePhotos,
+  finalizedAt,
+  onProgress
+}: {
+  detail: DetailData;
+  fields: Record<string, string>;
+  record: DataverseRecord;
+  maintenanceId: string;
+  motoristaId: string;
+  vehicleId: string;
+  invoicePhotos: ExpensePhoto[];
+  finalizedAt: string;
+  onProgress?: (message: string) => void;
+}) {
+  const cityId = getRequiredMaintenanceExpenseOptionId(getFieldValue(fields, "Cidade"), "Cidade");
+  if (!invoicePhotos.length) throw new Error("Adicione a foto da nota fiscal para registrar o gasto da manutencao.");
+
+  onProgress?.("Conferindo schema de despesas.");
+  await assertExpenseSchemaReadyRemote({ includeManutencao: true });
+  const [referenceData, lookupNavigationNames] = await Promise.all([
+    loadExpenseReferenceDataRemote(),
+    loadExpenseLookupNavigationNamesRemote({ includeVeiculo: true, includeManutencao: true })
+  ]);
+
+  const category = findExpenseCategoryByName(referenceData, ["Manutencao", "Manutenção"]);
+  const paymentMethod = findExpensePaymentMethodByName(
+    referenceData,
+    mapMaintenancePaymentToExpensePaymentNames(getFieldValue(fields, "Forma de Pagamento"))
+  );
+  const categoryId = getRequiredMaintenanceExpenseOptionId(category?.id ?? "", "Categoria Manutencao");
+  const paymentMethodId = getRequiredMaintenanceExpenseOptionId(paymentMethod?.id ?? "", "Forma de pagamento do gasto");
+
+  const maintenanceBusinessId = String(record.cr40f_id ?? detail.id ?? "").trim();
+  const draft: ExpenseDraft = {
+    categoriaId: categoryId,
+    veiculoId: vehicleId,
+    valor: getFieldValue(fields, "Valor") || "0",
+    dataGasto: finalizedAt.slice(0, 10),
+    formaPagamentoId: paymentMethodId,
+    cidadeId: cityId,
+    estabelecimento: getFieldValue(fields, "Estabelecimento"),
+    descricao: `Manutencao ${maintenanceBusinessId}: ${getFieldValue(fields, "Serviço Realizado", "Servico Realizado")}`,
+    kmInformado: "",
+    litros: ""
+  };
+  const expensePayload = buildExpenseCreatePayload({
+    draft,
+    photos: invoicePhotos,
+    referenceData,
+    motoristaId,
+    veiculoId: vehicleId,
+    manutencaoId: maintenanceId,
+    dataGastoIso: finalizedAt,
+    categoryEntitySet: DATAVERSE.categoriasDespesasOperacionais,
+    paymentMethodEntitySet: DATAVERSE.formasPagamentoDespesas,
+    cityEntitySet: DATAVERSE.cidades,
+    motoristaEntitySet: DATAVERSE.funcionarios,
+    veiculoEntitySet: DATAVERSE.veiculos,
+    reservaEntitySet: DATAVERSE.geral,
+    maintenanceEntitySet: DATAVERSE.manutencoes,
+    lookupNavigationNames
+  });
+
+  onProgress?.("Criando ou atualizando gasto da manutencao.");
+  const existingExpense = await findExistingMaintenanceExpense(maintenanceId);
+  const existingExpenseId = cleanODataGuid(existingExpense?.cr40f_despesaoperacionalid);
+  const expenseId = existingExpenseId || cleanODataGuid((await createOne(DATAVERSE.despesasOperacionais, expensePayload)).id);
+  if (existingExpenseId) await updateOne(DATAVERSE.despesasOperacionais, existingExpenseId, expensePayload);
+
+  const shouldUploadInvoices = shouldUploadMaintenanceExpenseInvoices(existingExpense?.cr40f_statusanexo);
+  if (shouldUploadInvoices) {
+    try {
+      await Promise.all(invoicePhotos.map((photo, index) => uploadExpenseInvoiceRemote({
+        expenseId,
+        expenseName: String(expensePayload.cr40f_nome ?? "Manutencao"),
+        motoristaId,
+        dataUrl: photo.dataUrl,
+        fileName: `nota-fiscal-manutencao-${index + 1}`,
+        order: index + 1,
+        onProgress
+      })));
+      await updateOne(DATAVERSE.despesasOperacionais, expenseId, { cr40f_statusanexo: 100000002 });
+    } catch (error) {
+      await updateOne(DATAVERSE.despesasOperacionais, expenseId, { cr40f_statusanexo: 100000003 });
+      throw error;
+    }
+  } else {
+    await updateOne(DATAVERSE.despesasOperacionais, expenseId, { cr40f_statusanexo: 100000002 });
+  }
+
+  return expenseId;
+}
+
 export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
   if (!dv?.id) throw new Error("Manutenção sem referência Dataverse.");
   const record = dv.record ?? {};
   const geralId = cleanODataGuid(record.__geralId);
+  const finalizedAt = new Date().toISOString();
   const paymentKey = normalizeText(getFieldValue(payload.fields, "Forma de Pagamento"));
   const paymentValue = MAINTENANCE_PAYMENT[paymentKey];
   dataverseLog("Finalização de manutenção iniciada.", {
@@ -3180,7 +3346,7 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
     photoKinds: Object.keys(payload.photos ?? {})
   });
   const maintenancePatch: Record<string, unknown> = {
-    cr40f_datamanutencao: new Date().toISOString(),
+    cr40f_datamanutencao: finalizedAt,
     cr40f_estabelecimento: getFieldValue(payload.fields, "Estabelecimento"),
     cr40f_valor: parseCurrencyNumber(getFieldValue(payload.fields, "Valor") || "0"),
     new_comentariosdocolaborador: getFieldValue(payload.fields, "Comentários do Motorista", "Comentarios do Motorista"),
@@ -3188,6 +3354,9 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
   };
   if (paymentValue !== undefined) maintenancePatch.cr40f_pagamento = paymentValue;
   const motoristaId = cleanODataGuid((record.__geral as DataverseRecord | undefined)?._cr40f_motorista_value);
+  const vehicleId = cleanODataGuid(record._cr40f_placa_carro_value);
+  if (!motoristaId) throw new Error("Motorista da manutencao nao encontrado para registrar gasto.");
+  if (!vehicleId) throw new Error("Veiculo da manutencao nao encontrado para registrar gasto.");
   if (motoristaId) maintenancePatch["cr40f_Realizado_por_nome@odata.bind"] = bind(DATAVERSE.funcionarios, motoristaId);
 
   payload.onProgress?.("Salvando dados da manutenção.");
@@ -3201,8 +3370,9 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
       const rightIndex = right === "NOTAFISCAL" ? 1 : Number(right.replace("NOTAFISCAL_", ""));
       return leftIndex - rightIndex;
     })
-    .map(([kind], index) => ({
+    .map(([kind, dataUrl], index) => ({
       kind: kind as MaintenancePhotoKind,
+      dataUrl: dataUrl ?? "",
       fileName: `nota-fiscal-${index + 1}`,
       targetField: "new_linkdanotafiscal"
     }));
@@ -3265,6 +3435,21 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
     throw new Error(`Manutenção salva, mas ${failedUploads} de ${uploadEntries.length} arquivo(s) falharam no upload.`);
   }
 
+  await upsertMaintenanceExpense({
+    detail: payload.detail,
+    fields: payload.fields,
+    record,
+    maintenanceId: dv.id,
+    motoristaId,
+    vehicleId,
+    invoicePhotos: invoiceEntries.map((entry, index) => ({
+      id: `${entry.kind}-${index + 1}`,
+      dataUrl: entry.dataUrl
+    })),
+    finalizedAt,
+    onProgress: payload.onProgress
+  });
+
   photoPatch.cr40f_status = MAINTENANCE_STATUS.realizado;
   payload.onProgress?.("Gravando links das fotos no Dataverse.");
   await updateOne(DATAVERSE.manutencoes, dv.id, photoPatch);
@@ -3273,7 +3458,7 @@ export async function finalizeMaintenanceRemote(payload: FinalizePayload) {
     await updateOne(DATAVERSE.geral, geralId, {
       new_observacaofinal: getFieldValue(payload.fields, "Comentários do Motorista", "Comentarios do Motorista", "Observações", "Observacoes"),
       cr40f_status: OPERATION_STATUS.concluido,
-      new_datadefinalizacao: new Date().toISOString()
+      new_datadefinalizacao: finalizedAt
     });
   }
 }

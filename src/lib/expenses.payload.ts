@@ -19,12 +19,15 @@ export function buildExpenseCreatePayload({
   motoristaId,
   veiculoId,
   reservaId,
+  manutencaoId,
+  dataGastoIso,
   categoryEntitySet,
   paymentMethodEntitySet,
   cityEntitySet,
   motoristaEntitySet,
   veiculoEntitySet,
   reservaEntitySet,
+  maintenanceEntitySet,
   lookupNavigationNames
 }: {
   draft: ExpenseDraft;
@@ -33,12 +36,15 @@ export function buildExpenseCreatePayload({
   motoristaId: string;
   veiculoId?: string;
   reservaId?: string;
+  manutencaoId?: string;
+  dataGastoIso?: string;
   categoryEntitySet: string;
   paymentMethodEntitySet: string;
   cityEntitySet: string;
   motoristaEntitySet: string;
   veiculoEntitySet: string;
   reservaEntitySet: string;
+  maintenanceEntitySet?: string;
   lookupNavigationNames: ExpenseLookupNavigationNames;
 }) {
   const fields = normalizeExpenseFields(draft, photos, referenceData);
@@ -47,7 +53,7 @@ export function buildExpenseCreatePayload({
 
   const payload: Record<string, unknown> = {
     cr40f_nome: name,
-    cr40f_datagasto: toDataverseDate(fields.dataGasto),
+    cr40f_datagasto: dataGastoIso ?? toDataverseDate(fields.dataGasto),
     cr40f_valor: fields.valor,
     cr40f_statusoperacional: 100000000,
     cr40f_statusfinanceiro: 100000000,
@@ -70,6 +76,11 @@ export function buildExpenseCreatePayload({
   if (reservaId) {
     if (!lookupNavigationNames.reserva) throw new Error("Navigation property de reserva n\u00e3o resolvido para despesa.");
     payload[`${lookupNavigationNames.reserva}@odata.bind`] = `/${reservaEntitySet}(${reservaId})`;
+  }
+  if (manutencaoId) {
+    if (!lookupNavigationNames.manutencao) throw new Error("Navigation property de manutencao nao resolvido para despesa.");
+    if (!maintenanceEntitySet) throw new Error("Entity set de manutencao nao informado para despesa.");
+    payload[`${lookupNavigationNames.manutencao}@odata.bind`] = `/${maintenanceEntitySet}(${manutencaoId})`;
   }
 
   return payload;

@@ -145,8 +145,8 @@ test("texto de cópia limpa html dos detalhes", () => {
 
   const text = detailsToClipboardText(detail);
   assert.equal(text.includes("<br"), false);
-  assert.equal(text.includes("Passageiros e Telefones de Contato:"), true);
-  assert.equal(text.includes("Ana Paula Martins\n+55"), true);
+  assert.equal(text.includes("Passageiros e Telefones de Contato:"), false);
+  assert.equal(text.includes("*Passageiro:* Ana Paula Martins\n+55"), true);
 });
 
 test("buildWhatsAppUrl remove caracteres e codifica mensagem", () => {

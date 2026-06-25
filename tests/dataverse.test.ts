@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildMaintenanceRequestRecord, buildMaintenanceRequestVehiclesQuery, buildReceiptEmailContent, normalizeReceiptIdentifier } from "../src/lib/dataverse.ts";
+import {
+  buildMaintenanceRequestAssignedVehiclesQuery,
+  buildMaintenanceRequestRecord,
+  buildMaintenanceRequestVehiclesQuery,
+  buildReceiptEmailContent,
+  normalizeReceiptIdentifier
+} from "../src/lib/dataverse.ts";
 
 test("solicitacao de manutencao monta apenas campos de requisicao", () => {
   const record = buildMaintenanceRequestRecord({
@@ -58,10 +64,43 @@ test("consulta de veiculos da manutencao filtra ativos proprios sem quebrar sele
   assert.equal(params.get("$select")?.includes("statuscode"), true);
   assert.equal(
     params.get("$filter"),
-    "statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq 202410001 and new_categoriadoveiculo eq 100000000"
+    "cr40f_statusdoveiculo eq 202410001 and new_categoriadoveiculo eq 100000000"
   );
   assert.equal(params.get("$orderby"), "cr40f_placa asc");
   assert.equal(params.get("$top"), "200");
+});
+
+test("consulta de veiculos para colisoes filtra apenas ativos sem restringir categoria", () => {
+  const query = buildMaintenanceRequestVehiclesQuery({ activeOnly: true });
+  const params = new URLSearchParams(query);
+
+  assert.equal(params.get("$select")?.includes("cr40f_statusdoveiculo"), true);
+  assert.equal(
+    params.get("$filter"),
+    "cr40f_statusdoveiculo eq 202410001"
+  );
+  assert.equal(params.get("$filter")?.includes("new_categoriadoveiculo"), false);
+  assert.equal(params.get("$orderby"), "cr40f_placa asc");
+  assert.equal(params.get("$top"), "200");
+});
+
+test("fallback de veiculos da manutencao busca veiculo atual ou atribuido ao motorista", () => {
+  const query = buildMaintenanceRequestAssignedVehiclesQuery({
+    id: "{22222222-2222-2222-2222-222222222222}",
+    email: "motorista@betinhos.com.br",
+    fullName: "Motorista Teste",
+    funcionario: {
+      _cr40f_veiculoatual_value: "{11111111-1111-1111-1111-111111111111}"
+    }
+  });
+  const params = new URLSearchParams(query);
+
+  assert.equal(params.get("$select")?.includes("new_categoriadoveiculo"), true);
+  assert.equal(
+    params.get("$filter"),
+    "statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq 202410001 and (_cr40f_motoristaatual_value eq 22222222-2222-2222-2222-222222222222 or cr40f_veiculosid eq 11111111-1111-1111-1111-111111111111)"
+  );
+  assert.equal(params.get("$top"), "20");
 });
 
 test("identificador de recibo usa padrao R-XXXX", () => {

@@ -7,9 +7,9 @@ import {
   captureVideoFrameDataUrl,
   createVideoPosterDataUrl,
   formatVideoDuration,
+  getDeviceOrientationAngle,
   getVideoDurationLabelFromUrl,
   getViewportOrientationAngle,
-  isLandscapeViewport,
   normalizeAngle,
   readBlobAsDataUrl,
   readPhotoFileAsDataUrl
@@ -34,6 +34,27 @@ type TorchMediaTrackConstraintSet = MediaTrackConstraintSet & {
   torch?: boolean;
 };
 
+type ImageCapturePhotoRange = {
+  max?: number;
+};
+
+type ImageCapturePhotoCapabilities = {
+  imageWidth?: ImageCapturePhotoRange;
+  imageHeight?: ImageCapturePhotoRange;
+};
+
+type ImageCapturePhotoSettings = {
+  imageWidth?: number;
+  imageHeight?: number;
+};
+
+type BrowserImageCapture = {
+  getPhotoCapabilities?: () => Promise<ImageCapturePhotoCapabilities>;
+  takePhoto: (settings?: ImageCapturePhotoSettings) => Promise<Blob>;
+};
+
+type BrowserImageCaptureConstructor = new (track: MediaStreamTrack) => BrowserImageCapture;
+
 function getTitleByKind(kind: MaintenancePhotoKind) {
   if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
   if (kind === "FOTO1") return "Tire a foto 1 de 3";
@@ -42,11 +63,8 @@ function getTitleByKind(kind: MaintenancePhotoKind) {
 }
 
 function getCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
-  const landscape = isLandscapeViewport();
   return {
-    facingMode: { ideal: mode },
-    width: { ideal: landscape ? 1920 : 1280 },
-    height: { ideal: landscape ? 1080 : 720 }
+    facingMode: { ideal: mode }
   };
 }
 
@@ -67,6 +85,34 @@ function revokeObjectPreviewUrl(url: string) {
   if (url.startsWith("blob:")) URL.revokeObjectURL(url);
 }
 
+function getBrowserImageCapture() {
+  return (globalThis as typeof globalThis & { ImageCapture?: BrowserImageCaptureConstructor }).ImageCapture;
+}
+
+function getMaxPhotoSettings(capabilities: ImageCapturePhotoCapabilities | undefined): ImageCapturePhotoSettings | undefined {
+  const imageWidth = Math.floor(Number(capabilities?.imageWidth?.max ?? 0));
+  const imageHeight = Math.floor(Number(capabilities?.imageHeight?.max ?? 0));
+  if (imageWidth > 0) return { imageWidth };
+  if (imageHeight > 0) return { imageHeight };
+  return undefined;
+}
+
+async function captureTrackPhotoDataUrl(track: MediaStreamTrack) {
+  const ImageCapture = getBrowserImageCapture();
+  if (!ImageCapture) return "";
+
+  const imageCapture = new ImageCapture(track);
+  let photoSettings: ImageCapturePhotoSettings | undefined;
+  try {
+    photoSettings = getMaxPhotoSettings(await imageCapture.getPhotoCapabilities?.());
+  } catch {
+    photoSettings = undefined;
+  }
+
+  const blob = await imageCapture.takePhoto(photoSettings);
+  return blob.size ? readBlobAsDataUrl(blob) : "";
+}
+
 export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }: MaintenancePhotoScreenProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -85,6 +131,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
   const [flashSupported, setFlashSupported] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [capturingPhoto, setCapturingPhoto] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
 
@@ -129,23 +176,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
     const syncDeviceOrientation = (event: DeviceOrientationEvent) => {
       if (typeof event.gamma !== "number" || typeof event.beta !== "number") return;
       lastDeviceOrientationAtRef.current = Date.now();
-      const currentAngle = orientationAngleRef.current;
-      const tiltX = Math.abs(event.gamma);
-      const enterLandscapeAt = 72;
-      const exitLandscapeAt = 58;
-
-      if (tiltX >= enterLandscapeAt) {
-        orientationAngleRef.current = event.gamma > 0 ? 90 : 270;
-        return;
-      }
-      if (event.beta < -125) {
-        orientationAngleRef.current = 180;
-        return;
-      }
-      if ((currentAngle === 90 || currentAngle === 270) && tiltX > exitLandscapeAt) return;
-      if (tiltX <= exitLandscapeAt && event.beta > -25) {
-        orientationAngleRef.current = 0;
-      }
+      orientationAngleRef.current = getDeviceOrientationAngle(event, orientationAngleRef.current);
     };
 
     syncViewportOrientation();
@@ -214,20 +245,37 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
     }
   };
 
-  const capture = () => {
+  const capture = async () => {
     const video = videoRef.current;
-    if (recording || processing) return;
+    if (recording || processing || capturingPhoto) return;
     if (!video || !ready || video.videoWidth === 0 || video.videoHeight === 0) {
       setCameraError("Câmera ainda não está pronta. Toque em Abrir câmera ou use câmera nativa.");
       return;
     }
 
-    const photoDataUrl = captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
-    if (photoDataUrl) onCapture(photoDataUrl);
+    setCapturingPhoto(true);
+    try {
+      const videoTrack = streamRef.current?.getVideoTracks()[0];
+      const stillPhotoDataUrl = videoTrack ? await captureTrackPhotoDataUrl(videoTrack) : "";
+      const photoDataUrl = stillPhotoDataUrl || captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
+      if (photoDataUrl) onCapture(photoDataUrl);
+    } catch (error) {
+      reportAppError(error, {
+        severity: "warning",
+        source: "maintenance-photo",
+        action: "capture-photo",
+        component: "MaintenancePhotoScreen",
+        screen: "TelaCameraMidia"
+      });
+      const photoDataUrl = captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
+      if (photoDataUrl) onCapture(photoDataUrl);
+    } finally {
+      setCapturingPhoto(false);
+    }
   };
 
   const switchCamera = () => {
-    if (recording || processing) return;
+    if (recording || processing || capturingPhoto) return;
     const next = facingMode === "environment" ? "user" : "environment";
     setFacingMode(next);
     onSwitchCamera();
@@ -427,7 +475,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
         <article className="photo-card camera-capture-card">
           <div className="photo-title camera-capture-title">
             <strong>{title ?? getTitleByKind(kind)}</strong>
-            <span>{recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando vídeo" : "Foto ou vídeo"}</span>
+            <span>{recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando vídeo" : capturingPhoto ? "Capturando foto" : "Foto ou vídeo"}</span>
           </div>
           <div className="photo-body">
             <div className="camera-view real-camera-view">
@@ -441,6 +489,7 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
               ) : null}
 
               {processing ? <div className="camera-loading camera-processing">Preparando vídeo...</div> : null}
+              {capturingPhoto ? <div className="camera-loading camera-processing">Capturando foto...</div> : null}
 
               {!startedByUser && !starting && !cameraError ? (
                 <div className="camera-start-panel">
@@ -478,22 +527,22 @@ export function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptu
                 className={`photo-flash ${flashOn ? "is-active" : ""}`}
                 onClick={toggleFlash}
                 aria-label={flashOn ? "Desativar flash" : "Ativar flash"}
-                disabled={!ready || !flashSupported || recording || processing}
+                disabled={!ready || !flashSupported || recording || processing || capturingPhoto}
               >
                 <SystemIcon name="flash" />
               </button>
-              <button className="photo-capture" onClick={capture} aria-label="Tirar foto" disabled={!ready || recording || processing}>
+              <button className="photo-capture" onClick={capture} aria-label="Tirar foto" disabled={!ready || recording || processing || capturingPhoto}>
                 <SystemIcon name="camera" />
               </button>
               <button
                 className={`photo-record ${recording ? "is-recording" : ""}`}
                 onClick={recording ? stopRecording : startRecording}
                 aria-label={recording ? "Parar gravação" : "Gravar vídeo"}
-                disabled={processing || (!ready && !recording)}
+                disabled={processing || capturingPhoto || (!ready && !recording)}
               >
                 <SystemIcon name="video" />
               </button>
-              <button className="photo-switch" onClick={switchCamera} aria-label="Mudar câmera" disabled={recording || processing}>
+              <button className="photo-switch" onClick={switchCamera} aria-label="Mudar câmera" disabled={recording || processing || capturingPhoto}>
                 <SystemIcon name="sync" />
               </button>
             </div>

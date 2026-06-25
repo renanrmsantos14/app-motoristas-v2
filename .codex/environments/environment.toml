@@ -4,3 +4,8 @@ name = "App Motoristas"
 
 [setup]
 script = ""
+
+[[actions]]
+name = "NPM RUN PUSH"
+icon = "tool"
+command = "npm run push"

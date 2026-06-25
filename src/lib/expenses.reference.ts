@@ -46,6 +46,27 @@ export function findExpenseCity(referenceData: ExpenseReferenceData, id: string)
   return referenceData.cities.find((city) => city.id === id) ?? null;
 }
 
+export function findExpenseCategoryByName(referenceData: ExpenseReferenceData, names: string[]) {
+  const wanted = new Set(names.map(normalizeText));
+  return referenceData.categories.find((category) => wanted.has(normalizeText(category.name))) ?? null;
+}
+
+export function findExpensePaymentMethodByName(referenceData: ExpenseReferenceData, names: string[]) {
+  const wanted = new Set(names.map(normalizeText));
+  return referenceData.paymentMethods.find((method) => wanted.has(normalizeText(method.name))) ?? null;
+}
+
+export function mapMaintenancePaymentToExpensePaymentNames(value: string) {
+  const normalized = normalizeText(value);
+  if (normalized.includes("pedido")) return ["Faturado (Plano mensal)", "Faturado"];
+  if (normalized.includes("pix")) return ["Particular (Reembolso)", "Particular"];
+  return ["Cartao de credito", "Cartão de crédito"];
+}
+
+export function shouldUploadMaintenanceExpenseInvoices(statusAnexo: unknown) {
+  return Number(statusAnexo) !== 100000002;
+}
+
 export function matchesExpenseCitySearch(city: ExpenseCityOption, query: string) {
   const normalizedQuery = normalizeText(query);
   if (!normalizedQuery) return false;

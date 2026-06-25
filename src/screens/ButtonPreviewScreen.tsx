@@ -398,6 +398,7 @@ export function ButtonPreviewScreen({ onShowToast }: ButtonPreviewScreenProps) {
     serviceDone: "Troca das pastilhas dianteiras e alinhamento rapido.",
     value: "480,00",
     payment: "Cartao de credito",
+    cidadeId: "city-sp",
     establishment: "Auto Center Vila Olimpia",
     notes: "Sem pendencias apos o teste."
   });
@@ -674,6 +675,9 @@ export function ButtonPreviewScreen({ onShowToast }: ButtonPreviewScreenProps) {
           maintenancePhotos={activeFinalizeKind === "maintenance" ? maintenancePhotos : {}}
           maintenanceDraft={maintenanceFinalizeDraft}
           onMaintenanceDraftChange={setMaintenanceFinalizeDraft}
+          expenseReferenceData={PREVIEW_EXPENSE_REFERENCE_DATA}
+          expenseReferenceLoading={false}
+          expenseReferenceError=""
           submitState={submitState}
           onClearPhotos={() => emitToast("Fotos locais limpas no preview.", "warning")}
           onPreviewMaintenancePhoto={() => openDemo("photo-preview")}

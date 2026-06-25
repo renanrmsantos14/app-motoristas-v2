@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   findFirstPendingDetail,
@@ -63,14 +63,6 @@ import {
 } from "./lib/dataverse";
 import { reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
 import {
-  createVideoPosterDataUrl,
-  getVideoDurationLabelFromUrl,
-  getViewportOrientationAngle,
-  normalizeAngle,
-  readBlobAsDataUrl,
-  readPhotoFileAsDataUrl
-} from "./lib/photoOrientation";
-import {
   cancelDetailLocally,
   clearMaintenancePhotos,
   deleteMaintenancePhoto as deleteFinalizationMaintenancePhoto,
@@ -133,13 +125,6 @@ type RefreshOptions = {
 
 type ReceiptEntrySource = "home" | "service";
 
-type NativeCaptureTarget =
-  | { flow: "maintenanceRequest" }
-  | { flow: "expense" }
-  | { flow: "receive" }
-  | { flow: "collision"; photoKind: CollisionPhotoKind }
-  | { flow: "maintenanceFinalize"; photoKind: MaintenancePhotoKind };
-
 const LOCAL_RECEIPT_CLIENT_MOCKS = [
   "Particular",
   "Tenaris",
@@ -168,10 +153,6 @@ function FlowProgressOverlay({ operation }: { operation: RemoteOperation }) {
 
 function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-function isVideoCaptureFile(file: File) {
-  return file.type.startsWith("video/") || /\.(mov|mp4|webm|m4v)$/i.test(file.name);
 }
 
 const DATA_LOADING_SUCCESS_DURATION_MS = 420;
@@ -286,11 +267,6 @@ function App() {
   const isButtonPreviewMode = devMode === "preview" || previewHashActive;
   const isReceiptPreviewMode = devMode === "recibo";
   const isLocalhostRuntime = useMemo(() => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname), []);
-  const isIosRuntime = useMemo(() => {
-    if (typeof navigator === "undefined") return false;
-    const userAgent = navigator.userAgent ?? "";
-    return /iPad|iPhone|iPod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  }, []);
   const hashRoutingActive = useMemo(
     () => isHashRoutingEnabled() && !isButtonPreviewMode && !isReceiptPreviewMode,
     [isButtonPreviewMode, isReceiptPreviewMode]
@@ -378,6 +354,7 @@ function App() {
     serviceDone: "",
     value: "",
     payment: "",
+    cidadeId: "",
     establishment: "",
     notes: ""
   });
@@ -385,8 +362,6 @@ function App() {
   const completingClearTimerRef = useRef<number | null>(null);
   const queueHighlightTimerRef = useRef<number | null>(null);
   const voucherDraftTimerRef = useRef<number | null>(null);
-  const nativeCaptureInputRef = useRef<HTMLInputElement | null>(null);
-  const nativeCaptureTargetRef = useRef<NativeCaptureTarget | null>(null);
   const lastGlobalErrorRef = useRef<{ id: string; at: number }>({ id: "", at: 0 });
 
   const logAppError = (error: unknown, action: string, phase = "") => {
@@ -428,136 +403,6 @@ function App() {
     });
     await wait(DATA_LOADING_SUCCESS_DURATION_MS);
     setDataLoadingState(null);
-  };
-
-  const openIosNativeCapture = (target: NativeCaptureTarget) => {
-    if (!isIosRuntime || !nativeCaptureInputRef.current) return false;
-    nativeCaptureTargetRef.current = target;
-    nativeCaptureInputRef.current.click();
-    return true;
-  };
-
-  const handleAppNativeCapture = async (event: ChangeEvent<HTMLInputElement>) => {
-    const target = nativeCaptureTargetRef.current;
-    const file = event.target.files?.[0];
-    if (!target || !file) {
-      event.target.value = "";
-      return;
-    }
-
-    const isVideo = isVideoCaptureFile(file);
-    const previewUrl = isVideo ? URL.createObjectURL(file) : "";
-
-    try {
-      if (isVideo) {
-        const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
-          readBlobAsDataUrl(file),
-          createVideoPosterDataUrl(previewUrl),
-          getVideoDurationLabelFromUrl(previewUrl)
-        ]);
-
-        switch (target.flow) {
-          case "maintenanceRequest":
-            setMaintenanceRequestPhotoDraft(videoDataUrl);
-            setMaintenanceRequestPhotoPreviewUrl("");
-            setMaintenanceRequestPhotoPosterUrl(posterUrl);
-            setMaintenanceRequestPhotoDurationLabel(durationLabel);
-            setMaintenanceRequestPreviewPhotoId("");
-            setScreen("previewFotoSolicitacaoManutencao");
-            break;
-          case "expense":
-            setExpensePhotoDraft(videoDataUrl);
-            setExpensePhotoPreviewUrl("");
-            setExpensePhotoPosterUrl(posterUrl);
-            setExpensePhotoDurationLabel(durationLabel);
-            setExpensePreviewPhotoId("");
-            setScreen("previewFotoGasto");
-            break;
-          case "receive":
-            setReceivePhotoDraft(videoDataUrl);
-            setReceivePhotoPreviewUrl("");
-            setReceivePhotoPosterUrl(posterUrl);
-            setReceivePhotoDurationLabel(durationLabel);
-            setReceivePreviewPhotoId("");
-            setScreen("previewFotoReceber");
-            break;
-          case "collision":
-            setCollisionPhotoKind(target.photoKind);
-            setCollisionPhotoDraft(videoDataUrl);
-            setCollisionPhotoPreviewUrl("");
-            setCollisionPhotoPosterUrl(posterUrl);
-            setCollisionPhotoDurationLabel(durationLabel);
-            setCollisionPreviewPhotoId("");
-            setScreen("previewFotoColisao");
-            break;
-          case "maintenanceFinalize":
-            setMaintenancePhotoKind(target.photoKind);
-            setPhotoDraft(videoDataUrl);
-            setPhotoDraftPreviewUrl("");
-            setMaintenanceExistingPreview(false);
-            setScreen("previewFotoManutencao");
-            break;
-        }
-      } else {
-        const dataUrl = await readPhotoFileAsDataUrl(file, normalizeAngle(getViewportOrientationAngle()));
-
-        switch (target.flow) {
-          case "maintenanceRequest":
-            setMaintenanceRequestPhotoDraft(dataUrl);
-            setMaintenanceRequestPhotoPreviewUrl("");
-            setMaintenanceRequestPhotoPosterUrl("");
-            setMaintenanceRequestPhotoDurationLabel("");
-            setMaintenanceRequestPreviewPhotoId("");
-            setScreen("previewFotoSolicitacaoManutencao");
-            break;
-          case "expense":
-            setExpensePhotoDraft(dataUrl);
-            setExpensePhotoPreviewUrl("");
-            setExpensePhotoPosterUrl("");
-            setExpensePhotoDurationLabel("");
-            setExpensePreviewPhotoId("");
-            setScreen("previewFotoGasto");
-            break;
-          case "receive":
-            setReceivePhotoDraft(dataUrl);
-            setReceivePhotoPreviewUrl("");
-            setReceivePhotoPosterUrl("");
-            setReceivePhotoDurationLabel("");
-            setReceivePreviewPhotoId("");
-            setScreen("previewFotoReceber");
-            break;
-          case "collision":
-            setCollisionPhotoKind(target.photoKind);
-            setCollisionPhotoDraft(dataUrl);
-            setCollisionPhotoPreviewUrl("");
-            setCollisionPhotoPosterUrl("");
-            setCollisionPhotoDurationLabel("");
-            setCollisionPreviewPhotoId("");
-            setScreen("previewFotoColisao");
-            break;
-          case "maintenanceFinalize":
-            setMaintenancePhotoKind(target.photoKind);
-            setPhotoDraft(dataUrl);
-            setPhotoDraftPreviewUrl("");
-            setMaintenanceExistingPreview(false);
-            setScreen("previewFotoManutencao");
-            break;
-        }
-      }
-    } catch (error) {
-      reportAppError(error, {
-        severity: "error",
-        source: "app",
-        action: "handle-app-native-capture",
-        phase: target.flow,
-        screen
-      });
-      setToast(error instanceof Error ? error.message : "Nao foi possivel preparar a captura.");
-    } finally {
-      nativeCaptureTargetRef.current = null;
-      if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
-      event.target.value = "";
-    }
   };
 
   useEffect(() => {
@@ -840,7 +685,10 @@ function App() {
     setMaintenanceVehiclesLoading(true);
     getDriverContext()
       .then(async (driver) => {
-        const vehicles = await loadMaintenanceRequestVehiclesRemote(driver, { onlyOwnCategory: screen === "solicitarManutencao" });
+        const vehicles = await loadMaintenanceRequestVehiclesRemote(driver, {
+          onlyOwnCategory: screen === "solicitarManutencao",
+          activeOnly: screen === "colisoes"
+        });
         if (!alive) return;
         setDriverContext(driver);
         const currentVehicleId = getDriverCurrentVehicleId(driver);
@@ -873,7 +721,8 @@ function App() {
   }, [screen, remoteMode]);
 
   useEffect(() => {
-    if (screen !== "gastos" || !remoteMode) return;
+    const shouldLoadExpenseReference = screen === "gastos" || (screen === "finalizar" && selectedDetail?.type === "MANUTENCAO");
+    if (!shouldLoadExpenseReference || !remoteMode) return;
     let alive = true;
     const hasReferenceData =
       expenseReferenceData.categories.length > 0 &&
@@ -893,7 +742,7 @@ function App() {
           severity: "error",
           source: "app",
           action: "loadExpenseReferenceDataRemote",
-          phase: "expense-form",
+          phase: screen === "finalizar" ? "maintenance-finalize" : "expense-form",
           screen
         });
         const message = error instanceof Error ? error.message : "Falha ao carregar categorias de despesas.";
@@ -906,7 +755,7 @@ function App() {
     return () => {
       alive = false;
     };
-  }, [screen, remoteMode]);
+  }, [screen, remoteMode, selectedDetail?.type]);
 
   useEffect(() => {
     if (screen !== "reciboPersonalizado") {
@@ -961,14 +810,6 @@ function App() {
       <LocalToast toast={dataLoading ? null : toast} onDismiss={() => setToastState(null)} />
       <LoadingOverlay loading={dataLoading} />
       {remoteOperation ? <FlowProgressOverlay operation={remoteOperation} /> : null}
-      <input
-        ref={nativeCaptureInputRef}
-        className="native-camera-input"
-        type="file"
-        accept="image/*,video/*,.mov,video/quicktime"
-        capture="environment"
-        onChange={handleAppNativeCapture}
-      />
       {criticalError ? (
         <div className="critical-error-overlay" role="dialog" aria-modal="true" aria-labelledby="critical-error-title">
           <div className="critical-error-card">
@@ -1170,7 +1011,7 @@ function App() {
       return next;
     });
     if (detailToFinalize.type === "MANUTENCAO") {
-      setMaintenanceFinalizeDraft({ serviceDone: "", value: "", payment: "", establishment: "", notes: "" });
+      setMaintenanceFinalizeDraft({ serviceDone: "", value: "", payment: "", cidadeId: "", establishment: "", notes: "" });
     }
     setSelectedDetail(null);
     setScreen("servicos");
@@ -1674,7 +1515,6 @@ function App() {
   };
 
   const openMaintenanceRequestCamera = () => {
-    if (openIosNativeCapture({ flow: "maintenanceRequest" })) return;
     setMaintenanceRequestPhotoDraft("");
     setMaintenanceRequestPhotoPreviewUrl("");
     setMaintenanceRequestPhotoPosterUrl("");
@@ -1750,7 +1590,6 @@ function App() {
   };
 
   const openExpenseCamera = () => {
-    if (openIosNativeCapture({ flow: "expense" })) return;
     setExpensePhotoDraft("");
     setExpensePhotoPreviewUrl("");
     setExpensePhotoPosterUrl("");
@@ -1826,7 +1665,6 @@ function App() {
   };
 
   const openReceiveCamera = () => {
-    if (openIosNativeCapture({ flow: "receive" })) return;
     setReceivePhotoDraft("");
     setReceivePhotoPreviewUrl("");
     setReceivePhotoPosterUrl("");
@@ -2062,7 +1900,6 @@ function App() {
   };
 
   const openCollisionCamera = (kind: CollisionPhotoKind) => {
-    if (openIosNativeCapture({ flow: "collision", photoKind: kind })) return;
     setCollisionPhotoKind(kind);
     setCollisionPhotoDraft("");
     setCollisionPhotoPreviewUrl("");
@@ -2073,7 +1910,6 @@ function App() {
   };
 
   const openMaintenanceFinalizeCamera = (kind: MaintenancePhotoKind) => {
-    if (openIosNativeCapture({ flow: "maintenanceFinalize", photoKind: kind })) return;
     setMaintenancePhotoKind(kind);
     setPhotoDraft(null);
     setPhotoDraftPreviewUrl("");
@@ -2518,6 +2354,9 @@ function App() {
         maintenancePhotos={store.photos[selectedDetail.id] ?? {}}
         maintenanceDraft={maintenanceFinalizeDraft}
         onMaintenanceDraftChange={setMaintenanceFinalizeDraft}
+        expenseReferenceData={expenseReferenceData}
+        expenseReferenceLoading={expenseReferenceLoading}
+        expenseReferenceError={expenseReferenceError}
         submitState={remoteOperation?.phase ?? "idle"}
         initialServiceObservation={getServiceObservationDraft(selectedDetail)}
         onClearPhotos={() => {
