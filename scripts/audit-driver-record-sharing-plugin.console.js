@@ -12,7 +12,7 @@
  *
  * O script verifica:
  * - entidades diretas: servico, troca, posse, colisao, recibo
- * - hierarquia do servico: manutencao, servicos por passageiro, passageiros
+ * - hierarquia do servico: manutencao, servicos por passageiro, passageiros e solicitante
  * - entidade especial: cr40f_servicosporpassageiro
  * - problemas de identidade: email vazio, systemuser ausente, duplicado
  * - shares faltando
@@ -83,7 +83,8 @@
         logicalName: "cr40f_reservadeveculos",
         id: "cr40f_reservadeveculosid",
         driver: "cr40f_motorista",
-        maintenance: "cr40f_om"
+        maintenance: "cr40f_om",
+        requester: "cr40f_solicitante"
       },
       maintenance: {
         logicalName: "cr40f_manutencoes",
@@ -110,11 +111,13 @@
     passengerAllowedUsers: new Map(),
     servicePassengerByService: new Map(),
     servicePassengerByPassenger: new Map(),
+    servicesByRequester: new Map(),
     sharesByRecord: new Map()
   };
   const LOOKUP_COLUMNS = new Set([
     CONFIG.tables.service.driver,
     CONFIG.tables.service.maintenance,
+    CONFIG.tables.service.requester,
     CONFIG.servicePassenger.serviceLookup,
     CONFIG.servicePassenger.passengerLookup,
     ...CONFIG.supportedDirectEntities.flatMap((item) => item.driverLookups)
@@ -143,6 +146,10 @@
       map.set(id, item);
     }
     return [...map.values()];
+  }
+
+  function uniqueIds(values) {
+    return [...new Set((values || []).map(cleanGuid).filter(Boolean))];
   }
 
   function escapeXml(value) {
@@ -358,7 +365,8 @@
     const service = await retrieveRecord(CONFIG.tables.service.logicalName, normalizedId, [
       CONFIG.tables.service.id,
       CONFIG.tables.service.driver,
-      CONFIG.tables.service.maintenance
+      CONFIG.tables.service.maintenance,
+      CONFIG.tables.service.requester
     ]);
 
     const driverLookup = getLookup(service, CONFIG.tables.service.driver);
@@ -390,7 +398,8 @@
       serviceId: normalizedId,
       drivers,
       identityIssues,
-      maintenanceLookup: getLookup(service, CONFIG.tables.service.maintenance)
+      maintenanceLookup: getLookup(service, CONFIG.tables.service.maintenance),
+      requesterLookup: getLookup(service, CONFIG.tables.service.requester)
     };
 
     state.serviceDrivers.set(normalizedId, value);
@@ -516,6 +525,40 @@
     return rows;
   }
 
+  async function listServicesByRequester(passengerId) {
+    const normalizedId = cleanGuid(passengerId);
+    if (!normalizedId) {
+      return [];
+    }
+
+    if (state.servicesByRequester.has(normalizedId)) {
+      return state.servicesByRequester.get(normalizedId);
+    }
+
+    const logicalName = CONFIG.tables.service.logicalName;
+    const fetch = [
+      "<fetch version=\"1.0\" mapping=\"logical\">",
+      `<entity name="${logicalName}">`,
+      `<attribute name="${CONFIG.tables.service.id}" />`,
+      `<attribute name="${CONFIG.tables.service.driver}" />`,
+      `<attribute name="${CONFIG.tables.service.requester}" />`,
+      "<filter type=\"and\">",
+      `<condition attribute="${CONFIG.tables.service.requester}" operator="eq" value="${escapeXml(normalizedId)}" />`,
+      "</filter>",
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    const rows = (await fetchXml(logicalName, fetch)).map((row) => ({
+      id: cleanGuid(row[CONFIG.tables.service.id]),
+      driver: getLookup(row, CONFIG.tables.service.driver),
+      requester: getLookup(row, CONFIG.tables.service.requester)
+    }));
+
+    state.servicesByRequester.set(normalizedId, rows);
+    return rows;
+  }
+
   async function getAllowedUsersForPassenger(passengerId) {
     const normalizedId = cleanGuid(passengerId);
     if (!normalizedId) {
@@ -527,11 +570,14 @@
     }
 
     const links = await listServicePassengersByPassenger(normalizedId);
+    const requesterServices = await listServicesByRequester(normalizedId);
+    const serviceIds = uniqueIds([
+      ...links.map((link) => link.service?.id),
+      ...requesterServices.map((service) => service.id)
+    ]);
+
     const nestedDrivers = await Promise.all(
-      links
-        .map((link) => cleanGuid(link.service?.id))
-        .filter(Boolean)
-        .map((serviceId) => getServiceCurrentDrivers(serviceId))
+      serviceIds.map((serviceId) => getServiceCurrentDrivers(serviceId))
     );
 
     const allowedUsers = uniqueById(
@@ -618,6 +664,7 @@
     const columns = [...entityConfig.driverLookups];
     if (entityConfig.includeServiceHierarchy) {
       columns.push(CONFIG.tables.service.maintenance);
+      columns.push(CONFIG.tables.service.requester);
     }
 
     const record = await retrieveRecord(entityConfig.logicalName, recordId, [...columns, meta.primaryIdAttribute]);
@@ -675,6 +722,13 @@
       result.checks.push(
         compareShares("maintenance", CONFIG.tables.maintenance.logicalName, maintenanceLookup.id, expectedUsers, maintenanceShares)
       );
+    }
+
+    const requesterLookup = getLookup(record, CONFIG.tables.service.requester);
+    if (requesterLookup) {
+      const allowedUsers = await getAllowedUsersForPassenger(requesterLookup.id);
+      const requesterShares = await getSharedPrincipals(CONFIG.tables.passenger.logicalName, requesterLookup.id);
+      result.checks.push(compareShares("requester", CONFIG.tables.passenger.logicalName, requesterLookup.id, allowedUsers, requesterShares));
     }
 
     const servicePassengers = await listServicePassengersByService(recordId);

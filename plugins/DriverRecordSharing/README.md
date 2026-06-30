@@ -352,6 +352,7 @@ No mesmo teste do servico, confirme tambem:
 
 - o novo motorista recebeu acesso aos `cr40f_servicosporpassageiro`
 - o novo motorista recebeu acesso aos passageiros relacionados
+- o novo motorista recebeu acesso ao `cr40f_solicitante`, quando preenchido
 - o antigo perdeu esses acessos quando deixou de ser o motorista
 
 ### Teste 5. Funcionario sem email Microsoft
@@ -382,8 +383,9 @@ Esperado:
 Validacao forte:
 
 1. abra o registro
-2. rode o script de consulta do `principalobjectaccess`
-3. confirme se existe linha para o `systemuser` do motorista atual
+2. cole `scripts/audit-driver-record-sharing-plugin.console.js` no console do model-driven app
+3. rode `await window.DriverRecordSharingAudit.auditCurrentForm()`
+4. confirme que nao existem shares faltando para servico, manutencao, solicitante, servicos por passageiro e passageiros
 
 No teste de troca:
 
