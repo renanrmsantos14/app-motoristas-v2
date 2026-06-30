@@ -11935,7 +11935,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.545","builtAt":"2026-06-30T12:59:31.065Z","builtAtLabel":"30/06/2026, 09:59"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.547","builtAt":"2026-06-30T13:02:12.053Z","builtAtLabel":"30/06/2026, 10:02"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83308,6 +83308,25 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       frameRate: { ideal: 30, max: 30 }
     };
   }
+  function getFallbackCameraVideoConstraints(mode) {
+    return {
+      facingMode: mode,
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      frameRate: { ideal: 30, max: 30 }
+    };
+  }
+  async function preferFullHdTrack(track, mode) {
+    try {
+      await track.applyConstraints(getCameraVideoConstraints(mode));
+      return;
+    } catch {
+    }
+    try {
+      await track.applyConstraints(getFallbackCameraVideoConstraints(mode));
+    } catch {
+    }
+  }
   function getPreferredVideoMimeType() {
     const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
     const isSafari = /Safari/i.test(userAgent) && !/Chrome|Chromium|Android/i.test(userAgent);
@@ -83367,18 +83386,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           });
         } catch {
           stream2 = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: mode,
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-              frameRate: { ideal: 30, max: 30 }
-            },
+            video: getFallbackCameraVideoConstraints(mode),
             audio: false
           });
         }
         streamRef.current = stream2;
         const videoTrack = stream2.getVideoTracks()[0];
         if (videoTrack) {
+          await preferFullHdTrack(videoTrack, mode);
           try {
             videoTrack.contentHint = onCaptureVideo ? "motion" : "detail";
           } catch {

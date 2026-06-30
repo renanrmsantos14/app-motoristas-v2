@@ -57,6 +57,30 @@ function getCameraVideoConstraints(mode: "environment" | "user"): MediaTrackCons
   };
 }
 
+function getFallbackCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
+  return {
+    facingMode: mode,
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+    frameRate: { ideal: 30, max: 30 }
+  };
+}
+
+async function preferFullHdTrack(track: MediaStreamTrack, mode: "environment" | "user") {
+  try {
+    await track.applyConstraints(getCameraVideoConstraints(mode));
+    return;
+  } catch {
+    // Ignore and keep fallback below.
+  }
+
+  try {
+    await track.applyConstraints(getFallbackCameraVideoConstraints(mode));
+  } catch {
+    // Keep browser-selected defaults when explicit constraints fail.
+  }
+}
+
 function getPreferredVideoMimeType() {
   const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
   const isSafari = /Safari/i.test(userAgent) && !/Chrome|Chromium|Android/i.test(userAgent);
@@ -125,12 +149,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         });
       } catch {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: mode,
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30, max: 30 }
-          },
+          video: getFallbackCameraVideoConstraints(mode),
           audio: false
         });
       }
@@ -138,6 +157,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       streamRef.current = stream;
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
+        await preferFullHdTrack(videoTrack, mode);
         try {
           videoTrack.contentHint = onCaptureVideo ? "motion" : "detail";
         } catch {
