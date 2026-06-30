@@ -137,7 +137,7 @@ export function ExpenseScreen({
   };
 
   const errorCount = Object.values(errors).filter(Boolean).length;
-  const isVideo = (photo: ExpensePhoto) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
+  const isVideo = (photo: ExpensePhoto) => photo.mediaType === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
 
   return (
     <AppShell screenLabel="TelaGastos">

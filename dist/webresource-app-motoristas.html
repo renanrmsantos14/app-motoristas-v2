@@ -11935,7 +11935,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.549","builtAt":"2026-06-30T13:08:02.610Z","builtAtLabel":"30/06/2026, 10:08"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.551","builtAt":"2026-06-30T13:37:26.744Z","builtAtLabel":"30/06/2026, 10:37"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -61753,7 +61753,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return [...COLLISION_REQUIRED_PHOTOS, ...COLLISION_THIRD_PARTY_REQUIRED_PHOTOS].find((item) => item.kind === kind)?.label ?? "Foto extra";
   }
   function isCollisionVideo(photo) {
-    return photo.mediaType === "video" || photo.kind === "video" || photo.dataUrl.startsWith("data:video/");
+    return photo.mediaType === "video" || photo.kind === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
   }
   function hasCollisionThirdParty(draft) {
     return draft.tipoOcorrencia === "bateram_em_mim" || draft.houveTerceiro;
@@ -61795,7 +61795,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (!cleanText(draft.terceiroVeiculo)) errors.terceiroVeiculo = "Informe modelo e cor do veiculo do terceiro.";
     }
     for (const requiredPhoto of getRequiredCollisionPhotos(hasThirdParty)) {
-      if (!photos.some((photo) => photo.kind === requiredPhoto.kind && photo.dataUrl)) {
+      if (!photos.some((photo) => photo.kind === requiredPhoto.kind && (photo.dataUrl || photo.rawBlob))) {
         errors[requiredPhoto.kind] = `Adicione foto: ${requiredPhoto.label}.`;
       }
     }
@@ -63107,7 +63107,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       onAddPhoto();
     };
     const errorCount = Object.values(errors).filter(Boolean).length;
-    const isVideo = (photo) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
+    const isVideo = (photo) => photo.mediaType === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
     return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)(AppShell, { screenLabel: "TelaGastos", children: [
       /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(FormMenu, { title: "Registrar gasto", onBack: isSubmitting ? void 0 : onBack }),
       /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("section", { className: "main-panel maintenance-request-main", children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("article", { className: "finalize-card maintenance-request-card", children: [
@@ -64711,6 +64711,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     title,
     prompt,
     photoDataUrl,
+    isVideo = false,
     onBack,
     onRetake,
     onConfirm,
@@ -64720,13 +64721,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     deleteOnly = false
   }) {
     const isInvoice = kind.startsWith("NOTAFISCAL");
-    const isVideo = Boolean(photoDataUrl?.startsWith("data:video/"));
+    const showVideo = isVideo || Boolean(photoDataUrl?.startsWith("data:video/")) || Boolean(externalVideoPreviewUrl);
     const [confirmDelete, setConfirmDelete] = (0, import_react48.useState)(false);
     const [videoPreviewUrl, setVideoPreviewUrl] = (0, import_react48.useState)("");
     const [videoPreviewError, setVideoPreviewError] = (0, import_react48.useState)(false);
     (0, import_react48.useEffect)(() => {
       setVideoPreviewError(false);
-      if (!isVideo || !photoDataUrl) {
+      if (!showVideo) {
         setVideoPreviewUrl("");
         return;
       }
@@ -64736,6 +64737,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
       let objectUrl = "";
       try {
+        if (!photoDataUrl) {
+          setVideoPreviewError(true);
+          setVideoPreviewUrl("");
+          return;
+        }
         objectUrl = dataUrlToObjectUrl(photoDataUrl);
       } catch (error2) {
         reportAppError(error2, {
@@ -64753,7 +64759,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return () => {
         if (objectUrl.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
       };
-    }, [externalVideoPreviewUrl, isVideo, photoDataUrl]);
+    }, [externalVideoPreviewUrl, showVideo, photoDataUrl]);
     const requestDelete = () => {
       if (!onDelete) return;
       setConfirmDelete(true);
@@ -64767,7 +64773,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("section", { className: "main-panel maintenance-preview-main", children: /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("article", { className: `maintenance-preview-card ${deleteOnly ? "is-delete-only" : ""}`, children: [
         deleteOnly ? null : /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "maintenance-preview-title", children: prompt ?? "A foto est\xE1 leg\xEDvel e ideal?" }),
         /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "maintenance-preview-body", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: `maintenance-preview-image ${isInvoice ? "invoice" : "vehicle"}`, "aria-label": "Preview da foto", children: isVideo && photoDataUrl ? /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(import_jsx_runtime33.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: `maintenance-preview-image ${isInvoice ? "invoice" : "vehicle"}`, "aria-label": "Preview da foto", children: showVideo ? /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(import_jsx_runtime33.Fragment, { children: [
             videoPreviewUrl ? /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("video", { className: "maintenance-preview-real-image", src: videoPreviewUrl, controls: true, playsInline: true, preload: "auto", muted: true, onCanPlay: () => setVideoPreviewError(false), onLoadedMetadata: () => setVideoPreviewError(false), onError: () => {
               reportAppError(new Error("Falha ao carregar preview de video."), {
                 severity: "warning",
@@ -64896,7 +64902,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       onAddPhoto();
     };
     const errorCount = Object.values(errors).filter(Boolean).length;
-    const isVideo = (photo) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
+    const isVideo = (photo) => photo.mediaType === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
     return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)(AppShell, { screenLabel: "TelaSolicitarManutencao", children: [
       /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(FormMenu, { title: "Solicitar manuten\xE7\xE3o", onBack: isSubmitting ? void 0 : onBack }),
       /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("section", { className: "main-panel maintenance-request-main", children: /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("article", { className: "finalize-card maintenance-request-card", children: [
@@ -65019,7 +65025,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const isSubmitting = submitState !== "idle";
     const photosRef = (0, import_react50.useRef)(null);
     const [photosError, setPhotosError] = (0, import_react50.useState)("");
-    const isVideo = (photo) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
+    const isVideo = (photo) => photo.mediaType === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
     const addPhoto = () => {
       setPhotosError("");
       onAddPhoto();
@@ -83568,19 +83574,17 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           const chunks = recordedChunksRef.current;
           recordedChunksRef.current = [];
           setRecording(false);
-          setProcessing(true);
           let previewUrl = "";
           try {
             if (!chunks.length) throw new Error("Nenhum dado de video capturado.");
             const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
             previewUrl = URL.createObjectURL(blob);
-            const fallbackDuration = formatVideoDuration((Date.now() - recordingStartedAtRef.current) / 1e3);
-            const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
-              readBlobAsDataUrl(blob),
-              createVideoPosterDataUrl(previewUrl),
-              getVideoDurationLabelFromUrl(previewUrl)
-            ]);
-            onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel || fallbackDuration);
+            onCaptureVideo({
+              rawBlob: blob,
+              previewUrl,
+              durationLabel: formatVideoDuration((Date.now() - recordingStartedAtRef.current) / 1e3)
+            });
+            previewUrl = "";
           } catch (error2) {
             reportAppError(error2, {
               severity: "error",
@@ -83592,7 +83596,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel preparar o video.");
           } finally {
             if (previewUrl) revokeObjectPreviewUrl(previewUrl);
-            setProcessing(false);
             recorderRef.current = null;
           }
         };
@@ -83639,12 +83642,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         }
         const previewUrl = URL.createObjectURL(file);
         try {
-          const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
-            readBlobAsDataUrl(file),
-            createVideoPosterDataUrl(previewUrl),
-            getVideoDurationLabelFromUrl(previewUrl)
-          ]);
-          onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel);
+          onCaptureVideo({ rawBlob: file, previewUrl });
+          event.target.value = "";
+          setProcessing(false);
+          return;
         } catch (error2) {
           reportAppError(error2, {
             severity: "error",
@@ -83656,7 +83657,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           });
           setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel preparar o video.");
         } finally {
-          revokeObjectPreviewUrl(previewUrl);
           event.target.value = "";
           setProcessing(false);
         }
@@ -83790,6 +83790,31 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     ] });
   }
 
+  // src/lib/mediaDrafts.ts
+  function isVideoDraft(value) {
+    return value.mediaType === "video" || String(value.dataUrl ?? "").startsWith("data:video/") || Boolean(value.rawBlob);
+  }
+  function hasMediaDraftContent(value) {
+    if (isVideoDraft(value)) return Boolean(value.rawBlob || value.dataUrl);
+    return Boolean(String(value.dataUrl ?? "").trim());
+  }
+  function revokePreviewUrl(url) {
+    if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+  }
+  async function prepareVideoBlobForUpload(blob) {
+    const previewUrl = URL.createObjectURL(blob);
+    try {
+      const [dataUrl, posterUrl, durationLabel] = await Promise.all([
+        readBlobAsDataUrl(blob),
+        createVideoPosterDataUrl(previewUrl),
+        getVideoDurationLabelFromUrl(previewUrl)
+      ]);
+      return { dataUrl, posterUrl, durationLabel };
+    } finally {
+      revokePreviewUrl(previewUrl);
+    }
+  }
+
   // src/App.tsx
   var import_jsx_runtime44 = __toESM(require_jsx_runtime(), 1);
   var LOCAL_RECEIPT_CLIENT_MOCKS = [
@@ -83875,6 +83900,23 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return {};
     }
   }
+  function isVideoMediaDraft(dataUrl, rawBlob) {
+    return Boolean(rawBlob) || String(dataUrl ?? "").startsWith("data:video/");
+  }
+  async function prepareMediaDraftForUpload(photo) {
+    if (!photo.rawBlob || photo.dataUrl) return photo;
+    const prepared = await prepareVideoBlobForUpload(photo.rawBlob);
+    return {
+      ...photo,
+      dataUrl: prepared.dataUrl,
+      posterUrl: photo.posterUrl ?? prepared.posterUrl,
+      durationLabel: photo.durationLabel ?? prepared.durationLabel,
+      mediaType: "video"
+    };
+  }
+  function revokePhotoPreviewUrls(photos) {
+    photos.forEach((photo) => revokePreviewUrl(photo.previewUrl));
+  }
   function App() {
     const devMode = (0, import_react58.useMemo)(() => new URLSearchParams(window.location.search).get("dev") ?? "", []);
     const previewHashActive = (0, import_react58.useMemo)(() => /^#\/?preview(?:[/?]|$)/i.test(window.location.hash), []);
@@ -83899,6 +83941,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [maintenancePhotoKind, setMaintenancePhotoKind] = (0, import_react58.useState)("NOTAFISCAL");
     const [photoDraft, setPhotoDraft] = (0, import_react58.useState)(null);
     const [photoDraftPreviewUrl, setPhotoDraftPreviewUrl] = (0, import_react58.useState)("");
+    const [photoDraftRawBlob, setPhotoDraftRawBlob] = (0, import_react58.useState)(null);
+    const [photoDraftIsVideo, setPhotoDraftIsVideo] = (0, import_react58.useState)(false);
     const [toast, setToastState] = (0, import_react58.useState)(null);
     const [dataLoading, setDataLoading] = (0, import_react58.useState)(null);
     const [criticalError, setCriticalError] = (0, import_react58.useState)("");
@@ -83939,6 +83983,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [expensePhotoPreviewUrl, setExpensePhotoPreviewUrl] = (0, import_react58.useState)("");
     const [expensePhotoPosterUrl, setExpensePhotoPosterUrl] = (0, import_react58.useState)("");
     const [expensePhotoDurationLabel, setExpensePhotoDurationLabel] = (0, import_react58.useState)("");
+    const [expensePhotoRawBlob, setExpensePhotoRawBlob] = (0, import_react58.useState)(null);
+    const [expensePhotoIsVideo, setExpensePhotoIsVideo] = (0, import_react58.useState)(false);
     const [expensePreviewPhotoId, setExpensePreviewPhotoId] = (0, import_react58.useState)("");
     const [receiveProofs, setReceiveProofs] = (0, import_react58.useState)({});
     const [receiveUploadedCounts, setReceiveUploadedCounts] = (0, import_react58.useState)({});
@@ -83946,6 +83992,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [receivePhotoPreviewUrl, setReceivePhotoPreviewUrl] = (0, import_react58.useState)("");
     const [receivePhotoPosterUrl, setReceivePhotoPosterUrl] = (0, import_react58.useState)("");
     const [receivePhotoDurationLabel, setReceivePhotoDurationLabel] = (0, import_react58.useState)("");
+    const [receivePhotoRawBlob, setReceivePhotoRawBlob] = (0, import_react58.useState)(null);
+    const [receivePhotoIsVideo, setReceivePhotoIsVideo] = (0, import_react58.useState)(false);
     const [receivePreviewPhotoId, setReceivePreviewPhotoId] = (0, import_react58.useState)("");
     const [collisionDraft, setCollisionDraft] = (0, import_react58.useState)(() => createEmptyCollisionDraft());
     const [collisionPhotos, setCollisionPhotos] = (0, import_react58.useState)([]);
@@ -83953,6 +84001,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [collisionPhotoPreviewUrl, setCollisionPhotoPreviewUrl] = (0, import_react58.useState)("");
     const [collisionPhotoPosterUrl, setCollisionPhotoPosterUrl] = (0, import_react58.useState)("");
     const [collisionPhotoDurationLabel, setCollisionPhotoDurationLabel] = (0, import_react58.useState)("");
+    const [collisionPhotoRawBlob, setCollisionPhotoRawBlob] = (0, import_react58.useState)(null);
+    const [collisionPhotoIsVideo, setCollisionPhotoIsVideo] = (0, import_react58.useState)(false);
     const [collisionPhotoKind, setCollisionPhotoKind] = (0, import_react58.useState)("cena");
     const [collisionPreviewPhotoId, setCollisionPreviewPhotoId] = (0, import_react58.useState)("");
     const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = (0, import_react58.useState)([]);
@@ -83960,6 +84010,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [maintenanceRequestPhotoPreviewUrl, setMaintenanceRequestPhotoPreviewUrl] = (0, import_react58.useState)("");
     const [maintenanceRequestPhotoPosterUrl, setMaintenanceRequestPhotoPosterUrl] = (0, import_react58.useState)("");
     const [maintenanceRequestPhotoDurationLabel, setMaintenanceRequestPhotoDurationLabel] = (0, import_react58.useState)("");
+    const [maintenanceRequestPhotoRawBlob, setMaintenanceRequestPhotoRawBlob] = (0, import_react58.useState)(null);
+    const [maintenanceRequestPhotoIsVideo, setMaintenanceRequestPhotoIsVideo] = (0, import_react58.useState)(false);
     const [maintenanceRequestPreviewPhotoId, setMaintenanceRequestPreviewPhotoId] = (0, import_react58.useState)("");
     const [maintenanceExistingPreview, setMaintenanceExistingPreview] = (0, import_react58.useState)(false);
     const [maintenanceFinalizeDraft, setMaintenanceFinalizeDraft] = (0, import_react58.useState)({
@@ -83975,6 +84027,49 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const queueHighlightTimerRef = (0, import_react58.useRef)(null);
     const voucherDraftTimerRef = (0, import_react58.useRef)(null);
     const lastGlobalErrorRef = (0, import_react58.useRef)({ id: "", at: 0 });
+    const clearMaintenanceFinalizePhotoDraft = (keepPreviewUrl = false) => {
+      if (!keepPreviewUrl) revokePreviewUrl(photoDraftPreviewUrl);
+      setPhotoDraft(null);
+      setPhotoDraftPreviewUrl("");
+      setPhotoDraftRawBlob(null);
+      setPhotoDraftIsVideo(false);
+    };
+    const clearMaintenanceRequestPhotoDraftState = (keepPreviewUrl = false) => {
+      if (!keepPreviewUrl) revokePreviewUrl(maintenanceRequestPhotoPreviewUrl);
+      setMaintenanceRequestPhotoDraft("");
+      setMaintenanceRequestPhotoPreviewUrl("");
+      setMaintenanceRequestPhotoPosterUrl("");
+      setMaintenanceRequestPhotoDurationLabel("");
+      setMaintenanceRequestPhotoRawBlob(null);
+      setMaintenanceRequestPhotoIsVideo(false);
+    };
+    const clearExpensePhotoDraftState = (keepPreviewUrl = false) => {
+      if (!keepPreviewUrl) revokePreviewUrl(expensePhotoPreviewUrl);
+      setExpensePhotoDraft("");
+      setExpensePhotoPreviewUrl("");
+      setExpensePhotoPosterUrl("");
+      setExpensePhotoDurationLabel("");
+      setExpensePhotoRawBlob(null);
+      setExpensePhotoIsVideo(false);
+    };
+    const clearReceivePhotoDraftState = (keepPreviewUrl = false) => {
+      if (!keepPreviewUrl) revokePreviewUrl(receivePhotoPreviewUrl);
+      setReceivePhotoDraft("");
+      setReceivePhotoPreviewUrl("");
+      setReceivePhotoPosterUrl("");
+      setReceivePhotoDurationLabel("");
+      setReceivePhotoRawBlob(null);
+      setReceivePhotoIsVideo(false);
+    };
+    const clearCollisionPhotoDraftState = (keepPreviewUrl = false) => {
+      if (!keepPreviewUrl) revokePreviewUrl(collisionPhotoPreviewUrl);
+      setCollisionPhotoDraft("");
+      setCollisionPhotoPreviewUrl("");
+      setCollisionPhotoPosterUrl("");
+      setCollisionPhotoDurationLabel("");
+      setCollisionPhotoRawBlob(null);
+      setCollisionPhotoIsVideo(false);
+    };
     const logAppError = (error2, action, phase = "") => {
       reportAppError(error2, {
         severity: "error",
@@ -84730,13 +84825,19 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
         const driver = driverContext ?? await getDriverContext();
         const veiculoId = draft.veiculoId || getDriverCurrentVehicleId(driver);
-        const photosToSubmit = expensePhotos.filter((photo) => Boolean(photo.dataUrl));
+        const photosToSubmit = expensePhotos.filter((photo) => hasMediaDraftContent(photo));
         setRemoteOperation({
           title: "Registrando gasto",
           message: "Conferindo schema do Dataverse.",
           phase: "loading"
         });
         await assertExpenseSchemaReadyRemote();
+        setRemoteOperation({
+          title: "Registrando gasto",
+          message: "Preparando arquivos do comprovante.",
+          phase: "loading"
+        });
+        const preparedPhotosToSubmit = await Promise.all(photosToSubmit.map((photo) => prepareMediaDraftForUpload(photo)));
         const lookupNavigationNames = await loadExpenseLookupNavigationNamesRemote({
           includeVeiculo: Boolean(draft.veiculoId || veiculoId),
           includeReserva: false
@@ -84748,7 +84849,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
         const payload = buildExpenseCreatePayload({
           draft,
-          photos: photosToSubmit,
+          photos: preparedPhotosToSubmit,
           referenceData: expenseReferenceData,
           motoristaId: driver.id,
           veiculoId,
@@ -84762,15 +84863,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
         const result = await createOne(DATAVERSE.despesasOperacionais, payload);
         createdExpenseId = result.id;
-        if (photosToSubmit.length) {
+        if (preparedPhotosToSubmit.length) {
           let completedUploads = 0;
           setRemoteOperation({
             title: "Registrando gasto",
-            message: `Enviando ${photosToSubmit.length} arquivo(s) em paralelo (0/${photosToSubmit.length}).`,
+            message: `Enviando ${preparedPhotosToSubmit.length} arquivo(s) em paralelo (0/${preparedPhotosToSubmit.length}).`,
             detailId: result.id,
             phase: "loading"
           });
-          const uploadResults = await Promise.allSettled(photosToSubmit.map(async (photo, index) => {
+          const uploadResults = await Promise.allSettled(preparedPhotosToSubmit.map(async (photo, index) => {
             const link = await uploadExpenseInvoiceRemote({
               expenseId: result.id,
               expenseName: String(payload.cr40f_nome ?? "Despesa"),
@@ -84788,7 +84889,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             completedUploads += 1;
             setRemoteOperation({
               title: "Registrando gasto",
-              message: `Uploads paralelos conclu\xEDdos (${completedUploads}/${photosToSubmit.length}).`,
+              message: `Uploads paralelos conclu\xEDdos (${completedUploads}/${preparedPhotosToSubmit.length}).`,
               detailId: result.id,
               phase: "loading"
             });
@@ -84796,10 +84897,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           }));
           const failedUploads = uploadResults.filter((uploadResult) => uploadResult.status === "rejected").length;
           if (failedUploads) {
-            throw new Error(`Despesa criada, mas ${failedUploads} de ${photosToSubmit.length} arquivo(s) falharam no upload.`);
+            throw new Error(`Despesa criada, mas ${failedUploads} de ${preparedPhotosToSubmit.length} arquivo(s) falharam no upload.`);
           }
         }
-        if (photosToSubmit.length) {
+        if (preparedPhotosToSubmit.length) {
           await updateOne(DATAVERSE.despesasOperacionais, result.id, { cr40f_statusanexo: 100000002 });
         }
         setRemoteOperation({
@@ -84810,6 +84911,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
         await wait(720);
         setRemoteOperation(null);
+        revokePhotoPreviewUrls(expensePhotos);
         setExpenseDraft({
           categoriaId: "",
           veiculoId: "",
@@ -84823,10 +84925,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           litros: ""
         });
         setExpensePhotos([]);
-        setExpensePhotoDraft("");
-        setExpensePhotoPreviewUrl("");
-        setExpensePhotoPosterUrl("");
-        setExpensePhotoDurationLabel("");
+        clearExpensePhotoDraftState();
         setExpensePreviewPhotoId("");
         setScreen("inicio");
         setToast("Gasto registrado.");
@@ -84861,7 +84960,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         const veiculoId = draft.veiculoId || getDriverCurrentVehicleId(driver);
         const collisionHasThirdParty = hasCollisionThirdParty(draft);
         const photosToSubmit = collisionPhotos.filter(
-          (photo) => Boolean(photo.dataUrl) && (collisionHasThirdParty || photo.kind !== "danoTerceiro" && photo.kind !== "documentoTerceiro")
+          (photo) => hasMediaDraftContent(photo) && (collisionHasThirdParty || photo.kind !== "danoTerceiro" && photo.kind !== "documentoTerceiro")
         );
         setRemoteOperation({
           title: "Registrando colis\xE3o",
@@ -84869,6 +84968,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           phase: "loading"
         });
         await assertCollisionSchemaReadyRemote();
+        setRemoteOperation({
+          title: "Registrando colis\xE3o",
+          message: "Preparando evid\xEAncias.",
+          phase: "loading"
+        });
+        const preparedPhotosToSubmit = await Promise.all(photosToSubmit.map((photo) => prepareMediaDraftForUpload(photo)));
         const lookupNavigationNames = await loadCollisionLookupNavigationNamesRemote();
         setRemoteOperation({
           title: "Registrando colis\xE3o",
@@ -84877,7 +84982,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
         const payload = buildCollisionCreatePayload({
           draft,
-          photos: photosToSubmit,
+          photos: preparedPhotosToSubmit,
           motoristaId: driver.id,
           veiculoId,
           motoristaEntitySet: DATAVERSE.funcionarios,
@@ -84887,14 +84992,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         const result = await createOne(DATAVERSE.colisoes, payload);
         createdCollisionId = result.id;
         const collisionName = String(payload.cr40f_nome ?? "Colis\xE3o");
-        if (photosToSubmit.length) {
+        if (preparedPhotosToSubmit.length) {
           setRemoteOperation({
             title: "Registrando colis\xE3o",
-            message: `Enviando ${photosToSubmit.length} arquivo(s) em paralelo (0/${photosToSubmit.length}).`,
+            message: `Enviando ${preparedPhotosToSubmit.length} arquivo(s) em paralelo (0/${preparedPhotosToSubmit.length}).`,
             detailId: result.id,
             phase: "loading"
           });
-          const uploadResults = await Promise.allSettled(photosToSubmit.map(async (photo, index) => {
+          const uploadResults = await Promise.allSettled(preparedPhotosToSubmit.map(async (photo, index) => {
             const link = await uploadCollisionPhotoRemote({
               collisionId: result.id,
               collisionName,
@@ -84912,7 +85017,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             uploadedCount += 1;
             setRemoteOperation({
               title: "Registrando colis\xE3o",
-              message: `Uploads paralelos conclu\xEDdos (${uploadedCount}/${photosToSubmit.length}).`,
+              message: `Uploads paralelos conclu\xEDdos (${uploadedCount}/${preparedPhotosToSubmit.length}).`,
               detailId: result.id,
               phase: "loading"
             });
@@ -84920,10 +85025,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           }));
           const failedUploads = uploadResults.filter((uploadResult) => uploadResult.status === "rejected").length;
           if (failedUploads) {
-            throw new Error(`Colis\xE3o criada, mas ${failedUploads} de ${photosToSubmit.length} arquivo(s) falharam no upload.`);
+            throw new Error(`Colis\xE3o criada, mas ${failedUploads} de ${preparedPhotosToSubmit.length} arquivo(s) falharam no upload.`);
           }
         }
-        if (photosToSubmit.length) {
+        if (preparedPhotosToSubmit.length) {
           await updateOne(DATAVERSE.colisoes, result.id, { cr40f_statusanexo: COLLISION_ATTACHMENT_STATUS.completo });
         }
         setRemoteOperation({
@@ -84934,12 +85039,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
         await wait(720);
         setRemoteOperation(null);
+        revokePhotoPreviewUrls(collisionPhotos);
         setCollisionDraft(createEmptyCollisionDraft());
         setCollisionPhotos([]);
-        setCollisionPhotoDraft("");
-        setCollisionPhotoPreviewUrl("");
-        setCollisionPhotoPosterUrl("");
-        setCollisionPhotoDurationLabel("");
+        clearCollisionPhotoDraftState();
         setCollisionPreviewPhotoId("");
         setScreen("inicio");
         setToast("Colis\xE3o registrada.");
@@ -84976,13 +85079,16 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           message: "Criando ordem de manuten\xE7\xE3o.",
           phase: "loading"
         });
+        const preparedPhotos = await Promise.all(
+          maintenanceRequestPhotos.filter((photo) => hasMediaDraftContent(photo)).map((photo) => prepareMediaDraftForUpload(photo))
+        );
         const result = await createMaintenanceRequestRemote({
           descricao: fields.descricao,
           kmAtual: fields.kmAtual,
           veiculoId: fields.veiculoId,
           motoristaId: driver.id,
           gravidade: fields.gravidade,
-          photos: maintenanceRequestPhotos.map((photo) => photo.dataUrl),
+          photos: preparedPhotos.map((photo) => photo.dataUrl),
           onProgress: (message) => setRemoteOperation({
             title: "Solicitando manuten\xE7\xE3o",
             message,
@@ -84997,12 +85103,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
         await wait(720);
         setRemoteOperation(null);
+        revokePhotoPreviewUrls(maintenanceRequestPhotos);
         setMaintenanceRequestDraft({ descricao: "", kmAtual: "", veiculoId: maintenanceCurrentVehicleId, gravidade: "" });
         setMaintenanceRequestPhotos([]);
-        setMaintenanceRequestPhotoDraft("");
-        setMaintenanceRequestPhotoPreviewUrl("");
-        setMaintenanceRequestPhotoPosterUrl("");
-        setMaintenanceRequestPhotoDurationLabel("");
+        clearMaintenanceRequestPhotoDraftState();
         setScreen("inicio");
         setToast("Solicita\xE7\xE3o enviada para aprova\xE7\xE3o.");
       } catch (error2) {
@@ -85012,18 +85116,17 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
     };
     const openMaintenanceRequestCamera = () => {
-      setMaintenanceRequestPhotoDraft("");
-      setMaintenanceRequestPhotoPreviewUrl("");
-      setMaintenanceRequestPhotoPosterUrl("");
-      setMaintenanceRequestPhotoDurationLabel("");
+      clearMaintenanceRequestPhotoDraftState();
       setMaintenanceRequestPreviewPhotoId("");
       setScreen("fotoSolicitacaoManutencao");
     };
-    const openMaintenanceRequestVideoPreview = (videoDataUrl, _previewUrl, posterUrl, durationLabel = "") => {
-      setMaintenanceRequestPhotoDraft(videoDataUrl);
-      setMaintenanceRequestPhotoPreviewUrl("");
-      setMaintenanceRequestPhotoPosterUrl(posterUrl);
-      setMaintenanceRequestPhotoDurationLabel(durationLabel);
+    const openMaintenanceRequestVideoPreview = (video) => {
+      setMaintenanceRequestPhotoDraft("");
+      setMaintenanceRequestPhotoPreviewUrl(video.previewUrl);
+      setMaintenanceRequestPhotoPosterUrl(video.posterUrl ?? "");
+      setMaintenanceRequestPhotoDurationLabel(video.durationLabel ?? "");
+      setMaintenanceRequestPhotoRawBlob(video.rawBlob);
+      setMaintenanceRequestPhotoIsVideo(true);
       setMaintenanceRequestPreviewPhotoId("");
       setScreen("previewFotoSolicitacaoManutencao");
     };
@@ -85034,21 +85137,30 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setMaintenanceRequestPhotoPreviewUrl(photo.previewUrl ?? "");
       setMaintenanceRequestPhotoPosterUrl(photo.posterUrl ?? "");
       setMaintenanceRequestPhotoDurationLabel(photo.durationLabel ?? "");
+      setMaintenanceRequestPhotoRawBlob(photo.rawBlob ?? null);
+      setMaintenanceRequestPhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
       setMaintenanceRequestPreviewPhotoId(photoId);
       setScreen("previewFotoSolicitacaoManutencao");
     };
     const confirmMaintenanceRequestPhoto = () => {
-      if (!maintenanceRequestPhotoDraft) return setScreen("solicitarManutencao");
+      if (!hasMediaDraftContent({ dataUrl: maintenanceRequestPhotoDraft, rawBlob: maintenanceRequestPhotoRawBlob, mediaType: maintenanceRequestPhotoIsVideo ? "video" : "foto" })) {
+        return setScreen("solicitarManutencao");
+      }
       if (maintenanceRequestPreviewPhotoId) {
         setMaintenanceRequestPhotos(
-          (current) => current.map((photo) => photo.id === maintenanceRequestPreviewPhotoId ? {
-            ...photo,
-            dataUrl: maintenanceRequestPhotoDraft,
-            previewUrl: maintenanceRequestPhotoPreviewUrl || void 0,
-            posterUrl: maintenanceRequestPhotoPosterUrl || void 0,
-            durationLabel: maintenanceRequestPhotoDurationLabel || void 0,
-            mediaType: maintenanceRequestPhotoDraft.startsWith("data:video/") ? "video" : "foto"
-          } : photo)
+          (current) => current.map((photo) => {
+            if (photo.id !== maintenanceRequestPreviewPhotoId) return photo;
+            if (photo.previewUrl && photo.previewUrl !== (maintenanceRequestPhotoPreviewUrl || void 0)) revokePreviewUrl(photo.previewUrl);
+            return {
+              ...photo,
+              dataUrl: maintenanceRequestPhotoDraft,
+              previewUrl: maintenanceRequestPhotoPreviewUrl || void 0,
+              posterUrl: maintenanceRequestPhotoPosterUrl || void 0,
+              durationLabel: maintenanceRequestPhotoDurationLabel || void 0,
+              mediaType: maintenanceRequestPhotoIsVideo ? "video" : "foto",
+              rawBlob: maintenanceRequestPhotoIsVideo ? maintenanceRequestPhotoRawBlob ?? void 0 : void 0
+            };
+          })
         );
       } else {
         setMaintenanceRequestPhotos((current) => [
@@ -85059,41 +85171,39 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             previewUrl: maintenanceRequestPhotoPreviewUrl || void 0,
             posterUrl: maintenanceRequestPhotoPosterUrl || void 0,
             durationLabel: maintenanceRequestPhotoDurationLabel || void 0,
-            mediaType: maintenanceRequestPhotoDraft.startsWith("data:video/") ? "video" : "foto"
+            mediaType: maintenanceRequestPhotoIsVideo ? "video" : "foto",
+            rawBlob: maintenanceRequestPhotoIsVideo ? maintenanceRequestPhotoRawBlob ?? void 0 : void 0
           }
         ]);
       }
-      setMaintenanceRequestPhotoDraft("");
-      setMaintenanceRequestPhotoPreviewUrl("");
-      setMaintenanceRequestPhotoPosterUrl("");
-      setMaintenanceRequestPhotoDurationLabel("");
+      clearMaintenanceRequestPhotoDraftState(true);
       setMaintenanceRequestPreviewPhotoId("");
       setScreen("solicitarManutencao");
     };
     const deleteMaintenanceRequestPhoto = () => {
       if (maintenanceRequestPreviewPhotoId) {
-        setMaintenanceRequestPhotos((current) => current.filter((photo) => photo.id !== maintenanceRequestPreviewPhotoId));
+        setMaintenanceRequestPhotos((current) => {
+          const removed = current.find((photo) => photo.id === maintenanceRequestPreviewPhotoId);
+          revokePreviewUrl(removed?.previewUrl);
+          return current.filter((photo) => photo.id !== maintenanceRequestPreviewPhotoId);
+        });
       }
-      setMaintenanceRequestPhotoDraft("");
-      setMaintenanceRequestPhotoPreviewUrl("");
-      setMaintenanceRequestPhotoPosterUrl("");
-      setMaintenanceRequestPhotoDurationLabel("");
+      clearMaintenanceRequestPhotoDraftState();
       setMaintenanceRequestPreviewPhotoId("");
       setScreen("solicitarManutencao");
     };
     const openExpenseCamera = () => {
-      setExpensePhotoDraft("");
-      setExpensePhotoPreviewUrl("");
-      setExpensePhotoPosterUrl("");
-      setExpensePhotoDurationLabel("");
+      clearExpensePhotoDraftState();
       setExpensePreviewPhotoId("");
       setScreen("fotoGasto");
     };
-    const openExpenseVideoPreview = (videoDataUrl, _previewUrl, posterUrl, durationLabel = "") => {
-      setExpensePhotoDraft(videoDataUrl);
-      setExpensePhotoPreviewUrl("");
-      setExpensePhotoPosterUrl(posterUrl);
-      setExpensePhotoDurationLabel(durationLabel);
+    const openExpenseVideoPreview = (video) => {
+      setExpensePhotoDraft("");
+      setExpensePhotoPreviewUrl(video.previewUrl);
+      setExpensePhotoPosterUrl(video.posterUrl ?? "");
+      setExpensePhotoDurationLabel(video.durationLabel ?? "");
+      setExpensePhotoRawBlob(video.rawBlob);
+      setExpensePhotoIsVideo(true);
       setExpensePreviewPhotoId("");
       setScreen("previewFotoGasto");
     };
@@ -85104,21 +85214,30 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setExpensePhotoPreviewUrl(photo.previewUrl ?? "");
       setExpensePhotoPosterUrl(photo.posterUrl ?? "");
       setExpensePhotoDurationLabel(photo.durationLabel ?? "");
+      setExpensePhotoRawBlob(photo.rawBlob ?? null);
+      setExpensePhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
       setExpensePreviewPhotoId(photoId);
       setScreen("previewFotoGasto");
     };
     const confirmExpensePhoto = () => {
-      if (!expensePhotoDraft) return setScreen("gastos");
+      if (!hasMediaDraftContent({ dataUrl: expensePhotoDraft, rawBlob: expensePhotoRawBlob, mediaType: expensePhotoIsVideo ? "video" : "foto" })) {
+        return setScreen("gastos");
+      }
       if (expensePreviewPhotoId) {
         setExpensePhotos(
-          (current) => current.map((photo) => photo.id === expensePreviewPhotoId ? {
-            ...photo,
-            dataUrl: expensePhotoDraft,
-            previewUrl: expensePhotoPreviewUrl || void 0,
-            posterUrl: expensePhotoPosterUrl || void 0,
-            durationLabel: expensePhotoDurationLabel || void 0,
-            mediaType: expensePhotoDraft.startsWith("data:video/") ? "video" : "foto"
-          } : photo)
+          (current) => current.map((photo) => {
+            if (photo.id !== expensePreviewPhotoId) return photo;
+            if (photo.previewUrl && photo.previewUrl !== (expensePhotoPreviewUrl || void 0)) revokePreviewUrl(photo.previewUrl);
+            return {
+              ...photo,
+              dataUrl: expensePhotoDraft,
+              previewUrl: expensePhotoPreviewUrl || void 0,
+              posterUrl: expensePhotoPosterUrl || void 0,
+              durationLabel: expensePhotoDurationLabel || void 0,
+              mediaType: expensePhotoIsVideo ? "video" : "foto",
+              rawBlob: expensePhotoIsVideo ? expensePhotoRawBlob ?? void 0 : void 0
+            };
+          })
         );
       } else {
         setExpensePhotos((current) => [
@@ -85129,41 +85248,39 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             previewUrl: expensePhotoPreviewUrl || void 0,
             posterUrl: expensePhotoPosterUrl || void 0,
             durationLabel: expensePhotoDurationLabel || void 0,
-            mediaType: expensePhotoDraft.startsWith("data:video/") ? "video" : "foto"
+            mediaType: expensePhotoIsVideo ? "video" : "foto",
+            rawBlob: expensePhotoIsVideo ? expensePhotoRawBlob ?? void 0 : void 0
           }
         ]);
       }
-      setExpensePhotoDraft("");
-      setExpensePhotoPreviewUrl("");
-      setExpensePhotoPosterUrl("");
-      setExpensePhotoDurationLabel("");
+      clearExpensePhotoDraftState(true);
       setExpensePreviewPhotoId("");
       setScreen("gastos");
     };
     const deleteExpensePhoto = () => {
       if (expensePreviewPhotoId) {
-        setExpensePhotos((current) => current.filter((photo) => photo.id !== expensePreviewPhotoId));
+        setExpensePhotos((current) => {
+          const removed = current.find((photo) => photo.id === expensePreviewPhotoId);
+          revokePreviewUrl(removed?.previewUrl);
+          return current.filter((photo) => photo.id !== expensePreviewPhotoId);
+        });
       }
-      setExpensePhotoDraft("");
-      setExpensePhotoPreviewUrl("");
-      setExpensePhotoPosterUrl("");
-      setExpensePhotoDurationLabel("");
+      clearExpensePhotoDraftState();
       setExpensePreviewPhotoId("");
       setScreen("gastos");
     };
     const openReceiveCamera = () => {
-      setReceivePhotoDraft("");
-      setReceivePhotoPreviewUrl("");
-      setReceivePhotoPosterUrl("");
-      setReceivePhotoDurationLabel("");
+      clearReceivePhotoDraftState();
       setReceivePreviewPhotoId("");
       setScreen("fotoReceber");
     };
-    const openReceiveVideoPreview = (videoDataUrl, _previewUrl, posterUrl, durationLabel = "") => {
-      setReceivePhotoDraft(videoDataUrl);
-      setReceivePhotoPreviewUrl("");
-      setReceivePhotoPosterUrl(posterUrl);
-      setReceivePhotoDurationLabel(durationLabel);
+    const openReceiveVideoPreview = (video) => {
+      setReceivePhotoDraft("");
+      setReceivePhotoPreviewUrl(video.previewUrl);
+      setReceivePhotoPosterUrl(video.posterUrl ?? "");
+      setReceivePhotoDurationLabel(video.durationLabel ?? "");
+      setReceivePhotoRawBlob(video.rawBlob);
+      setReceivePhotoIsVideo(true);
       setReceivePreviewPhotoId("");
       setScreen("previewFotoReceber");
     };
@@ -85175,12 +85292,16 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setReceivePhotoPreviewUrl(photo.previewUrl ?? "");
       setReceivePhotoPosterUrl(photo.posterUrl ?? "");
       setReceivePhotoDurationLabel(photo.durationLabel ?? "");
+      setReceivePhotoRawBlob(photo.rawBlob ?? null);
+      setReceivePhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
       setReceivePreviewPhotoId(photoId);
       setScreen("previewFotoReceber");
     };
     const confirmReceivePhoto = () => {
       if (!selectedDetail) return setScreen("servicos");
-      if (!receivePhotoDraft) return setScreen("receber");
+      if (!hasMediaDraftContent({ dataUrl: receivePhotoDraft, rawBlob: receivePhotoRawBlob, mediaType: receivePhotoIsVideo ? "video" : "foto" })) {
+        return setScreen("receber");
+      }
       setReceiveProofs((current) => {
         const detailPhotos = current[selectedDetail.id] ?? [];
         const nextPhoto = {
@@ -85189,9 +85310,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           previewUrl: receivePhotoPreviewUrl || void 0,
           posterUrl: receivePhotoPosterUrl || void 0,
           durationLabel: receivePhotoDurationLabel || void 0,
-          mediaType: receivePhotoDraft.startsWith("data:video/") ? "video" : "foto"
+          mediaType: receivePhotoIsVideo ? "video" : "foto",
+          rawBlob: receivePhotoIsVideo ? receivePhotoRawBlob ?? void 0 : void 0
         };
-        const nextPhotos = receivePreviewPhotoId ? detailPhotos.map((photo) => photo.id === receivePreviewPhotoId ? nextPhoto : photo) : [...detailPhotos, nextPhoto];
+        const nextPhotos = receivePreviewPhotoId ? detailPhotos.map((photo) => {
+          if (photo.id !== receivePreviewPhotoId) return photo;
+          if (photo.previewUrl && photo.previewUrl !== nextPhoto.previewUrl) revokePreviewUrl(photo.previewUrl);
+          return nextPhoto;
+        }) : [...detailPhotos, nextPhoto];
         return {
           ...current,
           [selectedDetail.id]: nextPhotos
@@ -85203,20 +85329,21 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         delete next[selectedDetail.id];
         return next;
       });
-      setReceivePhotoDraft("");
-      setReceivePhotoPreviewUrl("");
-      setReceivePhotoPosterUrl("");
-      setReceivePhotoDurationLabel("");
+      clearReceivePhotoDraftState(true);
       setReceivePreviewPhotoId("");
       setScreen("receber");
     };
     const deleteReceivePhoto = () => {
       if (!selectedDetail) return;
       if (receivePreviewPhotoId) {
-        setReceiveProofs((current) => ({
-          ...current,
-          [selectedDetail.id]: (current[selectedDetail.id] ?? []).filter((photo) => photo.id !== receivePreviewPhotoId)
-        }));
+        setReceiveProofs((current) => {
+          const removed = (current[selectedDetail.id] ?? []).find((photo) => photo.id === receivePreviewPhotoId);
+          revokePreviewUrl(removed?.previewUrl);
+          return {
+            ...current,
+            [selectedDetail.id]: (current[selectedDetail.id] ?? []).filter((photo) => photo.id !== receivePreviewPhotoId)
+          };
+        });
       }
       setReceiveUploadedCounts((current) => {
         if (!current[selectedDetail.id]) return current;
@@ -85224,10 +85351,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         delete next[selectedDetail.id];
         return next;
       });
-      setReceivePhotoDraft("");
-      setReceivePhotoPreviewUrl("");
-      setReceivePhotoPosterUrl("");
-      setReceivePhotoDurationLabel("");
+      clearReceivePhotoDraftState();
       setReceivePreviewPhotoId("");
       setScreen("receber");
     };
@@ -85257,9 +85381,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           detailId: detailToContinue.id,
           phase: "loading"
         });
+        const preparedPhotos = await Promise.all(photos.map((photo) => prepareMediaDraftForUpload(photo)));
         let completedUploads = 0;
         const uploadResults = await Promise.allSettled(
-          photos.map(async (photo, index) => {
+          preparedPhotos.map(async (photo, index) => {
             const link = await uploadReceiveProofRemote({
               reservaId: dvId,
               reservaName: detailToContinue.id,
@@ -85277,7 +85402,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             completedUploads += 1;
             setRemoteOperation({
               title: "Enviando comprovantes",
-              message: `Comprovantes enviados (${completedUploads}/${photos.length}).`,
+              message: `Comprovantes enviados (${completedUploads}/${preparedPhotos.length}).`,
               detailId: detailToContinue.id,
               phase: "loading"
             });
@@ -85286,9 +85411,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         );
         const failedUploads = uploadResults.filter((result) => result.status === "rejected").length;
         if (failedUploads) {
-          throw new Error(`${failedUploads} de ${photos.length} comprovante(s) falharam no upload.`);
+          throw new Error(`${failedUploads} de ${preparedPhotos.length} comprovante(s) falharam no upload.`);
         }
-        setReceiveUploadedCounts((current) => ({ ...current, [detailToContinue.id]: photos.length }));
+        setReceiveUploadedCounts((current) => ({ ...current, [detailToContinue.id]: preparedPhotos.length }));
         setRemoteOperation({
           title: "Enviando comprovantes",
           message: "Comprovantes enviados com sucesso.",
@@ -85360,25 +85485,23 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     };
     const openCollisionCamera = (kind) => {
       setCollisionPhotoKind(kind);
-      setCollisionPhotoDraft("");
-      setCollisionPhotoPreviewUrl("");
-      setCollisionPhotoPosterUrl("");
-      setCollisionPhotoDurationLabel("");
+      clearCollisionPhotoDraftState();
       setCollisionPreviewPhotoId("");
       setScreen("fotoColisao");
     };
     const openMaintenanceFinalizeCamera = (kind) => {
       setMaintenancePhotoKind(kind);
-      setPhotoDraft(null);
-      setPhotoDraftPreviewUrl("");
+      clearMaintenanceFinalizePhotoDraft();
       setMaintenanceExistingPreview(false);
       setScreen("fotoManutencao");
     };
-    const openCollisionVideoPreview = (videoDataUrl, _previewUrl, posterUrl, durationLabel = "") => {
-      setCollisionPhotoDraft(videoDataUrl);
-      setCollisionPhotoPreviewUrl("");
-      setCollisionPhotoPosterUrl(posterUrl);
-      setCollisionPhotoDurationLabel(durationLabel);
+    const openCollisionVideoPreview = (video) => {
+      setCollisionPhotoDraft("");
+      setCollisionPhotoPreviewUrl(video.previewUrl);
+      setCollisionPhotoPosterUrl(video.posterUrl ?? "");
+      setCollisionPhotoDurationLabel(video.durationLabel ?? "");
+      setCollisionPhotoRawBlob(video.rawBlob);
+      setCollisionPhotoIsVideo(true);
       setCollisionPreviewPhotoId("");
       setScreen("previewFotoColisao");
     };
@@ -85390,21 +85513,30 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       setCollisionPhotoPreviewUrl(photo.previewUrl ?? "");
       setCollisionPhotoPosterUrl(photo.posterUrl ?? "");
       setCollisionPhotoDurationLabel(photo.durationLabel ?? "");
+      setCollisionPhotoRawBlob(photo.rawBlob ?? null);
+      setCollisionPhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
       setCollisionPreviewPhotoId(photoId);
       setScreen("previewFotoColisao");
     };
     const confirmCollisionPhoto = () => {
-      if (!collisionPhotoDraft) return setScreen("colisoes");
+      if (!hasMediaDraftContent({ dataUrl: collisionPhotoDraft, rawBlob: collisionPhotoRawBlob, mediaType: collisionPhotoIsVideo ? "video" : "foto" })) {
+        return setScreen("colisoes");
+      }
       if (collisionPreviewPhotoId) {
         setCollisionPhotos(
-          (current) => current.map((photo) => photo.id === collisionPreviewPhotoId ? {
-            ...photo,
-            dataUrl: collisionPhotoDraft,
-            previewUrl: collisionPhotoPreviewUrl || void 0,
-            posterUrl: collisionPhotoPosterUrl || void 0,
-            durationLabel: collisionPhotoDurationLabel || void 0,
-            mediaType: collisionPhotoDraft.startsWith("data:video/") ? "video" : "foto"
-          } : photo)
+          (current) => current.map((photo) => {
+            if (photo.id !== collisionPreviewPhotoId) return photo;
+            if (photo.previewUrl && photo.previewUrl !== (collisionPhotoPreviewUrl || void 0)) revokePreviewUrl(photo.previewUrl);
+            return {
+              ...photo,
+              dataUrl: collisionPhotoDraft,
+              previewUrl: collisionPhotoPreviewUrl || void 0,
+              posterUrl: collisionPhotoPosterUrl || void 0,
+              durationLabel: collisionPhotoDurationLabel || void 0,
+              mediaType: collisionPhotoIsVideo ? "video" : "foto",
+              rawBlob: collisionPhotoIsVideo ? collisionPhotoRawBlob ?? void 0 : void 0
+            };
+          })
         );
       } else {
         setCollisionPhotos((current) => {
@@ -85417,26 +85549,25 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               previewUrl: collisionPhotoPreviewUrl || void 0,
               posterUrl: collisionPhotoPosterUrl || void 0,
               durationLabel: collisionPhotoDurationLabel || void 0,
-              mediaType: collisionPhotoDraft.startsWith("data:video/") ? "video" : "foto"
+              mediaType: collisionPhotoIsVideo ? "video" : "foto",
+              rawBlob: collisionPhotoIsVideo ? collisionPhotoRawBlob ?? void 0 : void 0
             }
           ];
         });
       }
-      setCollisionPhotoDraft("");
-      setCollisionPhotoPreviewUrl("");
-      setCollisionPhotoPosterUrl("");
-      setCollisionPhotoDurationLabel("");
+      clearCollisionPhotoDraftState(true);
       setCollisionPreviewPhotoId("");
       setScreen("colisoes");
     };
     const deleteCollisionPhoto = () => {
       if (collisionPreviewPhotoId) {
-        setCollisionPhotos((current) => current.filter((photo) => photo.id !== collisionPreviewPhotoId));
+        setCollisionPhotos((current) => {
+          const removed = current.find((photo) => photo.id === collisionPreviewPhotoId);
+          revokePreviewUrl(removed?.previewUrl);
+          return current.filter((photo) => photo.id !== collisionPreviewPhotoId);
+        });
       }
-      setCollisionPhotoDraft("");
-      setCollisionPhotoPreviewUrl("");
-      setCollisionPhotoPosterUrl("");
-      setCollisionPhotoDurationLabel("");
+      clearCollisionPhotoDraftState();
       setCollisionPreviewPhotoId("");
       setScreen("colisoes");
     };
@@ -85467,6 +85598,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               setMaintenanceRequestPhotoPreviewUrl("");
               setMaintenanceRequestPhotoPosterUrl("");
               setMaintenanceRequestPhotoDurationLabel("");
+              setMaintenanceRequestPhotoRawBlob(null);
+              setMaintenanceRequestPhotoIsVideo(false);
               setScreen("previewFotoSolicitacaoManutencao");
             },
             onCaptureVideo: openMaintenanceRequestVideoPreview,
@@ -85482,10 +85615,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           {
             kind: "FOTO1",
             title: "Foto da manuten\xE7\xE3o",
-            prompt: maintenanceRequestPhotoDraft.startsWith("data:video/") ? "O v\xEDdeo est\xE1 correto?" : "A foto est\xE1 leg\xEDvel?",
+            prompt: maintenanceRequestPhotoIsVideo ? "O v\xEDdeo est\xE1 correto?" : "A foto est\xE1 leg\xEDvel?",
             photoDataUrl: maintenanceRequestPhotoDraft,
+            isVideo: maintenanceRequestPhotoIsVideo,
             videoPreviewUrl: maintenanceRequestPhotoPreviewUrl,
-            onBack: () => setScreen("solicitarManutencao"),
+            onBack: () => {
+              clearMaintenanceRequestPhotoDraftState();
+              setMaintenanceRequestPreviewPhotoId("");
+              setScreen("solicitarManutencao");
+            },
             onRetake: openMaintenanceRequestCamera,
             onDelete: maintenanceRequestPreviewPhotoId ? deleteMaintenanceRequestPhoto : void 0,
             onConfirm: confirmMaintenanceRequestPhoto,
@@ -85508,6 +85646,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               setCollisionPhotoPreviewUrl("");
               setCollisionPhotoPosterUrl("");
               setCollisionPhotoDurationLabel("");
+              setCollisionPhotoRawBlob(null);
+              setCollisionPhotoIsVideo(false);
               setCollisionPreviewPhotoId("");
               setScreen("previewFotoColisao");
             },
@@ -85524,14 +85664,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           {
             kind: "NOTAFISCAL",
             title: getCollisionPhotoLabel(collisionPhotoKind),
-            prompt: collisionPhotoDraft.startsWith("data:video/") ? "O v\xEDdeo est\xE1 correto?" : "A foto est\xE1 leg\xEDvel?",
+            prompt: collisionPhotoIsVideo ? "O v\xEDdeo est\xE1 correto?" : "A foto est\xE1 leg\xEDvel?",
             photoDataUrl: collisionPhotoDraft,
+            isVideo: collisionPhotoIsVideo,
             videoPreviewUrl: collisionPhotoPreviewUrl,
             onBack: () => {
-              setCollisionPhotoDraft("");
-              setCollisionPhotoPreviewUrl("");
-              setCollisionPhotoPosterUrl("");
-              setCollisionPhotoDurationLabel("");
+              clearCollisionPhotoDraftState();
               setCollisionPreviewPhotoId("");
               setScreen("colisoes");
             },
@@ -85557,6 +85695,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               setExpensePhotoPreviewUrl("");
               setExpensePhotoPosterUrl("");
               setExpensePhotoDurationLabel("");
+              setExpensePhotoRawBlob(null);
+              setExpensePhotoIsVideo(false);
               setExpensePreviewPhotoId("");
               setScreen("previewFotoGasto");
             },
@@ -85573,13 +85713,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           {
             kind: "NOTAFISCAL",
             title: "Comprovante",
-            prompt: expensePhotoDraft.startsWith("data:video/") ? "O v\xEDdeo est\xE1 correto?" : "O comprovante est\xE1 leg\xEDvel?",
+            prompt: expensePhotoIsVideo ? "O v\xEDdeo est\xE1 correto?" : "O comprovante est\xE1 leg\xEDvel?",
             photoDataUrl: expensePhotoDraft,
+            isVideo: expensePhotoIsVideo,
             videoPreviewUrl: expensePhotoPreviewUrl,
             onBack: () => {
-              setExpensePhotoDraft("");
-              setExpensePhotoPreviewUrl("");
-              setExpensePhotoPosterUrl("");
+              clearExpensePhotoDraftState();
               setExpensePreviewPhotoId("");
               setScreen("gastos");
             },
@@ -85677,12 +85816,16 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             onCapture: (photoDataUrl) => {
               setPhotoDraft(photoDataUrl);
               setPhotoDraftPreviewUrl("");
+              setPhotoDraftRawBlob(null);
+              setPhotoDraftIsVideo(false);
               setMaintenanceExistingPreview(false);
               setScreen("previewFotoManutencao");
             },
-            onCaptureVideo: (videoDataUrl) => {
-              setPhotoDraft(videoDataUrl);
-              setPhotoDraftPreviewUrl("");
+            onCaptureVideo: (video) => {
+              setPhotoDraft("");
+              setPhotoDraftPreviewUrl(video.previewUrl);
+              setPhotoDraftRawBlob(video.rawBlob);
+              setPhotoDraftIsVideo(true);
               setMaintenanceExistingPreview(false);
               setScreen("previewFotoManutencao");
             },
@@ -85698,21 +85841,33 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           {
             kind: maintenancePhotoKind,
             photoDataUrl: photoDraft,
+            isVideo: photoDraftIsVideo,
             videoPreviewUrl: photoDraftPreviewUrl,
-            onBack: () => setScreen("finalizar"),
-            onRetake: () => openMaintenanceFinalizeCamera(maintenancePhotoKind),
-            onConfirm: () => {
-              setStore((current) => saveMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind, photoDraft ?? ""));
-              setToast("Foto salva localmente.");
-              setPhotoDraftPreviewUrl("");
+            onBack: () => {
+              clearMaintenanceFinalizePhotoDraft();
               setMaintenanceExistingPreview(false);
               setScreen("finalizar");
+            },
+            onRetake: () => openMaintenanceFinalizeCamera(maintenancePhotoKind),
+            onConfirm: () => {
+              void (async () => {
+                try {
+                  const savedPhotoDataUrl = photoDraftIsVideo && photoDraftRawBlob && !photoDraft ? (await prepareVideoBlobForUpload(photoDraftRawBlob)).dataUrl : photoDraft ?? "";
+                  setStore((current) => saveMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind, savedPhotoDataUrl));
+                  setToast("Foto salva localmente.");
+                  clearMaintenanceFinalizePhotoDraft();
+                  setMaintenanceExistingPreview(false);
+                  setScreen("finalizar");
+                } catch (error2) {
+                  logAppError(error2, "confirmMaintenancePhoto", "local-save");
+                  setCriticalError(error2 instanceof Error ? error2.message : "Falha ao preparar m\xEDdia local.");
+                }
+              })();
             },
             onDelete: maintenanceExistingPreview ? () => {
               setStore((current) => deleteMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind));
               setToast("Foto apagada.");
-              setPhotoDraft(null);
-              setPhotoDraftPreviewUrl("");
+              clearMaintenanceFinalizePhotoDraft();
               setMaintenanceExistingPreview(false);
               setScreen("finalizar");
             } : void 0,
@@ -85777,6 +85932,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               setReceivePhotoPreviewUrl("");
               setReceivePhotoPosterUrl("");
               setReceivePhotoDurationLabel("");
+              setReceivePhotoRawBlob(null);
+              setReceivePhotoIsVideo(false);
               setReceivePreviewPhotoId("");
               setScreen("previewFotoReceber");
             },
@@ -85793,14 +85950,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           {
             kind: "NOTAFISCAL",
             title: "Comprovante",
-            prompt: receivePhotoDraft.startsWith("data:video/") ? "O v\xEDdeo est\xE1 correto?" : "O comprovante est\xE1 leg\xEDvel?",
+            prompt: receivePhotoIsVideo ? "O v\xEDdeo est\xE1 correto?" : "O comprovante est\xE1 leg\xEDvel?",
             photoDataUrl: receivePhotoDraft,
+            isVideo: receivePhotoIsVideo,
             videoPreviewUrl: receivePhotoPreviewUrl,
             onBack: () => {
-              setReceivePhotoDraft("");
-              setReceivePhotoPreviewUrl("");
-              setReceivePhotoPosterUrl("");
-              setReceivePhotoDurationLabel("");
+              clearReceivePhotoDraftState();
               setReceivePreviewPhotoId("");
               setScreen("receber");
             },
@@ -85857,7 +86012,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               const existingPhoto = store.photos[selectedDetail.id]?.[kind];
               if (existingPhoto) {
                 setPhotoDraft(existingPhoto);
-                setPhotoDraftPreviewUrl(existingPhoto.startsWith("data:video/") ? existingPhoto : "");
+                setPhotoDraftPreviewUrl("");
+                setPhotoDraftRawBlob(null);
+                setPhotoDraftIsVideo(existingPhoto.startsWith("data:video/"));
                 setMaintenanceExistingPreview(true);
                 setScreen("previewFotoManutencao");
                 return;

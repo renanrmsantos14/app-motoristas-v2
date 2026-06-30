@@ -38,7 +38,7 @@ export function ReceiveScreen({
   const isSubmitting = submitState !== "idle";
   const photosRef = useRef<HTMLDivElement | null>(null);
   const [photosError, setPhotosError] = useState("");
-  const isVideo = (photo: ExpensePhoto) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
+  const isVideo = (photo: ExpensePhoto) => photo.mediaType === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
 
   const addPhoto = () => {
     setPhotosError("");

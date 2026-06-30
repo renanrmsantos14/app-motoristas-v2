@@ -20,6 +20,7 @@ export type MaintenanceRequestPhoto = {
   posterUrl?: string;
   durationLabel?: string;
   mediaType?: "foto" | "video";
+  rawBlob?: Blob;
 };
 
 export type MaintenanceRequestDraft = {
@@ -139,7 +140,7 @@ export function MaintenanceRequestScreen({
   };
 
   const errorCount = Object.values(errors).filter(Boolean).length;
-  const isVideo = (photo: MaintenanceRequestPhoto) => photo.mediaType === "video" || photo.dataUrl.startsWith("data:video/");
+  const isVideo = (photo: MaintenanceRequestPhoto) => photo.mediaType === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
 
   return (
     <AppShell screenLabel="TelaSolicitarManutencao">

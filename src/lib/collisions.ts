@@ -38,6 +38,7 @@ export type CollisionPhoto = {
   posterUrl?: string;
   durationLabel?: string;
   mediaType?: "foto" | "video";
+  rawBlob?: Blob;
 };
 
 export type CollisionDraft = {
@@ -126,8 +127,8 @@ export function getCollisionPhotoLabel(kind: CollisionPhotoKind) {
   return [...COLLISION_REQUIRED_PHOTOS, ...COLLISION_THIRD_PARTY_REQUIRED_PHOTOS].find((item) => item.kind === kind)?.label ?? "Foto extra";
 }
 
-export function isCollisionVideo(photo: Pick<CollisionPhoto, "kind" | "dataUrl" | "mediaType">) {
-  return photo.mediaType === "video" || photo.kind === "video" || photo.dataUrl.startsWith("data:video/");
+export function isCollisionVideo(photo: Pick<CollisionPhoto, "kind" | "dataUrl" | "mediaType" | "rawBlob">) {
+  return photo.mediaType === "video" || photo.kind === "video" || Boolean(photo.rawBlob) || photo.dataUrl.startsWith("data:video/");
 }
 
 export function hasCollisionThirdParty(draft: Pick<CollisionDraft, "tipoOcorrencia" | "houveTerceiro">) {
@@ -178,7 +179,7 @@ export function validateCollisionDraft(draft: CollisionDraft, photos: CollisionP
   }
 
   for (const requiredPhoto of getRequiredCollisionPhotos(hasThirdParty)) {
-    if (!photos.some((photo) => photo.kind === requiredPhoto.kind && photo.dataUrl)) {
+    if (!photos.some((photo) => photo.kind === requiredPhoto.kind && (photo.dataUrl || photo.rawBlob))) {
       errors[requiredPhoto.kind] = `Adicione foto: ${requiredPhoto.label}.`;
     }
   }

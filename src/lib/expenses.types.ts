@@ -57,6 +57,7 @@ export type ExpensePhoto = {
   posterUrl?: string;
   durationLabel?: string;
   mediaType?: "foto" | "video";
+  rawBlob?: Blob;
 };
 
 export type ExpenseFields = {

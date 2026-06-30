@@ -40,6 +40,13 @@ export type DetailAction = "cancel" | "receber" | "voucher" | "finalizar";
 
 export type MaintenancePhotoKind = "NOTAFISCAL" | `NOTAFISCAL_${number}` | "FOTO1" | "FOTO2" | "FOTO3";
 
+export type CapturedVideoDraft = {
+  rawBlob: Blob;
+  previewUrl: string;
+  posterUrl?: string;
+  durationLabel?: string;
+};
+
 export type DetailField = {
   label: string;
   value: string;

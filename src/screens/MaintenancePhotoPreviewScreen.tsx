@@ -12,6 +12,7 @@ type MaintenancePhotoPreviewScreenProps = {
   title?: string;
   prompt?: string;
   photoDataUrl?: string | null;
+  isVideo?: boolean;
   onBack: () => void;
   onRetake: () => void;
   onConfirm: () => void;
@@ -33,6 +34,7 @@ export function MaintenancePhotoPreviewScreen({
   title,
   prompt,
   photoDataUrl,
+  isVideo = false,
   onBack,
   onRetake,
   onConfirm,
@@ -42,14 +44,14 @@ export function MaintenancePhotoPreviewScreen({
   deleteOnly = false
 }: MaintenancePhotoPreviewScreenProps) {
   const isInvoice = kind.startsWith("NOTAFISCAL");
-  const isVideo = Boolean(photoDataUrl?.startsWith("data:video/"));
+  const showVideo = isVideo || Boolean(photoDataUrl?.startsWith("data:video/")) || Boolean(externalVideoPreviewUrl);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
   const [videoPreviewError, setVideoPreviewError] = useState(false);
 
   useEffect(() => {
     setVideoPreviewError(false);
-    if (!isVideo || !photoDataUrl) {
+    if (!showVideo) {
       setVideoPreviewUrl("");
       return;
     }
@@ -61,6 +63,11 @@ export function MaintenancePhotoPreviewScreen({
 
     let objectUrl = "";
     try {
+      if (!photoDataUrl) {
+        setVideoPreviewError(true);
+        setVideoPreviewUrl("");
+        return;
+      }
       objectUrl = dataUrlToObjectUrl(photoDataUrl);
     } catch (error) {
       reportAppError(error, {
@@ -78,7 +85,7 @@ export function MaintenancePhotoPreviewScreen({
     return () => {
       if (objectUrl.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
     };
-  }, [externalVideoPreviewUrl, isVideo, photoDataUrl]);
+  }, [externalVideoPreviewUrl, showVideo, photoDataUrl]);
 
   const requestDelete = () => {
     if (!onDelete) return;
@@ -98,7 +105,7 @@ export function MaintenancePhotoPreviewScreen({
           {deleteOnly ? null : <div className="maintenance-preview-title">{prompt ?? "A foto está legível e ideal?"}</div>}
           <div className="maintenance-preview-body">
             <div className={`maintenance-preview-image ${isInvoice ? "invoice" : "vehicle"}`} aria-label="Preview da foto">
-              {isVideo && photoDataUrl ? (
+              {showVideo ? (
                 <>
                   {videoPreviewUrl ? (
                     <video key={videoPreviewUrl} className="maintenance-preview-real-image" src={videoPreviewUrl} controls playsInline preload="auto" muted onCanPlay={() => setVideoPreviewError(false)} onLoadedMetadata={() => setVideoPreviewError(false)} onError={() => {

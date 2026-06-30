@@ -6,20 +6,17 @@ import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
 import {
   captureVideoFrameDataUrl,
-  createVideoPosterDataUrl,
   formatVideoDuration,
-  getVideoDurationLabelFromUrl,
-  readBlobAsDataUrl,
   readPhotoFileAsDataUrl
 } from "../lib/photoOrientation";
-import type { MaintenancePhotoKind } from "../types";
+import type { CapturedVideoDraft, MaintenancePhotoKind } from "../types";
 
 type MediaCaptureScreenProps = {
   kind: MaintenancePhotoKind;
   title?: string;
   onBack: () => void;
   onCapture: (photoDataUrl: string) => void;
-  onCaptureVideo?: (videoDataUrl: string, previewUrl: string, posterUrl: string, durationLabel: string) => void;
+  onCaptureVideo?: (video: CapturedVideoDraft) => void;
   onSwitchCamera: () => void;
 };
 
@@ -359,19 +356,17 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         const chunks = recordedChunksRef.current;
         recordedChunksRef.current = [];
         setRecording(false);
-        setProcessing(true);
         let previewUrl = "";
         try {
           if (!chunks.length) throw new Error("Nenhum dado de video capturado.");
           const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
           previewUrl = URL.createObjectURL(blob);
-          const fallbackDuration = formatVideoDuration((Date.now() - recordingStartedAtRef.current) / 1000);
-          const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
-            readBlobAsDataUrl(blob),
-            createVideoPosterDataUrl(previewUrl),
-            getVideoDurationLabelFromUrl(previewUrl)
-          ]);
-          onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel || fallbackDuration);
+          onCaptureVideo({
+            rawBlob: blob,
+            previewUrl,
+            durationLabel: formatVideoDuration((Date.now() - recordingStartedAtRef.current) / 1000)
+          });
+          previewUrl = "";
         } catch (error) {
           reportAppError(error, {
             severity: "error",
@@ -383,7 +378,6 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
           setCameraError(error instanceof Error ? error.message : "Nao foi possivel preparar o video.");
         } finally {
           if (previewUrl) revokeObjectPreviewUrl(previewUrl);
-          setProcessing(false);
           recorderRef.current = null;
         }
       };
@@ -436,12 +430,10 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
 
       const previewUrl = URL.createObjectURL(file);
       try {
-        const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
-          readBlobAsDataUrl(file),
-          createVideoPosterDataUrl(previewUrl),
-          getVideoDurationLabelFromUrl(previewUrl)
-        ]);
-        onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel);
+        onCaptureVideo({ rawBlob: file, previewUrl });
+        event.target.value = "";
+        setProcessing(false);
+        return;
       } catch (error) {
         reportAppError(error, {
           severity: "error",
@@ -453,7 +445,6 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         });
         setCameraError(error instanceof Error ? error.message : "Nao foi possivel preparar o video.");
       } finally {
-        revokeObjectPreviewUrl(previewUrl);
         event.target.value = "";
         setProcessing(false);
       }

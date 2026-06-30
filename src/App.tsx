@@ -110,7 +110,8 @@ import {
   type CollisionPhotoKind
 } from "./lib/collisions";
 import { DEFAULT_EXPENSE_REFERENCE_DATA, buildExpenseCreatePayload, type ExpenseDraft, type ExpensePhoto, type ExpenseReferenceData } from "./lib/expenses";
-import type { DetailData, MaintenancePhotoKind, Screen } from "./types";
+import { hasMediaDraftContent, prepareVideoBlobForUpload, revokePreviewUrl } from "./lib/mediaDrafts";
+import type { CapturedVideoDraft, DetailData, MaintenancePhotoKind, Screen } from "./types";
 
 type RemoteOperation = {
   title: string;
@@ -261,6 +262,34 @@ function loadVoucherDrafts(storage: Storage = window.localStorage): Record<strin
   }
 }
 
+function isVideoMediaDraft(dataUrl?: string | null, rawBlob?: Blob | null) {
+  return Boolean(rawBlob) || String(dataUrl ?? "").startsWith("data:video/");
+}
+
+type UploadableMediaDraft = {
+  dataUrl: string;
+  rawBlob?: Blob;
+  posterUrl?: string;
+  durationLabel?: string;
+  mediaType?: "foto" | "video";
+};
+
+async function prepareMediaDraftForUpload<T extends UploadableMediaDraft>(photo: T): Promise<T> {
+  if (!photo.rawBlob || photo.dataUrl) return photo;
+  const prepared = await prepareVideoBlobForUpload(photo.rawBlob);
+  return {
+    ...photo,
+    dataUrl: prepared.dataUrl,
+    posterUrl: photo.posterUrl ?? prepared.posterUrl,
+    durationLabel: photo.durationLabel ?? prepared.durationLabel,
+    mediaType: "video"
+  };
+}
+
+function revokePhotoPreviewUrls(photos: Array<{ previewUrl?: string }>) {
+  photos.forEach((photo) => revokePreviewUrl(photo.previewUrl));
+}
+
 function App() {
   const devMode = useMemo(() => new URLSearchParams(window.location.search).get("dev") ?? "", []);
   const previewHashActive = useMemo(() => /^#\/?preview(?:[/?]|$)/i.test(window.location.hash), []);
@@ -287,6 +316,8 @@ function App() {
   const [maintenancePhotoKind, setMaintenancePhotoKind] = useState<MaintenancePhotoKind>("NOTAFISCAL");
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
   const [photoDraftPreviewUrl, setPhotoDraftPreviewUrl] = useState("");
+  const [photoDraftRawBlob, setPhotoDraftRawBlob] = useState<Blob | null>(null);
+  const [photoDraftIsVideo, setPhotoDraftIsVideo] = useState(false);
   const [toast, setToastState] = useState<ToastState | null>(null);
   const [dataLoading, setDataLoading] = useState<LoadingOverlayState | null>(null);
   const [criticalError, setCriticalError] = useState("");
@@ -327,6 +358,8 @@ function App() {
   const [expensePhotoPreviewUrl, setExpensePhotoPreviewUrl] = useState("");
   const [expensePhotoPosterUrl, setExpensePhotoPosterUrl] = useState("");
   const [expensePhotoDurationLabel, setExpensePhotoDurationLabel] = useState("");
+  const [expensePhotoRawBlob, setExpensePhotoRawBlob] = useState<Blob | null>(null);
+  const [expensePhotoIsVideo, setExpensePhotoIsVideo] = useState(false);
   const [expensePreviewPhotoId, setExpensePreviewPhotoId] = useState("");
   const [receiveProofs, setReceiveProofs] = useState<Record<string, ExpensePhoto[]>>({});
   const [receiveUploadedCounts, setReceiveUploadedCounts] = useState<Record<string, number>>({});
@@ -334,6 +367,8 @@ function App() {
   const [receivePhotoPreviewUrl, setReceivePhotoPreviewUrl] = useState("");
   const [receivePhotoPosterUrl, setReceivePhotoPosterUrl] = useState("");
   const [receivePhotoDurationLabel, setReceivePhotoDurationLabel] = useState("");
+  const [receivePhotoRawBlob, setReceivePhotoRawBlob] = useState<Blob | null>(null);
+  const [receivePhotoIsVideo, setReceivePhotoIsVideo] = useState(false);
   const [receivePreviewPhotoId, setReceivePreviewPhotoId] = useState("");
   const [collisionDraft, setCollisionDraft] = useState<CollisionDraft>(() => createEmptyCollisionDraft());
   const [collisionPhotos, setCollisionPhotos] = useState<CollisionPhoto[]>([]);
@@ -341,6 +376,8 @@ function App() {
   const [collisionPhotoPreviewUrl, setCollisionPhotoPreviewUrl] = useState("");
   const [collisionPhotoPosterUrl, setCollisionPhotoPosterUrl] = useState("");
   const [collisionPhotoDurationLabel, setCollisionPhotoDurationLabel] = useState("");
+  const [collisionPhotoRawBlob, setCollisionPhotoRawBlob] = useState<Blob | null>(null);
+  const [collisionPhotoIsVideo, setCollisionPhotoIsVideo] = useState(false);
   const [collisionPhotoKind, setCollisionPhotoKind] = useState<CollisionPhotoKind>("cena");
   const [collisionPreviewPhotoId, setCollisionPreviewPhotoId] = useState("");
   const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = useState<MaintenanceRequestPhoto[]>([]);
@@ -348,6 +385,8 @@ function App() {
   const [maintenanceRequestPhotoPreviewUrl, setMaintenanceRequestPhotoPreviewUrl] = useState("");
   const [maintenanceRequestPhotoPosterUrl, setMaintenanceRequestPhotoPosterUrl] = useState("");
   const [maintenanceRequestPhotoDurationLabel, setMaintenanceRequestPhotoDurationLabel] = useState("");
+  const [maintenanceRequestPhotoRawBlob, setMaintenanceRequestPhotoRawBlob] = useState<Blob | null>(null);
+  const [maintenanceRequestPhotoIsVideo, setMaintenanceRequestPhotoIsVideo] = useState(false);
   const [maintenanceRequestPreviewPhotoId, setMaintenanceRequestPreviewPhotoId] = useState("");
   const [maintenanceExistingPreview, setMaintenanceExistingPreview] = useState(false);
   const [maintenanceFinalizeDraft, setMaintenanceFinalizeDraft] = useState<MaintenanceFinalizeDraft>({
@@ -363,6 +402,54 @@ function App() {
   const queueHighlightTimerRef = useRef<number | null>(null);
   const voucherDraftTimerRef = useRef<number | null>(null);
   const lastGlobalErrorRef = useRef<{ id: string; at: number }>({ id: "", at: 0 });
+
+  const clearMaintenanceFinalizePhotoDraft = (keepPreviewUrl = false) => {
+    if (!keepPreviewUrl) revokePreviewUrl(photoDraftPreviewUrl);
+    setPhotoDraft(null);
+    setPhotoDraftPreviewUrl("");
+    setPhotoDraftRawBlob(null);
+    setPhotoDraftIsVideo(false);
+  };
+
+  const clearMaintenanceRequestPhotoDraftState = (keepPreviewUrl = false) => {
+    if (!keepPreviewUrl) revokePreviewUrl(maintenanceRequestPhotoPreviewUrl);
+    setMaintenanceRequestPhotoDraft("");
+    setMaintenanceRequestPhotoPreviewUrl("");
+    setMaintenanceRequestPhotoPosterUrl("");
+    setMaintenanceRequestPhotoDurationLabel("");
+    setMaintenanceRequestPhotoRawBlob(null);
+    setMaintenanceRequestPhotoIsVideo(false);
+  };
+
+  const clearExpensePhotoDraftState = (keepPreviewUrl = false) => {
+    if (!keepPreviewUrl) revokePreviewUrl(expensePhotoPreviewUrl);
+    setExpensePhotoDraft("");
+    setExpensePhotoPreviewUrl("");
+    setExpensePhotoPosterUrl("");
+    setExpensePhotoDurationLabel("");
+    setExpensePhotoRawBlob(null);
+    setExpensePhotoIsVideo(false);
+  };
+
+  const clearReceivePhotoDraftState = (keepPreviewUrl = false) => {
+    if (!keepPreviewUrl) revokePreviewUrl(receivePhotoPreviewUrl);
+    setReceivePhotoDraft("");
+    setReceivePhotoPreviewUrl("");
+    setReceivePhotoPosterUrl("");
+    setReceivePhotoDurationLabel("");
+    setReceivePhotoRawBlob(null);
+    setReceivePhotoIsVideo(false);
+  };
+
+  const clearCollisionPhotoDraftState = (keepPreviewUrl = false) => {
+    if (!keepPreviewUrl) revokePreviewUrl(collisionPhotoPreviewUrl);
+    setCollisionPhotoDraft("");
+    setCollisionPhotoPreviewUrl("");
+    setCollisionPhotoPosterUrl("");
+    setCollisionPhotoDurationLabel("");
+    setCollisionPhotoRawBlob(null);
+    setCollisionPhotoIsVideo(false);
+  };
 
   const logAppError = (error: unknown, action: string, phase = "") => {
     reportAppError(error, {
@@ -1230,13 +1317,19 @@ function App() {
       });
       const driver = driverContext ?? await getDriverContext();
       const veiculoId = draft.veiculoId || getDriverCurrentVehicleId(driver);
-      const photosToSubmit = expensePhotos.filter((photo) => Boolean(photo.dataUrl));
+      const photosToSubmit = expensePhotos.filter((photo) => hasMediaDraftContent(photo));
       setRemoteOperation({
         title: "Registrando gasto",
         message: "Conferindo schema do Dataverse.",
         phase: "loading"
       });
       await assertExpenseSchemaReadyRemote();
+      setRemoteOperation({
+        title: "Registrando gasto",
+        message: "Preparando arquivos do comprovante.",
+        phase: "loading"
+      });
+      const preparedPhotosToSubmit = await Promise.all(photosToSubmit.map((photo) => prepareMediaDraftForUpload(photo)));
       const lookupNavigationNames = await loadExpenseLookupNavigationNamesRemote({
         includeVeiculo: Boolean(draft.veiculoId || veiculoId),
         includeReserva: false
@@ -1248,7 +1341,7 @@ function App() {
       });
       const payload = buildExpenseCreatePayload({
         draft,
-        photos: photosToSubmit,
+        photos: preparedPhotosToSubmit,
         referenceData: expenseReferenceData,
         motoristaId: driver.id,
         veiculoId,
@@ -1262,15 +1355,15 @@ function App() {
       });
       const result = await createOne(DATAVERSE.despesasOperacionais, payload);
       createdExpenseId = result.id;
-      if (photosToSubmit.length) {
+      if (preparedPhotosToSubmit.length) {
         let completedUploads = 0;
         setRemoteOperation({
           title: "Registrando gasto",
-          message: `Enviando ${photosToSubmit.length} arquivo(s) em paralelo (0/${photosToSubmit.length}).`,
+          message: `Enviando ${preparedPhotosToSubmit.length} arquivo(s) em paralelo (0/${preparedPhotosToSubmit.length}).`,
           detailId: result.id,
           phase: "loading"
         });
-        const uploadResults = await Promise.allSettled(photosToSubmit.map(async (photo, index) => {
+        const uploadResults = await Promise.allSettled(preparedPhotosToSubmit.map(async (photo, index) => {
           const link = await uploadExpenseInvoiceRemote({
             expenseId: result.id,
             expenseName: String(payload.cr40f_nome ?? "Despesa"),
@@ -1288,7 +1381,7 @@ function App() {
           completedUploads += 1;
           setRemoteOperation({
             title: "Registrando gasto",
-            message: `Uploads paralelos concluídos (${completedUploads}/${photosToSubmit.length}).`,
+            message: `Uploads paralelos concluídos (${completedUploads}/${preparedPhotosToSubmit.length}).`,
             detailId: result.id,
             phase: "loading"
           });
@@ -1296,10 +1389,10 @@ function App() {
         }));
         const failedUploads = uploadResults.filter((uploadResult) => uploadResult.status === "rejected").length;
         if (failedUploads) {
-          throw new Error(`Despesa criada, mas ${failedUploads} de ${photosToSubmit.length} arquivo(s) falharam no upload.`);
+          throw new Error(`Despesa criada, mas ${failedUploads} de ${preparedPhotosToSubmit.length} arquivo(s) falharam no upload.`);
         }
       }
-      if (photosToSubmit.length) {
+      if (preparedPhotosToSubmit.length) {
         await updateOne(DATAVERSE.despesasOperacionais, result.id, { cr40f_statusanexo: 100000002 });
       }
       setRemoteOperation({
@@ -1310,6 +1403,7 @@ function App() {
       });
       await wait(720);
       setRemoteOperation(null);
+      revokePhotoPreviewUrls(expensePhotos);
       setExpenseDraft({
         categoriaId: "",
         veiculoId: "",
@@ -1323,10 +1417,7 @@ function App() {
         litros: ""
       });
       setExpensePhotos([]);
-      setExpensePhotoDraft("");
-      setExpensePhotoPreviewUrl("");
-      setExpensePhotoPosterUrl("");
-      setExpensePhotoDurationLabel("");
+      clearExpensePhotoDraftState();
       setExpensePreviewPhotoId("");
       setScreen("inicio");
       setToast("Gasto registrado.");
@@ -1363,7 +1454,7 @@ function App() {
       const veiculoId = draft.veiculoId || getDriverCurrentVehicleId(driver);
       const collisionHasThirdParty = hasCollisionThirdParty(draft);
       const photosToSubmit = collisionPhotos.filter((photo) =>
-        Boolean(photo.dataUrl) &&
+        hasMediaDraftContent(photo) &&
         (collisionHasThirdParty || (photo.kind !== "danoTerceiro" && photo.kind !== "documentoTerceiro"))
       );
       setRemoteOperation({
@@ -1372,6 +1463,12 @@ function App() {
         phase: "loading"
       });
       await assertCollisionSchemaReadyRemote();
+      setRemoteOperation({
+        title: "Registrando colisão",
+        message: "Preparando evidências.",
+        phase: "loading"
+      });
+      const preparedPhotosToSubmit = await Promise.all(photosToSubmit.map((photo) => prepareMediaDraftForUpload(photo)));
       const lookupNavigationNames = await loadCollisionLookupNavigationNamesRemote();
       setRemoteOperation({
         title: "Registrando colisão",
@@ -1380,7 +1477,7 @@ function App() {
       });
       const payload = buildCollisionCreatePayload({
         draft,
-        photos: photosToSubmit,
+        photos: preparedPhotosToSubmit,
         motoristaId: driver.id,
         veiculoId,
         motoristaEntitySet: DATAVERSE.funcionarios,
@@ -1390,14 +1487,14 @@ function App() {
       const result = await createOne(DATAVERSE.colisoes, payload);
       createdCollisionId = result.id;
       const collisionName = String(payload.cr40f_nome ?? "Colisão");
-      if (photosToSubmit.length) {
+      if (preparedPhotosToSubmit.length) {
         setRemoteOperation({
           title: "Registrando colisão",
-          message: `Enviando ${photosToSubmit.length} arquivo(s) em paralelo (0/${photosToSubmit.length}).`,
+          message: `Enviando ${preparedPhotosToSubmit.length} arquivo(s) em paralelo (0/${preparedPhotosToSubmit.length}).`,
           detailId: result.id,
           phase: "loading"
         });
-        const uploadResults = await Promise.allSettled(photosToSubmit.map(async (photo, index) => {
+        const uploadResults = await Promise.allSettled(preparedPhotosToSubmit.map(async (photo, index) => {
           const link = await uploadCollisionPhotoRemote({
             collisionId: result.id,
             collisionName,
@@ -1415,7 +1512,7 @@ function App() {
           uploadedCount += 1;
           setRemoteOperation({
             title: "Registrando colisão",
-            message: `Uploads paralelos concluídos (${uploadedCount}/${photosToSubmit.length}).`,
+            message: `Uploads paralelos concluídos (${uploadedCount}/${preparedPhotosToSubmit.length}).`,
             detailId: result.id,
             phase: "loading"
           });
@@ -1423,10 +1520,10 @@ function App() {
         }));
         const failedUploads = uploadResults.filter((uploadResult) => uploadResult.status === "rejected").length;
         if (failedUploads) {
-          throw new Error(`Colisão criada, mas ${failedUploads} de ${photosToSubmit.length} arquivo(s) falharam no upload.`);
+          throw new Error(`Colisão criada, mas ${failedUploads} de ${preparedPhotosToSubmit.length} arquivo(s) falharam no upload.`);
         }
       }
-      if (photosToSubmit.length) {
+      if (preparedPhotosToSubmit.length) {
         await updateOne(DATAVERSE.colisoes, result.id, { cr40f_statusanexo: COLLISION_ATTACHMENT_STATUS.completo });
       }
       setRemoteOperation({
@@ -1437,12 +1534,10 @@ function App() {
       });
       await wait(720);
       setRemoteOperation(null);
+      revokePhotoPreviewUrls(collisionPhotos);
       setCollisionDraft(createEmptyCollisionDraft());
       setCollisionPhotos([]);
-      setCollisionPhotoDraft("");
-      setCollisionPhotoPreviewUrl("");
-      setCollisionPhotoPosterUrl("");
-      setCollisionPhotoDurationLabel("");
+      clearCollisionPhotoDraftState();
       setCollisionPreviewPhotoId("");
       setScreen("inicio");
       setToast("Colisão registrada.");
@@ -1481,13 +1576,16 @@ function App() {
         message: "Criando ordem de manutenção.",
         phase: "loading"
       });
+      const preparedPhotos = await Promise.all(
+        maintenanceRequestPhotos.filter((photo) => hasMediaDraftContent(photo)).map((photo) => prepareMediaDraftForUpload(photo))
+      );
       const result = await createMaintenanceRequestRemote({
         descricao: fields.descricao,
         kmAtual: fields.kmAtual,
         veiculoId: fields.veiculoId,
         motoristaId: driver.id,
         gravidade: fields.gravidade,
-        photos: maintenanceRequestPhotos.map((photo) => photo.dataUrl),
+        photos: preparedPhotos.map((photo) => photo.dataUrl),
         onProgress: (message) => setRemoteOperation({
           title: "Solicitando manutenção",
           message,
@@ -1502,12 +1600,10 @@ function App() {
       });
       await wait(720);
       setRemoteOperation(null);
+      revokePhotoPreviewUrls(maintenanceRequestPhotos);
       setMaintenanceRequestDraft({ descricao: "", kmAtual: "", veiculoId: maintenanceCurrentVehicleId, gravidade: "" });
       setMaintenanceRequestPhotos([]);
-      setMaintenanceRequestPhotoDraft("");
-      setMaintenanceRequestPhotoPreviewUrl("");
-      setMaintenanceRequestPhotoPosterUrl("");
-      setMaintenanceRequestPhotoDurationLabel("");
+      clearMaintenanceRequestPhotoDraftState();
       setScreen("inicio");
       setToast("Solicitação enviada para aprovação.");
     } catch (error) {
@@ -1518,19 +1614,18 @@ function App() {
   };
 
   const openMaintenanceRequestCamera = () => {
-    setMaintenanceRequestPhotoDraft("");
-    setMaintenanceRequestPhotoPreviewUrl("");
-    setMaintenanceRequestPhotoPosterUrl("");
-    setMaintenanceRequestPhotoDurationLabel("");
+    clearMaintenanceRequestPhotoDraftState();
     setMaintenanceRequestPreviewPhotoId("");
     setScreen("fotoSolicitacaoManutencao");
   };
 
-  const openMaintenanceRequestVideoPreview = (videoDataUrl: string, _previewUrl: string, posterUrl: string, durationLabel = "") => {
-    setMaintenanceRequestPhotoDraft(videoDataUrl);
-    setMaintenanceRequestPhotoPreviewUrl("");
-    setMaintenanceRequestPhotoPosterUrl(posterUrl);
-    setMaintenanceRequestPhotoDurationLabel(durationLabel);
+  const openMaintenanceRequestVideoPreview = (video: CapturedVideoDraft) => {
+    setMaintenanceRequestPhotoDraft("");
+    setMaintenanceRequestPhotoPreviewUrl(video.previewUrl);
+    setMaintenanceRequestPhotoPosterUrl(video.posterUrl ?? "");
+    setMaintenanceRequestPhotoDurationLabel(video.durationLabel ?? "");
+    setMaintenanceRequestPhotoRawBlob(video.rawBlob);
+    setMaintenanceRequestPhotoIsVideo(true);
     setMaintenanceRequestPreviewPhotoId("");
     setScreen("previewFotoSolicitacaoManutencao");
   };
@@ -1542,22 +1637,31 @@ function App() {
     setMaintenanceRequestPhotoPreviewUrl(photo.previewUrl ?? "");
     setMaintenanceRequestPhotoPosterUrl(photo.posterUrl ?? "");
     setMaintenanceRequestPhotoDurationLabel(photo.durationLabel ?? "");
+    setMaintenanceRequestPhotoRawBlob(photo.rawBlob ?? null);
+    setMaintenanceRequestPhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
     setMaintenanceRequestPreviewPhotoId(photoId);
     setScreen("previewFotoSolicitacaoManutencao");
   };
 
   const confirmMaintenanceRequestPhoto = () => {
-    if (!maintenanceRequestPhotoDraft) return setScreen("solicitarManutencao");
+    if (!hasMediaDraftContent({ dataUrl: maintenanceRequestPhotoDraft, rawBlob: maintenanceRequestPhotoRawBlob, mediaType: maintenanceRequestPhotoIsVideo ? "video" : "foto" })) {
+      return setScreen("solicitarManutencao");
+    }
     if (maintenanceRequestPreviewPhotoId) {
       setMaintenanceRequestPhotos((current) =>
-        current.map((photo) => photo.id === maintenanceRequestPreviewPhotoId ? {
-          ...photo,
-          dataUrl: maintenanceRequestPhotoDraft,
-          previewUrl: maintenanceRequestPhotoPreviewUrl || undefined,
-          posterUrl: maintenanceRequestPhotoPosterUrl || undefined,
-          durationLabel: maintenanceRequestPhotoDurationLabel || undefined,
-          mediaType: maintenanceRequestPhotoDraft.startsWith("data:video/") ? "video" : "foto"
-        } : photo)
+        current.map((photo) => {
+          if (photo.id !== maintenanceRequestPreviewPhotoId) return photo;
+          if (photo.previewUrl && photo.previewUrl !== (maintenanceRequestPhotoPreviewUrl || undefined)) revokePreviewUrl(photo.previewUrl);
+          return {
+            ...photo,
+            dataUrl: maintenanceRequestPhotoDraft,
+            previewUrl: maintenanceRequestPhotoPreviewUrl || undefined,
+            posterUrl: maintenanceRequestPhotoPosterUrl || undefined,
+            durationLabel: maintenanceRequestPhotoDurationLabel || undefined,
+            mediaType: maintenanceRequestPhotoIsVideo ? "video" : "foto",
+            rawBlob: maintenanceRequestPhotoIsVideo ? maintenanceRequestPhotoRawBlob ?? undefined : undefined
+          };
+        })
       );
     } else {
       setMaintenanceRequestPhotos((current) => [
@@ -1568,44 +1672,42 @@ function App() {
           previewUrl: maintenanceRequestPhotoPreviewUrl || undefined,
           posterUrl: maintenanceRequestPhotoPosterUrl || undefined,
           durationLabel: maintenanceRequestPhotoDurationLabel || undefined,
-          mediaType: maintenanceRequestPhotoDraft.startsWith("data:video/") ? "video" : "foto"
+          mediaType: maintenanceRequestPhotoIsVideo ? "video" : "foto",
+          rawBlob: maintenanceRequestPhotoIsVideo ? maintenanceRequestPhotoRawBlob ?? undefined : undefined
         }
       ]);
     }
-    setMaintenanceRequestPhotoDraft("");
-    setMaintenanceRequestPhotoPreviewUrl("");
-    setMaintenanceRequestPhotoPosterUrl("");
-    setMaintenanceRequestPhotoDurationLabel("");
+    clearMaintenanceRequestPhotoDraftState(true);
     setMaintenanceRequestPreviewPhotoId("");
     setScreen("solicitarManutencao");
   };
 
   const deleteMaintenanceRequestPhoto = () => {
     if (maintenanceRequestPreviewPhotoId) {
-      setMaintenanceRequestPhotos((current) => current.filter((photo) => photo.id !== maintenanceRequestPreviewPhotoId));
+      setMaintenanceRequestPhotos((current) => {
+        const removed = current.find((photo) => photo.id === maintenanceRequestPreviewPhotoId);
+        revokePreviewUrl(removed?.previewUrl);
+        return current.filter((photo) => photo.id !== maintenanceRequestPreviewPhotoId);
+      });
     }
-    setMaintenanceRequestPhotoDraft("");
-    setMaintenanceRequestPhotoPreviewUrl("");
-    setMaintenanceRequestPhotoPosterUrl("");
-    setMaintenanceRequestPhotoDurationLabel("");
+    clearMaintenanceRequestPhotoDraftState();
     setMaintenanceRequestPreviewPhotoId("");
     setScreen("solicitarManutencao");
   };
 
   const openExpenseCamera = () => {
-    setExpensePhotoDraft("");
-    setExpensePhotoPreviewUrl("");
-    setExpensePhotoPosterUrl("");
-    setExpensePhotoDurationLabel("");
+    clearExpensePhotoDraftState();
     setExpensePreviewPhotoId("");
     setScreen("fotoGasto");
   };
 
-  const openExpenseVideoPreview = (videoDataUrl: string, _previewUrl: string, posterUrl: string, durationLabel = "") => {
-    setExpensePhotoDraft(videoDataUrl);
-    setExpensePhotoPreviewUrl("");
-    setExpensePhotoPosterUrl(posterUrl);
-    setExpensePhotoDurationLabel(durationLabel);
+  const openExpenseVideoPreview = (video: CapturedVideoDraft) => {
+    setExpensePhotoDraft("");
+    setExpensePhotoPreviewUrl(video.previewUrl);
+    setExpensePhotoPosterUrl(video.posterUrl ?? "");
+    setExpensePhotoDurationLabel(video.durationLabel ?? "");
+    setExpensePhotoRawBlob(video.rawBlob);
+    setExpensePhotoIsVideo(true);
     setExpensePreviewPhotoId("");
     setScreen("previewFotoGasto");
   };
@@ -1617,22 +1719,31 @@ function App() {
     setExpensePhotoPreviewUrl(photo.previewUrl ?? "");
     setExpensePhotoPosterUrl(photo.posterUrl ?? "");
     setExpensePhotoDurationLabel(photo.durationLabel ?? "");
+    setExpensePhotoRawBlob(photo.rawBlob ?? null);
+    setExpensePhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
     setExpensePreviewPhotoId(photoId);
     setScreen("previewFotoGasto");
   };
 
   const confirmExpensePhoto = () => {
-    if (!expensePhotoDraft) return setScreen("gastos");
+    if (!hasMediaDraftContent({ dataUrl: expensePhotoDraft, rawBlob: expensePhotoRawBlob, mediaType: expensePhotoIsVideo ? "video" : "foto" })) {
+      return setScreen("gastos");
+    }
     if (expensePreviewPhotoId) {
       setExpensePhotos((current) =>
-        current.map((photo) => photo.id === expensePreviewPhotoId ? {
-          ...photo,
-          dataUrl: expensePhotoDraft,
-          previewUrl: expensePhotoPreviewUrl || undefined,
-          posterUrl: expensePhotoPosterUrl || undefined,
-          durationLabel: expensePhotoDurationLabel || undefined,
-          mediaType: expensePhotoDraft.startsWith("data:video/") ? "video" : "foto"
-        } : photo)
+        current.map((photo) => {
+          if (photo.id !== expensePreviewPhotoId) return photo;
+          if (photo.previewUrl && photo.previewUrl !== (expensePhotoPreviewUrl || undefined)) revokePreviewUrl(photo.previewUrl);
+          return {
+            ...photo,
+            dataUrl: expensePhotoDraft,
+            previewUrl: expensePhotoPreviewUrl || undefined,
+            posterUrl: expensePhotoPosterUrl || undefined,
+            durationLabel: expensePhotoDurationLabel || undefined,
+            mediaType: expensePhotoIsVideo ? "video" : "foto",
+            rawBlob: expensePhotoIsVideo ? expensePhotoRawBlob ?? undefined : undefined
+          };
+        })
       );
     } else {
       setExpensePhotos((current) => [
@@ -1643,44 +1754,42 @@ function App() {
           previewUrl: expensePhotoPreviewUrl || undefined,
           posterUrl: expensePhotoPosterUrl || undefined,
           durationLabel: expensePhotoDurationLabel || undefined,
-          mediaType: expensePhotoDraft.startsWith("data:video/") ? "video" : "foto"
+          mediaType: expensePhotoIsVideo ? "video" : "foto",
+          rawBlob: expensePhotoIsVideo ? expensePhotoRawBlob ?? undefined : undefined
         }
       ]);
     }
-    setExpensePhotoDraft("");
-    setExpensePhotoPreviewUrl("");
-    setExpensePhotoPosterUrl("");
-    setExpensePhotoDurationLabel("");
+    clearExpensePhotoDraftState(true);
     setExpensePreviewPhotoId("");
     setScreen("gastos");
   };
 
   const deleteExpensePhoto = () => {
     if (expensePreviewPhotoId) {
-      setExpensePhotos((current) => current.filter((photo) => photo.id !== expensePreviewPhotoId));
+      setExpensePhotos((current) => {
+        const removed = current.find((photo) => photo.id === expensePreviewPhotoId);
+        revokePreviewUrl(removed?.previewUrl);
+        return current.filter((photo) => photo.id !== expensePreviewPhotoId);
+      });
     }
-    setExpensePhotoDraft("");
-    setExpensePhotoPreviewUrl("");
-    setExpensePhotoPosterUrl("");
-    setExpensePhotoDurationLabel("");
+    clearExpensePhotoDraftState();
     setExpensePreviewPhotoId("");
     setScreen("gastos");
   };
 
   const openReceiveCamera = () => {
-    setReceivePhotoDraft("");
-    setReceivePhotoPreviewUrl("");
-    setReceivePhotoPosterUrl("");
-    setReceivePhotoDurationLabel("");
+    clearReceivePhotoDraftState();
     setReceivePreviewPhotoId("");
     setScreen("fotoReceber");
   };
 
-  const openReceiveVideoPreview = (videoDataUrl: string, _previewUrl: string, posterUrl: string, durationLabel = "") => {
-    setReceivePhotoDraft(videoDataUrl);
-    setReceivePhotoPreviewUrl("");
-    setReceivePhotoPosterUrl(posterUrl);
-    setReceivePhotoDurationLabel(durationLabel);
+  const openReceiveVideoPreview = (video: CapturedVideoDraft) => {
+    setReceivePhotoDraft("");
+    setReceivePhotoPreviewUrl(video.previewUrl);
+    setReceivePhotoPosterUrl(video.posterUrl ?? "");
+    setReceivePhotoDurationLabel(video.durationLabel ?? "");
+    setReceivePhotoRawBlob(video.rawBlob);
+    setReceivePhotoIsVideo(true);
     setReceivePreviewPhotoId("");
     setScreen("previewFotoReceber");
   };
@@ -1693,13 +1802,17 @@ function App() {
     setReceivePhotoPreviewUrl(photo.previewUrl ?? "");
     setReceivePhotoPosterUrl(photo.posterUrl ?? "");
     setReceivePhotoDurationLabel(photo.durationLabel ?? "");
+    setReceivePhotoRawBlob(photo.rawBlob ?? null);
+    setReceivePhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
     setReceivePreviewPhotoId(photoId);
     setScreen("previewFotoReceber");
   };
 
   const confirmReceivePhoto = () => {
     if (!selectedDetail) return setScreen("servicos");
-    if (!receivePhotoDraft) return setScreen("receber");
+    if (!hasMediaDraftContent({ dataUrl: receivePhotoDraft, rawBlob: receivePhotoRawBlob, mediaType: receivePhotoIsVideo ? "video" : "foto" })) {
+      return setScreen("receber");
+    }
 
     setReceiveProofs((current) => {
       const detailPhotos = current[selectedDetail.id] ?? [];
@@ -1709,10 +1822,15 @@ function App() {
         previewUrl: receivePhotoPreviewUrl || undefined,
         posterUrl: receivePhotoPosterUrl || undefined,
         durationLabel: receivePhotoDurationLabel || undefined,
-        mediaType: receivePhotoDraft.startsWith("data:video/") ? "video" : "foto"
+        mediaType: receivePhotoIsVideo ? "video" : "foto",
+        rawBlob: receivePhotoIsVideo ? receivePhotoRawBlob ?? undefined : undefined
       };
       const nextPhotos = receivePreviewPhotoId
-        ? detailPhotos.map((photo) => (photo.id === receivePreviewPhotoId ? nextPhoto : photo))
+        ? detailPhotos.map((photo) => {
+          if (photo.id !== receivePreviewPhotoId) return photo;
+          if (photo.previewUrl && photo.previewUrl !== nextPhoto.previewUrl) revokePreviewUrl(photo.previewUrl);
+          return nextPhoto;
+        })
         : [...detailPhotos, nextPhoto];
       return {
         ...current,
@@ -1726,10 +1844,7 @@ function App() {
       return next;
     });
 
-    setReceivePhotoDraft("");
-    setReceivePhotoPreviewUrl("");
-    setReceivePhotoPosterUrl("");
-    setReceivePhotoDurationLabel("");
+    clearReceivePhotoDraftState(true);
     setReceivePreviewPhotoId("");
     setScreen("receber");
   };
@@ -1737,10 +1852,14 @@ function App() {
   const deleteReceivePhoto = () => {
     if (!selectedDetail) return;
     if (receivePreviewPhotoId) {
-      setReceiveProofs((current) => ({
-        ...current,
-        [selectedDetail.id]: (current[selectedDetail.id] ?? []).filter((photo) => photo.id !== receivePreviewPhotoId)
-      }));
+      setReceiveProofs((current) => {
+        const removed = (current[selectedDetail.id] ?? []).find((photo) => photo.id === receivePreviewPhotoId);
+        revokePreviewUrl(removed?.previewUrl);
+        return {
+          ...current,
+          [selectedDetail.id]: (current[selectedDetail.id] ?? []).filter((photo) => photo.id !== receivePreviewPhotoId)
+        };
+      });
     }
     setReceiveUploadedCounts((current) => {
       if (!current[selectedDetail.id]) return current;
@@ -1748,10 +1867,7 @@ function App() {
       delete next[selectedDetail.id];
       return next;
     });
-    setReceivePhotoDraft("");
-    setReceivePhotoPreviewUrl("");
-    setReceivePhotoPosterUrl("");
-    setReceivePhotoDurationLabel("");
+    clearReceivePhotoDraftState();
     setReceivePreviewPhotoId("");
     setScreen("receber");
   };
@@ -1786,9 +1902,10 @@ function App() {
         detailId: detailToContinue.id,
         phase: "loading"
       });
+      const preparedPhotos = await Promise.all(photos.map((photo) => prepareMediaDraftForUpload(photo)));
       let completedUploads = 0;
       const uploadResults = await Promise.allSettled(
-        photos.map(async (photo, index) => {
+        preparedPhotos.map(async (photo, index) => {
           const link = await uploadReceiveProofRemote({
             reservaId: dvId,
             reservaName: detailToContinue.id,
@@ -1807,7 +1924,7 @@ function App() {
           completedUploads += 1;
           setRemoteOperation({
             title: "Enviando comprovantes",
-            message: `Comprovantes enviados (${completedUploads}/${photos.length}).`,
+            message: `Comprovantes enviados (${completedUploads}/${preparedPhotos.length}).`,
             detailId: detailToContinue.id,
             phase: "loading"
           });
@@ -1816,9 +1933,9 @@ function App() {
       );
       const failedUploads = uploadResults.filter((result) => result.status === "rejected").length;
       if (failedUploads) {
-        throw new Error(`${failedUploads} de ${photos.length} comprovante(s) falharam no upload.`);
+        throw new Error(`${failedUploads} de ${preparedPhotos.length} comprovante(s) falharam no upload.`);
       }
-      setReceiveUploadedCounts((current) => ({ ...current, [detailToContinue.id]: photos.length }));
+      setReceiveUploadedCounts((current) => ({ ...current, [detailToContinue.id]: preparedPhotos.length }));
       setRemoteOperation({
         title: "Enviando comprovantes",
         message: "Comprovantes enviados com sucesso.",
@@ -1904,27 +2021,25 @@ function App() {
 
   const openCollisionCamera = (kind: CollisionPhotoKind) => {
     setCollisionPhotoKind(kind);
-    setCollisionPhotoDraft("");
-    setCollisionPhotoPreviewUrl("");
-    setCollisionPhotoPosterUrl("");
-    setCollisionPhotoDurationLabel("");
+    clearCollisionPhotoDraftState();
     setCollisionPreviewPhotoId("");
     setScreen("fotoColisao");
   };
 
   const openMaintenanceFinalizeCamera = (kind: MaintenancePhotoKind) => {
     setMaintenancePhotoKind(kind);
-    setPhotoDraft(null);
-    setPhotoDraftPreviewUrl("");
+    clearMaintenanceFinalizePhotoDraft();
     setMaintenanceExistingPreview(false);
     setScreen("fotoManutencao");
   };
 
-  const openCollisionVideoPreview = (videoDataUrl: string, _previewUrl: string, posterUrl: string, durationLabel = "") => {
-    setCollisionPhotoDraft(videoDataUrl);
-    setCollisionPhotoPreviewUrl("");
-    setCollisionPhotoPosterUrl(posterUrl);
-    setCollisionPhotoDurationLabel(durationLabel);
+  const openCollisionVideoPreview = (video: CapturedVideoDraft) => {
+    setCollisionPhotoDraft("");
+    setCollisionPhotoPreviewUrl(video.previewUrl);
+    setCollisionPhotoPosterUrl(video.posterUrl ?? "");
+    setCollisionPhotoDurationLabel(video.durationLabel ?? "");
+    setCollisionPhotoRawBlob(video.rawBlob);
+    setCollisionPhotoIsVideo(true);
     setCollisionPreviewPhotoId("");
     setScreen("previewFotoColisao");
   };
@@ -1937,22 +2052,31 @@ function App() {
     setCollisionPhotoPreviewUrl(photo.previewUrl ?? "");
     setCollisionPhotoPosterUrl(photo.posterUrl ?? "");
     setCollisionPhotoDurationLabel(photo.durationLabel ?? "");
+    setCollisionPhotoRawBlob(photo.rawBlob ?? null);
+    setCollisionPhotoIsVideo(isVideoMediaDraft(photo.dataUrl, photo.rawBlob));
     setCollisionPreviewPhotoId(photoId);
     setScreen("previewFotoColisao");
   };
 
   const confirmCollisionPhoto = () => {
-    if (!collisionPhotoDraft) return setScreen("colisoes");
+    if (!hasMediaDraftContent({ dataUrl: collisionPhotoDraft, rawBlob: collisionPhotoRawBlob, mediaType: collisionPhotoIsVideo ? "video" : "foto" })) {
+      return setScreen("colisoes");
+    }
     if (collisionPreviewPhotoId) {
       setCollisionPhotos((current) =>
-        current.map((photo) => photo.id === collisionPreviewPhotoId ? {
-          ...photo,
-          dataUrl: collisionPhotoDraft,
-          previewUrl: collisionPhotoPreviewUrl || undefined,
-          posterUrl: collisionPhotoPosterUrl || undefined,
-          durationLabel: collisionPhotoDurationLabel || undefined,
-          mediaType: collisionPhotoDraft.startsWith("data:video/") ? "video" : "foto"
-        } : photo)
+        current.map((photo) => {
+          if (photo.id !== collisionPreviewPhotoId) return photo;
+          if (photo.previewUrl && photo.previewUrl !== (collisionPhotoPreviewUrl || undefined)) revokePreviewUrl(photo.previewUrl);
+          return {
+            ...photo,
+            dataUrl: collisionPhotoDraft,
+            previewUrl: collisionPhotoPreviewUrl || undefined,
+            posterUrl: collisionPhotoPosterUrl || undefined,
+            durationLabel: collisionPhotoDurationLabel || undefined,
+            mediaType: collisionPhotoIsVideo ? "video" : "foto",
+            rawBlob: collisionPhotoIsVideo ? collisionPhotoRawBlob ?? undefined : undefined
+          };
+        })
       );
     } else {
       setCollisionPhotos((current) => {
@@ -1965,27 +2089,26 @@ function App() {
             previewUrl: collisionPhotoPreviewUrl || undefined,
             posterUrl: collisionPhotoPosterUrl || undefined,
             durationLabel: collisionPhotoDurationLabel || undefined,
-            mediaType: collisionPhotoDraft.startsWith("data:video/") ? "video" : "foto"
+            mediaType: collisionPhotoIsVideo ? "video" : "foto",
+            rawBlob: collisionPhotoIsVideo ? collisionPhotoRawBlob ?? undefined : undefined
           }
         ];
       });
     }
-    setCollisionPhotoDraft("");
-    setCollisionPhotoPreviewUrl("");
-    setCollisionPhotoPosterUrl("");
-    setCollisionPhotoDurationLabel("");
+    clearCollisionPhotoDraftState(true);
     setCollisionPreviewPhotoId("");
     setScreen("colisoes");
   };
 
   const deleteCollisionPhoto = () => {
     if (collisionPreviewPhotoId) {
-      setCollisionPhotos((current) => current.filter((photo) => photo.id !== collisionPreviewPhotoId));
+      setCollisionPhotos((current) => {
+        const removed = current.find((photo) => photo.id === collisionPreviewPhotoId);
+        revokePreviewUrl(removed?.previewUrl);
+        return current.filter((photo) => photo.id !== collisionPreviewPhotoId);
+      });
     }
-    setCollisionPhotoDraft("");
-    setCollisionPhotoPreviewUrl("");
-    setCollisionPhotoPosterUrl("");
-    setCollisionPhotoDurationLabel("");
+    clearCollisionPhotoDraftState();
     setCollisionPreviewPhotoId("");
     setScreen("colisoes");
   };
@@ -2013,6 +2136,8 @@ function App() {
           setMaintenanceRequestPhotoPreviewUrl("");
           setMaintenanceRequestPhotoPosterUrl("");
           setMaintenanceRequestPhotoDurationLabel("");
+          setMaintenanceRequestPhotoRawBlob(null);
+          setMaintenanceRequestPhotoIsVideo(false);
           setScreen("previewFotoSolicitacaoManutencao");
         }}
         onCaptureVideo={openMaintenanceRequestVideoPreview}
@@ -2026,10 +2151,15 @@ function App() {
       <MaintenancePhotoPreviewScreen
         kind="FOTO1"
         title="Foto da manutenção"
-        prompt={maintenanceRequestPhotoDraft.startsWith("data:video/") ? "O vídeo está correto?" : "A foto está legível?"}
+        prompt={maintenanceRequestPhotoIsVideo ? "O vídeo está correto?" : "A foto está legível?"}
         photoDataUrl={maintenanceRequestPhotoDraft}
+        isVideo={maintenanceRequestPhotoIsVideo}
         videoPreviewUrl={maintenanceRequestPhotoPreviewUrl}
-        onBack={() => setScreen("solicitarManutencao")}
+        onBack={() => {
+          clearMaintenanceRequestPhotoDraftState();
+          setMaintenanceRequestPreviewPhotoId("");
+          setScreen("solicitarManutencao");
+        }}
         onRetake={openMaintenanceRequestCamera}
         onDelete={maintenanceRequestPreviewPhotoId ? deleteMaintenanceRequestPhoto : undefined}
         onConfirm={confirmMaintenanceRequestPhoto}
@@ -2050,6 +2180,8 @@ function App() {
           setCollisionPhotoPreviewUrl("");
           setCollisionPhotoPosterUrl("");
           setCollisionPhotoDurationLabel("");
+          setCollisionPhotoRawBlob(null);
+          setCollisionPhotoIsVideo(false);
           setCollisionPreviewPhotoId("");
           setScreen("previewFotoColisao");
         }}
@@ -2064,14 +2196,12 @@ function App() {
       <MaintenancePhotoPreviewScreen
         kind="NOTAFISCAL"
         title={getCollisionPhotoLabel(collisionPhotoKind)}
-        prompt={collisionPhotoDraft.startsWith("data:video/") ? "O vídeo está correto?" : "A foto está legível?"}
+        prompt={collisionPhotoIsVideo ? "O vídeo está correto?" : "A foto está legível?"}
         photoDataUrl={collisionPhotoDraft}
+        isVideo={collisionPhotoIsVideo}
         videoPreviewUrl={collisionPhotoPreviewUrl}
         onBack={() => {
-          setCollisionPhotoDraft("");
-          setCollisionPhotoPreviewUrl("");
-          setCollisionPhotoPosterUrl("");
-          setCollisionPhotoDurationLabel("");
+          clearCollisionPhotoDraftState();
           setCollisionPreviewPhotoId("");
           setScreen("colisoes");
         }}
@@ -2095,6 +2225,8 @@ function App() {
           setExpensePhotoPreviewUrl("");
           setExpensePhotoPosterUrl("");
           setExpensePhotoDurationLabel("");
+          setExpensePhotoRawBlob(null);
+          setExpensePhotoIsVideo(false);
           setExpensePreviewPhotoId("");
           setScreen("previewFotoGasto");
         }}
@@ -2109,13 +2241,12 @@ function App() {
       <MaintenancePhotoPreviewScreen
         kind="NOTAFISCAL"
         title="Comprovante"
-        prompt={expensePhotoDraft.startsWith("data:video/") ? "O vídeo está correto?" : "O comprovante está legível?"}
+        prompt={expensePhotoIsVideo ? "O vídeo está correto?" : "O comprovante está legível?"}
         photoDataUrl={expensePhotoDraft}
+        isVideo={expensePhotoIsVideo}
         videoPreviewUrl={expensePhotoPreviewUrl}
         onBack={() => {
-          setExpensePhotoDraft("");
-          setExpensePhotoPreviewUrl("");
-          setExpensePhotoPosterUrl("");
+          clearExpensePhotoDraftState();
           setExpensePreviewPhotoId("");
           setScreen("gastos");
         }}
@@ -2203,12 +2334,16 @@ function App() {
         onCapture={(photoDataUrl) => {
           setPhotoDraft(photoDataUrl);
           setPhotoDraftPreviewUrl("");
+          setPhotoDraftRawBlob(null);
+          setPhotoDraftIsVideo(false);
           setMaintenanceExistingPreview(false);
           setScreen("previewFotoManutencao");
         }}
-        onCaptureVideo={(videoDataUrl) => {
-          setPhotoDraft(videoDataUrl);
-          setPhotoDraftPreviewUrl("");
+        onCaptureVideo={(video) => {
+          setPhotoDraft("");
+          setPhotoDraftPreviewUrl(video.previewUrl);
+          setPhotoDraftRawBlob(video.rawBlob);
+          setPhotoDraftIsVideo(true);
           setMaintenanceExistingPreview(false);
           setScreen("previewFotoManutencao");
         }}
@@ -2222,21 +2357,36 @@ function App() {
       <MaintenancePhotoPreviewScreen
         kind={maintenancePhotoKind}
         photoDataUrl={photoDraft}
+        isVideo={photoDraftIsVideo}
         videoPreviewUrl={photoDraftPreviewUrl}
-        onBack={() => setScreen("finalizar")}
-        onRetake={() => openMaintenanceFinalizeCamera(maintenancePhotoKind)}
-        onConfirm={() => {
-          setStore((current) => saveMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind, photoDraft ?? ""));
-          setToast("Foto salva localmente.");
-          setPhotoDraftPreviewUrl("");
+        onBack={() => {
+          clearMaintenanceFinalizePhotoDraft();
           setMaintenanceExistingPreview(false);
           setScreen("finalizar");
+        }}
+        onRetake={() => openMaintenanceFinalizeCamera(maintenancePhotoKind)}
+        onConfirm={() => {
+          void (async () => {
+            try {
+              const savedPhotoDataUrl =
+                photoDraftIsVideo && photoDraftRawBlob && !photoDraft
+                  ? (await prepareVideoBlobForUpload(photoDraftRawBlob)).dataUrl
+                  : photoDraft ?? "";
+              setStore((current) => saveMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind, savedPhotoDataUrl));
+              setToast("Foto salva localmente.");
+              clearMaintenanceFinalizePhotoDraft();
+              setMaintenanceExistingPreview(false);
+              setScreen("finalizar");
+            } catch (error) {
+              logAppError(error, "confirmMaintenancePhoto", "local-save");
+              setCriticalError(error instanceof Error ? error.message : "Falha ao preparar mídia local.");
+            }
+          })();
         }}
         onDelete={maintenanceExistingPreview ? () => {
           setStore((current) => deleteFinalizationMaintenancePhoto(current, selectedDetail.id, maintenancePhotoKind));
           setToast("Foto apagada.");
-          setPhotoDraft(null);
-          setPhotoDraftPreviewUrl("");
+          clearMaintenanceFinalizePhotoDraft();
           setMaintenanceExistingPreview(false);
           setScreen("finalizar");
         } : undefined}
@@ -2295,6 +2445,8 @@ function App() {
           setReceivePhotoPreviewUrl("");
           setReceivePhotoPosterUrl("");
           setReceivePhotoDurationLabel("");
+          setReceivePhotoRawBlob(null);
+          setReceivePhotoIsVideo(false);
           setReceivePreviewPhotoId("");
           setScreen("previewFotoReceber");
         }}
@@ -2309,14 +2461,12 @@ function App() {
       <MaintenancePhotoPreviewScreen
         kind="NOTAFISCAL"
         title="Comprovante"
-        prompt={receivePhotoDraft.startsWith("data:video/") ? "O vídeo está correto?" : "O comprovante está legível?"}
+        prompt={receivePhotoIsVideo ? "O vídeo está correto?" : "O comprovante está legível?"}
         photoDataUrl={receivePhotoDraft}
+        isVideo={receivePhotoIsVideo}
         videoPreviewUrl={receivePhotoPreviewUrl}
         onBack={() => {
-          setReceivePhotoDraft("");
-          setReceivePhotoPreviewUrl("");
-          setReceivePhotoPosterUrl("");
-          setReceivePhotoDurationLabel("");
+          clearReceivePhotoDraftState();
           setReceivePreviewPhotoId("");
           setScreen("receber");
         }}
@@ -2371,7 +2521,9 @@ function App() {
           const existingPhoto = store.photos[selectedDetail.id]?.[kind];
           if (existingPhoto) {
             setPhotoDraft(existingPhoto);
-            setPhotoDraftPreviewUrl(existingPhoto.startsWith("data:video/") ? existingPhoto : "");
+            setPhotoDraftPreviewUrl("");
+            setPhotoDraftRawBlob(null);
+            setPhotoDraftIsVideo(existingPhoto.startsWith("data:video/"));
             setMaintenanceExistingPreview(true);
             setScreen("previewFotoManutencao");
             return;
