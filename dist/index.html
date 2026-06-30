@@ -11935,7 +11935,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.553","builtAt":"2026-06-30T13:55:21.894Z","builtAtLabel":"30/06/2026, 10:55"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.558","builtAt":"2026-06-30T14:16:32.839Z","builtAtLabel":"30/06/2026, 11:16"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83515,28 +83515,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       onSwitchCamera();
       if (useLiveCamera) void startLiveCamera(next);
     };
-    const captureLivePhoto = async () => {
+    const captureLivePhoto = () => {
       const video = videoRef.current;
-      const videoTrack = streamRef.current?.getVideoTracks?.()[0];
-      if (!video || !ready || processing || recording || !videoTrack) {
+      if (!video || !ready || processing || recording) {
         setCameraError("Abra a camera para tirar a foto.");
         return;
       }
       try {
-        let photoDataUrl = "";
-        const ImageCaptureCtor = globalThis.ImageCapture;
-        if (ImageCaptureCtor) {
-          try {
-            const imageCapture = new ImageCaptureCtor(videoTrack);
-            const photoBlob = await imageCapture.takePhoto?.();
-            if (photoBlob) {
-              const photoFile = new File([photoBlob], `captura-${Date.now()}.jpg`, { type: photoBlob.type || "image/jpeg" });
-              photoDataUrl = await readPhotoFileAsDataUrl(photoFile, 0);
-            }
-          } catch {
-          }
-        }
-        if (!photoDataUrl) photoDataUrl = captureVideoFrameDataUrl(video);
+        const photoDataUrl = captureVideoFrameDataUrl(video);
         if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
         onCapture(photoDataUrl);
       } catch (error2) {

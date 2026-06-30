@@ -28,10 +28,6 @@ type VideoCaptureProfile = {
   bitRate: number;
 };
 
-type ImageCaptureLike = {
-  takePhoto?: () => Promise<Blob>;
-};
-
 function getTitleByKind(kind: MaintenancePhotoKind) {
   if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
   if (kind === "FOTO1") return "Tire a foto 1 de 3";
@@ -297,30 +293,15 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     if (useLiveCamera) void startLiveCamera(next);
   };
 
-  const captureLivePhoto = async () => {
+  const captureLivePhoto = () => {
     const video = videoRef.current;
-    const videoTrack = streamRef.current?.getVideoTracks?.()[0];
-    if (!video || !ready || processing || recording || !videoTrack) {
+    if (!video || !ready || processing || recording) {
       setCameraError("Abra a camera para tirar a foto.");
       return;
     }
 
     try {
-      let photoDataUrl = "";
-      const ImageCaptureCtor = globalThis.ImageCapture as undefined | (new (track: MediaStreamTrack) => ImageCaptureLike);
-      if (ImageCaptureCtor) {
-        try {
-          const imageCapture = new ImageCaptureCtor(videoTrack);
-          const photoBlob = await imageCapture.takePhoto?.();
-          if (photoBlob) {
-            const photoFile = new File([photoBlob], `captura-${Date.now()}.jpg`, { type: photoBlob.type || "image/jpeg" });
-            photoDataUrl = await readPhotoFileAsDataUrl(photoFile, 0);
-          }
-        } catch {
-          // Fallback below.
-        }
-      }
-      if (!photoDataUrl) photoDataUrl = captureVideoFrameDataUrl(video);
+      const photoDataUrl = captureVideoFrameDataUrl(video);
       if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
       onCapture(photoDataUrl);
     } catch (error) {
