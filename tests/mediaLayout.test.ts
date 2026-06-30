@@ -85,3 +85,32 @@ test("camera ao vivo evita proporcao fixa e pede qualidade HD quando possivel", 
   assert.match(mediaCaptureScreen, /frameRate:\s*{\s*ideal:\s*30,\s*max:\s*30\s*}/);
   assert.match(mediaCaptureScreen, /iPhone\|iPad\|iPod/);
 });
+
+test("iphone usa captura nativa limpa para evitar fullscreen ao gravar video", () => {
+  assert.match(mediaCaptureScreen, /configureInlineCameraVideo\(videoRef\.current\)/);
+  assert.match(mediaCaptureScreen, /isAppleMobileDevice/);
+  assert.match(mediaCaptureScreen, /const useLiveRecording = useLiveCamera && !useAppleMobile;/);
+  assert.match(mediaCaptureScreen, /const useLivePreview = useLiveRecording;/);
+  assert.match(mediaCaptureScreen, /const nativeVideoAccept = useAppleMobile \? "video\/\*" : "video\/\*,\.mov,video\/quicktime";/);
+  assert.match(mediaCaptureScreen, /accept={nativeVideoAccept}/);
+  assert.match(mediaCaptureScreen, /onClick={useLiveRecording \? \(recording \? stopLiveRecording : startLiveRecording\) : openNativeVideoCamera}/);
+  assert.match(mediaCaptureScreen, /if \(videoRef\.current && useLivePreview\)/);
+  assert.match(mediaCaptureScreen, /onClick={useLivePreview \? captureLivePhoto : openNativePhotoCamera}/);
+  assert.match(mediaCaptureScreen, /disabled={processing \|\| starting \|\| \(useLivePreview && !ready && !recording\)}/);
+  assert.match(mediaCaptureScreen, /setAttribute\("webkit-playsinline",\s*""\)/);
+  assert.match(mediaCaptureScreen, /setAttribute\("playsinline",\s*""\)/);
+  assert.match(mediaCaptureScreen, /controls={false}/);
+  assert.match(mediaCaptureScreen, /disablePictureInPicture/);
+  assert.doesNotMatch(mediaCaptureScreen, /real-camera-canvas/);
+});
+
+test("foto android prioriza ImageCapture e jpeg com baixa compressao", () => {
+  const photoOrientation = readFileSync(new URL("../src/lib/photoOrientation.ts", import.meta.url), "utf8");
+
+  assert.match(mediaCaptureScreen, /ImageCapture\?: BrowserImageCaptureConstructor/);
+  assert.match(mediaCaptureScreen, /captureTrackPhotoDataUrl\(stream\)/);
+  assert.match(mediaCaptureScreen, /imageCapture\.takePhoto\(settings\)/);
+  assert.match(mediaCaptureScreen, /readBlobAsDataUrl\(photoBlob\)/);
+  assert.match(mediaCaptureScreen, /if \(!photoDataUrl && video\) photoDataUrl = await captureVideoFrameDataUrlAsync\(video\);/);
+  assert.match(photoOrientation, /const PHOTO_OUTPUT_QUALITY = 0\.98;/);
+});

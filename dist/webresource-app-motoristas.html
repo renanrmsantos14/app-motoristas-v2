@@ -11989,7 +11989,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.588","builtAt":"2026-06-30T16:39:19.959Z","builtAtLabel":"30/06/2026, 13:39"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.599","builtAt":"2026-06-30T17:22:52.162Z","builtAtLabel":"30/06/2026, 14:22"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -64554,7 +64554,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return normalized;
   }
   var PHOTO_OUTPUT_MIME_TYPE = "image/jpeg";
-  var PHOTO_OUTPUT_QUALITY = 0.94;
+  var PHOTO_OUTPUT_QUALITY = 0.98;
   function encodePhotoCanvas(canvas) {
     return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE, PHOTO_OUTPUT_QUALITY);
   }
@@ -83375,6 +83375,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const isMobileCameraDevice = /Android|iPhone|iPad|iPod/i.test(userAgent);
     return isMobileCameraDevice && Boolean(globalThis.navigator?.mediaDevices?.getUserMedia);
   }
+  function isAppleMobileDevice() {
+    return /iPhone|iPad|iPod/i.test(globalThis.navigator?.userAgent ?? "");
+  }
   function getPreferredCameraVideoConstraints(mode) {
     return {
       facingMode: { ideal: mode },
@@ -83450,6 +83453,31 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     ] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
     return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate)) ?? "";
   }
+  function configureInlineCameraVideo(video) {
+    video.playsInline = true;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.autoplay = true;
+    video.controls = false;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("x5-playsinline", "");
+    video.setAttribute("x5-video-player-type", "h5");
+    video.setAttribute("x5-video-player-fullscreen", "false");
+    if ("disablePictureInPicture" in video) video.disablePictureInPicture = true;
+  }
+  async function captureTrackPhotoDataUrl(stream2) {
+    const ImageCaptureConstructor = globalThis.ImageCapture;
+    const videoTrack = stream2.getVideoTracks()[0];
+    if (!ImageCaptureConstructor || !videoTrack) return "";
+    const imageCapture = new ImageCaptureConstructor(videoTrack);
+    const capabilities = await imageCapture.getPhotoCapabilities?.();
+    const maxWidth = Math.floor(Number(capabilities?.imageWidth?.max ?? 0));
+    const maxHeight = Math.floor(Number(capabilities?.imageHeight?.max ?? 0));
+    const settings = maxWidth > 0 && maxHeight > 0 ? { imageWidth: maxWidth, imageHeight: maxHeight } : void 0;
+    const photoBlob = await imageCapture.takePhoto(settings);
+    return readBlobAsDataUrl(photoBlob);
+  }
   function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }) {
     const photoInputRef = (0, import_react57.useRef)(null);
     const videoInputRef = (0, import_react57.useRef)(null);
@@ -83474,7 +83502,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [recording, setRecording] = (0, import_react57.useState)(false);
     const [recordingSeconds, setRecordingSeconds] = (0, import_react57.useState)(0);
     const useLiveCamera = shouldUseLiveCameraCapture();
+    const useAppleMobile = isAppleMobileDevice();
+    const useLiveRecording = useLiveCamera && !useAppleMobile;
+    const useLivePreview = useLiveRecording;
     const nativeCaptureMode = facingMode === "environment" ? "environment" : "user";
+    const nativeVideoAccept = useAppleMobile ? "video/*" : "video/*,.mov,video/quicktime";
     const stopStream = () => {
       const recorder = recorderRef.current;
       if (recorder && recorder.state !== "inactive") {
@@ -83500,7 +83532,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
     };
     const startLiveCamera = async (mode = facingMode) => {
-      if (!useLiveCamera || recording || processing) return;
+      if (!useLiveCamera || recording || processing) return false;
       setStarting(true);
       setReady(false);
       setCameraError("");
@@ -83527,13 +83559,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           activeVideoProfileRef.current = await preferTrackProfile(videoTrack, mode);
           updateTrackContentHint(false);
         }
-        if (videoRef.current) {
+        if (videoRef.current && useLivePreview) {
+          configureInlineCameraVideo(videoRef.current);
           videoRef.current.srcObject = stream2;
-          videoRef.current.setAttribute("playsinline", "true");
-          videoRef.current.muted = true;
           await videoRef.current.play();
         }
         setReady(true);
+        return true;
       } catch (error2) {
         reportAppError(error2, {
           severity: "error",
@@ -83544,12 +83576,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           payload: { mode, useLiveCamera }
         });
         setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel abrir a camera.");
+        return false;
       } finally {
         setStarting(false);
       }
     };
     const openNativePhotoCamera = () => {
-      if (useLiveCamera) {
+      if (useLivePreview) {
         void startLiveCamera();
         return;
       }
@@ -83562,9 +83595,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setCameraError("Video indisponivel nesta tela.");
         return;
       }
-      if (useLiveCamera) {
+      if (useLiveRecording) {
         if (!ready) {
-          void startLiveCamera();
+          void startLiveRecording();
           return;
         }
         return;
@@ -83578,11 +83611,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       const next = facingMode === "environment" ? "user" : "environment";
       setFacingMode(next);
       onSwitchCamera();
-      if (useLiveCamera) void startLiveCamera(next);
+      if (useLivePreview) void startLiveCamera(next);
     };
     const captureLivePhoto = async () => {
       const video = videoRef.current;
-      if (!video || !ready || processing || recording) {
+      const stream2 = streamRef.current;
+      if (!video && !stream2 || !ready || processing || recording) {
         setCameraError("Abra a camera para tirar a foto.");
         return;
       }
@@ -83595,7 +83629,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             requestAnimationFrame(() => resolve());
           });
         });
-        const photoDataUrl = await captureVideoFrameDataUrlAsync(video);
+        let photoDataUrl = "";
+        if (stream2) {
+          try {
+            photoDataUrl = await captureTrackPhotoDataUrl(stream2);
+          } catch {
+            photoDataUrl = "";
+          }
+        }
+        if (!photoDataUrl && video) photoDataUrl = await captureVideoFrameDataUrlAsync(video);
         if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
         onCapture(photoDataUrl);
       } catch (error2) {
@@ -83612,19 +83654,23 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setProcessing(false);
       }
     };
-    const startLiveRecording = () => {
-      const stream2 = streamRef.current;
+    const startLiveRecording = async () => {
+      let stream2 = streamRef.current;
       if (!onCaptureVideo) {
         setCameraError("Video indisponivel nesta tela.");
         return;
       }
-      if (!useLiveCamera) {
+      if (!useLiveRecording) {
         openNativeVideoCamera();
         return;
       }
       if (!stream2 || !ready) {
-        setCameraError("Abra a camera antes de gravar.");
-        return;
+        const started = await startLiveCamera();
+        stream2 = streamRef.current;
+        if (!started || !stream2) {
+          setCameraError("Nao foi possivel abrir a camera para gravar.");
+          return;
+        }
       }
       if (typeof MediaRecorder === "undefined") {
         setCameraError("Este dispositivo nao liberou gravacao direta no navegador.");
@@ -83780,7 +83826,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (defaultLaunchAttemptedRef.current) return;
       defaultLaunchAttemptedRef.current = true;
       const timer = window.setTimeout(() => {
-        if (useLiveCamera) {
+        if (useLivePreview) {
           void startLiveCamera();
           return;
         }
@@ -83792,19 +83838,33 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(FormMenu, { title: title ?? getTitleByKind2(kind), onBack }),
       /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("section", { className: "main-panel photo-main", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("article", { className: "photo-card camera-capture-card", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-body", children: [
         /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-view real-camera-view native-camera-view", children: [
-          useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("video", { ref: videoRef, className: "real-camera-video", playsInline: true, muted: true, autoPlay: true }) : null,
+          useLivePreview ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(import_jsx_runtime43.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+            "video",
+            {
+              ref: (element) => {
+                videoRef.current = element;
+                if (element) configureInlineCameraVideo(element);
+              },
+              className: "real-camera-video",
+              playsInline: true,
+              muted: true,
+              autoPlay: true,
+              controls: false,
+              disablePictureInPicture: true
+            }
+          ) }) : null,
           useLiveCamera && capturingPhoto ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-shutter-flash", "aria-hidden": "true" }) : null,
           useLiveCamera && recording ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-recording-pill", "aria-live": "polite", children: [
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", {}),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: formatVideoDuration(recordingSeconds) })
           ] }) : null,
-          !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
+          !useLiveRecording ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera do dispositivo" }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: nativeCaptureMode === "environment" ? "Traseira preferencial" : "Frontal preferencial" }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: openNativePhotoCamera, disabled: processing, children: "Tirar foto" }),
             onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "native-camera-link", onClick: openNativeVideoCamera, disabled: processing, children: "Gravar video" }) : null
           ] }) : null,
-          useLiveCamera && !cameraError && !ready && !starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
+          useLivePreview && !cameraError && !ready && !starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera ao vivo" }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "A captura acontece direto na tela para manter qualidade e bloquear galeria." }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => void startLiveCamera(), disabled: processing, children: "Abrir camera" })
@@ -83814,10 +83874,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-error", children: [
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera indisponivel" }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: cameraError }),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("small", { children: useLiveCamera ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera do dispositivo." })
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("small", { children: useLiveRecording ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera do dispositivo." })
           ] }) : null
         ] }),
-        !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(import_jsx_runtime43.Fragment, { children: [
+        !useLivePreview ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(import_jsx_runtime43.Fragment, { children: [
           /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
             TextInputControl,
             {
@@ -83835,7 +83895,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               ref: videoInputRef,
               className: "native-camera-input",
               type: "file",
-              accept: "video/*,.mov,video/quicktime",
+              accept: nativeVideoAccept,
               capture: nativeCaptureMode,
               onChange: handleNativeCapture
             }
@@ -83846,9 +83906,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             "button",
             {
               className: `photo-record camera-secondary-action ${recording ? "is-recording" : ""}`,
-              onClick: useLiveCamera ? recording ? stopLiveRecording : startLiveRecording : openNativeVideoCamera,
+              onClick: useLiveRecording ? recording ? stopLiveRecording : startLiveRecording : openNativeVideoCamera,
               "aria-label": recording ? "Parar gravacao" : "Gravar video",
-              disabled: processing || useLiveCamera && !ready && !recording,
+              disabled: processing || starting || useLivePreview && !ready && !recording,
               children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "video" })
             }
           ) : /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-action-spacer", "aria-hidden": "true" }) }),
@@ -83856,9 +83916,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             "button",
             {
               className: "photo-capture camera-primary-action",
-              onClick: useLiveCamera ? captureLivePhoto : openNativePhotoCamera,
+              onClick: useLivePreview ? captureLivePhoto : openNativePhotoCamera,
               "aria-label": "Tirar foto",
-              disabled: processing || useLiveCamera && (!ready || recording),
+              disabled: processing || starting || useLivePreview && (!ready || recording),
               children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { className: "camera-shutter-shell", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { className: "camera-shutter-core" }) })
             }
           ),

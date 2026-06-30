@@ -7,6 +7,7 @@ import { reportAppError } from "../lib/appErrorLogger";
 import {
   captureVideoFrameDataUrlAsync,
   formatVideoDuration,
+  readBlobAsDataUrl,
   readPhotoFileAsDataUrl
 } from "../lib/photoOrientation";
 import type { CapturedVideoDraft, MaintenancePhotoKind } from "../types";
@@ -25,6 +26,16 @@ type VideoCaptureProfile = {
   frameRate: number;
   bitRate: number;
 };
+
+type BrowserImageCapture = {
+  takePhoto: (settings?: { imageWidth?: number; imageHeight?: number }) => Promise<Blob>;
+  getPhotoCapabilities?: () => Promise<{
+    imageWidth?: { max?: number };
+    imageHeight?: { max?: number };
+  }>;
+};
+
+type BrowserImageCaptureConstructor = new (track: MediaStreamTrack) => BrowserImageCapture;
 
 function getTitleByKind(kind: MaintenancePhotoKind) {
   if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
@@ -50,6 +61,10 @@ function shouldUseLiveCameraCapture() {
   const userAgent = globalThis.navigator?.userAgent ?? "";
   const isMobileCameraDevice = /Android|iPhone|iPad|iPod/i.test(userAgent);
   return isMobileCameraDevice && Boolean(globalThis.navigator?.mediaDevices?.getUserMedia);
+}
+
+function isAppleMobileDevice() {
+  return /iPhone|iPad|iPod/i.test(globalThis.navigator?.userAgent ?? "");
 }
 
 function getPreferredCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
@@ -145,6 +160,34 @@ function getPreferredVideoMimeType() {
   return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate)) ?? "";
 }
 
+function configureInlineCameraVideo(video: HTMLVideoElement) {
+  video.playsInline = true;
+  video.muted = true;
+  video.defaultMuted = true;
+  video.autoplay = true;
+  video.controls = false;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  video.setAttribute("x5-playsinline", "");
+  video.setAttribute("x5-video-player-type", "h5");
+  video.setAttribute("x5-video-player-fullscreen", "false");
+  if ("disablePictureInPicture" in video) video.disablePictureInPicture = true;
+}
+
+async function captureTrackPhotoDataUrl(stream: MediaStream) {
+  const ImageCaptureConstructor = (globalThis as typeof globalThis & { ImageCapture?: BrowserImageCaptureConstructor }).ImageCapture;
+  const videoTrack = stream.getVideoTracks()[0];
+  if (!ImageCaptureConstructor || !videoTrack) return "";
+
+  const imageCapture = new ImageCaptureConstructor(videoTrack);
+  const capabilities = await imageCapture.getPhotoCapabilities?.();
+  const maxWidth = Math.floor(Number(capabilities?.imageWidth?.max ?? 0));
+  const maxHeight = Math.floor(Number(capabilities?.imageHeight?.max ?? 0));
+  const settings = maxWidth > 0 && maxHeight > 0 ? { imageWidth: maxWidth, imageHeight: maxHeight } : undefined;
+  const photoBlob = await imageCapture.takePhoto(settings);
+  return readBlobAsDataUrl(photoBlob);
+}
+
 export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }: MediaCaptureScreenProps) {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
@@ -170,7 +213,11 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const [recordingSeconds, setRecordingSeconds] = useState(0);
 
   const useLiveCamera = shouldUseLiveCameraCapture();
+  const useAppleMobile = isAppleMobileDevice();
+  const useLiveRecording = useLiveCamera && !useAppleMobile;
+  const useLivePreview = useLiveRecording;
   const nativeCaptureMode = facingMode === "environment" ? "environment" : "user";
+  const nativeVideoAccept = useAppleMobile ? "video/*" : "video/*,.mov,video/quicktime";
 
   const stopStream = () => {
     const recorder = recorderRef.current;
@@ -200,7 +247,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   };
 
   const startLiveCamera = async (mode = facingMode) => {
-    if (!useLiveCamera || recording || processing) return;
+    if (!useLiveCamera || recording || processing) return false;
 
     setStarting(true);
     setReady(false);
@@ -232,14 +279,14 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         updateTrackContentHint(false);
       }
 
-      if (videoRef.current) {
+      if (videoRef.current && useLivePreview) {
+        configureInlineCameraVideo(videoRef.current);
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true");
-        videoRef.current.muted = true;
         await videoRef.current.play();
       }
 
       setReady(true);
+      return true;
     } catch (error) {
       reportAppError(error, {
         severity: "error",
@@ -250,13 +297,14 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         payload: { mode, useLiveCamera }
       });
       setCameraError(error instanceof Error ? error.message : "Nao foi possivel abrir a camera.");
+      return false;
     } finally {
       setStarting(false);
     }
   };
 
   const openNativePhotoCamera = () => {
-    if (useLiveCamera) {
+    if (useLivePreview) {
       void startLiveCamera();
       return;
     }
@@ -270,9 +318,9 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       setCameraError("Video indisponivel nesta tela.");
       return;
     }
-    if (useLiveCamera) {
+    if (useLiveRecording) {
       if (!ready) {
-        void startLiveCamera();
+        void startLiveRecording();
         return;
       }
       return;
@@ -287,12 +335,13 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     const next = facingMode === "environment" ? "user" : "environment";
     setFacingMode(next);
     onSwitchCamera();
-    if (useLiveCamera) void startLiveCamera(next);
+    if (useLivePreview) void startLiveCamera(next);
   };
 
   const captureLivePhoto = async () => {
     const video = videoRef.current;
-    if (!video || !ready || processing || recording) {
+    const stream = streamRef.current;
+    if ((!video && !stream) || !ready || processing || recording) {
       setCameraError("Abra a camera para tirar a foto.");
       return;
     }
@@ -306,7 +355,15 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
           requestAnimationFrame(() => resolve());
         });
       });
-      const photoDataUrl = await captureVideoFrameDataUrlAsync(video);
+      let photoDataUrl = "";
+      if (stream) {
+        try {
+          photoDataUrl = await captureTrackPhotoDataUrl(stream);
+        } catch {
+          photoDataUrl = "";
+        }
+      }
+      if (!photoDataUrl && video) photoDataUrl = await captureVideoFrameDataUrlAsync(video);
       if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
       onCapture(photoDataUrl);
     } catch (error) {
@@ -324,19 +381,23 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     }
   };
 
-  const startLiveRecording = () => {
-    const stream = streamRef.current;
+  const startLiveRecording = async () => {
+    let stream = streamRef.current;
     if (!onCaptureVideo) {
       setCameraError("Video indisponivel nesta tela.");
       return;
     }
-    if (!useLiveCamera) {
+    if (!useLiveRecording) {
       openNativeVideoCamera();
       return;
     }
     if (!stream || !ready) {
-      setCameraError("Abra a camera antes de gravar.");
-      return;
+      const started = await startLiveCamera();
+      stream = streamRef.current;
+      if (!started || !stream) {
+        setCameraError("Nao foi possivel abrir a camera para gravar.");
+        return;
+      }
     }
     if (typeof MediaRecorder === "undefined") {
       setCameraError("Este dispositivo nao liberou gravacao direta no navegador.");
@@ -507,7 +568,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     defaultLaunchAttemptedRef.current = true;
 
     const timer = window.setTimeout(() => {
-      if (useLiveCamera) {
+      if (useLivePreview) {
         void startLiveCamera();
         return;
       }
@@ -524,7 +585,22 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         <article className="photo-card camera-capture-card">
           <div className="photo-body">
             <div className="camera-view real-camera-view native-camera-view">
-              {useLiveCamera ? <video ref={videoRef} className="real-camera-video" playsInline muted autoPlay /> : null}
+              {useLivePreview ? (
+                <>
+                  <video
+                    ref={(element) => {
+                      videoRef.current = element;
+                      if (element) configureInlineCameraVideo(element);
+                    }}
+                    className="real-camera-video"
+                    playsInline
+                    muted
+                    autoPlay
+                    controls={false}
+                    disablePictureInPicture
+                  />
+                </>
+              ) : null}
 
               {useLiveCamera && capturingPhoto ? <div className="camera-shutter-flash" aria-hidden="true" /> : null}
 
@@ -535,7 +611,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
                 </div>
               ) : null}
 
-              {!useLiveCamera ? (
+              {!useLiveRecording ? (
                 <div className="camera-start-panel native-camera-panel">
                   <strong>Camera do dispositivo</strong>
                   <span>{nativeCaptureMode === "environment" ? "Traseira preferencial" : "Frontal preferencial"}</span>
@@ -546,7 +622,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
                 </div>
               ) : null}
 
-              {useLiveCamera && !cameraError && !ready && !starting ? (
+              {useLivePreview && !cameraError && !ready && !starting ? (
                 <div className="camera-start-panel native-camera-panel">
                   <strong>Camera ao vivo</strong>
                   <span>A captura acontece direto na tela para manter qualidade e bloquear galeria.</span>
@@ -561,12 +637,12 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
                 <div className="camera-error">
                   <strong>Camera indisponivel</strong>
                   <span>{cameraError}</span>
-                  <small>{useLiveCamera ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera do dispositivo."}</small>
+                  <small>{useLiveRecording ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera do dispositivo."}</small>
                 </div>
               ) : null}
             </div>
 
-            {!useLiveCamera ? (
+            {!useLivePreview ? (
               <>
                 <TextInputControl
                   ref={photoInputRef}
@@ -580,7 +656,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
                   ref={videoInputRef}
                   className="native-camera-input"
                   type="file"
-                  accept="video/*,.mov,video/quicktime"
+                  accept={nativeVideoAccept}
                   capture={nativeCaptureMode}
                   onChange={handleNativeCapture}
                 />
@@ -592,9 +668,9 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
                 {onCaptureVideo ? (
                   <button
                     className={`photo-record camera-secondary-action ${recording ? "is-recording" : ""}`}
-                    onClick={useLiveCamera ? (recording ? stopLiveRecording : startLiveRecording) : openNativeVideoCamera}
+                    onClick={useLiveRecording ? (recording ? stopLiveRecording : startLiveRecording) : openNativeVideoCamera}
                     aria-label={recording ? "Parar gravacao" : "Gravar video"}
-                    disabled={processing || (useLiveCamera && !ready && !recording)}
+                    disabled={processing || starting || (useLivePreview && !ready && !recording)}
                   >
                     <SystemIcon name="video" />
                   </button>
@@ -605,9 +681,9 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
 
               <button
                 className="photo-capture camera-primary-action"
-                onClick={useLiveCamera ? captureLivePhoto : openNativePhotoCamera}
+                onClick={useLivePreview ? captureLivePhoto : openNativePhotoCamera}
                 aria-label="Tirar foto"
-                disabled={processing || (useLiveCamera && (!ready || recording))}
+                disabled={processing || starting || (useLivePreview && (!ready || recording))}
               >
                 <span className="camera-shutter-shell">
                   <span className="camera-shutter-core" />
