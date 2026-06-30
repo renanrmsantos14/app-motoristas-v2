@@ -608,27 +608,37 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
             ) : null}
 
             <div className="photo-actions photo-actions-ios camera-actions-pro">
+              <div className="camera-side-action camera-side-action-left">
+                {onCaptureVideo ? (
+                  <button
+                    className={`photo-record camera-secondary-action ${recording ? "is-recording" : ""}`}
+                    onClick={useLiveCamera ? (recording ? stopLiveRecording : startLiveRecording) : openNativeVideoCamera}
+                    aria-label={recording ? "Parar gravacao" : "Gravar video"}
+                    disabled={processing || (useLiveCamera && !ready && !recording)}
+                  >
+                    <SystemIcon name="video" />
+                  </button>
+                ) : (
+                  <div className="camera-action-spacer" aria-hidden="true" />
+                )}
+              </div>
+
               <button
-                className="photo-capture"
+                className="photo-capture camera-primary-action"
                 onClick={useLiveCamera ? captureLivePhoto : openNativePhotoCamera}
                 aria-label="Tirar foto"
                 disabled={processing || (useLiveCamera && (!ready || recording))}
               >
-                <SystemIcon name="camera" />
+                <span className="camera-shutter-shell">
+                  <span className="camera-shutter-core" />
+                </span>
               </button>
-              {onCaptureVideo ? (
-                <button
-                  className={`photo-record ${recording ? "is-recording" : ""}`}
-                  onClick={useLiveCamera ? (recording ? stopLiveRecording : startLiveRecording) : openNativeVideoCamera}
-                  aria-label={recording ? "Parar gravacao" : "Gravar video"}
-                  disabled={processing || (useLiveCamera && !ready && !recording)}
-                >
-                  <SystemIcon name="video" />
+
+              <div className="camera-side-action camera-side-action-right">
+                <button className="photo-switch camera-secondary-action" onClick={switchCamera} aria-label="Mudar camera" disabled={processing || recording || starting}>
+                  <SystemIcon name="sync" />
                 </button>
-              ) : null}
-              <button className="photo-switch" onClick={switchCamera} aria-label="Mudar camera" disabled={processing || recording || starting}>
-                <SystemIcon name="sync" />
-              </button>
+              </div>
             </div>
           </div>
         </article>
