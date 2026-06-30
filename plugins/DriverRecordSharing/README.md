@@ -8,6 +8,7 @@ Esta versao esta preparada para:
 - manter acesso quando o motorista continua igual
 - retirar acesso quando o motorista sai ou e trocado
 - compartilhar a `cr40f_manutencoes` vinculada no `cr40f_om` do servico
+- em troca de carro Programada, compartilhar tambem o registro do outro motorista para liberar o contato enquanto a troca estiver ativa
 
 Para isso, agora existe uma exigencia nova:
 
@@ -24,6 +25,11 @@ Regras:
 - se houver email Microsoft preenchido e nao existir um `systemuser` ativo correspondente, da erro
 - se houver mais de um `systemuser` ativo com o mesmo email, da erro
 - se o motorista mudar, o plugin concede acesso ao novo e revoga do antigo
+- em `cr40f_trocasdecarro`, se `cr40f_statusdatroca` estiver Programada, o motorista 1 recebe leitura do registro do motorista 2 e o motorista 2 recebe leitura do registro do motorista 1
+- em `cr40f_trocasdecarro` Programada, se um lado nao tiver app/usuario ativo, o outro lado ainda recebe acesso ao funcionario dele; o salvamento nao falha so por motorista sem app
+- depois de `GrantAccess` ou `ModifyAccess`, o plugin rele `RetrievePrincipalAccess`; se os direitos obrigatorios nao forem confirmados, o salvamento falha
+- falhas do plugin tentam criar log critico em `new_appmotoristaslog`
+- quando a troca deixa de estar Programada ou quando um motorista muda, o plugin revoga esse acesso ao funcionario do outro motorista, exceto se outra troca Programada entre o mesmo par ainda precisar dele
 
 ## Decisao recomendada de execucao
 
@@ -31,7 +37,7 @@ Use assim:
 
 - `cr40f_reservadeveculos`: `Synchronous`
 - `cr40f_servicosporpassageiro`: `Asynchronous`
-- `cr40f_trocasdecarro`: `Asynchronous`
+- `cr40f_trocasdecarro`: `Synchronous`
 - `new_possedeveiculo`: `Asynchronous`
 - `cr40f_colisao_v2`: `Asynchronous`
 - `cr40f_recibos_v2`: `Asynchronous`
@@ -158,15 +164,15 @@ Para todos os steps:
 - Message: `Create`
 - Primary Entity: `cr40f_trocasdecarro`
 - Filtering Attributes: deixar vazio
-- Execution Mode: `Asynchronous`
+- Execution Mode: `Synchronous`
 - Image: nao criar
 
 ### 6. Trocas de carro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_trocasdecarro`
-- Filtering Attributes: `cr40f_motorista1,cr40f_motorista2`
-- Execution Mode: `Asynchronous`
+- Filtering Attributes: `cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca`
+- Execution Mode: `Synchronous`
 - Image: criar `Pre Image`
 
 ### 7. Posse de veiculo - Create
@@ -249,6 +255,7 @@ Depois, no campo de atributos, use exatamente os atributos abaixo.
 
 - `cr40f_motorista1`
 - `cr40f_motorista2`
+- `cr40f_statusdatroca`
 
 ### Update de Posse de veiculo
 
@@ -295,6 +302,7 @@ Esse usuario precisa conseguir:
 - ler `cr40f_colisao_v2`
 - ler `cr40f_recibos_v2`
 - ler `cr40f_funcionarios`
+- compartilhar e revogar `cr40f_funcionarios`
 - ler `systemuser`
 - compartilhar registros
 - revogar compartilhamento

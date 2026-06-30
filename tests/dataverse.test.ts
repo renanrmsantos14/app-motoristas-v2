@@ -7,7 +7,8 @@ import {
   buildMaintenanceRequestVehiclesQuery,
   buildReceiptEmailContent,
   getExchangeCompletionState,
-  normalizeReceiptIdentifier
+  normalizeReceiptIdentifier,
+  shouldShowOpenExchangeForDriver
 } from "../src/lib/dataverse.ts";
 
 test("solicitacao de manutencao monta apenas campos de requisicao", () => {
@@ -163,6 +164,54 @@ test("troca com base fecha com confirmacao do motorista principal", () => {
   assert.equal(devolucaoBase.closesExchange, true);
 });
 
+test("troca aberta aparece para motorista da troca sem depender da Geral", () => {
+  assert.equal(
+    shouldShowOpenExchangeForDriver(
+      {
+        _cr40f_motorista1_value: "driver-1",
+        _cr40f_motorista2_value: "driver-2",
+        cr40f_statusdatroca: 202410000,
+        new_concluidomotorista1: false,
+        new_concluidomotorista2: false
+      },
+      "driver-2"
+    ),
+    true
+  );
+});
+
+test("troca aberta nao aparece quando motorista logado ja concluiu sua parte", () => {
+  assert.equal(
+    shouldShowOpenExchangeForDriver(
+      {
+        _cr40f_motorista1_value: "driver-1",
+        _cr40f_motorista2_value: "driver-2",
+        cr40f_statusdatroca: 202410000,
+        new_concluidomotorista1: false,
+        new_concluidomotorista2: true
+      },
+      "driver-2"
+    ),
+    false
+  );
+});
+
+test("troca aberta nao aparece quando status nao e Programada", () => {
+  assert.equal(
+    shouldShowOpenExchangeForDriver(
+      {
+        _cr40f_motorista1_value: "driver-1",
+        _cr40f_motorista2_value: "driver-2",
+        cr40f_statusdatroca: 202410002,
+        new_concluidomotorista1: false,
+        new_concluidomotorista2: false
+      },
+      "driver-2"
+    ),
+    false
+  );
+});
+
 test("descricao da troca entre motoristas usa perspectiva do motorista logado", () => {
   const display = buildExchangeDisplay(
     {
@@ -187,6 +236,24 @@ test("descricao da troca entre motoristas usa perspectiva do motorista logado", 
   assert.match(display.summary, /Bruno/);
   assert.match(display.window, /11:00 - 12:00/);
   assert.doesNotMatch(display.window, /:\d{2}:/);
+});
+
+test("detalhe da troca expoe telefone clicavel do outro motorista", () => {
+  const display = buildExchangeDisplay(
+    {
+      new_tipodetroca: 100000000,
+      _cr40f_motorista1_value: "driver-1",
+      "_cr40f_motorista1_value@OData.Community.Display.V1.FormattedValue": "Ana",
+      _cr40f_motorista2_value: "driver-2",
+      "_cr40f_motorista2_value@OData.Community.Display.V1.FormattedValue": "Bruno",
+      __otherDriverPhone: "+55 (12) 98888-7777"
+    },
+    { id: "driver-1", email: "", fullName: "Ana", funcionario: {} }
+  );
+
+  const phoneField = display.fields.find((field) => field.label === "Telefone do motorista");
+  assert.equal(phoneField?.value, "+55 (12) 98888-7777");
+  assert.equal(phoneField?.contact?.phone, "+55 (12) 98888-7777");
 });
 
 test("descricao de retirada e devolucao na base usa acao certa", () => {

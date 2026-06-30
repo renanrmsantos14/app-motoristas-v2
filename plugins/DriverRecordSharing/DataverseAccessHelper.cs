@@ -49,16 +49,32 @@ namespace Betinhos.DriverRecordSharing
                     principal.Id,
                     requiredRights);
 
-                _service.Execute(new GrantAccessRequest
+                try
                 {
-                    Target = target,
-                    PrincipalAccess = new PrincipalAccess
+                    _service.Execute(new GrantAccessRequest
                     {
-                        Principal = principal,
-                        AccessMask = requiredRights
-                    }
-                });
+                        Target = target,
+                        PrincipalAccess = new PrincipalAccess
+                        {
+                            Principal = principal,
+                            AccessMask = requiredRights
+                        }
+                    });
+                }
+                catch (FaultException<OrganizationServiceFault> ex)
+                {
+                    _tracing.Trace(
+                        "EnsureAccess grant fault target={0}:{1} principal={2}:{3} rights={4} message={5}",
+                        target.LogicalName,
+                        target.Id,
+                        principal.LogicalName,
+                        principal.Id,
+                        requiredRights,
+                        ex.Detail?.Message ?? ex.Message);
+                    throw;
+                }
 
+                VerifyRequiredAccess(target, principal, requiredRights);
                 return;
             }
 
@@ -71,15 +87,33 @@ namespace Betinhos.DriverRecordSharing
                 currentRights,
                 mergedRights);
 
-            _service.Execute(new ModifyAccessRequest
+            try
             {
-                Target = target,
-                PrincipalAccess = new PrincipalAccess
+                _service.Execute(new ModifyAccessRequest
                 {
-                    Principal = principal,
-                    AccessMask = mergedRights
-                }
-            });
+                    Target = target,
+                    PrincipalAccess = new PrincipalAccess
+                    {
+                        Principal = principal,
+                        AccessMask = mergedRights
+                    }
+                });
+            }
+            catch (FaultException<OrganizationServiceFault> ex)
+            {
+                _tracing.Trace(
+                    "EnsureAccess modify fault target={0}:{1} principal={2}:{3} current={4} required={5} message={6}",
+                    target.LogicalName,
+                    target.Id,
+                    principal.LogicalName,
+                    principal.Id,
+                    currentRights,
+                    requiredRights,
+                    ex.Detail?.Message ?? ex.Message);
+                throw;
+            }
+
+            VerifyRequiredAccess(target, principal, requiredRights);
         }
 
         public void RevokeAccess(EntityReference target, EntityReference principal)
@@ -181,6 +215,35 @@ namespace Betinhos.DriverRecordSharing
             });
 
             return response.AccessRights;
+        }
+
+        private void VerifyRequiredAccess(EntityReference target, EntityReference principal, AccessRights requiredRights)
+        {
+            var confirmedRights = GetCurrentRights(target, principal);
+            if ((confirmedRights & requiredRights) == requiredRights)
+            {
+                _tracing.Trace(
+                    "VerifyRequiredAccess ok target={0}:{1} principal={2}:{3} confirmed={4} required={5}",
+                    target.LogicalName,
+                    target.Id,
+                    principal.LogicalName,
+                    principal.Id,
+                    confirmedRights,
+                    requiredRights);
+                return;
+            }
+
+            _tracing.Trace(
+                "VerifyRequiredAccess failed target={0}:{1} principal={2}:{3} confirmed={4} required={5}",
+                target.LogicalName,
+                target.Id,
+                principal.LogicalName,
+                principal.Id,
+                confirmedRights,
+                requiredRights);
+
+            throw new InvalidPluginExecutionException(
+                $"Compartilhamento nao confirmou acesso obrigatorio. Registro={target.LogicalName}:{target.Id}; usuario={principal.Id}; esperado={requiredRights}; confirmado={confirmedRights}.");
         }
     }
 }

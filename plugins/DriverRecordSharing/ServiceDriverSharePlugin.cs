@@ -100,13 +100,16 @@ namespace Betinhos.DriverRecordSharing
                     servicePassengerRepository,
                     tracing);
             }
-            catch (InvalidPluginExecutionException)
+            catch (InvalidPluginExecutionException ex)
             {
+                tracing.Trace("ServiceDriverSharePlugin business error: {0}", ex);
+                new OperationalLogWriter(service, tracing).TryWriteError(context, ex);
                 throw;
             }
             catch (Exception ex)
             {
                 tracing.Trace("ServiceDriverSharePlugin error: {0}", ex);
+                new OperationalLogWriter(service, tracing).TryWriteError(context, ex);
                 throw new InvalidPluginExecutionException(
                     "Falha ao sincronizar compartilhamento do registro com o motorista.",
                     ex);
@@ -219,6 +222,18 @@ namespace Betinhos.DriverRecordSharing
                     currentDrivers,
                     accessHelper,
                     servicePassengerRepository,
+                    tracing);
+            }
+
+            if (definition.EntityName == PluginConfig.ExchangeTable)
+            {
+                SyncExchangeEmployeeContactAccess(
+                    context,
+                    service,
+                    currentEntity,
+                    context.MessageName == PluginConfig.UpdateMessage && hasUsablePreImage ? preImage : null,
+                    resolver,
+                    accessHelper,
                     tracing);
             }
 
@@ -383,9 +398,163 @@ namespace Betinhos.DriverRecordSharing
                 mode);
         }
 
+        private static void SyncExchangeEmployeeContactAccess(
+            IPluginExecutionContext context,
+            IOrganizationService service,
+            Entity currentExchange,
+            Entity previousExchange,
+            DriverResolver resolver,
+            DataverseAccessHelper accessHelper,
+            ITracingService tracing)
+        {
+            var currentGrants = BuildExchangeEmployeeContactGrants(
+                currentExchange,
+                resolver,
+                DriverResolutionMode.StrictForGrant);
+            var previousGrants = previousExchange != null
+                ? BuildExchangeEmployeeContactGrants(
+                    previousExchange,
+                    resolver,
+                    DriverResolutionMode.BestEffortForRevoke)
+                : new List<EmployeeContactGrant>();
+
+            foreach (var grant in currentGrants)
+            {
+                tracing.Trace(
+                    "SyncExchangeEmployeeContactAccess grant employee={0} user={1}",
+                    grant.EmployeeReference.Id,
+                    grant.Driver.UserReference.Id);
+                accessHelper.EnsureAccess(
+                    grant.EmployeeReference,
+                    grant.Driver.UserReference,
+                    PluginConfig.EmployeeContactAccessRights);
+            }
+
+            foreach (var grant in previousGrants)
+            {
+                if (ContainsEmployeeContactGrant(currentGrants, grant))
+                {
+                    continue;
+                }
+
+                if (HasOtherProgrammedExchangeForEmployeeContact(
+                    service,
+                    context.PrimaryEntityId,
+                    grant.EmployeeReference.Id,
+                    grant.Driver.EmployeeReference?.Id ?? Guid.Empty))
+                {
+                    tracing.Trace(
+                        "SyncExchangeEmployeeContactAccess keep employee={0} user={1} because another programmed exchange still needs it.",
+                        grant.EmployeeReference.Id,
+                        grant.Driver.UserReference.Id);
+                    continue;
+                }
+
+                tracing.Trace(
+                    "SyncExchangeEmployeeContactAccess revoke employee={0} user={1}",
+                    grant.EmployeeReference.Id,
+                    grant.Driver.UserReference.Id);
+                accessHelper.RevokeAccess(grant.EmployeeReference, grant.Driver.UserReference);
+            }
+        }
+
+        private static List<EmployeeContactGrant> BuildExchangeEmployeeContactGrants(
+            Entity exchange,
+            DriverResolver resolver,
+            DriverResolutionMode mode)
+        {
+            var grants = new List<EmployeeContactGrant>();
+            if (!IsProgrammedExchange(exchange))
+            {
+                return grants;
+            }
+
+            var driver1Reference = exchange.GetAttributeValue<EntityReference>(PluginConfig.ExchangeDriver1Lookup);
+            var driver2Reference = exchange.GetAttributeValue<EntityReference>(PluginConfig.ExchangeDriver2Lookup);
+            if (driver1Reference == null || driver2Reference == null)
+            {
+                return grants;
+            }
+
+            var driver1 = resolver.Resolve(driver1Reference, mode);
+            var driver2 = resolver.Resolve(driver2Reference, mode);
+
+            if (driver2 != null)
+            {
+                grants.Add(new EmployeeContactGrant(driver1Reference, driver2));
+            }
+
+            if (driver1 != null)
+            {
+                grants.Add(new EmployeeContactGrant(driver2Reference, driver1));
+            }
+
+            return grants;
+        }
+
+        private static bool IsProgrammedExchange(Entity exchange)
+        {
+            return exchange?.GetAttributeValue<OptionSetValue>(PluginConfig.ExchangeStatus)?.Value == PluginConfig.ExchangeStatusProgrammed;
+        }
+
+        private static bool ContainsEmployeeContactGrant(
+            IReadOnlyList<EmployeeContactGrant> grants,
+            EmployeeContactGrant candidate)
+        {
+            foreach (var grant in grants)
+            {
+                if (grant.EmployeeReference.Id == candidate.EmployeeReference.Id &&
+                    grant.Driver.UserReference.Id == candidate.Driver.UserReference.Id)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasOtherProgrammedExchangeForEmployeeContact(
+            IOrganizationService service,
+            Guid currentExchangeId,
+            Guid employeeId,
+            Guid otherEmployeeId)
+        {
+            if (employeeId == Guid.Empty || otherEmployeeId == Guid.Empty)
+            {
+                return false;
+            }
+
+            var query = new QueryExpression(PluginConfig.ExchangeTable)
+            {
+                ColumnSet = new ColumnSet(PluginConfig.ExchangePrimaryId),
+                TopCount = 1,
+                NoLock = true
+            };
+            query.Criteria.AddCondition(PluginConfig.ExchangePrimaryId, ConditionOperator.NotEqual, currentExchangeId);
+            query.Criteria.AddCondition(PluginConfig.ExchangeStatus, ConditionOperator.Equal, PluginConfig.ExchangeStatusProgrammed);
+
+            var pairFilter = new FilterExpression(LogicalOperator.Or);
+            var driver1Target = new FilterExpression(LogicalOperator.And);
+            driver1Target.AddCondition(PluginConfig.ExchangeDriver1Lookup, ConditionOperator.Equal, employeeId);
+            driver1Target.AddCondition(PluginConfig.ExchangeDriver2Lookup, ConditionOperator.Equal, otherEmployeeId);
+            var driver2Target = new FilterExpression(LogicalOperator.And);
+            driver2Target.AddCondition(PluginConfig.ExchangeDriver2Lookup, ConditionOperator.Equal, employeeId);
+            driver2Target.AddCondition(PluginConfig.ExchangeDriver1Lookup, ConditionOperator.Equal, otherEmployeeId);
+            pairFilter.AddFilter(driver1Target);
+            pairFilter.AddFilter(driver2Target);
+            query.Criteria.AddFilter(pairFilter);
+
+            return service.RetrieveMultiple(query).Entities.Count > 0;
+        }
+
         private static ColumnSet BuildDirectEntityColumnSet(EntityShareDefinition definition)
         {
             var columns = new List<string>(definition.DriverLookupAttributes ?? Array.Empty<string>());
+
+            if (definition?.EntityName == PluginConfig.ExchangeTable)
+            {
+                columns.Add(PluginConfig.ExchangeStatus);
+            }
 
             if (definition?.IncludeServiceHierarchy == true)
             {
@@ -399,6 +568,11 @@ namespace Betinhos.DriverRecordSharing
         private static string[] BuildDirectEntityTrackedAttributes(EntityShareDefinition definition)
         {
             var attributes = new List<string>(definition?.DriverLookupAttributes ?? Array.Empty<string>());
+
+            if (definition?.EntityName == PluginConfig.ExchangeTable)
+            {
+                attributes.Add(PluginConfig.ExchangeStatus);
+            }
 
             if (definition?.IncludeServiceHierarchy == true)
             {
@@ -917,5 +1091,18 @@ namespace Betinhos.DriverRecordSharing
         public AccessRights AccessRights { get; }
 
         public string[] DriverLookupAttributes { get; }
+    }
+
+    internal sealed class EmployeeContactGrant
+    {
+        public EmployeeContactGrant(EntityReference employeeReference, ResolvedDriver driver)
+        {
+            EmployeeReference = employeeReference;
+            Driver = driver;
+        }
+
+        public EntityReference EmployeeReference { get; }
+
+        public ResolvedDriver Driver { get; }
     }
 }

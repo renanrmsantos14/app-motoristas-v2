@@ -13,6 +13,10 @@ export function findFirstPendingDetail(agenda: LocalStore["agenda"]) {
   return agenda.find((item) => shouldShowAgendaItemInGallery(item) && item.tipo !== "HEADER" && !item.canceled && item.detail)?.detail;
 }
 
+export function findFirstPendingServiceDetail(agenda: LocalStore["agenda"]) {
+  return agenda.find((item) => shouldShowAgendaItemInGallery(item) && item.tipo === "SERVICO" && !item.canceled && item.detail)?.detail;
+}
+
 export function initialStore(): LocalStore {
   return {
     agenda: agendaMock,

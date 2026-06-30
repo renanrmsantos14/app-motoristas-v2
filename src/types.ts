@@ -45,6 +45,9 @@ export type DetailField = {
   value: string;
   strong?: boolean;
   html?: boolean;
+  contact?: {
+    phone: string;
+  };
 };
 
 export type DetailData = {

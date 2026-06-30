@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { filterAgendaGalleryItems, shouldShowAgendaItemInGallery } from "../src/app/agendaVisibility.ts";
-import { findFirstPendingDetail } from "../src/app/bootstrap.ts";
+import { findFirstPendingDetail, findFirstPendingServiceDetail } from "../src/app/bootstrap.ts";
 import type { AgendaItem } from "../src/types.ts";
 
 const firstDetail = {
@@ -20,6 +20,22 @@ const nextDetail = {
   fields: []
 } as const;
 
+const maintenanceDetail = {
+  type: "MANUTENCAO",
+  id: "maintenance",
+  title: "Manutencao",
+  actions: ["finalizar"],
+  fields: []
+} as const;
+
+const exchangeDetail = {
+  type: "TROCA",
+  id: "exchange",
+  title: "Troca",
+  actions: ["finalizar"],
+  fields: []
+} as const;
+
 test("findFirstPendingDetail ignores canceled agenda items", () => {
   const agenda: AgendaItem[] = [
     { id: "header", tipo: "HEADER", tituloData: "Hoje" },
@@ -28,6 +44,17 @@ test("findFirstPendingDetail ignores canceled agenda items", () => {
   ];
 
   assert.equal(findFirstPendingDetail(agenda)?.id, "next");
+});
+
+test("findFirstPendingServiceDetail ignores earlier maintenance and exchange", () => {
+  const agenda: AgendaItem[] = [
+    { id: "header", tipo: "HEADER", tituloData: "Hoje" },
+    { id: "mnt-first", tipo: "MANUTENCAO", detail: maintenanceDetail },
+    { id: "exc-first", tipo: "TROCA", detail: exchangeDetail },
+    { id: "srv-next", tipo: "SERVICO", detail: nextDetail }
+  ];
+
+  assert.equal(findFirstPendingServiceDetail(agenda)?.id, "next");
 });
 
 test("canceled agenda item stays visible for 20 minutes after departure", () => {

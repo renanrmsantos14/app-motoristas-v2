@@ -30,6 +30,24 @@ namespace Betinhos.DriverRecordSharing
         public const string UserInternalEmail = "internalemailaddress";
         public const string UserIsDisabled = "isdisabled";
 
+        public const string AppLogTable = "new_appmotoristaslog";
+        public const string AppLogName = "new_name";
+        public const string AppLogOccurredAt = "new_occurredat";
+        public const string AppLogSeverity = "new_severity";
+        public const string AppLogSource = "new_source";
+        public const string AppLogAction = "new_action";
+        public const string AppLogPhase = "new_phase";
+        public const string AppLogComponent = "new_component";
+        public const string AppLogDetailId = "new_detailid";
+        public const string AppLogDetailType = "new_detailtype";
+        public const string AppLogMessage = "new_message";
+        public const string AppLogStack = "new_stack";
+        public const string AppLogErrorName = "new_errorname";
+        public const string AppLogErrorCode = "new_errorcode";
+        public const string AppLogAppName = "new_appname";
+        public const string AppLogPayloadJson = "new_payloadjson";
+        public const string AppLogRawJson = "new_rawjson";
+
         public const string ServicePassengerTable = "cr40f_servicosporpassageiro";
         public const string ServicePassengerPrimaryId = "cr40f_servicosporpassageiroid";
         public const string ServicePassengerServiceLookup = "cr40f_geral";
@@ -44,6 +62,8 @@ namespace Betinhos.DriverRecordSharing
         public const string ExchangePrimaryId = "cr40f_trocasdecarroid";
         public const string ExchangeDriver1Lookup = "cr40f_motorista1";
         public const string ExchangeDriver2Lookup = "cr40f_motorista2";
+        public const string ExchangeStatus = "cr40f_statusdatroca";
+        public const int ExchangeStatusProgrammed = 202410000;
 
         public const string VehiclePossessionTable = "new_possedeveiculo";
         public const string VehiclePossessionPrimaryId = "new_possedeveiculoid";
@@ -67,5 +87,6 @@ namespace Betinhos.DriverRecordSharing
         public static readonly AccessRights MaintenanceAccessRights = AssignedRecordAccessRights;
         public static readonly AccessRights ServicePassengerAccessRights = AccessRights.ReadAccess;
         public static readonly AccessRights PassengerAccessRights = AccessRights.ReadAccess;
+        public static readonly AccessRights EmployeeContactAccessRights = AccessRights.ReadAccess;
     }
 }

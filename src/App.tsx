@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  findFirstPendingDetail,
+  findFirstPendingServiceDetail,
   getInitialDetail,
   getInitialParams,
   getVoucherDraftKey,
@@ -901,7 +901,8 @@ function App() {
 
   const blockIfNotFirstPending = (detail: typeof selectedDetail = selectedDetail) => {
     if (!detail) return true;
-    const firstPendingDetail = findFirstPendingDetail(store.agenda);
+    if (detail.type !== "SERVICO") return false;
+    const firstPendingDetail = findFirstPendingServiceDetail(store.agenda);
     if (!firstPendingDetail || isSameDetail(firstPendingDetail, detail)) return false;
     const firstPendingKey = `${firstPendingDetail.type}:${firstPendingDetail.id}`;
     if (queueHighlightTimerRef.current) window.clearTimeout(queueHighlightTimerRef.current);
@@ -969,7 +970,9 @@ function App() {
       try {
         setProgress("Conferindo fila no Dataverse.");
         const remoteBeforeFinalize = await loadRemoteStore();
-        const remoteFirstPendingDetail = findFirstPendingDetail(remoteBeforeFinalize.agenda);
+        const remoteFirstPendingDetail = detailToFinalize.type === "SERVICO"
+          ? findFirstPendingServiceDetail(remoteBeforeFinalize.agenda)
+          : undefined;
         setStore((current) => ({ ...current, agenda: remoteBeforeFinalize.agenda, history: remoteBeforeFinalize.history }));
 
         if (remoteFirstPendingDetail && !isSameDetail(remoteFirstPendingDetail, detailToFinalize)) {
