@@ -87,7 +87,7 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
       width: 1600,
       height: 900,
       frameRate: 30,
-      bitRate: 6_000_000
+      bitRate: 12_000_000
     };
   }
 
@@ -96,7 +96,7 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
     width: 1280,
     height: 720,
     frameRate: 30,
-    bitRate: 4_200_000
+    bitRate: 8_000_000
   };
 }
 
@@ -125,7 +125,7 @@ async function preferTrackProfile(track: MediaStreamTrack, mode: "environment" |
     width: 1280,
     height: 720,
     frameRate: 30,
-    bitRate: 4_200_000
+    bitRate: 8_000_000
   };
 
   try {
@@ -162,7 +162,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     width: 1280,
     height: 720,
     frameRate: 30,
-    bitRate: 4_200_000
+    bitRate: 8_000_000
   });
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [cameraError, setCameraError] = useState("");
