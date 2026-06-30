@@ -17,7 +17,12 @@ export function normalizeAngle(angle: number) {
   return normalized as 0 | 90 | 180 | 270;
 }
 
-const PHOTO_OUTPUT_MIME_TYPE = "image/png";
+const PHOTO_OUTPUT_MIME_TYPE = "image/jpeg";
+const PHOTO_OUTPUT_QUALITY = 0.9;
+
+function encodePhotoCanvas(canvas: HTMLCanvasElement) {
+  return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE, PHOTO_OUTPUT_QUALITY);
+}
 
 export function getDeviceOrientationAngle(event: Pick<DeviceOrientationEvent, "beta" | "gamma">, currentAngle = getViewportOrientationAngle()) {
   const beta = Number(event.beta);
@@ -46,7 +51,7 @@ function drawRotated(image: CanvasImageSource, sourceWidth: number, sourceHeight
   context.translate(canvas.width / 2, canvas.height / 2);
   context.rotate((angle * Math.PI) / 180);
   context.drawImage(image, -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight);
-  return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE);
+  return encodePhotoCanvas(canvas);
 }
 
 function getRotationForOrientation(sourceWidth: number, sourceHeight: number, orientationAngle: 0 | 90 | 180 | 270) {
@@ -75,7 +80,7 @@ export function captureVideoFrameDataUrl(video: HTMLVideoElement, orientationAng
   if (!context) return "";
 
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE);
+  return encodePhotoCanvas(canvas);
 }
 
 export function readFileAsDataUrl(file: File): Promise<string> {

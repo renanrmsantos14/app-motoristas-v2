@@ -23,27 +23,6 @@ type MediaCaptureScreenProps = {
   onSwitchCamera: () => void;
 };
 
-type ImageCapturePhotoRange = {
-  max?: number;
-};
-
-type ImageCapturePhotoCapabilities = {
-  imageWidth?: ImageCapturePhotoRange;
-  imageHeight?: ImageCapturePhotoRange;
-};
-
-type ImageCapturePhotoSettings = {
-  imageWidth?: number;
-  imageHeight?: number;
-};
-
-type BrowserImageCapture = {
-  getPhotoCapabilities?: () => Promise<ImageCapturePhotoCapabilities>;
-  takePhoto: (settings?: ImageCapturePhotoSettings) => Promise<Blob>;
-};
-
-type BrowserImageCaptureConstructor = new (track: MediaStreamTrack) => BrowserImageCapture;
-
 function getTitleByKind(kind: MaintenancePhotoKind) {
   if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
   if (kind === "FOTO1") return "Tire a foto 1 de 3";
@@ -71,27 +50,11 @@ function isAndroidDevice() {
 function getCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
   return {
     facingMode: { ideal: mode },
-    width: { ideal: 1280, max: 1920 },
-    height: { ideal: 720, max: 1080 },
+    width: { ideal: 1920, max: 1920 },
+    height: { ideal: 1080, max: 1080 },
     aspectRatio: { ideal: 16 / 9 },
-    frameRate: { ideal: 24, max: 30 }
+    frameRate: { ideal: 30, max: 30 }
   };
-}
-
-function getBrowserImageCapture() {
-  return (globalThis as typeof globalThis & { ImageCapture?: BrowserImageCaptureConstructor }).ImageCapture;
-}
-
-function getMaxPhotoSettings(capabilities: ImageCapturePhotoCapabilities | undefined): ImageCapturePhotoSettings | undefined {
-  const imageWidth = Math.floor(Number(capabilities?.imageWidth?.max ?? 0));
-  const imageHeight = Math.floor(Number(capabilities?.imageHeight?.max ?? 0));
-  if (imageWidth > 0 || imageHeight > 0) {
-    return {
-      ...(imageWidth > 0 ? { imageWidth } : {}),
-      ...(imageHeight > 0 ? { imageHeight } : {})
-    };
-  }
-  return undefined;
 }
 
 function getPreferredVideoMimeType() {
@@ -101,22 +64,6 @@ function getPreferredVideoMimeType() {
     ? ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp8", "video/webm"]
     : ["video/webm;codecs=vp8", "video/webm", "video/webm;codecs=vp9", "video/mp4"];
   return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate)) ?? "";
-}
-
-async function captureTrackPhotoDataUrl(track: MediaStreamTrack) {
-  const ImageCapture = getBrowserImageCapture();
-  if (!ImageCapture) return "";
-
-  const imageCapture = new ImageCapture(track);
-  let photoSettings: ImageCapturePhotoSettings | undefined;
-  try {
-    photoSettings = getMaxPhotoSettings(await imageCapture.getPhotoCapabilities?.());
-  } catch {
-    photoSettings = undefined;
-  }
-
-  const blob = await imageCapture.takePhoto(photoSettings);
-  return blob.size ? readBlobAsDataUrl(blob) : "";
 }
 
 export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }: MediaCaptureScreenProps) {
@@ -182,7 +129,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
             facingMode: mode,
             width: { ideal: 1280 },
             height: { ideal: 720 },
-            frameRate: { ideal: 20, max: 24 }
+            frameRate: { ideal: 30, max: 30 }
           },
           audio: false
         });
@@ -192,7 +139,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
         try {
-          videoTrack.contentHint = "motion";
+          videoTrack.contentHint = onCaptureVideo ? "motion" : "detail";
         } catch {
           // Ignore browsers that expose contentHint as read-only.
         }
@@ -263,27 +210,20 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       return;
     }
 
-    setProcessing(true);
-    void (async () => {
-      try {
-        const videoTrack = streamRef.current?.getVideoTracks()[0];
-        const stillPhotoDataUrl = videoTrack ? await captureTrackPhotoDataUrl(videoTrack) : "";
-        const photoDataUrl = stillPhotoDataUrl || captureVideoFrameDataUrl(video);
-        if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
-        onCapture(photoDataUrl);
-      } catch (error) {
-        reportAppError(error, {
-          severity: "error",
-          source: "media-capture",
-          action: "capture-live-photo",
-          component: "MediaCaptureScreen",
-          screen: "TelaCameraMidia"
-        });
-        setCameraError(error instanceof Error ? error.message : "Nao foi possivel capturar a foto.");
-      } finally {
-        setProcessing(false);
-      }
-    })();
+    try {
+      const photoDataUrl = captureVideoFrameDataUrl(video);
+      if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
+      onCapture(photoDataUrl);
+    } catch (error) {
+      reportAppError(error, {
+        severity: "error",
+        source: "media-capture",
+        action: "capture-live-photo",
+        component: "MediaCaptureScreen",
+        screen: "TelaCameraMidia"
+      });
+      setCameraError(error instanceof Error ? error.message : "Nao foi possivel capturar a foto.");
+    }
   };
 
   const startLiveRecording = () => {
@@ -313,10 +253,10 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         mimeType
           ? {
               mimeType,
-              videoBitsPerSecond: 2_500_000
+              videoBitsPerSecond: 3_200_000
             }
           : {
-              videoBitsPerSecond: 2_500_000
+              videoBitsPerSecond: 3_200_000
             }
       );
       recorderRef.current = recorder;
