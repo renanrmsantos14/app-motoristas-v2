@@ -86,7 +86,7 @@ import { HistoryDetailsScreen } from "./screens/HistoryDetailsScreen";
 import { HistoryScreen } from "./screens/HistoryScreen";
 import { InitialScreen } from "./screens/InitialScreen";
 import { LocalCancelScreen } from "./screens/LocalCancelScreen";
-import { MaintenancePhotoScreen } from "./screens/MaintenancePhotoScreen";
+import { MediaCaptureScreen } from "./screens/MediaCaptureScreen";
 import { MaintenancePhotoPreviewScreen } from "./screens/MaintenancePhotoPreviewScreen";
 import { ReceiveScreen } from "./screens/ReceiveScreen";
 import { ReceiptPreviewScreen, ReceiptScreen } from "./screens/ReceiptScreen";
@@ -2004,7 +2004,7 @@ function App() {
 
   if (screen === "fotoSolicitacaoManutencao") {
     return show(
-      <MaintenancePhotoScreen
+      <MediaCaptureScreen
         kind="FOTO1"
         title="Manutenção"
         onBack={() => setScreen("solicitarManutencao")}
@@ -2041,7 +2041,7 @@ function App() {
 
   if (screen === "fotoColisao") {
     return show(
-      <MaintenancePhotoScreen
+      <MediaCaptureScreen
         kind="NOTAFISCAL"
         title={`Capturar: ${getCollisionPhotoLabel(collisionPhotoKind)}`}
         onBack={() => setScreen("colisoes")}
@@ -2086,7 +2086,7 @@ function App() {
 
   if (screen === "fotoGasto") {
     return show(
-      <MaintenancePhotoScreen
+      <MediaCaptureScreen
         kind="NOTAFISCAL"
         title="Comprovante"
         onBack={() => setScreen("gastos")}
@@ -2197,7 +2197,7 @@ function App() {
 
   if (screen === "fotoManutencao" && selectedDetail) {
     return show(
-      <MaintenancePhotoScreen
+      <MediaCaptureScreen
         kind={maintenancePhotoKind}
         onBack={() => setScreen("finalizar")}
         onCapture={(photoDataUrl) => {
@@ -2286,7 +2286,7 @@ function App() {
 
   if (screen === "fotoReceber") {
     return show(
-      <MaintenancePhotoScreen
+      <MediaCaptureScreen
         kind="NOTAFISCAL"
         title="Comprovante"
         onBack={() => setScreen("receber")}

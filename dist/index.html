@@ -11935,7 +11935,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.534","builtAt":"2026-06-30T12:19:07.577Z","builtAtLabel":"30/06/2026, 09:19"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.539","builtAt":"2026-06-30T12:41:32.053Z","builtAtLabel":"30/06/2026, 09:41"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -21896,7 +21896,7 @@ select,
           var HostPortal = 4;
           var HostComponent = 5;
           var HostText = 6;
-          var Fragment13 = 7;
+          var Fragment14 = 7;
           var Mode = 8;
           var ContextConsumer = 9;
           var ContextProvider = 10;
@@ -23052,7 +23052,7 @@ select,
                 return "DehydratedFragment";
               case ForwardRef:
                 return getWrappedName$1(type, type.render, "ForwardRef");
-              case Fragment13:
+              case Fragment14:
                 return "Fragment";
               case HostComponent:
                 return type;
@@ -31435,7 +31435,7 @@ select,
               }
             }
             function updateFragment2(returnFiber, current2, fragment, lanes, key) {
-              if (current2 === null || current2.tag !== Fragment13) {
+              if (current2 === null || current2.tag !== Fragment14) {
                 var created = createFiberFromFragment(fragment, returnFiber.mode, lanes, key);
                 created.return = returnFiber;
                 return created;
@@ -31838,7 +31838,7 @@ select,
                 if (child.key === key) {
                   var elementType = element.type;
                   if (elementType === REACT_FRAGMENT_TYPE) {
-                    if (child.tag === Fragment13) {
+                    if (child.tag === Fragment14) {
                       deleteRemainingChildren(returnFiber, child.sibling);
                       var existing = useFiber(child, element.props.children);
                       existing.return = returnFiber;
@@ -37313,7 +37313,7 @@ select,
                 var _resolvedProps2 = workInProgress2.elementType === type ? _unresolvedProps2 : resolveDefaultProps(type, _unresolvedProps2);
                 return updateForwardRef(current2, workInProgress2, type, _resolvedProps2, renderLanes2);
               }
-              case Fragment13:
+              case Fragment14:
                 return updateFragment(current2, workInProgress2, renderLanes2);
               case Mode:
                 return updateMode(current2, workInProgress2, renderLanes2);
@@ -37585,7 +37585,7 @@ select,
               case SimpleMemoComponent:
               case FunctionComponent:
               case ForwardRef:
-              case Fragment13:
+              case Fragment14:
               case Mode:
               case Profiler:
               case ContextConsumer:
@@ -41836,7 +41836,7 @@ select,
             return fiber;
           }
           function createFiberFromFragment(elements, mode, lanes, key) {
-            var fiber = createFiber(Fragment13, elements, key, mode);
+            var fiber = createFiber(Fragment14, elements, key, mode);
             fiber.lanes = lanes;
             return fiber;
           }
@@ -64500,20 +64500,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return normalized;
   }
   var PHOTO_OUTPUT_MIME_TYPE = "image/png";
-  function getDeviceOrientationAngle(event, currentAngle = getViewportOrientationAngle()) {
-    const beta = Number(event.beta);
-    const gamma = Number(event.gamma);
-    if (!Number.isFinite(beta) || !Number.isFinite(gamma)) return normalizeAngle(currentAngle);
-    const current = normalizeAngle(currentAngle);
-    const tiltX = Math.abs(gamma);
-    const enterLandscapeAt = 72;
-    const exitLandscapeAt = 58;
-    if (tiltX >= enterLandscapeAt) return gamma > 0 ? 90 : 270;
-    if (Math.abs(beta) >= 125) return 180;
-    if ((current === 90 || current === 270) && tiltX > exitLandscapeAt) return current;
-    if (tiltX <= exitLandscapeAt && beta > -25) return 0;
-    return current;
-  }
   function drawRotated(image2, sourceWidth, sourceHeight, angle) {
     const canvas = document.createElement("canvas");
     canvas.width = angle === 90 || angle === 270 ? sourceHeight : sourceWidth;
@@ -83287,7 +83273,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     ] });
   }
 
-  // src/screens/MaintenancePhotoScreen.tsx
+  // src/screens/MediaCaptureScreen.tsx
   var import_react57 = __toESM(require_react(), 1);
   var import_jsx_runtime43 = __toESM(require_jsx_runtime(), 1);
   function getTitleByKind2(kind) {
@@ -83295,6 +83281,19 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (kind === "FOTO1") return "Tire a foto 1 de 3";
     if (kind === "FOTO2") return "Tire a foto 2 de 3";
     return "Tire a foto 3 de 3";
+  }
+  function isVideoFile(file) {
+    return file.type.startsWith("video/") || /\.(mov|mp4|webm|m4v)$/i.test(file.name);
+  }
+  function revokeObjectPreviewUrl(url) {
+    if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+  }
+  function isFreshNativeCapture(file, requestedAt) {
+    const freshnessToleranceMs = 15e3;
+    return file.lastModified >= requestedAt - freshnessToleranceMs;
+  }
+  function isAndroidDevice() {
+    return /Android/i.test(globalThis.navigator?.userAgent ?? "");
   }
   function getCameraVideoConstraints(mode) {
     return {
@@ -83307,56 +83306,25 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const candidates = isSafari ? ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp8", "video/webm"] : ["video/webm;codecs=vp8", "video/webm", "video/webm;codecs=vp9", "video/mp4"];
     return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate)) ?? "";
   }
-  function isVideoFile(file) {
-    return file.type.startsWith("video/") || /\.(mov|mp4|webm|m4v)$/i.test(file.name);
-  }
-  function revokeObjectPreviewUrl(url) {
-    if (url.startsWith("blob:")) URL.revokeObjectURL(url);
-  }
-  function getBrowserImageCapture() {
-    return globalThis.ImageCapture;
-  }
-  function getMaxPhotoSettings(capabilities) {
-    const imageWidth = Math.floor(Number(capabilities?.imageWidth?.max ?? 0));
-    const imageHeight = Math.floor(Number(capabilities?.imageHeight?.max ?? 0));
-    if (imageWidth > 0) return { imageWidth };
-    if (imageHeight > 0) return { imageHeight };
-    return void 0;
-  }
-  async function captureTrackPhotoDataUrl(track) {
-    const ImageCapture = getBrowserImageCapture();
-    if (!ImageCapture) return "";
-    const imageCapture = new ImageCapture(track);
-    let photoSettings;
-    try {
-      photoSettings = getMaxPhotoSettings(await imageCapture.getPhotoCapabilities?.());
-    } catch {
-      photoSettings = void 0;
-    }
-    const blob = await imageCapture.takePhoto(photoSettings);
-    return blob.size ? readBlobAsDataUrl(blob) : "";
-  }
-  function MaintenancePhotoScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }) {
+  function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }) {
+    const photoInputRef = (0, import_react57.useRef)(null);
+    const videoInputRef = (0, import_react57.useRef)(null);
     const videoRef = (0, import_react57.useRef)(null);
-    const fileInputRef = (0, import_react57.useRef)(null);
     const streamRef = (0, import_react57.useRef)(null);
     const recorderRef = (0, import_react57.useRef)(null);
     const recordedChunksRef = (0, import_react57.useRef)([]);
     const recordingStartedAtRef = (0, import_react57.useRef)(0);
     const defaultLaunchAttemptedRef = (0, import_react57.useRef)(false);
-    const orientationAngleRef = (0, import_react57.useRef)(getViewportOrientationAngle());
-    const lastDeviceOrientationAtRef = (0, import_react57.useRef)(0);
+    const captureRequestedAtRef = (0, import_react57.useRef)(Date.now());
     const [facingMode, setFacingMode] = (0, import_react57.useState)("environment");
     const [cameraError, setCameraError] = (0, import_react57.useState)("");
+    const [processing, setProcessing] = (0, import_react57.useState)(false);
     const [ready, setReady] = (0, import_react57.useState)(false);
     const [starting, setStarting] = (0, import_react57.useState)(false);
-    const [startedByUser, setStartedByUser] = (0, import_react57.useState)(false);
-    const [flashSupported, setFlashSupported] = (0, import_react57.useState)(false);
-    const [flashOn, setFlashOn] = (0, import_react57.useState)(false);
     const [recording, setRecording] = (0, import_react57.useState)(false);
-    const [capturingPhoto, setCapturingPhoto] = (0, import_react57.useState)(false);
-    const [processing, setProcessing] = (0, import_react57.useState)(false);
     const [recordingSeconds, setRecordingSeconds] = (0, import_react57.useState)(0);
+    const useLiveCamera = isAndroidDevice();
+    const nativeCaptureMode = facingMode === "environment" ? "environment" : "user";
     const stopStream = () => {
       const recorder = recorderRef.current;
       if (recorder && recorder.state !== "inactive") {
@@ -83370,218 +83338,122 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       setReady(false);
-      setFlashSupported(false);
-      setFlashOn(false);
       setRecording(false);
+      setRecordingSeconds(0);
     };
-    (0, import_react57.useEffect)(() => () => stopStream(), []);
-    (0, import_react57.useEffect)(() => {
-      if (!recording) {
-        setRecordingSeconds(0);
-        return;
-      }
-      const timer = window.setInterval(() => {
-        setRecordingSeconds((Date.now() - recordingStartedAtRef.current) / 1e3);
-      }, 250);
-      return () => window.clearInterval(timer);
-    }, [recording]);
-    (0, import_react57.useEffect)(() => {
-      const syncViewportOrientation = () => {
-        if (Date.now() - lastDeviceOrientationAtRef.current < 800) return;
-        orientationAngleRef.current = getViewportOrientationAngle();
-      };
-      const syncDeviceOrientation = (event) => {
-        if (typeof event.gamma !== "number" || typeof event.beta !== "number") return;
-        lastDeviceOrientationAtRef.current = Date.now();
-        orientationAngleRef.current = getDeviceOrientationAngle(event, orientationAngleRef.current);
-      };
-      syncViewportOrientation();
-      window.addEventListener("resize", syncViewportOrientation);
-      window.addEventListener("orientationchange", syncViewportOrientation);
-      window.addEventListener("deviceorientation", syncDeviceOrientation);
-      return () => {
-        window.removeEventListener("resize", syncViewportOrientation);
-        window.removeEventListener("orientationchange", syncViewportOrientation);
-        window.removeEventListener("deviceorientation", syncDeviceOrientation);
-      };
-    }, []);
-    const startCamera = async (mode = facingMode) => {
-      if (recording) return;
+    const startLiveCamera = async (mode = facingMode) => {
+      if (!useLiveCamera || recording || processing) return;
       setStarting(true);
       setReady(false);
       setCameraError("");
       stopStream();
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error("Este navegador n\xE3o liberou c\xE2mera por v\xEDdeo.");
+          throw new Error("Este Android nao liberou camera direta no navegador.");
         }
         let stream2;
         try {
           stream2 = await navigator.mediaDevices.getUserMedia({
             video: getCameraVideoConstraints(mode),
-            audio: false
+            audio: Boolean(onCaptureVideo)
           });
         } catch {
           stream2 = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: mode },
-            audio: false
+            audio: Boolean(onCaptureVideo)
           });
         }
         streamRef.current = stream2;
-        const videoTrack = stream2.getVideoTracks()[0];
-        const capabilities = videoTrack?.getCapabilities?.();
-        setFlashSupported(Boolean(capabilities?.torch));
-        setFlashOn(false);
         if (videoRef.current) {
           videoRef.current.srcObject = stream2;
           videoRef.current.setAttribute("playsinline", "true");
           videoRef.current.muted = true;
           await videoRef.current.play();
         }
-        setStartedByUser(true);
         setReady(true);
       } catch (error2) {
         reportAppError(error2, {
           severity: "error",
-          source: "maintenance-photo",
-          action: "start-camera",
-          component: "MaintenancePhotoScreen",
+          source: "media-capture",
+          action: "start-live-camera",
+          component: "MediaCaptureScreen",
           screen: "TelaCameraMidia",
-          payload: { mode }
+          payload: { mode, useLiveCamera }
         });
-        setCameraError(error2 instanceof Error ? error2.message : "N\xE3o foi poss\xEDvel abrir a c\xE2mera.");
+        setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel abrir a camera.");
       } finally {
         setStarting(false);
       }
     };
-    const capture = async () => {
-      const video = videoRef.current;
-      if (recording || processing || capturingPhoto) return;
-      if (!video || !ready || video.videoWidth === 0 || video.videoHeight === 0) {
-        setCameraError("C\xE2mera ainda n\xE3o est\xE1 pronta. Toque em Abrir c\xE2mera ou use c\xE2mera nativa.");
+    const openNativePhotoCamera = () => {
+      if (useLiveCamera) {
+        void startLiveCamera();
         return;
       }
-      setCapturingPhoto(true);
-      try {
-        const videoTrack = streamRef.current?.getVideoTracks()[0];
-        const stillPhotoDataUrl = videoTrack ? await captureTrackPhotoDataUrl(videoTrack) : "";
-        const photoDataUrl = stillPhotoDataUrl || captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
-        if (photoDataUrl) onCapture(photoDataUrl);
-      } catch (error2) {
-        reportAppError(error2, {
-          severity: "warning",
-          source: "maintenance-photo",
-          action: "capture-photo",
-          component: "MaintenancePhotoScreen",
-          screen: "TelaCameraMidia"
-        });
-        const photoDataUrl = captureVideoFrameDataUrl(video, normalizeAngle(orientationAngleRef.current));
-        if (photoDataUrl) onCapture(photoDataUrl);
-      } finally {
-        setCapturingPhoto(false);
+      setCameraError("");
+      captureRequestedAtRef.current = Date.now();
+      photoInputRef.current?.click();
+    };
+    const openNativeVideoCamera = () => {
+      if (!onCaptureVideo) {
+        setCameraError("Video indisponivel nesta tela.");
+        return;
       }
+      if (useLiveCamera) {
+        if (!ready) {
+          void startLiveCamera();
+          return;
+        }
+        return;
+      }
+      setCameraError("");
+      captureRequestedAtRef.current = Date.now();
+      videoInputRef.current?.click();
     };
     const switchCamera = () => {
-      if (recording || processing || capturingPhoto) return;
+      if (processing || recording) return;
       const next = facingMode === "environment" ? "user" : "environment";
       setFacingMode(next);
       onSwitchCamera();
-      if (startedByUser) void startCamera(next);
+      if (useLiveCamera) void startLiveCamera(next);
     };
-    const toggleFlash = async () => {
-      const videoTrack = streamRef.current?.getVideoTracks()[0];
-      if (!videoTrack || !ready) {
-        setCameraError("Abra a c\xE2mera antes de ativar o flash.");
-        return;
-      }
-      if (!flashSupported) {
-        setCameraError("Este dispositivo n\xE3o liberou controle de flash pelo navegador.");
-        return;
-      }
-      const nextFlashOn = !flashOn;
-      try {
-        await videoTrack.applyConstraints({
-          advanced: [{ torch: nextFlashOn }]
-        });
-        setFlashOn(nextFlashOn);
-        setCameraError("");
-      } catch (error2) {
-        reportAppError(error2, {
-          severity: "warning",
-          source: "maintenance-photo",
-          action: "toggle-flash",
-          component: "MaintenancePhotoScreen",
-          screen: "TelaCameraMidia"
-        });
-        setFlashOn(false);
-        setCameraError(error2 instanceof Error ? error2.message : "N\xE3o foi poss\xEDvel controlar o flash.");
-      }
-    };
-    const openNativeCamera = () => {
-      fileInputRef.current?.click();
-    };
-    const handleNativeCapture = async (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      if (isVideoFile(file)) {
-        if (!onCaptureVideo) {
-          setCameraError("V\xEDdeo indispon\xEDvel nesta tela.");
-          event.target.value = "";
-          return;
-        }
-        const previewUrl = URL.createObjectURL(file);
-        try {
-          const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
-            readBlobAsDataUrl(file),
-            createVideoPosterDataUrl(previewUrl),
-            getVideoDurationLabelFromUrl(previewUrl)
-          ]);
-          onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel);
-        } catch (error2) {
-          reportAppError(error2, {
-            severity: "error",
-            source: "maintenance-photo",
-            action: "prepare-native-video",
-            component: "MaintenancePhotoScreen",
-            screen: "TelaCameraMidia",
-            payload: { fileName: file.name, fileType: file.type }
-          });
-          setCameraError(error2 instanceof Error ? error2.message : "N\xE3o foi poss\xEDvel preparar o v\xEDdeo.");
-        } finally {
-          revokeObjectPreviewUrl(previewUrl);
-          event.target.value = "";
-        }
+    const captureLivePhoto = () => {
+      const video = videoRef.current;
+      if (!video || !ready || processing || recording) {
+        setCameraError("Abra a camera para tirar a foto.");
         return;
       }
       try {
-        const dataUrl = await readPhotoFileAsDataUrl(file, normalizeAngle(orientationAngleRef.current));
-        onCapture(dataUrl);
+        const photoDataUrl = captureVideoFrameDataUrl(video);
+        if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
+        onCapture(photoDataUrl);
       } catch (error2) {
         reportAppError(error2, {
           severity: "error",
-          source: "maintenance-photo",
-          action: "prepare-native-photo",
-          component: "MaintenancePhotoScreen",
-          screen: "TelaCameraMidia",
-          payload: { fileName: file.name, fileType: file.type }
+          source: "media-capture",
+          action: "capture-live-photo",
+          component: "MediaCaptureScreen",
+          screen: "TelaCameraMidia"
         });
-        setCameraError(error2 instanceof Error ? error2.message : "N\xE3o foi poss\xEDvel preparar a foto.");
-      } finally {
-        event.target.value = "";
+        setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel capturar a foto.");
       }
     };
-    const startRecording = () => {
+    const startLiveRecording = () => {
       const stream2 = streamRef.current;
       if (!onCaptureVideo) {
-        setCameraError("V\xEDdeo indispon\xEDvel nesta tela.");
+        setCameraError("Video indisponivel nesta tela.");
+        return;
+      }
+      if (!useLiveCamera) {
+        openNativeVideoCamera();
         return;
       }
       if (!stream2 || !ready) {
-        setCameraError("Abra a c\xE2mera antes de gravar.");
+        setCameraError("Abra a camera antes de gravar.");
         return;
       }
       if (typeof MediaRecorder === "undefined") {
-        setCameraError("Este navegador n\xE3o liberou grava\xE7\xE3o por v\xEDdeo. Use a c\xE2mera nativa.");
+        setCameraError("Este Android nao liberou gravacao direta no navegador.");
         return;
       }
       try {
@@ -83593,16 +83465,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           if (event.data.size > 0) recordedChunksRef.current.push(event.data);
         };
         recorder.onerror = () => {
-          reportAppError(new Error("Falha durante a grava\xE7\xE3o do v\xEDdeo."), {
-            severity: "error",
-            source: "maintenance-photo",
-            action: "record-video",
-            component: "MaintenancePhotoScreen",
-            screen: "TelaCameraMidia"
-          });
           setRecording(false);
           setProcessing(false);
-          setCameraError("Falha durante a grava\xE7\xE3o do v\xEDdeo.");
+          setCameraError("Falha durante a gravacao do video.");
         };
         recorder.onstop = async () => {
           const chunks = recordedChunksRef.current;
@@ -83611,7 +83476,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           setProcessing(true);
           let previewUrl = "";
           try {
-            if (!chunks.length) throw new Error("Nenhum dado de v\xEDdeo capturado.");
+            if (!chunks.length) throw new Error("Nenhum dado de video capturado.");
             const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
             previewUrl = URL.createObjectURL(blob);
             const fallbackDuration = formatVideoDuration((Date.now() - recordingStartedAtRef.current) / 1e3);
@@ -83624,12 +83489,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           } catch (error2) {
             reportAppError(error2, {
               severity: "error",
-              source: "maintenance-photo",
-              action: "finalize-video",
-              component: "MaintenancePhotoScreen",
+              source: "media-capture",
+              action: "finalize-live-video",
+              component: "MediaCaptureScreen",
               screen: "TelaCameraMidia"
             });
-            setCameraError(error2 instanceof Error ? error2.message : "N\xE3o foi poss\xEDvel preparar o v\xEDdeo.");
+            setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel preparar o video.");
           } finally {
             if (previewUrl) revokeObjectPreviewUrl(previewUrl);
             setProcessing(false);
@@ -83644,91 +83509,186 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       } catch (error2) {
         reportAppError(error2, {
           severity: "error",
-          source: "maintenance-photo",
-          action: "start-recording",
-          component: "MaintenancePhotoScreen",
+          source: "media-capture",
+          action: "start-live-recording",
+          component: "MediaCaptureScreen",
           screen: "TelaCameraMidia"
         });
         setRecording(false);
         setProcessing(false);
-        setCameraError(error2 instanceof Error ? error2.message : "N\xE3o foi poss\xEDvel iniciar a grava\xE7\xE3o.");
+        setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel iniciar a gravacao.");
       }
     };
-    const stopRecording = () => {
+    const stopLiveRecording = () => {
       const recorder = recorderRef.current;
       if (!recorder || recorder.state === "inactive") return;
       recorder.stop();
     };
+    const handleNativeCapture = async (event) => {
+      const file = event.target.files?.[0];
+      if (!file || processing) return;
+      setCameraError("");
+      setProcessing(true);
+      if (!isFreshNativeCapture(file, captureRequestedAtRef.current)) {
+        setCameraError("Use a camera para registrar agora. Arquivos antigos da galeria nao sao aceitos.");
+        event.target.value = "";
+        setProcessing(false);
+        return;
+      }
+      if (isVideoFile(file)) {
+        if (!onCaptureVideo) {
+          setCameraError("Video indisponivel nesta tela.");
+          event.target.value = "";
+          setProcessing(false);
+          return;
+        }
+        const previewUrl = URL.createObjectURL(file);
+        try {
+          const [videoDataUrl, posterUrl, durationLabel] = await Promise.all([
+            readBlobAsDataUrl(file),
+            createVideoPosterDataUrl(previewUrl),
+            getVideoDurationLabelFromUrl(previewUrl)
+          ]);
+          onCaptureVideo(videoDataUrl, previewUrl, posterUrl, durationLabel);
+        } catch (error2) {
+          reportAppError(error2, {
+            severity: "error",
+            source: "media-capture",
+            action: "prepare-native-video",
+            component: "MediaCaptureScreen",
+            screen: "TelaCameraMidia",
+            payload: { fileName: file.name, fileType: file.type }
+          });
+          setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel preparar o video.");
+        } finally {
+          revokeObjectPreviewUrl(previewUrl);
+          event.target.value = "";
+          setProcessing(false);
+        }
+        return;
+      }
+      try {
+        const dataUrl = await readPhotoFileAsDataUrl(file, 0);
+        onCapture(dataUrl);
+      } catch (error2) {
+        reportAppError(error2, {
+          severity: "error",
+          source: "media-capture",
+          action: "prepare-native-photo",
+          component: "MediaCaptureScreen",
+          screen: "TelaCameraMidia",
+          payload: { fileName: file.name, fileType: file.type }
+        });
+        setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel preparar a foto.");
+      } finally {
+        event.target.value = "";
+        setProcessing(false);
+      }
+    };
+    (0, import_react57.useEffect)(() => {
+      return () => stopStream();
+    }, []);
+    (0, import_react57.useEffect)(() => {
+      if (!recording) {
+        setRecordingSeconds(0);
+        return;
+      }
+      const timer = window.setInterval(() => {
+        setRecordingSeconds((Date.now() - recordingStartedAtRef.current) / 1e3);
+      }, 250);
+      return () => window.clearInterval(timer);
+    }, [recording]);
     (0, import_react57.useEffect)(() => {
       if (defaultLaunchAttemptedRef.current) return;
       defaultLaunchAttemptedRef.current = true;
-      void startCamera("environment");
+      const timer = window.setTimeout(() => {
+        if (useLiveCamera) {
+          void startLiveCamera();
+          return;
+        }
+        openNativePhotoCamera();
+      }, 120);
+      return () => window.clearTimeout(timer);
     }, []);
     return /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(AppShell, { screenLabel: "TelaCameraMidia", children: [
       /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(FormMenu, { title: "", onBack }),
       /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("section", { className: "main-panel photo-main", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("article", { className: "photo-card camera-capture-card", children: [
         /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-title camera-capture-title", children: [
           /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: title ?? getTitleByKind2(kind) }),
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando v\xEDdeo" : capturingPhoto ? "Capturando foto" : "Foto ou v\xEDdeo" })
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando midia" : useLiveCamera ? "Camera ao vivo" : "Camera nativa" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-body", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-view real-camera-view", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("video", { ref: videoRef, className: "real-camera-video", playsInline: true, muted: true, autoPlay: true }),
-            recording ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-recording-pill", "aria-live": "polite", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-view real-camera-view native-camera-view", children: [
+            useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("video", { ref: videoRef, className: "real-camera-video", playsInline: true, muted: true, autoPlay: true }) : null,
+            useLiveCamera && recording ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-recording-pill", "aria-live": "polite", children: [
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", {}),
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: formatVideoDuration(recordingSeconds) })
             ] }) : null,
-            processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: "Preparando v\xEDdeo..." }) : null,
-            capturingPhoto ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: "Capturando foto..." }) : null,
-            !startedByUser && !starting && !cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Abra a c\xE2mera" }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "Use foto ou v\xEDdeo no mesmo fluxo." }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => startCamera(), children: "Abrir c\xE2mera" }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "native-camera-link", onClick: openNativeCamera, children: "Usar c\xE2mera nativa" })
+            !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera do dispositivo" }),
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: nativeCaptureMode === "environment" ? "Traseira preferencial" : "Frontal preferencial" }),
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: openNativePhotoCamera, disabled: processing, children: "Tirar foto" }),
+              onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "native-camera-link", onClick: openNativeVideoCamera, disabled: processing, children: "Gravar video" }) : null
             ] }) : null,
+            useLiveCamera && !cameraError && !ready && !starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera ao vivo" }),
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "No Android a captura acontece direto na tela para bloquear galeria." }),
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => void startLiveCamera(), disabled: processing, children: "Abrir camera" })
+            ] }) : null,
+            processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: "Preparando midia..." }) : null,
+            starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading", children: "Abrindo camera..." }) : null,
             cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-error", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "C\xE2mera indispon\xEDvel" }),
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera indisponivel" }),
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: cameraError }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("small", { children: "Use a c\xE2mera nativa se o navegador bloquear foto ou v\xEDdeo." }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => startCamera(), children: "Tentar novamente" }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "native-camera-link", onClick: openNativeCamera, children: "Usar c\xE2mera nativa" })
-            ] }) : null,
-            !cameraError && starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading", children: "Abrindo c\xE2mera..." }) : null
+              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("small", { children: useLiveCamera ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera nativa." })
+            ] }) : null
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
-            TextInputControl,
-            {
-              ref: fileInputRef,
-              className: "native-camera-input",
-              type: "file",
-              accept: "image/*,video/*,.mov,video/quicktime",
-              capture: facingMode === "environment" ? "environment" : "user",
-              onChange: handleNativeCapture
-            }
-          ),
+          !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(import_jsx_runtime43.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+              TextInputControl,
+              {
+                ref: photoInputRef,
+                className: "native-camera-input",
+                type: "file",
+                accept: "image/*",
+                capture: nativeCaptureMode,
+                onChange: handleNativeCapture
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+              TextInputControl,
+              {
+                ref: videoInputRef,
+                className: "native-camera-input",
+                type: "file",
+                accept: "video/*,.mov,video/quicktime",
+                capture: nativeCaptureMode,
+                onChange: handleNativeCapture
+              }
+            )
+          ] }) : null,
           /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-actions photo-actions-ios camera-actions-pro", children: [
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
               "button",
               {
-                className: `photo-flash ${flashOn ? "is-active" : ""}`,
-                onClick: toggleFlash,
-                "aria-label": flashOn ? "Desativar flash" : "Ativar flash",
-                disabled: !ready || !flashSupported || recording || processing || capturingPhoto,
-                children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "flash" })
+                className: "photo-capture",
+                onClick: useLiveCamera ? captureLivePhoto : openNativePhotoCamera,
+                "aria-label": "Tirar foto",
+                disabled: processing || useLiveCamera && (!ready || recording),
+                children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "camera" })
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-capture", onClick: capture, "aria-label": "Tirar foto", disabled: !ready || recording || processing || capturingPhoto, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "camera" }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+            onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
               "button",
               {
                 className: `photo-record ${recording ? "is-recording" : ""}`,
-                onClick: recording ? stopRecording : startRecording,
-                "aria-label": recording ? "Parar grava\xE7\xE3o" : "Gravar v\xEDdeo",
-                disabled: processing || capturingPhoto || !ready && !recording,
+                onClick: useLiveCamera ? recording ? stopLiveRecording : startLiveRecording : openNativeVideoCamera,
+                "aria-label": recording ? "Parar gravacao" : "Gravar video",
+                disabled: processing || useLiveCamera && !ready && !recording,
                 children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "video" })
               }
-            ),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-switch", onClick: switchCamera, "aria-label": "Mudar c\xE2mera", disabled: recording || processing || capturingPhoto, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "sync" }) })
+            ) : null,
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-switch", onClick: switchCamera, "aria-label": "Mudar camera", disabled: processing || recording || starting, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "sync" }) })
           ] })
         ] })
       ] }) })
@@ -85402,7 +85362,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (screen === "fotoSolicitacaoManutencao") {
       return show(
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
-          MaintenancePhotoScreen,
+          MediaCaptureScreen,
           {
             kind: "FOTO1",
             title: "Manuten\xE7\xE3o",
@@ -85443,7 +85403,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (screen === "fotoColisao") {
       return show(
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
-          MaintenancePhotoScreen,
+          MediaCaptureScreen,
           {
             kind: "NOTAFISCAL",
             title: `Capturar: ${getCollisionPhotoLabel(collisionPhotoKind)}`,
@@ -85492,7 +85452,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (screen === "fotoGasto") {
       return show(
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
-          MaintenancePhotoScreen,
+          MediaCaptureScreen,
           {
             kind: "NOTAFISCAL",
             title: "Comprovante",
@@ -85615,7 +85575,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (screen === "fotoManutencao" && selectedDetail) {
       return show(
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
-          MaintenancePhotoScreen,
+          MediaCaptureScreen,
           {
             kind: maintenancePhotoKind,
             onBack: () => setScreen("finalizar"),
@@ -85712,7 +85672,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (screen === "fotoReceber") {
       return show(
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(
-          MaintenancePhotoScreen,
+          MediaCaptureScreen,
           {
             kind: "NOTAFISCAL",
             title: "Comprovante",
