@@ -75,6 +75,32 @@ static void Fail(List<string> failures, string message)
   Console.WriteLine($"[ERRO] {message}");
 }
 
+static T ExecuteWithRetry<T>(Func<T> action, string label, int maxAttempts = 4)
+{
+  Exception? lastError = null;
+  for (var attempt = 1; attempt <= maxAttempts; attempt++)
+  {
+    try
+    {
+      return action();
+    }
+    catch (Exception ex) when (attempt < maxAttempts)
+    {
+      lastError = ex;
+      var delayMs = attempt * 2000;
+      Log($"{label} falhou tentativa {attempt}/{maxAttempts}: {ex.Message}");
+      Thread.Sleep(delayMs);
+    }
+    catch (Exception ex)
+    {
+      lastError = ex;
+      break;
+    }
+  }
+
+  throw new InvalidOperationException($"{label} falhou apos {maxAttempts} tentativas.", lastError);
+}
+
 var connectionString =
   $"AuthType=OAuth;" +
   $"Url={environmentUrl.TrimEnd('/')};" +
@@ -257,7 +283,7 @@ static List<Entity> FindMany(ServiceClient service, string logicalName, ColumnSe
   {
     query.Criteria.AddCondition(condition.Attribute, ConditionOperator.Equal, condition.Value);
   }
-  return service.RetrieveMultiple(query).Entities.ToList();
+  return ExecuteWithRetry(() => service.RetrieveMultiple(query).Entities.ToList(), $"RetrieveMultiple {logicalName}");
 }
 
 static bool SameCsv(string left, string right)

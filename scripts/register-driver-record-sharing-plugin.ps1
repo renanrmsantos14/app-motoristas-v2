@@ -75,6 +75,44 @@ var dryRun = args.Any(arg => string.Equals(arg, "--dry-run", StringComparison.Or
 static void Log(string message) => Console.WriteLine($"[driver-sharing-plugin] {message}");
 static EntityReference Ref(string logicalName, Guid id) => new(logicalName, id);
 
+static T ExecuteWithRetry<T>(Func<T> action, string label, int maxAttempts = 4)
+{
+  Exception? lastError = null;
+  for (var attempt = 1; attempt <= maxAttempts; attempt++)
+  {
+    try
+    {
+      return action();
+    }
+    catch (Exception ex) when (attempt < maxAttempts)
+    {
+      lastError = ex;
+      var delayMs = attempt * 2000;
+      Log($"{label} falhou tentativa {attempt}/{maxAttempts}: {ex.Message}");
+      Thread.Sleep(delayMs);
+    }
+    catch (Exception ex)
+    {
+      lastError = ex;
+      break;
+    }
+  }
+
+  throw new InvalidOperationException($"{label} falhou apos {maxAttempts} tentativas.", lastError);
+}
+
+static void ExecuteActionWithRetry(Action action, string label, int maxAttempts = 4)
+{
+  ExecuteWithRetry(
+    () =>
+    {
+      action();
+      return true;
+    },
+    label,
+    maxAttempts);
+}
+
 var specs = new[]
 {
   new StepSpec("Servicos Create", "cr40f_reservadeveculos", "Create", 0, "", Array.Empty<string>()),
@@ -200,12 +238,12 @@ static Guid UpsertPluginAssembly(ServiceClient service, string content, Assembly
     };
     record.Id = existing.Id;
     Log($"update assembly {AssemblyName}");
-    if (!dryRun) service.Update(record);
+    if (!dryRun) ExecuteActionWithRetry(() => service.Update(record), $"Update pluginassembly {AssemblyName}");
     return existing.Id;
   }
 
   Log($"create assembly {AssemblyName}");
-  return dryRun ? Guid.Empty : service.Create(record);
+  return dryRun ? Guid.Empty : ExecuteWithRetry(() => service.Create(record), $"Create pluginassembly {AssemblyName}");
 }
 
 static Guid UpsertPluginType(ServiceClient service, Guid assemblyId, bool dryRun)
@@ -226,7 +264,7 @@ static Guid UpsertPluginType(ServiceClient service, Guid assemblyId, bool dryRun
   }
 
   Log($"create plugintype {PluginTypeName}");
-  return dryRun ? Guid.Empty : service.Create(record);
+  return dryRun ? Guid.Empty : ExecuteWithRetry(() => service.Create(record), $"Create plugintype {PluginTypeName}");
 }
 
 static Guid UpsertStep(ServiceClient service, StepSpec spec, Guid pluginTypeId, Guid messageId, Guid filterId, EntityReference? runAsUser, bool dryRun)
@@ -260,12 +298,12 @@ static Guid UpsertStep(ServiceClient service, StepSpec spec, Guid pluginTypeId, 
   {
     record.Id = existing.Id;
     Log($"update step {name}");
-    if (!dryRun) service.Update(record);
+    if (!dryRun) ExecuteActionWithRetry(() => service.Update(record), $"Update step {name}");
     return existing.Id;
   }
 
   Log($"create step {name}");
-  return dryRun ? Guid.Empty : service.Create(record);
+  return dryRun ? Guid.Empty : ExecuteWithRetry(() => service.Create(record), $"Create step {name}");
 }
 
 static void UpsertPreImage(ServiceClient service, StepSpec spec, Guid stepId, bool dryRun)
@@ -291,12 +329,12 @@ static void UpsertPreImage(ServiceClient service, StepSpec spec, Guid stepId, bo
   {
     record.Id = existing.Id;
     Log($"update pre image {spec.Label}: {attrs}");
-    if (!dryRun) service.Update(record);
+    if (!dryRun) ExecuteActionWithRetry(() => service.Update(record), $"Update pre image {spec.Label}");
     return;
   }
 
   Log($"create pre image {spec.Label}: {attrs}");
-  if (!dryRun) service.Create(record);
+  if (!dryRun) ExecuteWithRetry(() => service.Create(record), $"Create pre image {spec.Label}");
 }
 
 static EntityReference? ResolveActiveUserByEmail(ServiceClient service, string email)
@@ -308,7 +346,7 @@ static EntityReference? ResolveActiveUserByEmail(ServiceClient service, string e
   };
   query.Criteria.AddCondition("internalemailaddress", ConditionOperator.Equal, email.Trim());
   query.Criteria.AddCondition("isdisabled", ConditionOperator.Equal, false);
-  var users = service.RetrieveMultiple(query).Entities;
+  var users = ExecuteWithRetry(() => service.RetrieveMultiple(query).Entities, $"RetrieveMultiple systemuser {email}");
   if (users.Count != 1)
   {
     throw new InvalidOperationException($"Usuario tecnico nao encontrado ou duplicado: {email}. Ativos encontrados={users.Count}");
@@ -326,7 +364,7 @@ static Guid RequireMessageFilter(ServiceClient service, Guid messageId, string p
   };
   query.Criteria.AddCondition("sdkmessageid", ConditionOperator.Equal, messageId);
   query.Criteria.AddCondition("primaryobjecttypecode", ConditionOperator.Equal, primaryEntity);
-  var rows = service.RetrieveMultiple(query).Entities;
+  var rows = ExecuteWithRetry(() => service.RetrieveMultiple(query).Entities, $"RetrieveMultiple sdkmessagefilter {primaryEntity}");
   if (rows.Count != 1)
   {
     throw new InvalidOperationException($"sdkmessagefilter invalido para {primaryEntity}. encontrados={rows.Count}");
@@ -359,7 +397,7 @@ static Entity? FindStep(ServiceClient service, Guid pluginTypeId, Guid messageId
   query.Criteria.AddCondition("eventhandler", ConditionOperator.Equal, pluginTypeId);
   query.Criteria.AddCondition("sdkmessageid", ConditionOperator.Equal, messageId);
   query.Criteria.AddCondition("sdkmessagefilterid", ConditionOperator.Equal, filterId);
-  var rows = service.RetrieveMultiple(query).Entities;
+  var rows = ExecuteWithRetry(() => service.RetrieveMultiple(query).Entities, "RetrieveMultiple sdkmessageprocessingstep");
   if (rows.Count > 1)
   {
     throw new InvalidOperationException($"Steps duplicados para message={messageId} filter={filterId}");
@@ -382,7 +420,7 @@ static Entity? FindPreImage(ServiceClient service, Guid stepId)
   query.Criteria.AddCondition("sdkmessageprocessingstepid", ConditionOperator.Equal, stepId);
   query.Criteria.AddCondition("imagetype", ConditionOperator.Equal, 0);
   query.Criteria.AddCondition("entityalias", ConditionOperator.Equal, PreImageAlias);
-  var rows = service.RetrieveMultiple(query).Entities;
+  var rows = ExecuteWithRetry(() => service.RetrieveMultiple(query).Entities, "RetrieveMultiple sdkmessageprocessingstepimage");
   if (rows.Count > 1)
   {
     throw new InvalidOperationException($"Pre Images duplicadas no step {stepId}");
@@ -401,7 +439,7 @@ static Entity? FindFirst(ServiceClient service, string logicalName, ColumnSet co
   {
     query.Criteria.AddCondition(condition.Attribute, ConditionOperator.Equal, condition.Value);
   }
-  var rows = service.RetrieveMultiple(query).Entities;
+  var rows = ExecuteWithRetry(() => service.RetrieveMultiple(query).Entities, $"RetrieveMultiple {logicalName}");
   if (rows.Count > 1)
   {
     throw new InvalidOperationException($"Mais de um registro encontrado: {logicalName}");
