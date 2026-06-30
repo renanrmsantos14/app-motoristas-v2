@@ -10707,9 +10707,9 @@ select,
 
 .camera-actions-pro {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr) 72px minmax(0, 1fr) 56px;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 8px !important;
   min-height: 72px !important;
   padding: 5px 10px 4px !important;
   border-radius: 18px !important;
@@ -10733,24 +10733,27 @@ select,
 }
 
 .camera-side-action-left {
+  grid-column: 2;
   justify-content: flex-start;
 }
 
 .camera-side-action-right {
+  grid-column: 5;
   justify-content: flex-end;
 }
 
 .camera-action-spacer {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
 }
 
 .camera-actions-pro svg {
-  width: 22px !important;
-  height: 22px !important;
+  width: 24px !important;
+  height: 24px !important;
 }
 
 .camera-primary-action {
+  grid-column: 3;
   width: 72px !important;
   height: 72px !important;
   min-height: 72px !important;
@@ -10786,9 +10789,9 @@ select,
 }
 
 .camera-secondary-action {
-  width: 48px !important;
-  height: 48px !important;
-  min-height: 48px !important;
+  width: 56px !important;
+  height: 56px !important;
+  min-height: 56px !important;
   border: 1px solid rgba(0, 26, 61, 0.12) !important;
   background: #f7f9fb !important;
   color: #001a3d !important;
@@ -10804,13 +10807,14 @@ select,
 }
 
 .photo-record {
-  border-color: rgba(192, 39, 45, 0.18) !important;
-  background: #fff4f5 !important;
-  color: #c0272d !important;
+  border-color: #c0272d !important;
+  background: #c0272d !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(192, 39, 45, 0.18) !important;
 }
 
 .photo-record.is-recording {
-  border-color: rgba(192, 39, 45, 0.36) !important;
+  border-color: #c0272d !important;
   background: #ffffff !important;
   color: #c0272d !important;
   animation: camera-record-button 920ms ease-in-out infinite;
@@ -10899,9 +10903,8 @@ select,
 
 @media (max-width: 520px) {
   .camera-actions-pro {
-    grid-template-columns: 48px 72px 48px;
-    justify-content: center !important;
-    gap: 12px !important;
+    grid-template-columns: 56px minmax(0, 1fr) 72px minmax(0, 1fr) 56px;
+    gap: 8px !important;
     min-height: 72px !important;
     padding: 5px 8px 4px !important;
   }
@@ -10913,9 +10916,9 @@ select,
   }
 
   .camera-actions-pro .camera-secondary-action {
-    width: 48px !important;
-    height: 48px !important;
-    min-height: 48px !important;
+    width: 56px !important;
+    height: 56px !important;
+    min-height: 56px !important;
   }
 
   .camera-shutter-core {

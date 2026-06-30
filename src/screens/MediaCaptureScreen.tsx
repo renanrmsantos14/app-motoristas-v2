@@ -22,8 +22,6 @@ type MediaCaptureScreenProps = {
 
 type VideoCaptureProfile = {
   label: "hdPlus" | "hd";
-  width: number;
-  height: number;
   frameRate: number;
   bitRate: number;
 };
@@ -55,9 +53,6 @@ function isAndroidDevice() {
 function getPreferredCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
   return {
     facingMode: { ideal: mode },
-    width: { ideal: 1280, max: 1600 },
-    height: { ideal: 720, max: 900 },
-    aspectRatio: { ideal: 16 / 9 },
     frameRate: { ideal: 30, max: 30 }
   };
 }
@@ -65,8 +60,6 @@ function getPreferredCameraVideoConstraints(mode: "environment" | "user"): Media
 function getFallbackCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
   return {
     facingMode: mode,
-    width: { ideal: 1280 },
-    height: { ideal: 720 },
     frameRate: { ideal: 30, max: 30 }
   };
 }
@@ -78,14 +71,12 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
   const frameRateMax = Math.floor(Number(capabilities?.frameRate?.max ?? 0));
   const deviceMemory = Number((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 0);
   const hardwareConcurrency = Number(navigator.hardwareConcurrency ?? 0);
-  const supportsHdPlus = widthMax >= 1600 && heightMax >= 900 && frameRateMax >= 30;
+  const supportsHdPlus = widthMax >= 1280 && heightMax >= 720 && frameRateMax >= 30;
   const highTierDevice = deviceMemory >= 8 && hardwareConcurrency >= 8;
 
   if (supportsHdPlus && highTierDevice) {
     return {
       label: "hdPlus",
-      width: 1600,
-      height: 900,
       frameRate: 30,
       bitRate: 12_000_000
     };
@@ -93,8 +84,6 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
 
   return {
     label: "hd",
-    width: 1280,
-    height: 720,
     frameRate: 30,
     bitRate: 8_000_000
   };
@@ -103,9 +92,6 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
 function buildTrackConstraints(mode: "environment" | "user", profile: VideoCaptureProfile): MediaTrackConstraints {
   return {
     facingMode: { ideal: mode },
-    width: { ideal: profile.width, max: profile.width },
-    height: { ideal: profile.height, max: profile.height },
-    aspectRatio: { ideal: 16 / 9 },
     frameRate: { ideal: profile.frameRate, min: 24, max: profile.frameRate }
   };
 }
@@ -122,8 +108,6 @@ async function preferTrackProfile(track: MediaStreamTrack, mode: "environment" |
 
   const fallbackProfile: VideoCaptureProfile = {
     label: "hd",
-    width: 1280,
-    height: 720,
     frameRate: 30,
     bitRate: 8_000_000
   };
@@ -169,8 +153,6 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const captureRequestedAtRef = useRef(Date.now());
   const activeVideoProfileRef = useRef<VideoCaptureProfile>({
     label: "hd",
-    width: 1280,
-    height: 720,
     frameRate: 30,
     bitRate: 8_000_000
   });

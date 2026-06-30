@@ -10856,9 +10856,9 @@ select,
 }
 .camera-actions-pro {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr) 72px minmax(0, 1fr) 56px;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 8px !important;
   min-height: 72px !important;
   padding: 5px 10px 4px !important;
   border-radius: 18px !important;
@@ -10882,20 +10882,23 @@ select,
   align-items: center;
 }
 .camera-side-action-left {
+  grid-column: 2;
   justify-content: flex-start;
 }
 .camera-side-action-right {
+  grid-column: 5;
   justify-content: flex-end;
 }
 .camera-action-spacer {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
 }
 .camera-actions-pro svg {
-  width: 22px !important;
-  height: 22px !important;
+  width: 24px !important;
+  height: 24px !important;
 }
 .camera-primary-action {
+  grid-column: 3;
   width: 72px !important;
   height: 72px !important;
   min-height: 72px !important;
@@ -10927,9 +10930,9 @@ select,
   display: block;
 }
 .camera-secondary-action {
-  width: 48px !important;
-  height: 48px !important;
-  min-height: 48px !important;
+  width: 56px !important;
+  height: 56px !important;
+  min-height: 56px !important;
   border: 1px solid rgba(0, 26, 61, 0.12) !important;
   background: #f7f9fb !important;
   color: #001a3d !important;
@@ -10942,12 +10945,13 @@ select,
   transform: rotate(0deg);
 }
 .photo-record {
-  border-color: rgba(192, 39, 45, 0.18) !important;
-  background: #fff4f5 !important;
-  color: #c0272d !important;
+  border-color: #c0272d !important;
+  background: #c0272d !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(192, 39, 45, 0.18) !important;
 }
 .photo-record.is-recording {
-  border-color: rgba(192, 39, 45, 0.36) !important;
+  border-color: #c0272d !important;
   background: #ffffff !important;
   color: #c0272d !important;
   animation: camera-record-button 920ms ease-in-out infinite;
@@ -11028,9 +11032,8 @@ select,
 }
 @media (max-width: 520px) {
   .camera-actions-pro {
-    grid-template-columns: 48px 72px 48px;
-    justify-content: center !important;
-    gap: 12px !important;
+    grid-template-columns: 56px minmax(0, 1fr) 72px minmax(0, 1fr) 56px;
+    gap: 8px !important;
     min-height: 72px !important;
     padding: 5px 8px 4px !important;
   }
@@ -11040,9 +11043,9 @@ select,
     min-height: 72px !important;
   }
   .camera-actions-pro .camera-secondary-action {
-    width: 48px !important;
-    height: 48px !important;
-    min-height: 48px !important;
+    width: 56px !important;
+    height: 56px !important;
+    min-height: 56px !important;
   }
   .camera-shutter-core {
     width: 42px;
@@ -11986,7 +11989,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.580","builtAt":"2026-06-30T16:20:46.067Z","builtAtLabel":"30/06/2026, 13:20"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.587","builtAt":"2026-06-30T16:33:03.449Z","builtAtLabel":"30/06/2026, 13:33"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83373,17 +83376,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function getPreferredCameraVideoConstraints(mode) {
     return {
       facingMode: { ideal: mode },
-      width: { ideal: 1280, max: 1600 },
-      height: { ideal: 720, max: 900 },
-      aspectRatio: { ideal: 16 / 9 },
       frameRate: { ideal: 30, max: 30 }
     };
   }
   function getFallbackCameraVideoConstraints(mode) {
     return {
       facingMode: mode,
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
       frameRate: { ideal: 30, max: 30 }
     };
   }
@@ -83394,21 +83392,17 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const frameRateMax = Math.floor(Number(capabilities?.frameRate?.max ?? 0));
     const deviceMemory = Number(navigator.deviceMemory ?? 0);
     const hardwareConcurrency = Number(navigator.hardwareConcurrency ?? 0);
-    const supportsHdPlus = widthMax >= 1600 && heightMax >= 900 && frameRateMax >= 30;
+    const supportsHdPlus = widthMax >= 1280 && heightMax >= 720 && frameRateMax >= 30;
     const highTierDevice = deviceMemory >= 8 && hardwareConcurrency >= 8;
     if (supportsHdPlus && highTierDevice) {
       return {
         label: "hdPlus",
-        width: 1600,
-        height: 900,
         frameRate: 30,
         bitRate: 12e6
       };
     }
     return {
       label: "hd",
-      width: 1280,
-      height: 720,
       frameRate: 30,
       bitRate: 8e6
     };
@@ -83416,9 +83410,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function buildTrackConstraints(mode, profile) {
     return {
       facingMode: { ideal: mode },
-      width: { ideal: profile.width, max: profile.width },
-      height: { ideal: profile.height, max: profile.height },
-      aspectRatio: { ideal: 16 / 9 },
       frameRate: { ideal: profile.frameRate, min: 24, max: profile.frameRate }
     };
   }
@@ -83431,8 +83422,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     }
     const fallbackProfile = {
       label: "hd",
-      width: 1280,
-      height: 720,
       frameRate: 30,
       bitRate: 8e6
     };
@@ -83469,8 +83458,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const captureRequestedAtRef = (0, import_react57.useRef)(Date.now());
     const activeVideoProfileRef = (0, import_react57.useRef)({
       label: "hd",
-      width: 1280,
-      height: 720,
       frameRate: 30,
       bitRate: 8e6
     });

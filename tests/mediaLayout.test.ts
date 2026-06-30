@@ -40,12 +40,15 @@ test("camera e previews principais sempre exibem a midia inteira", () => {
 });
 
 test("controles mobile da camera preservam obturador circular", () => {
-  assert.match(styles, /@media\s*\(max-width:\s*520px\)\s*{[\s\S]*?\.camera-actions-pro\s*{[\s\S]*?grid-template-columns:\s*48px\s+72px\s+48px;/);
+  assert.match(styles, /@media\s*\(max-width:\s*520px\)\s*{[\s\S]*?\.camera-actions-pro\s*{[\s\S]*?grid-template-columns:\s*56px\s+minmax\(0,\s*1fr\)\s+72px\s+minmax\(0,\s*1fr\)\s+56px;/);
   assert.match(styles, /\.camera-actions-pro\s+\.camera-primary-action\s*{[\s\S]*?width:\s*72px\s*!important;[\s\S]*?height:\s*72px\s*!important;/);
-  assert.match(styles, /\.camera-actions-pro\s+\.camera-secondary-action\s*{[\s\S]*?width:\s*48px\s*!important;[\s\S]*?height:\s*48px\s*!important;/);
+  assert.match(styles, /\.camera-actions-pro\s+\.camera-secondary-action\s*{[\s\S]*?width:\s*56px\s*!important;[\s\S]*?height:\s*56px\s*!important;/);
+  assert.match(styles, /\.camera-side-action-left\s*{[\s\S]*?grid-column:\s*2;/);
+  assert.match(styles, /\.camera-primary-action\s*{[\s\S]*?grid-column:\s*3;/);
+  assert.match(styles, /\.camera-side-action-right\s*{[\s\S]*?grid-column:\s*5;/);
   assert.doesNotMatch(styles, /@media\s*\(max-width:\s*520px\)\s*{[\s\S]*?\.camera-actions-pro\s+button\s*{[\s\S]*?height:\s*54px\s*!important;/);
   assert.doesNotMatch(styles, /grid-template-columns:\s*66px\s+104px\s+66px;/);
-  assert.doesNotMatch(styles, /grid-template-columns:\s*56px\s+88px\s+56px;/);
+  assert.doesNotMatch(styles, /grid-template-columns:\s*48px\s+72px\s+48px;/);
 });
 
 test("controles da camera seguem visual minimalista do app", () => {
@@ -57,7 +60,8 @@ test("controles da camera seguem visual minimalista do app", () => {
   assert.equal(cameraControls.some((block) => /background:\s*rgba\(255,\s*255,\s*255,\s*0\.94\)/i.test(block)), true);
   assert.equal(shutterShell.some((block) => /background:\s*#ffffff\b/i.test(block)), true);
   assert.equal(shutterCore.some((block) => /background:\s*#000e23\b/i.test(block)), true);
-  assert.equal(recordButton.some((block) => /background:\s*#fff4f5\b/i.test(block)), true);
+  assert.equal(recordButton.some((block) => /background:\s*#c0272d\b/i.test(block)), true);
+  assert.equal(recordButton.some((block) => /color:\s*#ffffff\b/i.test(block)), true);
   assert.equal([...cameraControls, ...shutterShell, ...shutterCore, ...recordButton].some((block) => /linear-gradient|radial-gradient/i.test(block)), false);
 });
 
@@ -70,4 +74,13 @@ test("tela de captura usa titulo no topo e preview transparente", () => {
   assert.doesNotMatch(mediaCaptureScreen, /Camera nativa/i);
   assert.equal(cameraView.some((block) => /background:\s*transparent\s*!important/i.test(block)), true);
   assert.equal(realCameraVideo.some((block) => /background:\s*transparent\s*!important/i.test(block)), true);
+});
+
+test("camera ao vivo nao forca proporcao nem dimensoes hardcoded", () => {
+  assert.doesNotMatch(mediaCaptureScreen, /aspectRatio\s*:/);
+  assert.doesNotMatch(mediaCaptureScreen, /width:\s*{\s*ideal:/);
+  assert.doesNotMatch(mediaCaptureScreen, /height:\s*{\s*ideal:/);
+  assert.doesNotMatch(mediaCaptureScreen, /width:\s*\d+/);
+  assert.doesNotMatch(mediaCaptureScreen, /height:\s*\d+/);
+  assert.match(mediaCaptureScreen, /frameRate:\s*{\s*ideal:\s*30,\s*max:\s*30\s*}/);
 });
