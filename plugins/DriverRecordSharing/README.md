@@ -431,8 +431,8 @@ Cheque nesta ordem:
 
 1. a DLL certa foi compilada?
 2. o assembly certo foi atualizado?
-3. os steps de `cr40f_reservadeveculos` estao `Synchronous`?
-4. os demais estao `Asynchronous`?
+3. os steps de `cr40f_reservadeveculos`, `cr40f_funcionarios` e `cr40f_trocasdecarro` estao `Synchronous`?
+4. os steps de passageiro, posse, colisao e recibo estao `Asynchronous`?
 5. todos estao em `PostOperation`?
 6. todos os `Update` receberam `Pre Image`?
 7. o alias da image esta exatamente `pre`?
