@@ -571,7 +571,6 @@ export function ButtonPreviewScreen({ onShowToast }: ButtonPreviewScreenProps) {
             if (screen === "reciboPersonalizado") openDemo("receipt-preview");
           }}
           onRefresh={() => emitToast("Refresh local do preview executado.", "success")}
-          onResetLocal={() => emitToast("Reset local interceptado no preview.", "warning")}
           canGeneratePersonalReceipt={canGeneratePersonalReceipt}
           services={agendaMock}
           driverName="Renan Batista"

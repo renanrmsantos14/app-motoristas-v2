@@ -5,9 +5,7 @@ import carIcon from "../assets/icons/car.svg";
 import historyIcon from "../assets/icons/clock.svg";
 import invoiceReceiptIcon from "../assets/icons/invoice-receipt.svg";
 import { filterAgendaGalleryItems, getAgendaItemStartDate } from "../app/agendaVisibility.ts";
-import { ActionButton } from "../components/common/ActionButton";
 import { PullToRefresh } from "../components/common/PullToRefresh";
-import { reportAppError } from "../lib/appErrorLogger";
 import type { AgendaItem } from "../types";
 
 const baseModules = [
@@ -121,37 +119,6 @@ const navigationHandlers = [
   "handleNavigate",
 ];
 
-const localStorageKeysToReset = ["app-motoristas-local-v1", "app-motoristas-error-log-queue-v1"];
-
-function clearKnownLocalData() {
-  localStorageKeysToReset.forEach((key) => {
-    try {
-      window.localStorage.removeItem(key);
-    } catch (error) {
-      reportAppError(error, {
-        severity: "warning",
-        source: "initial-screen",
-        action: "reset-localstorage",
-        component: "InitialScreen",
-        screen: "TelaInicial",
-        payload: { key }
-      });
-    }
-    try {
-      window.sessionStorage.removeItem(key);
-    } catch (error) {
-      reportAppError(error, {
-        severity: "warning",
-        source: "initial-screen",
-        action: "reset-sessionstorage",
-        component: "InitialScreen",
-        screen: "TelaInicial",
-        payload: { key }
-      });
-    }
-  });
-}
-
 type InitialScreenProps = {
   onNavigate?: (screen: string) => void;
   navigate?: (screen: string) => void;
@@ -205,7 +172,6 @@ type InitialScreenProps = {
   openPersonalReceipt?: () => void;
   openRecibo?: () => void;
   onOpenRecibo?: () => void;
-  onResetLocal?: () => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
   driverName?: string;
   motoristaNome?: string;
@@ -366,7 +332,6 @@ function ModuleIcon({ name }: { name: string }) {
 export function InitialScreen(props: InitialScreenProps) {
   const shellRef = useRef<HTMLElement | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const driverName = getFirstName(props.driverName ?? props.motoristaNome);
   const nextService = useMemo(() => getNextServiceItem(props, now), [now, props.nextServiceAt, props.proximoServicoEm, props.services]);
   const nextServiceDate = nextService?.date ?? null;
@@ -425,21 +390,6 @@ export function InitialScreen(props: InitialScreenProps) {
       }),
     );
   };
-  const resetLocalData = () => {
-    setResetConfirmOpen(true);
-  };
-
-  const confirmResetLocalData = async () => {
-    if (props.onResetLocal) {
-      await props.onResetLocal();
-      setResetConfirmOpen(false);
-      return;
-    }
-
-    clearKnownLocalData();
-    window.location.reload();
-  };
-
   return (
     <PullToRefresh className="pull-refresh--home" scrollRef={shellRef} onRefresh={props.onRefresh ?? (() => window.location.reload())}>
     <main ref={shellRef} className="concept-shell">
@@ -488,22 +438,7 @@ export function InitialScreen(props: InitialScreenProps) {
         <span>
           Versão {buildInfo.version ?? "local"} {buildInfo.builtAtLabel ? `- Build ${buildInfo.builtAtLabel}` : ""}
         </span>
-        <button type="button" onClick={resetLocalData}>
-          Resetar dados locais
-        </button>
       </footer>
-      {resetConfirmOpen ? (
-        <div className="maintenance-delete-overlay" role="dialog" aria-modal="true" aria-labelledby="reset-local-title">
-          <div className="maintenance-delete-dialog">
-            <div id="reset-local-title" className="maintenance-delete-title">Resetar dados locais?</div>
-            <p>Rascunhos, fotos locais e sessão offline deste app serão removidos deste navegador.</p>
-            <div className="maintenance-delete-actions">
-              <ActionButton className="maintenance-delete-cancel" label="Cancelar" onClick={() => setResetConfirmOpen(false)} />
-              <ActionButton className="maintenance-delete-confirm" variant="danger" label="Resetar" onClick={() => { void confirmResetLocalData(); }} />
-            </div>
-          </div>
-        </div>
-      ) : null}
     </main>
     </PullToRefresh>
   );

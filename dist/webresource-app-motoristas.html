@@ -11989,7 +11989,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.600","builtAt":"2026-06-30T17:24:22.295Z","builtAtLabel":"30/06/2026, 14:24"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.601","builtAt":"2026-06-30T17:56:40.806Z","builtAtLabel":"30/06/2026, 14:56"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -64259,35 +64259,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     "onNavigateTo",
     "handleNavigate"
   ];
-  var localStorageKeysToReset = ["app-motoristas-local-v1", "app-motoristas-error-log-queue-v1"];
-  function clearKnownLocalData() {
-    localStorageKeysToReset.forEach((key) => {
-      try {
-        window.localStorage.removeItem(key);
-      } catch (error2) {
-        reportAppError(error2, {
-          severity: "warning",
-          source: "initial-screen",
-          action: "reset-localstorage",
-          component: "InitialScreen",
-          screen: "TelaInicial",
-          payload: { key }
-        });
-      }
-      try {
-        window.sessionStorage.removeItem(key);
-      } catch (error2) {
-        reportAppError(error2, {
-          severity: "warning",
-          source: "initial-screen",
-          action: "reset-sessionstorage",
-          component: "InitialScreen",
-          screen: "TelaInicial",
-          payload: { key }
-        });
-      }
-    });
-  }
   function getBuildInfo2() {
     return window.__APP_BUILD_INFO ?? {};
   }
@@ -64363,7 +64334,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function InitialScreen(props) {
     const shellRef = (0, import_react46.useRef)(null);
     const [now2, setNow] = (0, import_react46.useState)(() => Date.now());
-    const [resetConfirmOpen, setResetConfirmOpen] = (0, import_react46.useState)(false);
     const driverName = getFirstName3(props.driverName ?? props.motoristaNome);
     const nextService = (0, import_react46.useMemo)(() => getNextServiceItem(props, now2), [now2, props.nextServiceAt, props.proximoServicoEm, props.services]);
     const nextServiceDate = nextService?.date ?? null;
@@ -64412,18 +64382,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         })
       );
     };
-    const resetLocalData = () => {
-      setResetConfirmOpen(true);
-    };
-    const confirmResetLocalData = async () => {
-      if (props.onResetLocal) {
-        await props.onResetLocal();
-        setResetConfirmOpen(false);
-        return;
-      }
-      clearKnownLocalData();
-      window.location.reload();
-    };
     return /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(PullToRefresh, { className: "pull-refresh--home", scrollRef: shellRef, onRefresh: props.onRefresh ?? (() => window.location.reload()), children: /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("main", { ref: shellRef, className: "concept-shell", children: [
       /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("header", { className: "concept-topbar", children: [
         /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { children: [
@@ -64462,25 +64420,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         },
         module.id
       )) }),
-      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("footer", { className: "concept-footer", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { children: [
-          "Vers\xE3o ",
-          buildInfo.version ?? "local",
-          " ",
-          buildInfo.builtAtLabel ? `- Build ${buildInfo.builtAtLabel}` : ""
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("button", { type: "button", onClick: resetLocalData, children: "Resetar dados locais" })
-      ] }),
-      resetConfirmOpen ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { className: "maintenance-delete-overlay", role: "dialog", "aria-modal": "true", "aria-labelledby": "reset-local-title", children: /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "maintenance-delete-dialog", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { id: "reset-local-title", className: "maintenance-delete-title", children: "Resetar dados locais?" }),
-        /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { children: "Rascunhos, fotos locais e sess\xE3o offline deste app ser\xE3o removidos deste navegador." }),
-        /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "maintenance-delete-actions", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(ActionButton, { className: "maintenance-delete-cancel", label: "Cancelar", onClick: () => setResetConfirmOpen(false) }),
-          /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(ActionButton, { className: "maintenance-delete-confirm", variant: "danger", label: "Resetar", onClick: () => {
-            void confirmResetLocalData();
-          } })
-        ] })
-      ] }) }) : null
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("footer", { className: "concept-footer", children: /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { children: [
+        "Vers\xE3o ",
+        buildInfo.version ?? "local",
+        " ",
+        buildInfo.builtAtLabel ? `- Build ${buildInfo.builtAtLabel}` : ""
+      ] }) })
     ] }) });
   }
 
@@ -83069,7 +83014,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               if (screen === "reciboPersonalizado") openDemo("receipt-preview");
             },
             onRefresh: () => emitToast("Refresh local do preview executado.", "success"),
-            onResetLocal: () => emitToast("Reset local interceptado no preview.", "warning"),
             canGeneratePersonalReceipt,
             services: agendaMock,
             driverName: "Renan Batista"
@@ -84650,25 +84594,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       const timer = window.setInterval(autoRefresh, AUTO_REFRESH_INTERVAL_MS);
       return () => window.clearInterval(timer);
     }, [remoteMode, remoteOperation, screen, selectedDetail]);
-    const resetLocal = async () => {
-      try {
-        setDataLoadingState({
-          phase: "loading",
-          title: "Carregando dados",
-          message: "Resetando dados locais."
-        });
-        await wait(2e3);
-        const next = initialStore();
-        setStore(next);
-        setReceiveProofs({});
-        setReceiveUploadedCounts({});
-        setSelectedDetail(null);
-        setScreen("inicio");
-        await completeDataLoadingState("Dados reiniciados", "Armazenamento local limpo.");
-      } finally {
-        setDataLoading((current) => current?.phase === "success" ? current : null);
-      }
-    };
     const blockIfNotFirstPending = (detail = selectedDetail) => {
       if (!detail) return true;
       if (detail.type !== "SERVICO") return false;
@@ -86297,7 +86222,6 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           onOpenPersonalReceipt: openPersonalReceiptFromHome,
           onPersonalReceipt: openPersonalReceiptFromHome,
           openPersonalReceipt: openPersonalReceiptFromHome,
-          onResetLocal: resetLocal,
           onRefresh: refreshLocal,
           canGeneratePersonalReceipt,
           services: store.agenda,

@@ -5,7 +5,6 @@ import {
   getInitialDetail,
   getInitialParams,
   getVoucherDraftKey,
-  initialStore,
   isSameDetail,
   loadStore,
   STORAGE_KEY
@@ -965,26 +964,6 @@ function App() {
     const timer = window.setInterval(autoRefresh, AUTO_REFRESH_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [remoteMode, remoteOperation, screen, selectedDetail]);
-
-  const resetLocal = async () => {
-    try {
-      setDataLoadingState({
-        phase: "loading",
-        title: "Carregando dados",
-        message: "Resetando dados locais."
-      });
-      await wait(2000);
-      const next = initialStore();
-      setStore(next);
-      setReceiveProofs({});
-      setReceiveUploadedCounts({});
-      setSelectedDetail(null);
-      setScreen("inicio");
-      await completeDataLoadingState("Dados reiniciados", "Armazenamento local limpo.");
-    } finally {
-      setDataLoading((current) => (current?.phase === "success" ? current : null));
-    }
-  };
 
   const blockIfNotFirstPending = (detail: typeof selectedDetail = selectedDetail) => {
     if (!detail) return true;
@@ -2657,7 +2636,6 @@ function App() {
       onOpenPersonalReceipt={openPersonalReceiptFromHome}
       onPersonalReceipt={openPersonalReceiptFromHome}
       openPersonalReceipt={openPersonalReceiptFromHome}
-      onResetLocal={resetLocal}
       onRefresh={refreshLocal}
       canGeneratePersonalReceipt={canGeneratePersonalReceipt}
       services={store.agenda}
