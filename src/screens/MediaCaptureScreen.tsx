@@ -533,15 +533,9 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
 
   return (
     <AppShell screenLabel="TelaCameraMidia">
-      <FormMenu title="" onBack={onBack} />
+      <FormMenu title={title ?? getTitleByKind(kind)} onBack={onBack} />
       <section className="main-panel photo-main">
         <article className="photo-card camera-capture-card">
-          <div className="photo-title camera-capture-title">
-            <strong>{title ?? getTitleByKind(kind)}</strong>
-            <span>
-              {recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando midia" : useLiveCamera ? "Camera ao vivo" : "Camera nativa"}
-            </span>
-          </div>
           <div className="photo-body">
             <div className="camera-view real-camera-view native-camera-view">
               {useLiveCamera ? <video ref={videoRef} className="real-camera-video" playsInline muted autoPlay /> : null}
@@ -581,7 +575,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
                 <div className="camera-error">
                   <strong>Camera indisponivel</strong>
                   <span>{cameraError}</span>
-                  <small>{useLiveCamera ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera nativa."}</small>
+                  <small>{useLiveCamera ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera do dispositivo."}</small>
                 </div>
               ) : null}
             </div>

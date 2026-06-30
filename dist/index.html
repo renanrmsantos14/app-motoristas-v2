@@ -10784,57 +10784,22 @@ select,
   backdrop-filter: blur(8px);
 }
 .camera-capture-card {
-  gap: 6px;
-}
-.camera-capture-title {
-  min-height: 32px !important;
-  padding: 0 2px 5px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 10px !important;
-}
-.camera-capture-title strong,
-.camera-capture-title span {
-  min-width: 0;
-  font-family:
-    "Manrope",
-    Arial,
-    sans-serif;
-  line-height: 1;
-}
-.camera-capture-title strong {
-  color: #000e23;
-  font-size: 0.95rem;
-  font-weight: 950;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.camera-capture-title span {
-  flex: 0 0 auto;
-  padding: 6px 9px;
-  border-radius: 999px;
-  background: #eef3f8;
-  color: #536174;
-  font-size: 0.68rem;
-  font-weight: 950;
-  text-transform: uppercase;
+  gap: 4px;
 }
 .camera-capture-card .photo-body {
-  gap: 6px !important;
+  gap: 5px !important;
 }
 .camera-capture-card .camera-view {
   min-height: 0 !important;
   flex: 1 1 auto !important;
   border-radius: 18px !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  background: #05070a !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 14, 35, 0.16) !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 .camera-capture-card .real-camera-video {
   object-fit: contain !important;
-  background: #05070a !important;
+  background: transparent !important;
 }
 .camera-recording-pill {
   position: absolute;
@@ -10891,12 +10856,12 @@ select,
 }
 .camera-actions-pro {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
   align-items: center !important;
-  gap: 14px !important;
-  min-height: 88px !important;
-  padding: 7px 12px 5px !important;
-  border-radius: 20px !important;
+  gap: 12px !important;
+  min-height: 72px !important;
+  padding: 5px 10px 4px !important;
+  border-radius: 18px !important;
   border: 1px solid rgba(0, 26, 61, 0.08) !important;
   background: rgba(255, 255, 255, 0.94) !important;
   box-shadow: 0 6px 18px rgba(0, 14, 35, 0.08);
@@ -10923,17 +10888,17 @@ select,
   justify-content: flex-end;
 }
 .camera-action-spacer {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
 }
 .camera-actions-pro svg {
-  width: 24px !important;
-  height: 24px !important;
+  width: 22px !important;
+  height: 22px !important;
 }
 .camera-primary-action {
-  width: 88px !important;
-  height: 88px !important;
-  min-height: 88px !important;
+  width: 72px !important;
+  height: 72px !important;
+  min-height: 72px !important;
   padding: 0 !important;
   justify-self: center;
   border: 0 !important;
@@ -10948,23 +10913,23 @@ select,
   height: 100%;
   border-radius: 999px;
   background: #ffffff;
-  border: 3px solid #000e23;
-  box-shadow: 0 4px 12px rgba(0, 14, 35, 0.1);
+  border: 2px solid #000e23;
+  box-shadow: 0 3px 10px rgba(0, 14, 35, 0.09);
   display: grid;
   place-items: center;
 }
 .camera-shutter-core {
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   border-radius: 999px;
   background: #000e23;
   box-shadow: none;
   display: block;
 }
 .camera-secondary-action {
-  width: 56px !important;
-  height: 56px !important;
-  min-height: 56px !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
   border: 1px solid rgba(0, 26, 61, 0.12) !important;
   background: #f7f9fb !important;
   color: #001a3d !important;
@@ -11063,25 +11028,25 @@ select,
 }
 @media (max-width: 520px) {
   .camera-actions-pro {
-    grid-template-columns: 56px 88px 56px;
+    grid-template-columns: 48px 72px 48px;
     justify-content: center !important;
-    gap: 14px !important;
-    min-height: 88px !important;
-    padding: 7px 10px 5px !important;
+    gap: 12px !important;
+    min-height: 72px !important;
+    padding: 5px 8px 4px !important;
   }
   .camera-actions-pro .camera-primary-action {
-    width: 88px !important;
-    height: 88px !important;
-    min-height: 88px !important;
+    width: 72px !important;
+    height: 72px !important;
+    min-height: 72px !important;
   }
   .camera-actions-pro .camera-secondary-action {
-    width: 56px !important;
-    height: 56px !important;
-    min-height: 56px !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
   }
   .camera-shutter-core {
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 42px;
   }
   .collision-evidence-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -12021,7 +11986,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.577","builtAt":"2026-06-30T16:12:38.690Z","builtAtLabel":"30/06/2026, 13:12"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.580","builtAt":"2026-06-30T16:20:46.067Z","builtAtLabel":"30/06/2026, 13:20"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83833,88 +83798,82 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return () => window.clearTimeout(timer);
     }, []);
     return /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(AppShell, { screenLabel: "TelaCameraMidia", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(FormMenu, { title: "", onBack }),
-      /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("section", { className: "main-panel photo-main", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("article", { className: "photo-card camera-capture-card", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-title camera-capture-title", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: title ?? getTitleByKind2(kind) }),
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: recording ? `REC ${formatVideoDuration(recordingSeconds)}` : processing ? "Preparando midia" : useLiveCamera ? "Camera ao vivo" : "Camera nativa" })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-body", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-view real-camera-view native-camera-view", children: [
-            useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("video", { ref: videoRef, className: "real-camera-video", playsInline: true, muted: true, autoPlay: true }) : null,
-            useLiveCamera && capturingPhoto ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-shutter-flash", "aria-hidden": "true" }) : null,
-            useLiveCamera && recording ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-recording-pill", "aria-live": "polite", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", {}),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: formatVideoDuration(recordingSeconds) })
-            ] }) : null,
-            !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera do dispositivo" }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: nativeCaptureMode === "environment" ? "Traseira preferencial" : "Frontal preferencial" }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: openNativePhotoCamera, disabled: processing, children: "Tirar foto" }),
-              onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "native-camera-link", onClick: openNativeVideoCamera, disabled: processing, children: "Gravar video" }) : null
-            ] }) : null,
-            useLiveCamera && !cameraError && !ready && !starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera ao vivo" }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "No Android a captura acontece direto na tela para bloquear galeria." }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => void startLiveCamera(), disabled: processing, children: "Abrir camera" })
-            ] }) : null,
-            processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: capturingPhoto ? "Capturando foto..." : "Preparando midia..." }) : null,
-            starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading", children: "Abrindo camera..." }) : null,
-            cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-error", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera indisponivel" }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: cameraError }),
-              /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("small", { children: useLiveCamera ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera nativa." })
-            ] }) : null
-          ] }),
-          !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(import_jsx_runtime43.Fragment, { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
-              TextInputControl,
-              {
-                ref: photoInputRef,
-                className: "native-camera-input",
-                type: "file",
-                accept: "image/*",
-                capture: nativeCaptureMode,
-                onChange: handleNativeCapture
-              }
-            ),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
-              TextInputControl,
-              {
-                ref: videoInputRef,
-                className: "native-camera-input",
-                type: "file",
-                accept: "video/*,.mov,video/quicktime",
-                capture: nativeCaptureMode,
-                onChange: handleNativeCapture
-              }
-            )
+      /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(FormMenu, { title: title ?? getTitleByKind2(kind), onBack }),
+      /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("section", { className: "main-panel photo-main", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("article", { className: "photo-card camera-capture-card", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-body", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-view real-camera-view native-camera-view", children: [
+          useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("video", { ref: videoRef, className: "real-camera-video", playsInline: true, muted: true, autoPlay: true }) : null,
+          useLiveCamera && capturingPhoto ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-shutter-flash", "aria-hidden": "true" }) : null,
+          useLiveCamera && recording ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-recording-pill", "aria-live": "polite", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", {}),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: formatVideoDuration(recordingSeconds) })
           ] }) : null,
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-actions photo-actions-ios camera-actions-pro", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-side-action camera-side-action-left", children: onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
-              "button",
-              {
-                className: `photo-record camera-secondary-action ${recording ? "is-recording" : ""}`,
-                onClick: useLiveCamera ? recording ? stopLiveRecording : startLiveRecording : openNativeVideoCamera,
-                "aria-label": recording ? "Parar gravacao" : "Gravar video",
-                disabled: processing || useLiveCamera && !ready && !recording,
-                children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "video" })
-              }
-            ) : /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-action-spacer", "aria-hidden": "true" }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
-              "button",
-              {
-                className: "photo-capture camera-primary-action",
-                onClick: useLiveCamera ? captureLivePhoto : openNativePhotoCamera,
-                "aria-label": "Tirar foto",
-                disabled: processing || useLiveCamera && (!ready || recording),
-                children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { className: "camera-shutter-shell", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { className: "camera-shutter-core" }) })
-              }
-            ),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-side-action camera-side-action-right", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-switch camera-secondary-action", onClick: switchCamera, "aria-label": "Mudar camera", disabled: processing || recording || starting, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "sync" }) }) })
-          ] })
+          !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera do dispositivo" }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: nativeCaptureMode === "environment" ? "Traseira preferencial" : "Frontal preferencial" }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: openNativePhotoCamera, disabled: processing, children: "Tirar foto" }),
+            onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "native-camera-link", onClick: openNativeVideoCamera, disabled: processing, children: "Gravar video" }) : null
+          ] }) : null,
+          useLiveCamera && !cameraError && !ready && !starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera ao vivo" }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "No Android a captura acontece direto na tela para bloquear galeria." }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => void startLiveCamera(), disabled: processing, children: "Abrir camera" })
+          ] }) : null,
+          processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: capturingPhoto ? "Capturando foto..." : "Preparando midia..." }) : null,
+          starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading", children: "Abrindo camera..." }) : null,
+          cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-error", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera indisponivel" }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: cameraError }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("small", { children: useLiveCamera ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera do dispositivo." })
+          ] }) : null
+        ] }),
+        !useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(import_jsx_runtime43.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+            TextInputControl,
+            {
+              ref: photoInputRef,
+              className: "native-camera-input",
+              type: "file",
+              accept: "image/*",
+              capture: nativeCaptureMode,
+              onChange: handleNativeCapture
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+            TextInputControl,
+            {
+              ref: videoInputRef,
+              className: "native-camera-input",
+              type: "file",
+              accept: "video/*,.mov,video/quicktime",
+              capture: nativeCaptureMode,
+              onChange: handleNativeCapture
+            }
+          )
+        ] }) : null,
+        /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-actions photo-actions-ios camera-actions-pro", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-side-action camera-side-action-left", children: onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+            "button",
+            {
+              className: `photo-record camera-secondary-action ${recording ? "is-recording" : ""}`,
+              onClick: useLiveCamera ? recording ? stopLiveRecording : startLiveRecording : openNativeVideoCamera,
+              "aria-label": recording ? "Parar gravacao" : "Gravar video",
+              disabled: processing || useLiveCamera && !ready && !recording,
+              children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "video" })
+            }
+          ) : /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-action-spacer", "aria-hidden": "true" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+            "button",
+            {
+              className: "photo-capture camera-primary-action",
+              onClick: useLiveCamera ? captureLivePhoto : openNativePhotoCamera,
+              "aria-label": "Tirar foto",
+              disabled: processing || useLiveCamera && (!ready || recording),
+              children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { className: "camera-shutter-shell", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { className: "camera-shutter-core" }) })
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-side-action camera-side-action-right", children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { className: "photo-switch camera-secondary-action", onClick: switchCamera, "aria-label": "Mudar camera", disabled: processing || recording || starting, children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(SystemIcon, { name: "sync" }) }) })
         ] })
-      ] }) })
+      ] }) }) })
     ] });
   }
 

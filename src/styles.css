@@ -10629,61 +10629,25 @@ select,
 }
 
 .camera-capture-card {
-  gap: 6px;
-}
-
-.camera-capture-title {
-  min-height: 32px !important;
-  padding: 0 2px 5px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 10px !important;
-}
-
-.camera-capture-title strong,
-.camera-capture-title span {
-  min-width: 0;
-  font-family: "Manrope", Arial, sans-serif;
-  line-height: 1;
-}
-
-.camera-capture-title strong {
-  color: #000e23;
-  font-size: 0.95rem;
-  font-weight: 950;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.camera-capture-title span {
-  flex: 0 0 auto;
-  padding: 6px 9px;
-  border-radius: 999px;
-  background: #eef3f8;
-  color: #536174;
-  font-size: 0.68rem;
-  font-weight: 950;
-  text-transform: uppercase;
+  gap: 4px;
 }
 
 .camera-capture-card .photo-body {
-  gap: 6px !important;
+  gap: 5px !important;
 }
 
 .camera-capture-card .camera-view {
   min-height: 0 !important;
   flex: 1 1 auto !important;
   border-radius: 18px !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  background: #05070a !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 14, 35, 0.16) !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .camera-capture-card .real-camera-video {
   object-fit: contain !important;
-  background: #05070a !important;
+  background: transparent !important;
 }
 
 .camera-recording-pill {
@@ -10743,12 +10707,12 @@ select,
 
 .camera-actions-pro {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
   align-items: center !important;
-  gap: 14px !important;
-  min-height: 88px !important;
-  padding: 7px 12px 5px !important;
-  border-radius: 20px !important;
+  gap: 12px !important;
+  min-height: 72px !important;
+  padding: 5px 10px 4px !important;
+  border-radius: 18px !important;
   border: 1px solid rgba(0, 26, 61, 0.08) !important;
   background: rgba(255, 255, 255, 0.94) !important;
   box-shadow: 0 6px 18px rgba(0, 14, 35, 0.08);
@@ -10777,19 +10741,19 @@ select,
 }
 
 .camera-action-spacer {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
 }
 
 .camera-actions-pro svg {
-  width: 24px !important;
-  height: 24px !important;
+  width: 22px !important;
+  height: 22px !important;
 }
 
 .camera-primary-action {
-  width: 88px !important;
-  height: 88px !important;
-  min-height: 88px !important;
+  width: 72px !important;
+  height: 72px !important;
+  min-height: 72px !important;
   padding: 0 !important;
   justify-self: center;
   border: 0 !important;
@@ -10806,15 +10770,15 @@ select,
   height: 100%;
   border-radius: 999px;
   background: #ffffff;
-  border: 3px solid #000e23;
-  box-shadow: 0 4px 12px rgba(0, 14, 35, 0.1);
+  border: 2px solid #000e23;
+  box-shadow: 0 3px 10px rgba(0, 14, 35, 0.09);
   display: grid;
   place-items: center;
 }
 
 .camera-shutter-core {
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   border-radius: 999px;
   background: #000e23;
   box-shadow: none;
@@ -10822,9 +10786,9 @@ select,
 }
 
 .camera-secondary-action {
-  width: 56px !important;
-  height: 56px !important;
-  min-height: 56px !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
   border: 1px solid rgba(0, 26, 61, 0.12) !important;
   background: #f7f9fb !important;
   color: #001a3d !important;
@@ -10935,28 +10899,28 @@ select,
 
 @media (max-width: 520px) {
   .camera-actions-pro {
-    grid-template-columns: 56px 88px 56px;
+    grid-template-columns: 48px 72px 48px;
     justify-content: center !important;
-    gap: 14px !important;
-    min-height: 88px !important;
-    padding: 7px 10px 5px !important;
+    gap: 12px !important;
+    min-height: 72px !important;
+    padding: 5px 8px 4px !important;
   }
 
   .camera-actions-pro .camera-primary-action {
-    width: 88px !important;
-    height: 88px !important;
-    min-height: 88px !important;
+    width: 72px !important;
+    height: 72px !important;
+    min-height: 72px !important;
   }
 
   .camera-actions-pro .camera-secondary-action {
-    width: 56px !important;
-    height: 56px !important;
-    min-height: 56px !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
   }
 
   .camera-shutter-core {
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 42px;
   }
 
   .collision-evidence-strip {

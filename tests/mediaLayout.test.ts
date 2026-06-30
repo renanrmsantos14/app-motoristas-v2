@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+const mediaCaptureScreen = readFileSync(new URL("../src/screens/MediaCaptureScreen.tsx", import.meta.url), "utf8");
 
 function getBlocksContaining(selectorFragment: string) {
   return styles
@@ -39,11 +40,12 @@ test("camera e previews principais sempre exibem a midia inteira", () => {
 });
 
 test("controles mobile da camera preservam obturador circular", () => {
-  assert.match(styles, /@media\s*\(max-width:\s*520px\)\s*{[\s\S]*?\.camera-actions-pro\s*{[\s\S]*?grid-template-columns:\s*56px\s+88px\s+56px;/);
-  assert.match(styles, /\.camera-actions-pro\s+\.camera-primary-action\s*{[\s\S]*?width:\s*88px\s*!important;[\s\S]*?height:\s*88px\s*!important;/);
-  assert.match(styles, /\.camera-actions-pro\s+\.camera-secondary-action\s*{[\s\S]*?width:\s*56px\s*!important;[\s\S]*?height:\s*56px\s*!important;/);
+  assert.match(styles, /@media\s*\(max-width:\s*520px\)\s*{[\s\S]*?\.camera-actions-pro\s*{[\s\S]*?grid-template-columns:\s*48px\s+72px\s+48px;/);
+  assert.match(styles, /\.camera-actions-pro\s+\.camera-primary-action\s*{[\s\S]*?width:\s*72px\s*!important;[\s\S]*?height:\s*72px\s*!important;/);
+  assert.match(styles, /\.camera-actions-pro\s+\.camera-secondary-action\s*{[\s\S]*?width:\s*48px\s*!important;[\s\S]*?height:\s*48px\s*!important;/);
   assert.doesNotMatch(styles, /@media\s*\(max-width:\s*520px\)\s*{[\s\S]*?\.camera-actions-pro\s+button\s*{[\s\S]*?height:\s*54px\s*!important;/);
   assert.doesNotMatch(styles, /grid-template-columns:\s*66px\s+104px\s+66px;/);
+  assert.doesNotMatch(styles, /grid-template-columns:\s*56px\s+88px\s+56px;/);
 });
 
 test("controles da camera seguem visual minimalista do app", () => {
@@ -57,4 +59,15 @@ test("controles da camera seguem visual minimalista do app", () => {
   assert.equal(shutterCore.some((block) => /background:\s*#000e23\b/i.test(block)), true);
   assert.equal(recordButton.some((block) => /background:\s*#fff4f5\b/i.test(block)), true);
   assert.equal([...cameraControls, ...shutterShell, ...shutterCore, ...recordButton].some((block) => /linear-gradient|radial-gradient/i.test(block)), false);
+});
+
+test("tela de captura usa titulo no topo e preview transparente", () => {
+  const cameraView = getBlocksContaining(".camera-capture-card .camera-view");
+  const realCameraVideo = getBlocksContaining(".camera-capture-card .real-camera-video");
+
+  assert.match(mediaCaptureScreen, /<FormMenu title={title \?\? getTitleByKind\(kind\)} onBack={onBack} \/>/);
+  assert.doesNotMatch(mediaCaptureScreen, /camera-capture-title/);
+  assert.doesNotMatch(mediaCaptureScreen, /Camera nativa/i);
+  assert.equal(cameraView.some((block) => /background:\s*transparent\s*!important/i.test(block)), true);
+  assert.equal(realCameraVideo.some((block) => /background:\s*transparent\s*!important/i.test(block)), true);
 });
