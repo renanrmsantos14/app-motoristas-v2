@@ -11935,7 +11935,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.539","builtAt":"2026-06-30T12:41:32.053Z","builtAtLabel":"30/06/2026, 09:41"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.543","builtAt":"2026-06-30T12:53:22.263Z","builtAtLabel":"30/06/2026, 09:53"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83297,14 +83297,45 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   }
   function getCameraVideoConstraints(mode) {
     return {
-      facingMode: { ideal: mode }
+      facingMode: { ideal: mode },
+      width: { ideal: 1280, max: 1920 },
+      height: { ideal: 720, max: 1080 },
+      aspectRatio: { ideal: 16 / 9 },
+      frameRate: { ideal: 24, max: 30 }
     };
+  }
+  function getBrowserImageCapture() {
+    return globalThis.ImageCapture;
+  }
+  function getMaxPhotoSettings(capabilities) {
+    const imageWidth = Math.floor(Number(capabilities?.imageWidth?.max ?? 0));
+    const imageHeight = Math.floor(Number(capabilities?.imageHeight?.max ?? 0));
+    if (imageWidth > 0 || imageHeight > 0) {
+      return {
+        ...imageWidth > 0 ? { imageWidth } : {},
+        ...imageHeight > 0 ? { imageHeight } : {}
+      };
+    }
+    return void 0;
   }
   function getPreferredVideoMimeType() {
     const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
     const isSafari = /Safari/i.test(userAgent) && !/Chrome|Chromium|Android/i.test(userAgent);
     const candidates = isSafari ? ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp8", "video/webm"] : ["video/webm;codecs=vp8", "video/webm", "video/webm;codecs=vp9", "video/mp4"];
     return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate)) ?? "";
+  }
+  async function captureTrackPhotoDataUrl(track) {
+    const ImageCapture = getBrowserImageCapture();
+    if (!ImageCapture) return "";
+    const imageCapture = new ImageCapture(track);
+    let photoSettings;
+    try {
+      photoSettings = getMaxPhotoSettings(await imageCapture.getPhotoCapabilities?.());
+    } catch {
+      photoSettings = void 0;
+    }
+    const blob = await imageCapture.takePhoto(photoSettings);
+    return blob.size ? readBlobAsDataUrl(blob) : "";
   }
   function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }) {
     const photoInputRef = (0, import_react57.useRef)(null);
@@ -83355,15 +83386,27 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         try {
           stream2 = await navigator.mediaDevices.getUserMedia({
             video: getCameraVideoConstraints(mode),
-            audio: Boolean(onCaptureVideo)
+            audio: false
           });
         } catch {
           stream2 = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: mode },
-            audio: Boolean(onCaptureVideo)
+            video: {
+              facingMode: mode,
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              frameRate: { ideal: 20, max: 24 }
+            },
+            audio: false
           });
         }
         streamRef.current = stream2;
+        const videoTrack = stream2.getVideoTracks()[0];
+        if (videoTrack) {
+          try {
+            videoTrack.contentHint = "motion";
+          } catch {
+          }
+        }
         if (videoRef.current) {
           videoRef.current.srcObject = stream2;
           videoRef.current.setAttribute("playsinline", "true");
@@ -83423,20 +83466,27 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setCameraError("Abra a camera para tirar a foto.");
         return;
       }
-      try {
-        const photoDataUrl = captureVideoFrameDataUrl(video);
-        if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
-        onCapture(photoDataUrl);
-      } catch (error2) {
-        reportAppError(error2, {
-          severity: "error",
-          source: "media-capture",
-          action: "capture-live-photo",
-          component: "MediaCaptureScreen",
-          screen: "TelaCameraMidia"
-        });
-        setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel capturar a foto.");
-      }
+      setProcessing(true);
+      void (async () => {
+        try {
+          const videoTrack = streamRef.current?.getVideoTracks()[0];
+          const stillPhotoDataUrl = videoTrack ? await captureTrackPhotoDataUrl(videoTrack) : "";
+          const photoDataUrl = stillPhotoDataUrl || captureVideoFrameDataUrl(video);
+          if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
+          onCapture(photoDataUrl);
+        } catch (error2) {
+          reportAppError(error2, {
+            severity: "error",
+            source: "media-capture",
+            action: "capture-live-photo",
+            component: "MediaCaptureScreen",
+            screen: "TelaCameraMidia"
+          });
+          setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel capturar a foto.");
+        } finally {
+          setProcessing(false);
+        }
+      })();
     };
     const startLiveRecording = () => {
       const stream2 = streamRef.current;
@@ -83459,7 +83509,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       try {
         recordedChunksRef.current = [];
         const mimeType = getPreferredVideoMimeType();
-        const recorder = new MediaRecorder(stream2, mimeType ? { mimeType } : void 0);
+        const recorder = new MediaRecorder(
+          stream2,
+          mimeType ? {
+            mimeType,
+            videoBitsPerSecond: 25e5
+          } : {
+            videoBitsPerSecond: 25e5
+          }
+        );
         recorderRef.current = recorder;
         recorder.ondataavailable = (event) => {
           if (event.data.size > 0) recordedChunksRef.current.push(event.data);
@@ -83503,7 +83561,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         };
         recordingStartedAtRef.current = Date.now();
         setRecordingSeconds(0);
-        recorder.start(250);
+        recorder.start();
         setRecording(true);
         setCameraError("");
       } catch (error2) {
@@ -83595,7 +83653,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
       const timer = window.setInterval(() => {
         setRecordingSeconds((Date.now() - recordingStartedAtRef.current) / 1e3);
-      }, 250);
+      }, 1e3);
       return () => window.clearInterval(timer);
     }, [recording]);
     (0, import_react57.useEffect)(() => {
