@@ -23,6 +23,14 @@ type MediaCaptureScreenProps = {
   onSwitchCamera: () => void;
 };
 
+type VideoCaptureProfile = {
+  label: "fhd" | "hd";
+  width: number;
+  height: number;
+  frameRate: number;
+  bitRate: number;
+};
+
 function getTitleByKind(kind: MaintenancePhotoKind) {
   if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
   if (kind === "FOTO1") return "Tire a foto 1 de 3";
@@ -47,7 +55,7 @@ function isAndroidDevice() {
   return /Android/i.test(globalThis.navigator?.userAgent ?? "");
 }
 
-function getCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
+function getPreferredCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
   return {
     facingMode: { ideal: mode },
     width: { ideal: 1920, max: 1920 },
@@ -66,19 +74,71 @@ function getFallbackCameraVideoConstraints(mode: "environment" | "user"): MediaT
   };
 }
 
-async function preferFullHdTrack(track: MediaStreamTrack, mode: "environment" | "user") {
+function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile {
+  const capabilities = track.getCapabilities?.();
+  const widthMax = Math.floor(Number(capabilities?.width?.max ?? 0));
+  const heightMax = Math.floor(Number(capabilities?.height?.max ?? 0));
+  const frameRateMax = Math.floor(Number(capabilities?.frameRate?.max ?? 0));
+  const deviceMemory = Number((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 0);
+  const hardwareConcurrency = Number(navigator.hardwareConcurrency ?? 0);
+  const supportsFhd = widthMax >= 1920 && heightMax >= 1080 && frameRateMax >= 30;
+  const highTierDevice = deviceMemory >= 6 || hardwareConcurrency >= 8;
+
+  if (supportsFhd && highTierDevice) {
+    return {
+      label: "fhd",
+      width: 1920,
+      height: 1080,
+      frameRate: 30,
+      bitRate: 4_000_000
+    };
+  }
+
+  return {
+    label: "hd",
+    width: 1280,
+    height: 720,
+    frameRate: 30,
+    bitRate: 2_500_000
+  };
+}
+
+function buildTrackConstraints(mode: "environment" | "user", profile: VideoCaptureProfile): MediaTrackConstraints {
+  return {
+    facingMode: { ideal: mode },
+    width: { ideal: profile.width, max: profile.width },
+    height: { ideal: profile.height, max: profile.height },
+    aspectRatio: { ideal: 16 / 9 },
+    frameRate: { ideal: profile.frameRate, max: profile.frameRate }
+  };
+}
+
+async function preferTrackProfile(track: MediaStreamTrack, mode: "environment" | "user") {
+  const preferredProfile = getPreferredVideoProfile(track);
+
   try {
-    await track.applyConstraints(getCameraVideoConstraints(mode));
-    return;
+    await track.applyConstraints(buildTrackConstraints(mode, preferredProfile));
+    return preferredProfile;
   } catch {
     // Ignore and keep fallback below.
   }
 
+  const fallbackProfile: VideoCaptureProfile = {
+    label: "hd",
+    width: 1280,
+    height: 720,
+    frameRate: 30,
+    bitRate: 2_500_000
+  };
+
   try {
-    await track.applyConstraints(getFallbackCameraVideoConstraints(mode));
+    await track.applyConstraints(buildTrackConstraints(mode, fallbackProfile));
+    return fallbackProfile;
   } catch {
     // Keep browser-selected defaults when explicit constraints fail.
   }
+
+  return fallbackProfile;
 }
 
 function getPreferredVideoMimeType() {
@@ -100,6 +160,13 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const recordingStartedAtRef = useRef(0);
   const defaultLaunchAttemptedRef = useRef(false);
   const captureRequestedAtRef = useRef(Date.now());
+  const activeVideoProfileRef = useRef<VideoCaptureProfile>({
+    label: "hd",
+    width: 1280,
+    height: 720,
+    frameRate: 30,
+    bitRate: 2_500_000
+  });
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [cameraError, setCameraError] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -144,7 +211,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: getCameraVideoConstraints(mode),
+          video: getPreferredCameraVideoConstraints(mode),
           audio: false
         });
       } catch {
@@ -157,7 +224,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       streamRef.current = stream;
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
-        await preferFullHdTrack(videoTrack, mode);
+        activeVideoProfileRef.current = await preferTrackProfile(videoTrack, mode);
         try {
           videoTrack.contentHint = onCaptureVideo ? "motion" : "detail";
         } catch {
@@ -273,10 +340,10 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         mimeType
           ? {
               mimeType,
-              videoBitsPerSecond: 3_200_000
+              videoBitsPerSecond: activeVideoProfileRef.current.bitRate
             }
           : {
-              videoBitsPerSecond: 3_200_000
+              videoBitsPerSecond: activeVideoProfileRef.current.bitRate
             }
       );
       recorderRef.current = recorder;
