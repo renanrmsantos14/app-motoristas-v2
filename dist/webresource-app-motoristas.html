@@ -10870,6 +10870,25 @@ select,
   z-index: 5;
   backdrop-filter: blur(12px);
 }
+.camera-shutter-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: rgba(255, 255, 255, 0.92);
+  pointer-events: none;
+  animation: camera-shutter-flash 220ms ease-out forwards;
+}
+@keyframes camera-shutter-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 .camera-actions-pro {
   display: grid !important;
   grid-template-columns: 54px minmax(0, 1fr) minmax(0, 1fr) 54px;
@@ -11935,7 +11954,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.565","builtAt":"2026-06-30T14:30:03.133Z","builtAtLabel":"30/06/2026, 11:30"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.568","builtAt":"2026-06-30T14:37:59.995Z","builtAtLabel":"30/06/2026, 11:37"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -64504,6 +64523,20 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function encodePhotoCanvas(canvas) {
     return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE, PHOTO_OUTPUT_QUALITY);
   }
+  function encodePhotoCanvasAsync(canvas) {
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resolve(encodePhotoCanvas(canvas));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => resolve(encodePhotoCanvas(canvas));
+        reader.readAsDataURL(blob);
+      }, PHOTO_OUTPUT_MIME_TYPE, PHOTO_OUTPUT_QUALITY);
+    });
+  }
   function drawRotated(image2, sourceWidth, sourceHeight, angle) {
     const canvas = document.createElement("canvas");
     canvas.width = angle === 90 || angle === 270 ? sourceHeight : sourceWidth;
@@ -64522,7 +64555,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (orientationAngle === 90) return sourceIsLandscape ? 0 : 90;
     return sourceIsLandscape ? 180 : 270;
   }
-  function captureVideoFrameDataUrl(video, orientationAngle = getViewportOrientationAngle()) {
+  async function captureVideoFrameDataUrlAsync(video, orientationAngle = getViewportOrientationAngle()) {
     const sourceWidth = video.videoWidth;
     const sourceHeight = video.videoHeight;
     const normalizedAngle = normalizeAngle(orientationAngle);
@@ -64537,7 +64570,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const context = canvas.getContext("2d");
     if (!context) return "";
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return encodePhotoCanvas(canvas);
+    return encodePhotoCanvasAsync(canvas);
   }
   function readFileAsDataUrl(file) {
     return new Promise((resolve, reject) => {
@@ -83412,6 +83445,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [facingMode, setFacingMode] = (0, import_react57.useState)("environment");
     const [cameraError, setCameraError] = (0, import_react57.useState)("");
     const [processing, setProcessing] = (0, import_react57.useState)(false);
+    const [capturingPhoto, setCapturingPhoto] = (0, import_react57.useState)(false);
     const [ready, setReady] = (0, import_react57.useState)(false);
     const [starting, setStarting] = (0, import_react57.useState)(false);
     const [recording, setRecording] = (0, import_react57.useState)(false);
@@ -83523,14 +83557,22 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       onSwitchCamera();
       if (useLiveCamera) void startLiveCamera(next);
     };
-    const captureLivePhoto = () => {
+    const captureLivePhoto = async () => {
       const video = videoRef.current;
       if (!video || !ready || processing || recording) {
         setCameraError("Abra a camera para tirar a foto.");
         return;
       }
       try {
-        const photoDataUrl = captureVideoFrameDataUrl(video);
+        setCameraError("");
+        setCapturingPhoto(true);
+        setProcessing(true);
+        await new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve());
+          });
+        });
+        const photoDataUrl = await captureVideoFrameDataUrlAsync(video);
         if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
         onCapture(photoDataUrl);
       } catch (error2) {
@@ -83542,6 +83584,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           screen: "TelaCameraMidia"
         });
         setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel capturar a foto.");
+      } finally {
+        setCapturingPhoto(false);
+        setProcessing(false);
       }
     };
     const startLiveRecording = () => {
@@ -83730,6 +83775,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-body", children: [
           /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-view real-camera-view native-camera-view", children: [
             useLiveCamera ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("video", { ref: videoRef, className: "real-camera-video", playsInline: true, muted: true, autoPlay: true }) : null,
+            useLiveCamera && capturingPhoto ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-shutter-flash", "aria-hidden": "true" }) : null,
             useLiveCamera && recording ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-recording-pill", "aria-live": "polite", children: [
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", {}),
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: formatVideoDuration(recordingSeconds) })
@@ -83745,7 +83791,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "No Android a captura acontece direto na tela para bloquear galeria." }),
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => void startLiveCamera(), disabled: processing, children: "Abrir camera" })
             ] }) : null,
-            processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: "Preparando midia..." }) : null,
+            processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: capturingPhoto ? "Capturando foto..." : "Preparando midia..." }) : null,
             starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading", children: "Abrindo camera..." }) : null,
             cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-error", children: [
               /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera indisponivel" }),

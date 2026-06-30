@@ -5,7 +5,7 @@ import { AppShell } from "../components/layout/AppShell";
 import { FormMenu } from "../components/navigation/FormMenu";
 import { reportAppError } from "../lib/appErrorLogger";
 import {
-  captureVideoFrameDataUrl,
+  captureVideoFrameDataUrlAsync,
   formatVideoDuration,
   readPhotoFileAsDataUrl
 } from "../lib/photoOrientation";
@@ -177,6 +177,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [cameraError, setCameraError] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [capturingPhoto, setCapturingPhoto] = useState(false);
   const [ready, setReady] = useState(false);
   const [starting, setStarting] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -303,7 +304,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     if (useLiveCamera) void startLiveCamera(next);
   };
 
-  const captureLivePhoto = () => {
+  const captureLivePhoto = async () => {
     const video = videoRef.current;
     if (!video || !ready || processing || recording) {
       setCameraError("Abra a camera para tirar a foto.");
@@ -311,7 +312,15 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     }
 
     try {
-      const photoDataUrl = captureVideoFrameDataUrl(video);
+      setCameraError("");
+      setCapturingPhoto(true);
+      setProcessing(true);
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
+      const photoDataUrl = await captureVideoFrameDataUrlAsync(video);
       if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
       onCapture(photoDataUrl);
     } catch (error) {
@@ -323,6 +332,9 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
         screen: "TelaCameraMidia"
       });
       setCameraError(error instanceof Error ? error.message : "Nao foi possivel capturar a foto.");
+    } finally {
+      setCapturingPhoto(false);
+      setProcessing(false);
     }
   };
 
@@ -534,6 +546,8 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
             <div className="camera-view real-camera-view native-camera-view">
               {useLiveCamera ? <video ref={videoRef} className="real-camera-video" playsInline muted autoPlay /> : null}
 
+              {useLiveCamera && capturingPhoto ? <div className="camera-shutter-flash" aria-hidden="true" /> : null}
+
               {useLiveCamera && recording ? (
                 <div className="camera-recording-pill" aria-live="polite">
                   <span />
@@ -560,7 +574,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
                 </div>
               ) : null}
 
-              {processing ? <div className="camera-loading camera-processing">Preparando midia...</div> : null}
+              {processing ? <div className="camera-loading camera-processing">{capturingPhoto ? "Capturando foto..." : "Preparando midia..."}</div> : null}
               {starting ? <div className="camera-loading">Abrindo camera...</div> : null}
 
               {cameraError ? (

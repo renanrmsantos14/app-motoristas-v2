@@ -24,6 +24,21 @@ function encodePhotoCanvas(canvas: HTMLCanvasElement) {
   return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE, PHOTO_OUTPUT_QUALITY);
 }
 
+function encodePhotoCanvasAsync(canvas: HTMLCanvasElement) {
+  return new Promise<string>((resolve) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        resolve(encodePhotoCanvas(canvas));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => resolve(encodePhotoCanvas(canvas));
+      reader.readAsDataURL(blob);
+    }, PHOTO_OUTPUT_MIME_TYPE, PHOTO_OUTPUT_QUALITY);
+  });
+}
+
 export function getDeviceOrientationAngle(event: Pick<DeviceOrientationEvent, "beta" | "gamma">, currentAngle = getViewportOrientationAngle()) {
   const beta = Number(event.beta);
   const gamma = Number(event.gamma);
@@ -81,6 +96,27 @@ export function captureVideoFrameDataUrl(video: HTMLVideoElement, orientationAng
 
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   return encodePhotoCanvas(canvas);
+}
+
+export async function captureVideoFrameDataUrlAsync(video: HTMLVideoElement, orientationAngle = getViewportOrientationAngle()) {
+  const sourceWidth = video.videoWidth;
+  const sourceHeight = video.videoHeight;
+  const normalizedAngle = normalizeAngle(orientationAngle);
+  const rotation = getRotationForOrientation(sourceWidth, sourceHeight, normalizedAngle);
+
+  if (rotation) {
+    const rotated = drawRotated(video, sourceWidth, sourceHeight, rotation);
+    if (rotated) return rotated;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = sourceWidth;
+  canvas.height = sourceHeight;
+  const context = canvas.getContext("2d");
+  if (!context) return "";
+
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  return encodePhotoCanvasAsync(canvas);
 }
 
 export function readFileAsDataUrl(file: File): Promise<string> {

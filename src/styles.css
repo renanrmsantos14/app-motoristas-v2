@@ -10720,6 +10720,27 @@ select,
   backdrop-filter: blur(12px);
 }
 
+.camera-shutter-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: rgba(255, 255, 255, 0.92);
+  pointer-events: none;
+  animation: camera-shutter-flash 220ms ease-out forwards;
+}
+
+@keyframes camera-shutter-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .camera-actions-pro {
   display: grid !important;
   grid-template-columns: 54px minmax(0, 1fr) minmax(0, 1fr) 54px;
