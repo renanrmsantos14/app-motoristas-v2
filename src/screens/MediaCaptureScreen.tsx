@@ -21,11 +21,15 @@ type MediaCaptureScreenProps = {
 };
 
 type VideoCaptureProfile = {
-  label: "fhd" | "hd";
+  label: "hdPlus" | "hd";
   width: number;
   height: number;
   frameRate: number;
   bitRate: number;
+};
+
+type ImageCaptureLike = {
+  takePhoto?: () => Promise<Blob>;
 };
 
 function getTitleByKind(kind: MaintenancePhotoKind) {
@@ -55,8 +59,8 @@ function isAndroidDevice() {
 function getPreferredCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
   return {
     facingMode: { ideal: mode },
-    width: { ideal: 1920, max: 1920 },
-    height: { ideal: 1080, max: 1080 },
+    width: { ideal: 1280, max: 1600 },
+    height: { ideal: 720, max: 900 },
     aspectRatio: { ideal: 16 / 9 },
     frameRate: { ideal: 30, max: 30 }
   };
@@ -78,16 +82,16 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
   const frameRateMax = Math.floor(Number(capabilities?.frameRate?.max ?? 0));
   const deviceMemory = Number((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 0);
   const hardwareConcurrency = Number(navigator.hardwareConcurrency ?? 0);
-  const supportsFhd = widthMax >= 1920 && heightMax >= 1080 && frameRateMax >= 30;
-  const highTierDevice = deviceMemory >= 6 || hardwareConcurrency >= 8;
+  const supportsHdPlus = widthMax >= 1600 && heightMax >= 900 && frameRateMax >= 30;
+  const highTierDevice = deviceMemory >= 8 && hardwareConcurrency >= 8;
 
-  if (supportsFhd && highTierDevice) {
+  if (supportsHdPlus && highTierDevice) {
     return {
-      label: "fhd",
-      width: 1920,
-      height: 1080,
+      label: "hdPlus",
+      width: 1600,
+      height: 900,
       frameRate: 30,
-      bitRate: 4_000_000
+      bitRate: 3_200_000
     };
   }
 
@@ -96,7 +100,7 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
     width: 1280,
     height: 720,
     frameRate: 30,
-    bitRate: 2_500_000
+    bitRate: 2_600_000
   };
 }
 
@@ -106,7 +110,7 @@ function buildTrackConstraints(mode: "environment" | "user", profile: VideoCaptu
     width: { ideal: profile.width, max: profile.width },
     height: { ideal: profile.height, max: profile.height },
     aspectRatio: { ideal: 16 / 9 },
-    frameRate: { ideal: profile.frameRate, max: profile.frameRate }
+    frameRate: { ideal: profile.frameRate, min: 24, max: profile.frameRate }
   };
 }
 
@@ -125,7 +129,7 @@ async function preferTrackProfile(track: MediaStreamTrack, mode: "environment" |
     width: 1280,
     height: 720,
     frameRate: 30,
-    bitRate: 2_500_000
+    bitRate: 2_600_000
   };
 
   try {
@@ -192,6 +196,16 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     setRecordingSeconds(0);
   };
 
+  const updateTrackContentHint = (isRecording: boolean) => {
+    const videoTrack = streamRef.current?.getVideoTracks?.()[0];
+    if (!videoTrack) return;
+    try {
+      videoTrack.contentHint = isRecording ? "motion" : "detail";
+    } catch {
+      // Ignore browsers that expose contentHint as read-only.
+    }
+  };
+
   const startLiveCamera = async (mode = facingMode) => {
     if (!useLiveCamera || recording || processing) return;
 
@@ -222,11 +236,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
         activeVideoProfileRef.current = await preferTrackProfile(videoTrack, mode);
-        try {
-          videoTrack.contentHint = onCaptureVideo ? "motion" : "detail";
-        } catch {
-          // Ignore browsers that expose contentHint as read-only.
-        }
+        updateTrackContentHint(false);
       }
 
       if (videoRef.current) {
@@ -287,15 +297,30 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     if (useLiveCamera) void startLiveCamera(next);
   };
 
-  const captureLivePhoto = () => {
+  const captureLivePhoto = async () => {
     const video = videoRef.current;
-    if (!video || !ready || processing || recording) {
+    const videoTrack = streamRef.current?.getVideoTracks?.()[0];
+    if (!video || !ready || processing || recording || !videoTrack) {
       setCameraError("Abra a camera para tirar a foto.");
       return;
     }
 
     try {
-      const photoDataUrl = captureVideoFrameDataUrl(video);
+      let photoDataUrl = "";
+      const ImageCaptureCtor = globalThis.ImageCapture as undefined | (new (track: MediaStreamTrack) => ImageCaptureLike);
+      if (ImageCaptureCtor) {
+        try {
+          const imageCapture = new ImageCaptureCtor(videoTrack);
+          const photoBlob = await imageCapture.takePhoto?.();
+          if (photoBlob) {
+            const photoFile = new File([photoBlob], `captura-${Date.now()}.jpg`, { type: photoBlob.type || "image/jpeg" });
+            photoDataUrl = await readPhotoFileAsDataUrl(photoFile, 0);
+          }
+        } catch {
+          // Fallback below.
+        }
+      }
+      if (!photoDataUrl) photoDataUrl = captureVideoFrameDataUrl(video);
       if (!photoDataUrl) throw new Error("Nao foi possivel capturar a foto.");
       onCapture(photoDataUrl);
     } catch (error) {
@@ -330,6 +355,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     }
 
     try {
+      updateTrackContentHint(true);
       recordedChunksRef.current = [];
       const mimeType = getPreferredVideoMimeType();
       const recorder = new MediaRecorder(
@@ -383,7 +409,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       };
       recordingStartedAtRef.current = Date.now();
       setRecordingSeconds(0);
-      recorder.start();
+      recorder.start(1000);
       setRecording(true);
       setCameraError("");
     } catch (error) {
@@ -403,6 +429,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const stopLiveRecording = () => {
     const recorder = recorderRef.current;
     if (!recorder || recorder.state === "inactive") return;
+    updateTrackContentHint(false);
     recorder.stop();
   };
 

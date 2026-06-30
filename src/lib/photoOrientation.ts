@@ -18,7 +18,7 @@ export function normalizeAngle(angle: number) {
 }
 
 const PHOTO_OUTPUT_MIME_TYPE = "image/jpeg";
-const PHOTO_OUTPUT_QUALITY = 0.9;
+const PHOTO_OUTPUT_QUALITY = 0.94;
 
 function encodePhotoCanvas(canvas: HTMLCanvasElement) {
   return canvas.toDataURL(PHOTO_OUTPUT_MIME_TYPE, PHOTO_OUTPUT_QUALITY);
