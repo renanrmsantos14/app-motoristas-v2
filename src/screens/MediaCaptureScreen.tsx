@@ -140,10 +140,20 @@ async function preferTrackProfile(track: MediaStreamTrack, mode: "environment" |
 
 function getPreferredVideoMimeType() {
   const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
+  const isAndroid = /Android/i.test(userAgent);
   const isSafari = /Safari/i.test(userAgent) && !/Chrome|Chromium|Android/i.test(userAgent);
   const candidates = isSafari
-    ? ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp8", "video/webm"]
-    : ["video/webm;codecs=vp8", "video/webm", "video/webm;codecs=vp9", "video/mp4"];
+    ? ["video/mp4;codecs=avc1.64001F", "video/mp4;codecs=avc1.42E01E", "video/mp4", "video/webm;codecs=vp8", "video/webm"]
+    : isAndroid
+      ? [
+          "video/mp4;codecs=avc1.64001F",
+          "video/mp4;codecs=avc1.42E01E",
+          "video/mp4",
+          "video/webm;codecs=vp9",
+          "video/webm;codecs=vp8",
+          "video/webm"
+        ]
+      : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
   return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate)) ?? "";
 }
 

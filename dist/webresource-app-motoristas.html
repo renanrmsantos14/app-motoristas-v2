@@ -11935,7 +11935,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.563","builtAt":"2026-06-30T14:25:41.249Z","builtAtLabel":"30/06/2026, 11:25"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.565","builtAt":"2026-06-30T14:30:03.133Z","builtAtLabel":"30/06/2026, 11:30"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83380,8 +83380,16 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   }
   function getPreferredVideoMimeType() {
     const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
+    const isAndroid = /Android/i.test(userAgent);
     const isSafari = /Safari/i.test(userAgent) && !/Chrome|Chromium|Android/i.test(userAgent);
-    const candidates = isSafari ? ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp8", "video/webm"] : ["video/webm;codecs=vp8", "video/webm", "video/webm;codecs=vp9", "video/mp4"];
+    const candidates = isSafari ? ["video/mp4;codecs=avc1.64001F", "video/mp4;codecs=avc1.42E01E", "video/mp4", "video/webm;codecs=vp8", "video/webm"] : isAndroid ? [
+      "video/mp4;codecs=avc1.64001F",
+      "video/mp4;codecs=avc1.42E01E",
+      "video/mp4",
+      "video/webm;codecs=vp9",
+      "video/webm;codecs=vp8",
+      "video/webm"
+    ] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
     return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate)) ?? "";
   }
   function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVideo, onSwitchCamera }) {
