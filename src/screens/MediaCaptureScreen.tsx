@@ -46,13 +46,16 @@ function isFreshNativeCapture(file: File, requestedAt: number) {
   return file.lastModified >= requestedAt - freshnessToleranceMs;
 }
 
-function isAndroidDevice() {
-  return /Android/i.test(globalThis.navigator?.userAgent ?? "");
+function shouldUseLiveCameraCapture() {
+  const userAgent = globalThis.navigator?.userAgent ?? "";
+  const isMobileCameraDevice = /Android|iPhone|iPad|iPod/i.test(userAgent);
+  return isMobileCameraDevice && Boolean(globalThis.navigator?.mediaDevices?.getUserMedia);
 }
 
 function getPreferredCameraVideoConstraints(mode: "environment" | "user"): MediaTrackConstraints {
   return {
     facingMode: { ideal: mode },
+    height: { ideal: 1080, min: 720 },
     frameRate: { ideal: 30, max: 30 }
   };
 }
@@ -92,6 +95,7 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
 function buildTrackConstraints(mode: "environment" | "user", profile: VideoCaptureProfile): MediaTrackConstraints {
   return {
     facingMode: { ideal: mode },
+    height: { ideal: 1080, min: 720 },
     frameRate: { ideal: profile.frameRate, min: 24, max: profile.frameRate }
   };
 }
@@ -165,7 +169,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
 
-  const useLiveCamera = isAndroidDevice();
+  const useLiveCamera = shouldUseLiveCameraCapture();
   const nativeCaptureMode = facingMode === "environment" ? "environment" : "user";
 
   const stopStream = () => {
@@ -205,7 +209,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
 
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error("Este Android nao liberou camera direta no navegador.");
+        throw new Error("Este dispositivo nao liberou camera direta no navegador.");
       }
 
       let stream: MediaStream;
@@ -335,7 +339,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       return;
     }
     if (typeof MediaRecorder === "undefined") {
-      setCameraError("Este Android nao liberou gravacao direta no navegador.");
+      setCameraError("Este dispositivo nao liberou gravacao direta no navegador.");
       return;
     }
 
@@ -545,7 +549,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
               {useLiveCamera && !cameraError && !ready && !starting ? (
                 <div className="camera-start-panel native-camera-panel">
                   <strong>Camera ao vivo</strong>
-                  <span>No Android a captura acontece direto na tela para bloquear galeria.</span>
+                  <span>A captura acontece direto na tela para manter qualidade e bloquear galeria.</span>
                   <button onClick={() => void startLiveCamera()} disabled={processing}>Abrir camera</button>
                 </div>
               ) : null}

@@ -76,11 +76,12 @@ test("tela de captura usa titulo no topo e preview transparente", () => {
   assert.equal(realCameraVideo.some((block) => /background:\s*transparent\s*!important/i.test(block)), true);
 });
 
-test("camera ao vivo nao forca proporcao nem dimensoes hardcoded", () => {
+test("camera ao vivo evita proporcao fixa e pede qualidade HD quando possivel", () => {
   assert.doesNotMatch(mediaCaptureScreen, /aspectRatio\s*:/);
   assert.doesNotMatch(mediaCaptureScreen, /width:\s*{\s*ideal:/);
-  assert.doesNotMatch(mediaCaptureScreen, /height:\s*{\s*ideal:/);
   assert.doesNotMatch(mediaCaptureScreen, /width:\s*\d+/);
   assert.doesNotMatch(mediaCaptureScreen, /height:\s*\d+/);
+  assert.match(mediaCaptureScreen, /height:\s*{\s*ideal:\s*1080,\s*min:\s*720\s*}/);
   assert.match(mediaCaptureScreen, /frameRate:\s*{\s*ideal:\s*30,\s*max:\s*30\s*}/);
+  assert.match(mediaCaptureScreen, /iPhone\|iPad\|iPod/);
 });

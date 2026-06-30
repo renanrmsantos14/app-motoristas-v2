@@ -11989,7 +11989,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.587","builtAt":"2026-06-30T16:33:03.449Z","builtAtLabel":"30/06/2026, 13:33"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.588","builtAt":"2026-06-30T16:39:19.959Z","builtAtLabel":"30/06/2026, 13:39"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83370,12 +83370,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const freshnessToleranceMs = 15e3;
     return file.lastModified >= requestedAt - freshnessToleranceMs;
   }
-  function isAndroidDevice() {
-    return /Android/i.test(globalThis.navigator?.userAgent ?? "");
+  function shouldUseLiveCameraCapture() {
+    const userAgent = globalThis.navigator?.userAgent ?? "";
+    const isMobileCameraDevice = /Android|iPhone|iPad|iPod/i.test(userAgent);
+    return isMobileCameraDevice && Boolean(globalThis.navigator?.mediaDevices?.getUserMedia);
   }
   function getPreferredCameraVideoConstraints(mode) {
     return {
       facingMode: { ideal: mode },
+      height: { ideal: 1080, min: 720 },
       frameRate: { ideal: 30, max: 30 }
     };
   }
@@ -83410,6 +83413,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   function buildTrackConstraints(mode, profile) {
     return {
       facingMode: { ideal: mode },
+      height: { ideal: 1080, min: 720 },
       frameRate: { ideal: profile.frameRate, min: 24, max: profile.frameRate }
     };
   }
@@ -83469,7 +83473,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [starting, setStarting] = (0, import_react57.useState)(false);
     const [recording, setRecording] = (0, import_react57.useState)(false);
     const [recordingSeconds, setRecordingSeconds] = (0, import_react57.useState)(0);
-    const useLiveCamera = isAndroidDevice();
+    const useLiveCamera = shouldUseLiveCameraCapture();
     const nativeCaptureMode = facingMode === "environment" ? "environment" : "user";
     const stopStream = () => {
       const recorder = recorderRef.current;
@@ -83503,7 +83507,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       stopStream();
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error("Este Android nao liberou camera direta no navegador.");
+          throw new Error("Este dispositivo nao liberou camera direta no navegador.");
         }
         let stream2;
         try {
@@ -83623,7 +83627,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         return;
       }
       if (typeof MediaRecorder === "undefined") {
-        setCameraError("Este Android nao liberou gravacao direta no navegador.");
+        setCameraError("Este dispositivo nao liberou gravacao direta no navegador.");
         return;
       }
       try {
@@ -83802,7 +83806,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           ] }) : null,
           useLiveCamera && !cameraError && !ready && !starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-start-panel native-camera-panel", children: [
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera ao vivo" }),
-            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "No Android a captura acontece direto na tela para bloquear galeria." }),
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "A captura acontece direto na tela para manter qualidade e bloquear galeria." }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => void startLiveCamera(), disabled: processing, children: "Abrir camera" })
           ] }) : null,
           processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: capturingPhoto ? "Capturando foto..." : "Preparando midia..." }) : null,
