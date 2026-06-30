@@ -9,6 +9,7 @@ Esta versao esta preparada para:
 - retirar acesso quando o motorista sai ou e trocado
 - compartilhar a `cr40f_manutencoes` vinculada no `cr40f_om` do servico
 - em troca de carro Programada, compartilhar tambem o registro do outro motorista para liberar o contato enquanto a troca estiver ativa
+- quando `cr40f_emailmicrosoft` for criado ou alterado em `cr40f_funcionarios`, rodar backfill sincronamente para servicos dos ultimos 45 dias e todo futuro
 
 Para isso, agora existe uma exigencia nova:
 
@@ -36,6 +37,7 @@ Regras:
 Use assim:
 
 - `cr40f_reservadeveculos`: `Synchronous`
+- `cr40f_funcionarios`: `Synchronous`
 - `cr40f_servicosporpassageiro`: `Asynchronous`
 - `cr40f_trocasdecarro`: `Synchronous`
 - `new_possedeveiculo`: `Asynchronous`
@@ -143,7 +145,23 @@ Para todos os steps:
 - Execution Mode: `Synchronous`
 - Image: criar `Pre Image`
 
-### 3. Servicos por passageiro - Create
+### 3. Funcionarios - Create
+
+- Message: `Create`
+- Primary Entity: `cr40f_funcionarios`
+- Filtering Attributes: deixar vazio
+- Execution Mode: `Synchronous`
+- Image: nao criar
+
+### 4. Funcionarios - Update
+
+- Message: `Update`
+- Primary Entity: `cr40f_funcionarios`
+- Filtering Attributes: `cr40f_emailmicrosoft`
+- Execution Mode: `Synchronous`
+- Image: criar `Pre Image`
+
+### 5. Servicos por passageiro - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_servicosporpassageiro`
@@ -151,7 +169,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: nao criar
 
-### 4. Servicos por passageiro - Update
+### 6. Servicos por passageiro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_servicosporpassageiro`
@@ -159,7 +177,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: criar `Pre Image`
 
-### 5. Trocas de carro - Create
+### 7. Trocas de carro - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_trocasdecarro`
@@ -167,7 +185,7 @@ Para todos os steps:
 - Execution Mode: `Synchronous`
 - Image: nao criar
 
-### 6. Trocas de carro - Update
+### 8. Trocas de carro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_trocasdecarro`
@@ -175,7 +193,7 @@ Para todos os steps:
 - Execution Mode: `Synchronous`
 - Image: criar `Pre Image`
 
-### 7. Posse de veiculo - Create
+### 9. Posse de veiculo - Create
 
 - Message: `Create`
 - Primary Entity: `new_possedeveiculo`
@@ -183,7 +201,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: nao criar
 
-### 8. Posse de veiculo - Update
+### 10. Posse de veiculo - Update
 
 - Message: `Update`
 - Primary Entity: `new_possedeveiculo`
@@ -191,7 +209,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: criar `Pre Image`
 
-### 9. Colisoes - Create
+### 11. Colisoes - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_colisao_v2`
@@ -199,7 +217,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: nao criar
 
-### 10. Colisoes - Update
+### 12. Colisoes - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_colisao_v2`
@@ -207,7 +225,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: criar `Pre Image`
 
-### 11. Recibos - Create
+### 13. Recibos - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_recibos_v2`
@@ -215,7 +233,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: nao criar
 
-### 12. Recibos - Update
+### 14. Recibos - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_recibos_v2`
@@ -245,6 +263,19 @@ Depois, no campo de atributos, use exatamente os atributos abaixo.
 
 - `cr40f_motorista`
 - `cr40f_solicitante`
+
+### Update de Funcionarios
+
+- `cr40f_emailmicrosoft`
+
+Quando este step roda, o plugin busca servicos com:
+
+- `cr40f_motorista` igual ao funcionario salvo
+- `cr40f_dataehorriodesada` a partir de 45 dias atras
+- sem limite futuro
+- `new_foiprogramado = true`
+- `cr40f_ot` vazio
+- `new_categoriadoitem` em `100000000` ou `100000001`
 
 ### Update de Servicos por passageiro
 
@@ -281,13 +312,15 @@ Confira:
 1. o assembly foi atualizado
 2. `cr40f_reservadeveculos Create` esta em `Synchronous`
 3. `cr40f_reservadeveculos Update` esta em `Synchronous`
-4. os outros steps estao em `Asynchronous`
-5. todos estao em `PostOperation`
-6. todos estao com `Deployment = Server`
-7. todos os `Create` estao sem image
-8. todos os `Update` estao com `Pre Image`
-9. toda `Pre Image` usa alias `pre`
-10. os filtros de `Update` estao corretos
+4. `cr40f_funcionarios Create` e `Update` estao em `Synchronous`
+5. `cr40f_trocasdecarro Create` e `Update` estao em `Synchronous`
+6. os steps de passageiro, posse, colisao e recibo estao em `Asynchronous`
+7. todos estao em `PostOperation`
+8. todos estao com `Deployment = Server`
+9. todos os `Create` estao sem image
+10. todos os `Update` estao com `Pre Image`
+11. toda `Pre Image` usa alias `pre`
+12. os filtros de `Update` estao corretos
 
 ## Parte 7: permissoes do usuario tecnico
 

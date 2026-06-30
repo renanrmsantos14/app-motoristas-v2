@@ -68,6 +68,20 @@ namespace Betinhos.DriverRecordSharing
                 var accessHelper = new DataverseAccessHelper(service, tracing);
                 var servicePassengerRepository = new ServicePassengerRepository(service, tracing);
 
+                if (context.PrimaryEntityName == PluginConfig.EmployeeTable)
+                {
+                    HandleEmployeeEmailBackfill(
+                        context,
+                        service,
+                        target,
+                        preImage,
+                        resolver,
+                        accessHelper,
+                        servicePassengerRepository,
+                        tracing);
+                    return;
+                }
+
                 if (context.PrimaryEntityName == PluginConfig.ServicePassengerTable)
                 {
                     HandleServicePassenger(
@@ -243,6 +257,125 @@ namespace Betinhos.DriverRecordSharing
                 context.PrimaryEntityId,
                 currentDrivers.Count,
                 previousDrivers.Count);
+        }
+
+        private static void HandleEmployeeEmailBackfill(
+            IPluginExecutionContext context,
+            IOrganizationService service,
+            Entity target,
+            Entity preImage,
+            DriverResolver resolver,
+            DataverseAccessHelper accessHelper,
+            ServicePassengerRepository servicePassengerRepository,
+            ITracingService tracing)
+        {
+            if (context.MessageName == PluginConfig.UpdateMessage)
+            {
+                EnsurePreImage(context, preImage, tracing, PluginConfig.EmployeeMicrosoftEmail);
+
+                if (!target.Contains(PluginConfig.EmployeeMicrosoftEmail))
+                {
+                    tracing.Trace("HandleEmployeeEmailBackfill skip because email did not change.");
+                    return;
+                }
+
+                var previousEmail = preImage?.GetAttributeValue<string>(PluginConfig.EmployeeMicrosoftEmail) ?? string.Empty;
+                var nextEmail = target.GetAttributeValue<string>(PluginConfig.EmployeeMicrosoftEmail) ?? string.Empty;
+                if (string.Equals(previousEmail.Trim(), nextEmail.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    tracing.Trace("HandleEmployeeEmailBackfill skip because email value is unchanged.");
+                    return;
+                }
+            }
+
+            var employeeReference = new EntityReference(PluginConfig.EmployeeTable, context.PrimaryEntityId);
+            var driver = resolver.Resolve(employeeReference, DriverResolutionMode.StrictForGrant);
+            if (driver == null)
+            {
+                tracing.Trace("HandleEmployeeEmailBackfill skip because employee could not be resolved.");
+                return;
+            }
+
+            var services = ListServicesForEmployeeBackfill(service, context.PrimaryEntityId, tracing);
+            tracing.Trace(
+                "HandleEmployeeEmailBackfill employeeId={0} userId={1} services={2}",
+                context.PrimaryEntityId,
+                driver.UserReference.Id,
+                services.Count);
+
+            foreach (var serviceEntity in services)
+            {
+                var serviceReference = new EntityReference(PluginConfig.ServiceTable, serviceEntity.Id);
+                GrantServiceHierarchy(
+                    serviceReference,
+                    LoadMaintenanceReference(serviceEntity),
+                    LoadRequesterReference(serviceEntity),
+                    driver.UserReference,
+                    servicePassengerRepository.ListByService(serviceEntity.Id),
+                    accessHelper,
+                    tracing);
+            }
+
+            tracing.Trace(
+                "HandleEmployeeEmailBackfill done employeeId={0} userId={1} services={2}",
+                context.PrimaryEntityId,
+                driver.UserReference.Id,
+                services.Count);
+        }
+
+        private static IReadOnlyList<Entity> ListServicesForEmployeeBackfill(
+            IOrganizationService service,
+            Guid employeeId,
+            ITracingService tracing)
+        {
+            var start = DateTime.UtcNow.Date.AddDays(-PluginConfig.EmployeeBackfillDaysBack);
+            var query = new QueryExpression(PluginConfig.ServiceTable)
+            {
+                ColumnSet = new ColumnSet(
+                    PluginConfig.ServicePrimaryId,
+                    PluginConfig.ServiceDriverLookup,
+                    PluginConfig.ServiceMaintenanceLookup,
+                    PluginConfig.ServiceRequesterLookup,
+                    PluginConfig.ServiceStartDate),
+                NoLock = true,
+                PageInfo = new PagingInfo
+                {
+                    Count = 5000,
+                    PageNumber = 1
+                }
+            };
+
+            query.Criteria.AddCondition(PluginConfig.ServiceDriverLookup, ConditionOperator.Equal, employeeId);
+            query.Criteria.AddCondition(PluginConfig.ServiceStartDate, ConditionOperator.OnOrAfter, start);
+            query.Criteria.AddCondition(PluginConfig.ServiceProgrammedFlag, ConditionOperator.Equal, true);
+            query.Criteria.AddCondition(PluginConfig.ServiceExchangeLookup, ConditionOperator.Null);
+            query.Criteria.AddCondition(
+                PluginConfig.ServiceCategory,
+                ConditionOperator.In,
+                Array.ConvertAll(PluginConfig.ServiceBackfillCategories, value => (object)value));
+            query.Orders.Add(new OrderExpression(PluginConfig.ServiceStartDate, OrderType.Ascending));
+
+            var results = new List<Entity>();
+            while (true)
+            {
+                var page = service.RetrieveMultiple(query);
+                results.AddRange(page.Entities);
+
+                if (!page.MoreRecords)
+                {
+                    break;
+                }
+
+                query.PageInfo.PageNumber++;
+                query.PageInfo.PagingCookie = page.PagingCookie;
+            }
+
+            tracing.Trace(
+                "ListServicesForEmployeeBackfill employeeId={0} start={1:o} count={2}",
+                employeeId,
+                start,
+                results.Count);
+            return results;
         }
 
         private static void HandleServicePassenger(
@@ -1044,6 +1177,11 @@ namespace Betinhos.DriverRecordSharing
             }
 
             if (context.PrimaryEntityName == PluginConfig.ServicePassengerTable)
+            {
+                return true;
+            }
+
+            if (context.PrimaryEntityName == PluginConfig.EmployeeTable)
             {
                 return true;
             }

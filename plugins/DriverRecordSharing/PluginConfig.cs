@@ -14,6 +14,12 @@ namespace Betinhos.DriverRecordSharing
         public const string ServiceDriverLookup = "cr40f_motorista";
         public const string ServiceMaintenanceLookup = "cr40f_om";
         public const string ServiceRequesterLookup = "cr40f_solicitante";
+        public const string ServiceStartDate = "cr40f_dataehorriodesada";
+        public const string ServiceProgrammedFlag = "new_foiprogramado";
+        public const string ServiceExchangeLookup = "cr40f_ot";
+        public const string ServiceCategory = "new_categoriadoitem";
+        public static readonly int[] ServiceBackfillCategories = { 100000000, 100000001 };
+        public const int EmployeeBackfillDaysBack = 45;
 
         public const string MaintenanceTable = "cr40f_manutencoes";
         public const string MaintenancePrimaryId = "cr40f_manutencoesid";
