@@ -438,16 +438,20 @@
         cleanGuid(row._principalid_value) ||
         cleanGuid(row.principalid) ||
         cleanGuid(row["principalid"]);
+      const knownUser = state.userById.get(principalId);
+      const principalType =
+        row["_principalid_value@Microsoft.Dynamics.CRM.lookuplogicalname"] ||
+        row["principalid@Microsoft.Dynamics.CRM.lookuplogicalname"] ||
+        (knownUser ? CONFIG.tables.user.logicalName : "");
       return {
         principalId,
         principalName:
           row["_principalid_value@OData.Community.Display.V1.FormattedValue"] ||
           row["principalid@OData.Community.Display.V1.FormattedValue"] ||
+          knownUser?.name ||
+          knownUser?.email ||
           principalId,
-        principalType:
-          row["_principalid_value@Microsoft.Dynamics.CRM.lookuplogicalname"] ||
-          row["principalid@Microsoft.Dynamics.CRM.lookuplogicalname"] ||
-          "",
+        principalType,
         accessRightsMask: row.accessrightsmask,
         inheritedAccessRightsMask: row.inheritedaccessrightsmask
       };
