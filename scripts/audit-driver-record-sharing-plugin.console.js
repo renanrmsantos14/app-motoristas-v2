@@ -9,6 +9,8 @@
  *   await window.DriverRecordSharingAudit.auditCurrentForm()
  *   await window.DriverRecordSharingAudit.auditRecord("cr40f_reservadeveculos", "GUID")
  *   await window.DriverRecordSharingAudit.auditEmployee("GUID_FUNCIONARIO")
+ *   await window.DriverRecordSharingAudit.auditAllEmployees()
+ *   await window.DriverRecordSharingAudit.auditAllEmployees({ onlyWithEmail: true, includeDismissed: false, logChecks: true })
  *   await window.DriverRecordSharingAudit.runAll({ sampleSizePerEntity: 5 })
  *
  * O script verifica:
@@ -19,8 +21,8 @@
  * - shares faltando
  * - shares sobrando
  *
- * auditEmployee valida apenas o usuario daquele funcionario. auditRecord/runAll
- * validam o conjunto completo de usuarios esperados para cada registro.
+ * auditEmployee/auditAllEmployees validam apenas o usuario de cada funcionario.
+ * auditRecord/runAll validam o conjunto completo de usuarios esperados para cada registro.
  */
 (async () => {
   if (!window.Xrm?.Utility?.getGlobalContext) {
@@ -633,7 +635,7 @@
   function filterExpectedUsersForScope(expectedUsers, options) {
     const expected = uniqueById(expectedUsers || []);
     const expectedUserIds = options?.expectedUserIds || null;
-    if (!expectedUserIds?.size) {
+    if (!expectedUserIds) {
       return expected;
     }
 
@@ -857,6 +859,97 @@
     return rows.map((row) => cleanGuid(row[CONFIG.tables.service.id])).filter(Boolean);
   }
 
+  async function listEmployees(options = {}) {
+    const maxEmployees = Number(options.maxEmployees || 0) || 0;
+    const filters = [];
+    if (options.onlyWithEmail === true) {
+      filters.push(`<condition attribute="${CONFIG.tables.employee.email}" operator="not-null" />`);
+    }
+    if (options.includeDismissed === false) {
+      filters.push(`<condition attribute="${CONFIG.tables.employee.dismissalDate}" operator="null" />`);
+    }
+
+    const fetch = [
+      `<fetch version="1.0" mapping="logical"${maxEmployees > 0 ? ` top="${maxEmployees}"` : ""}>`,
+      `<entity name="${CONFIG.tables.employee.logicalName}">`,
+      `<attribute name="${CONFIG.tables.employee.id}" />`,
+      `<attribute name="${CONFIG.tables.employee.name}" />`,
+      `<attribute name="${CONFIG.tables.employee.email}" />`,
+      `<attribute name="${CONFIG.tables.employee.dismissalDate}" />`,
+      filters.length ? `<filter type="and">${filters.join("")}</filter>` : "",
+      `<order attribute="${CONFIG.tables.employee.name}" descending="false" />`,
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    return (await fetchXml(CONFIG.tables.employee.logicalName, fetch)).map((row) => ({
+      id: cleanGuid(row[CONFIG.tables.employee.id]),
+      name: row[CONFIG.tables.employee.name] || "",
+      email: normalizeEmail(row[CONFIG.tables.employee.email]),
+      dismissalDate: row[CONFIG.tables.employee.dismissalDate] || null
+    })).filter((item) => item.id);
+  }
+
+  function makeEmployeeAuditOptions(employeeResolution) {
+    return {
+      expectedUserIds: new Set((employeeResolution?.users || []).map((user) => cleanGuid(user.id)).filter(Boolean)),
+      ignoreUnexpectedUsers: true
+    };
+  }
+
+  async function buildEmployeeAudit(employeeInput) {
+    const normalizedId = cleanGuid(employeeInput?.id || employeeInput);
+    if (!normalizedId) {
+      throw new Error("buildEmployeeAudit exige GUID valido do funcionario.");
+    }
+
+    const employee = employeeInput?.email !== undefined && employeeInput?.name !== undefined
+      ? employeeInput
+      : await retrieveRecord(CONFIG.tables.employee.logicalName, normalizedId, [
+          CONFIG.tables.employee.id,
+          CONFIG.tables.employee.name,
+          CONFIG.tables.employee.email,
+          CONFIG.tables.employee.dismissalDate
+        ]).then((row) => ({
+          id: normalizedId,
+          name: row[CONFIG.tables.employee.name] || "",
+          email: normalizeEmail(row[CONFIG.tables.employee.email]),
+          dismissalDate: row[CONFIG.tables.employee.dismissalDate] || null
+        }));
+
+    const employeeResolution = await resolveEmployee({
+      id: normalizedId,
+      name: employee.name || normalizedId
+    });
+    const auditOptions = makeEmployeeAuditOptions(employeeResolution);
+    const serviceIds = await listServiceIdsForEmployee(normalizedId);
+    const recordResults = [];
+
+    for (const serviceId of serviceIds) {
+      try {
+        recordResults.push(await buildDirectRecordAudit(CONFIG.supportedDirectEntities[0], serviceId, auditOptions));
+      } catch (error) {
+        recordResults.push({
+          entity: CONFIG.tables.service.logicalName,
+          recordId: cleanGuid(serviceId),
+          caseType: "direct",
+          label: "Servico",
+          checks: [],
+          issues: [makeIssue("error", CONFIG.tables.service.logicalName, serviceId, "runtime", String(error?.message || error), "employee service audit failed")]
+        });
+      }
+    }
+
+    const report = finalizeReport(recordResults);
+    return {
+      employee,
+      employeeResolution,
+      serviceIds,
+      recordResults,
+      report
+    };
+  }
+
   async function auditRecord(logicalName, recordId) {
     const normalizedEntity = String(logicalName || "").trim().toLowerCase();
     const normalizedId = cleanGuid(recordId);
@@ -885,29 +978,16 @@
       throw new Error("auditEmployee exige GUID valido do funcionario.");
     }
 
-    const employee = await retrieveRecord(CONFIG.tables.employee.logicalName, normalizedId, [
-      CONFIG.tables.employee.id,
-      CONFIG.tables.employee.name,
-      CONFIG.tables.employee.email
-    ]);
-    const employeeResolution = await resolveEmployee({
-      id: normalizedId,
-      name: employee[CONFIG.tables.employee.name] || normalizedId
-    });
-    const auditOptions = {
-      expectedUserIds: new Set((employeeResolution?.users || []).map((user) => cleanGuid(user.id)).filter(Boolean)),
-      ignoreUnexpectedUsers: true
-    };
-
-    const serviceIds = await listServiceIdsForEmployee(normalizedId);
+    const employeeAudit = await buildEmployeeAudit(normalizedId);
+    const { employee, employeeResolution, serviceIds, report } = employeeAudit;
     console.log(
-      `[DriverRecordSharingAudit] Funcionario ${employee[CONFIG.tables.employee.name] || normalizedId} ` +
-        `<${employee[CONFIG.tables.employee.email] || "sem email"}>: ${serviceIds.length} servico(s) no escopo do plugin.`
+      `[DriverRecordSharingAudit] Funcionario ${employee.name || normalizedId} ` +
+        `<${employee.email || "sem email"}>: ${serviceIds.length} servico(s) no escopo do plugin.`
     );
 
     if (employeeResolution?.status !== "resolved") {
       console.warn(
-        `[DriverRecordSharingAudit] Funcionario ${employee[CONFIG.tables.employee.name] || normalizedId} ` +
+        `[DriverRecordSharingAudit] Funcionario ${employee.name || normalizedId} ` +
           `nao resolveu para usuario ativo unico: ${employeeResolution?.status || "unknown"}.`
       );
     } else {
@@ -917,24 +997,68 @@
       );
     }
 
-    const results = [];
-    for (const serviceId of serviceIds) {
+    printReport(report);
+    return report;
+  }
+
+  async function auditAllEmployees(options = {}) {
+    const employees = await listEmployees(options);
+    const employeeRows = [];
+    const recordResults = [];
+    const progressEvery = Number(options.progressEvery || 10) || 10;
+
+    console.log(`[DriverRecordSharingAudit] auditando ${employees.length} funcionario(s) de ${CONFIG.tables.employee.logicalName}.`);
+
+    for (let index = 0; index < employees.length; index += 1) {
+      const employee = employees[index];
+      if (index === 0 || (index + 1) % progressEvery === 0 || index + 1 === employees.length) {
+        console.log(`[DriverRecordSharingAudit] funcionario ${index + 1}/${employees.length}: ${employee.name || employee.id}`);
+      }
+
       try {
-        results.push(await buildDirectRecordAudit(CONFIG.supportedDirectEntities[0], serviceId, auditOptions));
+        const employeeAudit = await buildEmployeeAudit(employee);
+        recordResults.push(...employeeAudit.recordResults);
+        const user = employeeAudit.employeeResolution?.users?.[0] || null;
+        employeeRows.push({
+          index: index + 1,
+          employeeId: employee.id,
+          employeeName: employee.name,
+          email: employee.email,
+          dismissedOn: employee.dismissalDate || "",
+          resolutionStatus: employeeAudit.employeeResolution?.status || "unknown",
+          user: user ? (user.name || user.email || user.id) : "",
+          servicesInScope: employeeAudit.serviceIds.length,
+          failedChecks: employeeAudit.report.summary.failedChecks,
+          warningChecks: employeeAudit.report.summary.warningChecks,
+          issues: employeeAudit.report.summary.totalIssues
+        });
       } catch (error) {
-        results.push({
-          entity: CONFIG.tables.service.logicalName,
-          recordId: cleanGuid(serviceId),
-          caseType: "direct",
-          label: "Servico",
-          checks: [],
-          issues: [makeIssue("error", CONFIG.tables.service.logicalName, serviceId, "runtime", String(error?.message || error), "employee service audit failed")]
+        employeeRows.push({
+          index: index + 1,
+          employeeId: employee.id,
+          employeeName: employee.name,
+          email: employee.email,
+          dismissedOn: employee.dismissalDate || "",
+          resolutionStatus: "runtime_error",
+          user: "",
+          servicesInScope: "",
+          failedChecks: "",
+          warningChecks: "",
+          issues: 1,
+          error: String(error?.message || error)
         });
       }
     }
 
-    const report = finalizeReport(results);
-    printReport(report);
+    const report = finalizeReport(recordResults);
+    report.employeeRows = employeeRows;
+
+    console.log("Resumo por funcionario:");
+    console.table(employeeRows);
+    printReport(report, {
+      logChecks: options.logChecks === true,
+      logIssues: options.logIssues !== false
+    });
     return report;
   }
 
@@ -1195,20 +1319,25 @@
     };
   }
 
-  function printReport(report) {
+  function printReport(report, options = {}) {
     console.log("Resumo da auditoria do plugin:", report.summary);
 
-    if (!CONFIG.logTables) {
+    const logTables = options.logTables ?? CONFIG.logTables;
+    const logChecks = options.logChecks ?? logTables;
+    const logIssues = options.logIssues ?? logTables;
+    if (!logChecks && !logIssues) {
       return;
     }
 
-    console.log("Checks executados:");
-    console.table(report.checkRows);
+    if (logChecks) {
+      console.log("Checks executados:");
+      console.table(report.checkRows);
+    }
 
-    if (report.issueRows.length > 0) {
+    if (logIssues && report.issueRows.length > 0) {
       console.log("Issues encontradas:");
       console.table(report.issueRows);
-    } else {
+    } else if (logIssues) {
       console.log("Nenhuma issue encontrada.");
     }
   }
@@ -1218,6 +1347,7 @@
     runAll,
     auditCurrentForm,
     auditEmployee,
+    auditAllEmployees,
     auditRecord,
     getCurrentFormTarget
   };
@@ -1226,6 +1356,8 @@
   console.log("Uso rapido:");
   console.log("  await window.DriverRecordSharingAudit.auditCurrentForm()");
   console.log("  await window.DriverRecordSharingAudit.auditEmployee('GUID_FUNCIONARIO')");
+  console.log("  await window.DriverRecordSharingAudit.auditAllEmployees()");
+  console.log("  await window.DriverRecordSharingAudit.auditAllEmployees({ onlyWithEmail: true, includeDismissed: false, logChecks: true })");
   console.log("  await window.DriverRecordSharingAudit.auditRecord('cr40f_reservadeveculos', 'GUID')");
   console.log("  await window.DriverRecordSharingAudit.runAll({ sampleSizePerEntity: 5 })");
 })();
