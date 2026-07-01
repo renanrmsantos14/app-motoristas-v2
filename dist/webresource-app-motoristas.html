@@ -4962,6 +4962,17 @@ button:disabled {
   font: inherit;
   font-weight: 850;
 }
+.concept-footer .local-reset {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+}
 @media (min-width: 560px) {
   .concept-shell {
     max-width: 460px;
@@ -11989,7 +12000,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.602","builtAt":"2026-06-30T18:03:09.900Z","builtAtLabel":"30/06/2026, 15:03"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.604","builtAt":"2026-07-01T16:39:15.703Z","builtAtLabel":"01/07/2026, 13:39"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -55951,273 +55962,420 @@ select,
   var motion = /* @__PURE__ */ createMotionProxy(featureBundle, createDomVisualElement);
 
   // src/data/mockData.ts
-  var agendaMock = [
-    { id: "h-hoje", tipo: "HEADER", tituloData: "HOJE", seta: "" },
-    {
-      id: "srv-10241",
+  var GERAL_ENTITY_SET = "cr40f_reservadeveculoses";
+  var TROCA_ENTITY_SET = "cr40f_trocasdecarros";
+  var MANUTENCAO_ENTITY_SET = "cr40f_manutencoeses";
+  function parseBrazilianDateTime(value) {
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+    if (!match) return "";
+    const [, day, month, year, hour, minute] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute)).toISOString();
+  }
+  function serviceDetail(options) {
+    const fields = [
+      { label: "Data e Hor\xE1rio de Sa\xEDda", value: options.departureAt },
+      ...options.finalizationAt ? [{ label: "Data de Finaliza\xE7\xE3o", value: options.finalizationAt }] : [],
+      { label: "Cliente", value: options.client },
+      { label: "Receber", value: options.receive },
+      { label: "Valor a Receber", value: options.amount },
+      { label: "Trajeto", value: options.route },
+      { label: "Passageiros e Telefones de Contato", value: options.passengersHtml, html: true },
+      { label: "Endere\xE7o de Sa\xEDda", value: options.departureAddress },
+      { label: "Destino", value: options.destination },
+      { label: "Obs de Opera\xE7\xE3o", value: options.operationNotes },
+      { label: "Perfil do Passageiro", value: options.passengerProfile },
+      { label: "Solicitante", value: options.requester },
+      { label: "Ve\xEDculo", value: options.vehicle },
+      ...options.finalObservation ? [{ label: "Observa\xE7\xE3o Final", value: options.finalObservation }] : []
+    ];
+    return {
+      type: "SERVICO",
+      id: options.id,
+      title: "Detalhes do Servi\xE7o",
+      actions: options.actions,
+      fields,
+      dataverse: {
+        entitySetName: GERAL_ENTITY_SET,
+        id: options.id,
+        record: {
+          cr40f_dataehorriodesada: parseBrazilianDateTime(options.departureAt),
+          cr40f_receber: options.receive === "Sim",
+          cr40f_cotao: options.amountValue,
+          cr40f_trajeto: options.route,
+          cr40f_obsdeoperao: options.operationNotes,
+          new_datadefinalizacao: options.finalizationAt ? parseBrazilianDateTime(options.finalizationAt) : null
+        }
+      }
+    };
+  }
+  function serviceItem(options) {
+    return {
+      id: options.itemId,
       tipo: "SERVICO",
       label: "Servi\xE7o",
+      time: options.time,
+      description: options.description,
+      priority: options.priority,
+      canceled: options.canceled,
+      searchText: options.searchText,
+      detail: serviceDetail(options)
+    };
+  }
+  function exchangeItem(options, history = false) {
+    const fields = [
+      { label: "Janela da Troca", value: options.window },
+      { label: "Resumo", value: options.summary, strong: true },
+      { label: "O que fazer", value: options.actionLabel, strong: true },
+      ...options.giving ? [{ label: "Voc\xEA entrega", value: options.giving, strong: true }] : [],
+      ...options.receiving ? [{ label: "Voc\xEA recebe", value: options.receiving, strong: true }] : [],
+      ...options.contactName ? [{ label: "Encontrar com", value: options.contactName }] : [],
+      ...options.contactPhone ? [{ label: "Telefone", value: options.contactPhone, contact: { phone: options.contactPhone } }] : [],
+      { label: "Tipo de Troca", value: options.kind },
+      { label: "Observa\xE7\xE3o", value: options.notes },
+      ...options.operationNotes ? [{ label: "Obs de Opera\xE7\xE3o", value: options.operationNotes }] : []
+    ];
+    return {
+      id: options.itemId,
+      tipo: "TROCA",
+      label: options.label,
+      time: options.time,
+      description: options.description,
+      priority: options.priority,
+      searchText: options.searchText,
+      detail: {
+        type: "TROCA",
+        id: options.id,
+        title: options.title,
+        actions: history ? [] : ["finalizar"],
+        fields,
+        dataverse: {
+          entitySetName: TROCA_ENTITY_SET,
+          id: options.id,
+          record: {}
+        }
+      }
+    };
+  }
+  function maintenanceItem(options) {
+    const fields = [
+      { label: "Data e Hor\xE1rio da Manuten\xE7\xE3o", value: options.dateLabel },
+      ...options.finalizationAt ? [{ label: "Data de Finaliza\xE7\xE3o", value: options.finalizationAt }] : [],
+      ...options.history ? [{ label: "ID Manuten\xE7\xE3o", value: options.id }] : [],
+      { label: "Ve\xEDculo", value: options.vehicle },
+      { label: "Descri\xE7\xE3o do Cen\xE1rio Encontrado", value: options.scenario },
+      { label: "Coment\xE1rios ao Motorista", value: options.driverComments },
+      ...options.collaboratorComments ? [{ label: "Coment\xE1rios do Colaborador", value: options.collaboratorComments }] : [],
+      ...options.serviceDone ? [{ label: "Servi\xE7o Realizado", value: options.serviceDone }] : [],
+      ...options.establishment ? [{ label: "Estabelecimento", value: options.establishment }] : [],
+      ...options.payment ? [{ label: "Forma de Pagamento", value: options.payment }] : [],
+      ...options.value ? [{ label: "Valor", value: options.value }] : [],
+      ...options.requestLinks?.[0] ? [{ label: "Link Foto Solicita\xE7\xE3o 1", value: options.requestLinks[0] }] : [],
+      ...options.requestLinks?.[1] ? [{ label: "Link Foto Solicita\xE7\xE3o 2", value: options.requestLinks[1] }] : [],
+      ...options.requestLinks?.[2] ? [{ label: "Link Foto Solicita\xE7\xE3o 3", value: options.requestLinks[2] }] : [],
+      ...options.invoiceLink ? [{ label: "Link Nota Fiscal", value: options.invoiceLink }] : [],
+      ...options.finalLinks?.[0] ? [{ label: "Link Foto Final 1", value: options.finalLinks[0] }] : [],
+      ...options.finalLinks?.[1] ? [{ label: "Link Foto Final 2", value: options.finalLinks[1] }] : [],
+      ...options.finalLinks?.[2] ? [{ label: "Link Foto Final 3", value: options.finalLinks[2] }] : []
+    ];
+    return {
+      id: options.itemId,
+      tipo: "MANUTENCAO",
+      label: "Manuten\xE7\xE3o",
+      time: options.time,
+      description: options.description,
+      priority: 0,
+      searchText: options.searchText,
+      detail: {
+        type: "MANUTENCAO",
+        id: options.id,
+        title: "Detalhes da Manuten\xE7\xE3o",
+        actions: options.history ? [] : ["cancel", "finalizar"],
+        fields,
+        dataverse: {
+          entitySetName: MANUTENCAO_ENTITY_SET,
+          id: options.id,
+          record: {}
+        }
+      }
+    };
+  }
+  var agendaMock = [
+    { id: "h-hoje", tipo: "HEADER", tituloData: "HOJE", seta: "" },
+    serviceItem({
+      itemId: "srv-10240",
+      id: "10240",
+      time: "HOJE 09:15",
+      description: "Base Betinhos -> Aeroporto de Guarulhos",
+      priority: 10,
+      client: "Particular",
+      receive: "Sim",
+      amount: "R$ 380,00",
+      amountValue: 380,
+      departureAt: "01/07/2026 09:15",
+      route: "Base Betinhos -> Aeroporto de Guarulhos",
+      passengersHtml: "Henrique Tavares<br />+55 (11) 99888-1100",
+      departureAddress: "Rua das Ac\xE1cias, 120 - Jardim Sat\xE9lite, S\xE3o Jos\xE9 dos Campos - SP",
+      destination: "GRU Airport - Terminal 3, Guarulhos - SP",
+      operationNotes: "Receber em cart\xE3o na chegada. Passageiro com 2 malas e 1 bagagem de m\xE3o.",
+      passengerProfile: "Fam\xEDlia executiva. Confirmar carrinho de bagagem ao desembarque.",
+      requester: "Fernanda Lima",
+      vehicle: "Spin Preta FGH4J21",
+      actions: ["cancel", "receber"],
+      searchText: "10240 base betinhos aeroporto guarulhos receber servico hoje 09:15"
+    }),
+    serviceItem({
+      itemId: "srv-10241",
+      id: "10241",
       time: "HOJE 14:30",
       description: "Hotel Fasano S\xE3o Paulo -> Aeroporto de Congonhas",
       priority: 1,
-      searchText: "10241 hotel fasano sao paulo aeroporto de congonhas servico hoje 14:30",
-      detail: {
-        type: "SERVICO",
-        id: "10241",
-        title: "Detalhes do Servi\xE7o",
-        actions: ["cancel", "voucher"],
-        fields: [
-          { label: "Data e Hor\xE1rio de Sa\xEDda", value: "02/06/2026 14:30" },
-          { label: "Cliente", value: "Tenaris" },
-          { label: "Receber", value: "N\xE3o" },
-          { label: "Trajeto", value: "Hotel Fasano S\xE3o Paulo -> Aeroporto de Congonhas" },
-          {
-            label: "Passageiros e Telefones de Contato",
-            value: "Ana Paula Martins<br />+55 (11) 98765-4321<br /><br />Roberto Almeida<br />+55 (11) 91234-5678",
-            html: true
-          },
-          { label: "Endere\xE7o de Sa\xEDda", value: "Rua Vit\xF3rio Fasano, 88 - Jardins, S\xE3o Paulo - SP" },
-          { label: "Destino", value: "Aeroporto de Congonhas - Av. Washington Lu\xEDs, s/n" },
-          { label: "Obs de Opera\xE7\xE3o", value: "Passageiros aguardam na recep\xE7\xE3o. Confirmar bagagens antes da sa\xEDda." },
-          { label: "Perfil do Passageiro", value: "Executivo. Atendimento discreto. Prefere trajeto direto." },
-          { label: "Solicitante", value: "Mariana Costa" },
-          { label: "Ve\xEDculo", value: "Corolla Preto ABC1D23" }
-        ]
-      }
-    },
-    {
-      id: "troca-381",
-      tipo: "TROCA",
+      client: "Tenaris",
+      receive: "N\xE3o",
+      amount: "R$ 0,00",
+      amountValue: 0,
+      departureAt: "01/07/2026 14:30",
+      route: "Hotel Fasano S\xE3o Paulo -> Aeroporto de Congonhas",
+      passengersHtml: "Ana Paula Martins<br />+55 (11) 98765-4321<br /><br />Roberto Almeida<br />+55 (11) 91234-5678",
+      departureAddress: "Rua Vittorio Fasano, 88 - Jardins, S\xE3o Paulo - SP",
+      destination: "Aeroporto de Congonhas - Av. Washington Lu\xEDs, s/n - S\xE3o Paulo - SP",
+      operationNotes: "Passageiros aguardam na recep\xE7\xE3o. Confirmar bagagens antes da sa\xEDda.",
+      passengerProfile: "Executivo. Atendimento discreto. Prefere trajeto direto.",
+      requester: "Mariana Costa",
+      vehicle: "Corolla Preto ABC1D23",
+      actions: ["cancel", "voucher"],
+      searchText: "10241 hotel fasano sao paulo aeroporto de congonhas tenaris voucher servico hoje 14:30"
+    }),
+    exchangeItem({
+      itemId: "troca-381",
+      id: "381",
       label: "Troca entre Motoristas",
+      title: "Troca entre Motoristas",
       time: "HOJE entre 16:00 e 17:00",
       description: "Entregar Corolla ABC1D23 e receber Civic XYZ9A87",
       priority: 3,
-      searchText: "381 troca entre motoristas carlos andrade corolla abc1d23 civic xyz9a87 hoje 16:00 17:00",
-      detail: {
-        type: "TROCA",
-        id: "381",
-        title: "Troca entre Motoristas",
-        actions: ["finalizar"],
-        fields: [
-          { label: "Janela da Troca", value: "02/06/2026 16:00 - 17:00" },
-          { label: "Resumo", value: "Troque com Carlos Andrade. Entregue Corolla Preto ABC1D23 e receba Civic Prata XYZ9A87.", strong: true },
-          { label: "O que fazer", value: "Trocar ve\xEDculo com Carlos Andrade", strong: true },
-          { label: "Voc\xEA entrega", value: "Corolla Preto ABC1D23", strong: true },
-          { label: "Voc\xEA recebe", value: "Civic Prata XYZ9A87", strong: true },
-          { label: "Encontrar com", value: "Carlos Andrade" },
-          { label: "Telefone", value: "+55 (12) 99723-6961" },
-          { label: "Tipo de Troca", value: "Troca" },
-          { label: "Observa\xE7\xE3o", value: "Troca combinada na base operacional. Conferir pertences, documentos e chaves antes da entrega." },
-          { label: "Obs de Opera\xE7\xE3o", value: "Ponto de encontro na portaria da base. Confirmar fotos do ve\xEDculo antes da sa\xEDda." }
-        ]
-      }
-    },
-    {
-      id: "troca-382",
-      tipo: "TROCA",
+      window: "01/07/2026 16:00 - 17:00",
+      summary: "Troque com Carlos Andrade. Entregue Corolla Preto ABC1D23 e receba Civic Prata XYZ9A87.",
+      actionLabel: "Trocar ve\xEDculo com Carlos Andrade",
+      giving: "Corolla Preto ABC1D23",
+      receiving: "Civic Prata XYZ9A87",
+      contactName: "Carlos Andrade",
+      contactPhone: "+55 (12) 99723-6961",
+      kind: "Troca",
+      notes: "Troca combinada na base operacional. Conferir pertences, documentos e chaves antes da entrega.",
+      operationNotes: "Ponto de encontro na portaria da base. Confirmar fotos do ve\xEDculo antes da sa\xEDda.",
+      searchText: "381 troca entre motoristas carlos andrade corolla abc1d23 civic xyz9a87 hoje 16:00 17:00"
+    }),
+    exchangeItem({
+      itemId: "troca-382",
+      id: "382",
       label: "Retirada na Base",
+      title: "Retirada na Base",
       time: "HOJE entre 17:20 e 18:00",
       description: "Retirar Spin Preta FGH4J21 na base",
       priority: 1,
-      searchText: "382 retirada na base spin preta fgh4j21 hoje 17:20 18:00",
-      detail: {
-        type: "TROCA",
-        id: "382",
-        title: "Retirada na Base",
-        actions: ["finalizar"],
-        fields: [
-          { label: "Janela da Troca", value: "02/06/2026 17:20 - 18:00" },
-          { label: "Resumo", value: "Retire Spin Preta FGH4J21 na base operacional.", strong: true },
-          { label: "O que fazer", value: "Retirar ve\xEDculo na base", strong: true },
-          { label: "Voc\xEA recebe", value: "Spin Preta FGH4J21", strong: true },
-          { label: "Local", value: "Base operacional" },
-          { label: "Motorista", value: "Voc\xEA" },
-          { label: "Tipo de Troca", value: "Retirada da base" },
-          { label: "Observa\xE7\xE3o", value: "Ve\xEDculo separado para servi\xE7o noturno. Conferir combust\xEDvel, TAG e documentos." },
-          { label: "Obs de Opera\xE7\xE3o", value: "Chave com a opera\xE7\xE3o. Ve\xEDculo estacionado na vaga 04." }
-        ]
-      }
-    },
-    {
-      id: "manut-76",
-      tipo: "MANUTENCAO",
-      label: "Manuten\xE7\xE3o",
+      window: "01/07/2026 17:20 - 18:00",
+      summary: "Retire Spin Preta FGH4J21 na base operacional.",
+      actionLabel: "Retirar ve\xEDculo na base",
+      receiving: "Spin Preta FGH4J21",
+      kind: "Retirada da base",
+      notes: "Ve\xEDculo separado para servi\xE7o noturno. Conferir combust\xEDvel, TAG e documentos.",
+      operationNotes: "Chave com a opera\xE7\xE3o. Ve\xEDculo estacionado na vaga 04.",
+      searchText: "382 retirada na base spin preta fgh4j21 hoje 17:20 18:00"
+    }),
+    maintenanceItem({
+      itemId: "manut-76",
+      id: "76",
       time: "HOJE 18:10",
       description: "Manuten\xE7\xE3o no Corolla Preto ABC1D23",
-      priority: 0,
-      searchText: "76 manutencao corolla preto abc1d23 hoje 18:10",
-      detail: {
-        type: "MANUTENCAO",
-        id: "76",
-        title: "Detalhes da Manuten\xE7\xE3o",
-        actions: ["finalizar"],
-        fields: [
-          { label: "Data e Hor\xE1rio da Manuten\xE7\xE3o", value: "02/06/2026 18:10" },
-          { label: "Descri\xE7\xE3o do Cen\xE1rio Encontrado", value: "Verificar ru\xEDdo no freio dianteiro e calibragem dos pneus." },
-          { label: "Ve\xEDculo", value: "Corolla Preto ABC1D23" },
-          { label: "Coment\xE1rios ao Motorista", value: "Levar o ve\xEDculo at\xE9 a base e aguardar orienta\xE7\xE3o do J\xFAnior." }
-        ]
-      }
-    },
+      dateLabel: "01/07/2026 18:10",
+      vehicle: "Corolla Preto ABC1D23",
+      scenario: "Verificar ru\xEDdo no freio dianteiro, calibragem dos pneus e alinhamento ap\xF3s impacto em buraco.",
+      driverComments: "Levar o ve\xEDculo at\xE9 a base, fotografar pneus e aguardar orienta\xE7\xE3o do J\xFAnior.",
+      collaboratorComments: "Aprova\xE7\xE3o j\xE1 alinhada com a opera\xE7\xE3o caso o diagn\xF3stico confirme desgaste.",
+      requestLinks: [
+        "https://example.com/mock/manutencao/76/solicitacao-1.jpg",
+        "https://example.com/mock/manutencao/76/solicitacao-2.jpg"
+      ],
+      searchText: "76 manutencao corolla preto abc1d23 hoje 18:10"
+    }),
     { id: "h-amanha", tipo: "HEADER", tituloData: "AMANH\xC3", seta: "" },
-    {
-      id: "srv-10244",
-      tipo: "SERVICO",
-      label: "Servi\xE7o",
+    serviceItem({
+      itemId: "srv-10244",
+      id: "10244",
       time: "AMANH\xC3 08:20",
       description: "Residencial Alphaville -> Reuni\xE3o Faria Lima",
-      priority: 10,
-      searchText: "10244 residencial alphaville reuniao faria lima servico amanha 08:20",
-      detail: {
-        type: "SERVICO",
-        id: "10244",
-        title: "Detalhes do Servi\xE7o",
-        actions: ["cancel", "finalizar"],
-        fields: [
-          { label: "Data e Hor\xE1rio de Sa\xEDda", value: "03/06/2026 08:20" },
-          { label: "Cliente", value: "Cliente Executivo Alphaville" },
-          { label: "Receber", value: "N\xE3o" },
-          { label: "Trajeto", value: "Residencial Alphaville -> Reuni\xE3o Faria Lima" },
-          { label: "Passageiros e Telefones de Contato", value: "Eduardo Ribeiro<br />+55 (11) 95555-0101", html: true },
-          { label: "Endere\xE7o de Sa\xEDda", value: "Alameda Rio Negro, Alphaville - Barueri - SP" },
-          { label: "Destino", value: "Av. Brigadeiro Faria Lima, S\xE3o Paulo - SP" },
-          { label: "Obs de Opera\xE7\xE3o", value: "Chegar 10 minutos antes. Passageiro seguir\xE1 para reuni\xE3o." },
-          { label: "Perfil do Passageiro", value: "Diretor financeiro. Prefere sil\xEAncio no trajeto." },
-          { label: "Solicitante", value: "Patr\xEDcia Gomes" },
-          { label: "Ve\xEDculo", value: "Civic Prata XYZ9A87" }
-        ]
-      }
-    },
-    {
-      id: "troca-384",
-      tipo: "TROCA",
+      priority: 3,
+      client: "Cliente Executivo Alphaville",
+      receive: "N\xE3o",
+      amount: "R$ 0,00",
+      amountValue: 0,
+      departureAt: "02/07/2026 08:20",
+      route: "Residencial Alphaville -> Reuni\xE3o Faria Lima",
+      passengersHtml: "Eduardo Ribeiro<br />+55 (11) 95555-0101",
+      departureAddress: "Alameda Rio Negro, Alphaville - Barueri - SP",
+      destination: "Av. Brigadeiro Faria Lima, 3477 - Itaim Bibi, S\xE3o Paulo - SP",
+      operationNotes: "Chegar 10 minutos antes. Passageiro seguir\xE1 para reuni\xE3o com tr\xEAs executivos.",
+      passengerProfile: "Diretor financeiro. Prefere sil\xEAncio no trajeto.",
+      requester: "Patr\xEDcia Gomes",
+      vehicle: "Civic Prata XYZ9A87",
+      actions: ["cancel", "finalizar"],
+      searchText: "10244 residencial alphaville reuniao faria lima servico amanha 08:20"
+    }),
+    serviceItem({
+      itemId: "srv-10245",
+      id: "10245",
+      time: "AMANH\xC3 22:40",
+      description: "Hotel Unique -> Fazenda Boa Vista",
+      priority: 1,
+      client: "Particular Premium",
+      receive: "Sim",
+      amount: "R$ 1.250,00",
+      amountValue: 1250,
+      departureAt: "02/07/2026 22:40",
+      route: "Hotel Unique -> Fazenda Boa Vista",
+      passengersHtml: "Luciana Ferraz<br />+55 (11) 97770-1111<br /><br />Crian\xE7a 1<br />Cadeirinha obrigat\xF3ria",
+      departureAddress: "Av. Brigadeiro Lu\xEDs Ant\xF4nio, 4700 - Jardim Paulista, S\xE3o Paulo - SP",
+      destination: "Rod. Castello Branco, km 102,5 - Porto Feliz - SP",
+      operationNotes: "Receber via Pix ao final. Confirmar cadeirinha infantil e parada r\xE1pida em posto seguro.",
+      passengerProfile: "Fam\xEDlia com crian\xE7a. Aten\xE7\xE3o a conforto, climatiza\xE7\xE3o e bagagem extra.",
+      requester: "Paula Ferraz",
+      vehicle: "Trailblazer Branca QWE5R67",
+      actions: ["cancel", "receber"],
+      searchText: "10245 hotel unique fazenda boa vista receber pix servico amanha 22:40"
+    }),
+    exchangeItem({
+      itemId: "troca-384",
+      id: "384",
       label: "Devolu\xE7\xE3o \xE0 Base",
+      title: "Devolu\xE7\xE3o \xE0 Base",
       time: "AMANH\xC3 entre 11:00 e 12:00",
       description: "Devolver Civic Prata XYZ9A87 na base",
       priority: 0,
-      searchText: "384 devolucao a base civic prata xyz9a87 amanha 11:00 12:00",
-      detail: {
-        type: "TROCA",
-        id: "384",
-        title: "Devolu\xE7\xE3o \xE0 Base",
-        actions: ["finalizar"],
-        fields: [
-          { label: "Janela da Troca", value: "03/06/2026 11:00 - 12:00" },
-          { label: "Resumo", value: "Devolva Civic Prata XYZ9A87 na base operacional.", strong: true },
-          { label: "O que fazer", value: "Devolver ve\xEDculo na base", strong: true },
-          { label: "Voc\xEA entrega", value: "Civic Prata XYZ9A87", strong: true },
-          { label: "Local", value: "Base operacional" },
-          { label: "Motorista", value: "Voc\xEA" },
-          { label: "Tipo de Troca", value: "Devolu\xE7\xE3o \xE0 base" },
-          { label: "Observa\xE7\xE3o", value: "Devolver ve\xEDculo limpo, sem objetos pessoais e com checklist preenchido." },
-          { label: "Obs de Opera\xE7\xE3o", value: "Ap\xF3s a devolu\xE7\xE3o, entregar chave e documento ao respons\xE1vel da base." }
-        ]
-      }
-    }
+      window: "02/07/2026 11:00 - 12:00",
+      summary: "Devolva Civic Prata XYZ9A87 na base operacional.",
+      actionLabel: "Devolver ve\xEDculo na base",
+      giving: "Civic Prata XYZ9A87",
+      kind: "Devolu\xE7\xE3o \xE0 base",
+      notes: "Devolver ve\xEDculo limpo, sem objetos pessoais e com checklist preenchido.",
+      operationNotes: "Ap\xF3s a devolu\xE7\xE3o, entregar chave e documento ao respons\xE1vel da base.",
+      searchText: "384 devolucao a base civic prata xyz9a87 amanha 11:00 12:00"
+    })
   ];
   var historyMock = [
     { id: "hist-hoje", tipo: "HEADER", tituloData: "HOJE", seta: "" },
-    {
-      id: "hist-srv-10239",
-      tipo: "SERVICO",
-      label: "Servi\xE7o",
+    serviceItem({
+      itemId: "hist-srv-10239",
+      id: "10239",
       time: "HOJE 09:10",
       description: "Aeroporto de Guarulhos -> Escrit\xF3rio Tenaris",
       priority: 0,
+      client: "Tenaris",
+      receive: "N\xE3o",
+      amount: "R$ 0,00",
+      amountValue: 0,
+      departureAt: "01/07/2026 09:10",
+      route: "Aeroporto de Guarulhos -> Escrit\xF3rio Tenaris",
+      passengersHtml: "Marcelo Nunes<br />+55 (11) 97777-0101",
+      departureAddress: "GRU Airport - Terminal 3",
+      destination: "Av. das Na\xE7\xF5es Unidas, 12995 - Brooklin, S\xE3o Paulo - SP",
+      operationNotes: "Voucher gerado e servi\xE7o conclu\xEDdo.",
+      passengerProfile: "Executivo internacional. Atendimento discreto.",
+      requester: "Camila Torres",
+      vehicle: "Corolla Preto ABC1D23",
+      actions: [],
       searchText: "10239 guarulhos escritorio tenaris servico concluido hoje",
-      detail: {
-        type: "SERVICO",
-        id: "10239",
-        title: "Detalhes do Servi\xE7o",
-        actions: [],
-        fields: [
-          { label: "Data e Hor\xE1rio de Sa\xEDda", value: "02/06/2026 09:10" },
-          { label: "Data de Finaliza\xE7\xE3o", value: "02/06/2026 10:05" },
-          { label: "Cliente", value: "Tenaris" },
-          { label: "Trajeto", value: "Aeroporto de Guarulhos -> Escrit\xF3rio Tenaris" },
-          { label: "Passageiros", value: "Marcelo Nunes<br />+55 (11) 97777-0101", html: true },
-          { label: "Endere\xE7o de Sa\xEDda", value: "GRU Airport - Terminal 3" },
-          { label: "Destino", value: "Av. das Na\xE7\xF5es Unidas, S\xE3o Paulo - SP" },
-          { label: "Obs de Opera\xE7\xE3o", value: "Voucher gerado e servi\xE7o conclu\xEDdo." },
-          { label: "Perfil do Passageiro", value: "Executivo internacional. Atendimento discreto." },
-          { label: "Solicitante", value: "Camila Torres" },
-          { label: "Ve\xEDculo", value: "Corolla Preto ABC1D23" }
-        ]
-      }
-    },
-    {
-      id: "hist-troca-376",
-      tipo: "TROCA",
+      finalizationAt: "01/07/2026 10:05"
+    }),
+    serviceItem({
+      itemId: "hist-srv-10238",
+      id: "10238",
+      time: "ONTEM 21:35",
+      description: "Shopping Iguatemi -> Aeroporto de Congonhas",
+      priority: 0,
+      client: "Particular",
+      receive: "Sim",
+      amount: "R$ 245,00",
+      amountValue: 245,
+      departureAt: "30/06/2026 21:35",
+      route: "Shopping Iguatemi -> Aeroporto de Congonhas",
+      passengersHtml: "Priscila Moraes<br />+55 (11) 96666-4400",
+      departureAddress: "Av. Brigadeiro Faria Lima, 2232 - Jardim Paulistano, S\xE3o Paulo - SP",
+      destination: "Aeroporto de Congonhas - S\xE3o Paulo - SP",
+      operationNotes: "Recebimento confirmado com dois comprovantes anexados.",
+      passengerProfile: "Passageira frequente. Prefere embarque r\xE1pido e direto.",
+      requester: "Priscila Moraes",
+      vehicle: "Civic Prata XYZ9A87",
+      actions: [],
+      searchText: "10238 iguatemi congonhas receber concluido ontem",
+      finalizationAt: "30/06/2026 22:18",
+      finalObservation: "Pagamento confirmado via Pix e comprovantes enviados."
+    }),
+    exchangeItem({
+      itemId: "hist-troca-376",
+      id: "376",
       label: "Troca de Carro",
+      title: "Detalhes da Troca",
       time: "ONTEM 17:30",
       description: "Troca conclu\xEDda com Base Operacional",
       priority: 0,
-      searchText: "376 troca carro base operacional concluida ontem",
-      detail: {
-        type: "TROCA",
-        id: "376",
-        title: "Detalhes da Troca",
-        actions: [],
-        fields: [
-          { label: "In\xEDcio da Janela de Troca", value: "01/06/2026 17:00" },
-          { label: "Fim da Janela de Troca", value: "01/06/2026 18:00" },
-          { label: "Voc\xEA trocou de carro com:", value: "Base Operacional" },
-          { label: "Telefone", value: "+55 (12) 99723-6961" },
-          { label: "Whatsapp", value: "Abrir conversa" },
-          { label: "Ve\xEDculos envolvidos:", value: "Entregou: Corolla Preto | ABC1D23\nRecebeu: Civic Prata | XYZ9A87" },
-          { label: "Observa\xE7\xF5es", value: "Troca conclu\xEDda sem pend\xEAncias." }
-        ]
-      }
-    },
-    {
-      id: "hist-manut-72",
-      tipo: "MANUTENCAO",
-      label: "Manuten\xE7\xE3o",
+      window: "30/06/2026 17:00 - 18:00",
+      summary: "Troca conclu\xEDda com a base operacional sem pend\xEAncias.",
+      actionLabel: "Troca conclu\xEDda",
+      giving: "Corolla Preto ABC1D23",
+      receiving: "Civic Prata XYZ9A87",
+      contactName: "Base Operacional",
+      contactPhone: "+55 (12) 99723-6961",
+      kind: "Troca",
+      notes: "Checklist final conferido e sem avarias adicionais.",
+      searchText: "376 troca carro base operacional concluida ontem"
+    }, true),
+    maintenanceItem({
+      itemId: "hist-manut-72",
+      id: "72",
       time: "2 dias atr\xE1s 15:40",
       description: "Manuten\xE7\xE3o realizada no Civic Prata XYZ9A87",
-      priority: 0,
+      dateLabel: "29/06/2026 15:40",
+      vehicle: "Civic Prata XYZ9A87",
+      scenario: "Troca de pastilhas de freio dianteiras e reaperto geral.",
+      driverComments: "Servi\xE7o autorizado pelo J\xFAnior.",
+      collaboratorComments: "Validado com fornecedor homologado.",
+      serviceDone: "Pastilhas substitu\xEDdas, alinhamento conferido e teste de rodagem aprovado.",
+      establishment: "Auto Center Vila Ol\xEDmpia",
+      payment: "Cart\xE3o",
+      value: "R$ 480,00",
+      finalizationAt: "29/06/2026 17:12",
+      invoiceLink: "https://example.com/mock/manutencao/72/nota-fiscal.pdf",
+      finalLinks: [
+        "https://example.com/mock/manutencao/72/final-1.jpg",
+        "https://example.com/mock/manutencao/72/final-2.jpg"
+      ],
       searchText: "72 manutencao civic prata realizada",
-      detail: {
-        type: "MANUTENCAO",
-        id: "72",
-        title: "Detalhes da Manuten\xE7\xE3o",
-        actions: [],
-        fields: [
-          { label: "Data e Hor\xE1rio da Manuten\xE7\xE3o", value: "31/05/2026 15:40" },
-          { label: "Data de Finaliza\xE7\xE3o", value: "31/05/2026 17:12" },
-          { label: "Descri\xE7\xE3o do Cen\xE1rio Encontrado", value: "Troca de pastilhas de freio dianteiras." },
-          { label: "Ve\xEDculo", value: "Civic Prata XYZ9A87" },
-          { label: "Coment\xE1rios ao Motorista", value: "Servi\xE7o autorizado pelo J\xFAnior." },
-          { label: "Servi\xE7o Realizado", value: "Pastilhas substitu\xEDdas e teste conclu\xEDdo." },
-          { label: "Estabelecimento", value: "Auto Center Vila Ol\xEDmpia" },
-          { label: "Coment\xE1rios do Motorista", value: "Nota fiscal anexada. Sem pend\xEAncias." },
-          { label: "Forma de Pagamento", value: "Cart\xE3o" },
-          { label: "Valor", value: "R$ 480,00" }
-        ]
-      }
-    },
-    {
-      id: "hist-cancelado",
-      tipo: "SERVICO",
-      label: "Servi\xE7o",
+      history: true
+    }),
+    serviceItem({
+      itemId: "hist-cancelado",
+      id: "10188",
       time: "5 dias atr\xE1s 20:20",
       description: "Hotel Unique -> Aeroporto de Viracopos",
       priority: 0,
-      canceled: true,
+      client: "Cliente Executivo",
+      receive: "N\xE3o",
+      amount: "R$ 0,00",
+      amountValue: 0,
+      departureAt: "26/06/2026 20:20",
+      route: "Hotel Unique -> Aeroporto de Viracopos",
+      passengersHtml: "N\xE3o informado",
+      departureAddress: "Hotel Unique - S\xE3o Paulo - SP",
+      destination: "Aeroporto de Viracopos - Campinas - SP",
+      operationNotes: "Servi\xE7o cancelado no local pelo passageiro.",
+      passengerProfile: "N\xE3o informado",
+      requester: "N\xE3o informado",
+      vehicle: "Corolla Preto ABC1D23",
+      actions: [],
       searchText: "cancelado hotel unique viracopos",
-      detail: {
-        type: "SERVICO",
-        id: "10188",
-        title: "Detalhes do Servi\xE7o",
-        actions: [],
-        fields: [
-          { label: "Data e Hor\xE1rio de Sa\xEDda", value: "28/05/2026 20:20" },
-          { label: "Cliente", value: "Cliente Executivo" },
-          { label: "Trajeto", value: "Hotel Unique -> Aeroporto de Viracopos" },
-          { label: "Observa\xE7\xE3o Final", value: "Cancelado no local pelo passageiro." }
-        ]
-      }
-    }
+      canceled: true,
+      finalObservation: "Cancelado no local pelo passageiro."
+    })
   ];
 
   // src/app/agendaVisibility.ts
@@ -64420,12 +64578,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         },
         module.id
       )) }),
-      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("footer", { className: "concept-footer", children: /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { children: [
-        "Vers\xE3o ",
-        buildInfo.version ?? "local",
-        " ",
-        buildInfo.builtAtLabel ? `- Build ${buildInfo.builtAtLabel}` : ""
-      ] }) })
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("footer", { className: "concept-footer", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { children: [
+          "Vers\xE3o ",
+          buildInfo.version ?? "local",
+          " ",
+          buildInfo.builtAtLabel ? `- Build ${buildInfo.builtAtLabel}` : ""
+        ] }),
+        props.showLocalReset && props.onResetLocalData ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("button", { type: "button", className: "local-reset", onClick: props.onResetLocalData, children: "Resetar dados locais" }) : null
+      ] })
     ] }) });
   }
 
@@ -83908,6 +84069,32 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     "Volkswagen",
     "Natura"
   ];
+  var EMPTY_MAINTENANCE_REQUEST_DRAFT = {
+    descricao: "",
+    kmAtual: "",
+    veiculoId: "",
+    gravidade: ""
+  };
+  var EMPTY_EXPENSE_DRAFT = {
+    categoriaId: "",
+    veiculoId: "",
+    valor: "",
+    dataGasto: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+    formaPagamentoId: "",
+    cidadeId: "",
+    estabelecimento: "",
+    descricao: "",
+    kmInformado: "",
+    litros: ""
+  };
+  var EMPTY_MAINTENANCE_FINALIZE_DRAFT = {
+    serviceDone: "",
+    value: "",
+    payment: "",
+    cidadeId: "",
+    establishment: "",
+    notes: ""
+  };
   function FlowProgressOverlay({ operation }) {
     return /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "flow-progress-overlay", role: "status", "aria-live": "polite", "aria-label": operation.title, children: /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)("div", { className: `flow-progress-card is-${operation.phase}`, children: [
       /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "flow-progress-track", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("span", {}) }),
@@ -84038,24 +84225,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [maintenanceVehicles, setMaintenanceVehicles] = (0, import_react58.useState)([]);
     const [maintenanceCurrentVehicleId, setMaintenanceCurrentVehicleId] = (0, import_react58.useState)("");
     const [maintenanceVehiclesLoading, setMaintenanceVehiclesLoading] = (0, import_react58.useState)(false);
-    const [maintenanceRequestDraft, setMaintenanceRequestDraft] = (0, import_react58.useState)({
-      descricao: "",
-      kmAtual: "",
-      veiculoId: "",
-      gravidade: ""
-    });
-    const [expenseDraft, setExpenseDraft] = (0, import_react58.useState)({
-      categoriaId: "",
-      veiculoId: "",
-      valor: "",
-      dataGasto: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
-      formaPagamentoId: "",
-      cidadeId: "",
-      estabelecimento: "",
-      descricao: "",
-      kmInformado: "",
-      litros: ""
-    });
+    const [maintenanceRequestDraft, setMaintenanceRequestDraft] = (0, import_react58.useState)({ ...EMPTY_MAINTENANCE_REQUEST_DRAFT });
+    const [expenseDraft, setExpenseDraft] = (0, import_react58.useState)({ ...EMPTY_EXPENSE_DRAFT });
     const [expenseReferenceData, setExpenseReferenceData] = (0, import_react58.useState)(DEFAULT_EXPENSE_REFERENCE_DATA);
     const [expenseReferenceLoading, setExpenseReferenceLoading] = (0, import_react58.useState)(false);
     const [expenseReferenceError, setExpenseReferenceError] = (0, import_react58.useState)("");
@@ -84096,14 +84267,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [maintenanceRequestPhotoIsVideo, setMaintenanceRequestPhotoIsVideo] = (0, import_react58.useState)(false);
     const [maintenanceRequestPreviewPhotoId, setMaintenanceRequestPreviewPhotoId] = (0, import_react58.useState)("");
     const [maintenanceExistingPreview, setMaintenanceExistingPreview] = (0, import_react58.useState)(false);
-    const [maintenanceFinalizeDraft, setMaintenanceFinalizeDraft] = (0, import_react58.useState)({
-      serviceDone: "",
-      value: "",
-      payment: "",
-      cidadeId: "",
-      establishment: "",
-      notes: ""
-    });
+    const [maintenanceFinalizeDraft, setMaintenanceFinalizeDraft] = (0, import_react58.useState)({ ...EMPTY_MAINTENANCE_FINALIZE_DRAFT });
     const finalizeTimerRef = (0, import_react58.useRef)(null);
     const completingClearTimerRef = (0, import_react58.useRef)(null);
     const queueHighlightTimerRef = (0, import_react58.useRef)(null);
@@ -84555,6 +84719,67 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     if (isReceiptPreviewMode) {
       return show(/* @__PURE__ */ (0, import_jsx_runtime44.jsx)(ReceiptPreviewScreen, {}));
     }
+    const resetLocalData = () => {
+      if (remoteMode || !isLocalhostRuntime2) return;
+      const confirmed = window.confirm("Resetar dados locais, rascunhos e anexos salvos neste navegador?");
+      if (!confirmed) return;
+      if (voucherDraftTimerRef.current) {
+        window.clearTimeout(voucherDraftTimerRef.current);
+        voucherDraftTimerRef.current = null;
+      }
+      if (finalizeTimerRef.current) {
+        window.clearTimeout(finalizeTimerRef.current);
+        finalizeTimerRef.current = null;
+      }
+      if (completingClearTimerRef.current) {
+        window.clearTimeout(completingClearTimerRef.current);
+        completingClearTimerRef.current = null;
+      }
+      if (queueHighlightTimerRef.current) {
+        window.clearTimeout(queueHighlightTimerRef.current);
+        queueHighlightTimerRef.current = null;
+      }
+      revokePhotoPreviewUrls(expensePhotos);
+      Object.values(receiveProofs).forEach((photos) => revokePhotoPreviewUrls(photos));
+      revokePhotoPreviewUrls(collisionPhotos);
+      revokePhotoPreviewUrls(maintenanceRequestPhotos);
+      clearMaintenanceFinalizePhotoDraft();
+      clearMaintenanceRequestPhotoDraftState();
+      clearExpensePhotoDraftState();
+      clearReceivePhotoDraftState();
+      clearCollisionPhotoDraftState();
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(VOUCHER_DRAFTS_STORAGE_KEY);
+      localStorage.removeItem(SERVICE_OBSERVATION_DRAFTS_KEY);
+      setStore(initialStore());
+      setSelectedDetail(null);
+      setScreen("inicio");
+      setReceiptEntrySource("home");
+      setVoucherDrafts({});
+      setServiceObservationDrafts({});
+      setReceiveProofs({});
+      setReceiveUploadedCounts({});
+      setExpensePhotos([]);
+      setExpensePreviewPhotoId("");
+      setCollisionDraft(createEmptyCollisionDraft());
+      setCollisionPhotos([]);
+      setCollisionPreviewPhotoId("");
+      setMaintenanceRequestPhotos([]);
+      setMaintenanceRequestPreviewPhotoId("");
+      setMaintenanceExistingPreview(false);
+      setMaintenanceRequestDraft({ ...EMPTY_MAINTENANCE_REQUEST_DRAFT });
+      setExpenseDraft({ ...EMPTY_EXPENSE_DRAFT });
+      setMaintenanceFinalizeDraft({ ...EMPTY_MAINTENANCE_FINALIZE_DRAFT });
+      setPhotoDraft(null);
+      setPhotoDraftPreviewUrl("");
+      setPhotoDraftRawBlob(null);
+      setPhotoDraftIsVideo(false);
+      setRemoteOperation(null);
+      setCriticalError("");
+      setCompletingDetailKey("");
+      setQueueHighlightDetailKey("");
+      setToast("Dados locais resetados.");
+    };
     const refreshLocal = async (detailToRefresh, options) => {
       const silent = options?.silent === true;
       if (remoteMode) {
@@ -86225,7 +86450,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           onRefresh: refreshLocal,
           canGeneratePersonalReceipt,
           services: store.agenda,
-          driverName: driverContext?.fullName
+          driverName: driverContext?.fullName,
+          showLocalReset: isLocalhostRuntime2 && !remoteMode,
+          onResetLocalData: resetLocalData
         }
       )
     );

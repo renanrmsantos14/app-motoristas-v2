@@ -5,6 +5,7 @@ import {
   getInitialDetail,
   getInitialParams,
   getVoucherDraftKey,
+  initialStore,
   isSameDetail,
   loadStore,
   STORAGE_KEY
@@ -134,6 +135,35 @@ const LOCAL_RECEIPT_CLIENT_MOCKS = [
   "Volkswagen",
   "Natura"
 ];
+
+const EMPTY_MAINTENANCE_REQUEST_DRAFT: MaintenanceRequestDraft = {
+  descricao: "",
+  kmAtual: "",
+  veiculoId: "",
+  gravidade: ""
+};
+
+const EMPTY_EXPENSE_DRAFT: ExpenseDraft = {
+  categoriaId: "",
+  veiculoId: "",
+  valor: "",
+  dataGasto: new Date().toISOString().slice(0, 10),
+  formaPagamentoId: "",
+  cidadeId: "",
+  estabelecimento: "",
+  descricao: "",
+  kmInformado: "",
+  litros: ""
+};
+
+const EMPTY_MAINTENANCE_FINALIZE_DRAFT: MaintenanceFinalizeDraft = {
+  serviceDone: "",
+  value: "",
+  payment: "",
+  cidadeId: "",
+  establishment: "",
+  notes: ""
+};
 
 function FlowProgressOverlay({ operation }: { operation: RemoteOperation }) {
   return (
@@ -330,24 +360,8 @@ function App() {
   const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
   const [maintenanceCurrentVehicleId, setMaintenanceCurrentVehicleId] = useState("");
   const [maintenanceVehiclesLoading, setMaintenanceVehiclesLoading] = useState(false);
-  const [maintenanceRequestDraft, setMaintenanceRequestDraft] = useState<MaintenanceRequestDraft>({
-    descricao: "",
-    kmAtual: "",
-    veiculoId: "",
-    gravidade: ""
-  });
-  const [expenseDraft, setExpenseDraft] = useState<ExpenseDraft>({
-    categoriaId: "",
-    veiculoId: "",
-    valor: "",
-    dataGasto: new Date().toISOString().slice(0, 10),
-    formaPagamentoId: "",
-    cidadeId: "",
-    estabelecimento: "",
-    descricao: "",
-    kmInformado: "",
-    litros: ""
-  });
+  const [maintenanceRequestDraft, setMaintenanceRequestDraft] = useState<MaintenanceRequestDraft>({ ...EMPTY_MAINTENANCE_REQUEST_DRAFT });
+  const [expenseDraft, setExpenseDraft] = useState<ExpenseDraft>({ ...EMPTY_EXPENSE_DRAFT });
   const [expenseReferenceData, setExpenseReferenceData] = useState<ExpenseReferenceData>(DEFAULT_EXPENSE_REFERENCE_DATA);
   const [expenseReferenceLoading, setExpenseReferenceLoading] = useState(false);
   const [expenseReferenceError, setExpenseReferenceError] = useState("");
@@ -388,14 +402,7 @@ function App() {
   const [maintenanceRequestPhotoIsVideo, setMaintenanceRequestPhotoIsVideo] = useState(false);
   const [maintenanceRequestPreviewPhotoId, setMaintenanceRequestPreviewPhotoId] = useState("");
   const [maintenanceExistingPreview, setMaintenanceExistingPreview] = useState(false);
-  const [maintenanceFinalizeDraft, setMaintenanceFinalizeDraft] = useState<MaintenanceFinalizeDraft>({
-    serviceDone: "",
-    value: "",
-    payment: "",
-    cidadeId: "",
-    establishment: "",
-    notes: ""
-  });
+  const [maintenanceFinalizeDraft, setMaintenanceFinalizeDraft] = useState<MaintenanceFinalizeDraft>({ ...EMPTY_MAINTENANCE_FINALIZE_DRAFT });
   const finalizeTimerRef = useRef<number | null>(null);
   const completingClearTimerRef = useRef<number | null>(null);
   const queueHighlightTimerRef = useRef<number | null>(null);
@@ -918,6 +925,72 @@ function App() {
   if (isReceiptPreviewMode) {
     return show(<ReceiptPreviewScreen />);
   }
+
+  const resetLocalData = () => {
+    if (remoteMode || !isLocalhostRuntime) return;
+    const confirmed = window.confirm("Resetar dados locais, rascunhos e anexos salvos neste navegador?");
+    if (!confirmed) return;
+
+    if (voucherDraftTimerRef.current) {
+      window.clearTimeout(voucherDraftTimerRef.current);
+      voucherDraftTimerRef.current = null;
+    }
+    if (finalizeTimerRef.current) {
+      window.clearTimeout(finalizeTimerRef.current);
+      finalizeTimerRef.current = null;
+    }
+    if (completingClearTimerRef.current) {
+      window.clearTimeout(completingClearTimerRef.current);
+      completingClearTimerRef.current = null;
+    }
+    if (queueHighlightTimerRef.current) {
+      window.clearTimeout(queueHighlightTimerRef.current);
+      queueHighlightTimerRef.current = null;
+    }
+
+    revokePhotoPreviewUrls(expensePhotos);
+    Object.values(receiveProofs).forEach((photos) => revokePhotoPreviewUrls(photos));
+    revokePhotoPreviewUrls(collisionPhotos);
+    revokePhotoPreviewUrls(maintenanceRequestPhotos);
+    clearMaintenanceFinalizePhotoDraft();
+    clearMaintenanceRequestPhotoDraftState();
+    clearExpensePhotoDraftState();
+    clearReceivePhotoDraftState();
+    clearCollisionPhotoDraftState();
+
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(VOUCHER_DRAFTS_STORAGE_KEY);
+    localStorage.removeItem(SERVICE_OBSERVATION_DRAFTS_KEY);
+
+    setStore(initialStore());
+    setSelectedDetail(null);
+    setScreen("inicio");
+    setReceiptEntrySource("home");
+    setVoucherDrafts({});
+    setServiceObservationDrafts({});
+    setReceiveProofs({});
+    setReceiveUploadedCounts({});
+    setExpensePhotos([]);
+    setExpensePreviewPhotoId("");
+    setCollisionDraft(createEmptyCollisionDraft());
+    setCollisionPhotos([]);
+    setCollisionPreviewPhotoId("");
+    setMaintenanceRequestPhotos([]);
+    setMaintenanceRequestPreviewPhotoId("");
+    setMaintenanceExistingPreview(false);
+    setMaintenanceRequestDraft({ ...EMPTY_MAINTENANCE_REQUEST_DRAFT });
+    setExpenseDraft({ ...EMPTY_EXPENSE_DRAFT });
+    setMaintenanceFinalizeDraft({ ...EMPTY_MAINTENANCE_FINALIZE_DRAFT });
+    setPhotoDraft(null);
+    setPhotoDraftPreviewUrl("");
+    setPhotoDraftRawBlob(null);
+    setPhotoDraftIsVideo(false);
+    setRemoteOperation(null);
+    setCriticalError("");
+    setCompletingDetailKey("");
+    setQueueHighlightDetailKey("");
+    setToast("Dados locais resetados.");
+  };
 
   const refreshLocal = async (detailToRefresh?: DetailData, options?: RefreshOptions) => {
     const silent = options?.silent === true;
@@ -2640,6 +2713,8 @@ function App() {
       canGeneratePersonalReceipt={canGeneratePersonalReceipt}
       services={store.agenda}
       driverName={driverContext?.fullName}
+      showLocalReset={isLocalhostRuntime && !remoteMode}
+      onResetLocalData={resetLocalData}
     />
   );
 }

@@ -179,6 +179,8 @@ type InitialScreenProps = {
   proximoServicoEm?: string | Date | null;
   services?: AgendaItem[];
   canGeneratePersonalReceipt?: boolean;
+  showLocalReset?: boolean;
+  onResetLocalData?: () => void;
   [key: string]: unknown;
 };
 
@@ -438,6 +440,11 @@ export function InitialScreen(props: InitialScreenProps) {
         <span>
           Versão {buildInfo.version ?? "local"} {buildInfo.builtAtLabel ? `- Build ${buildInfo.builtAtLabel}` : ""}
         </span>
+        {props.showLocalReset && props.onResetLocalData ? (
+          <button type="button" className="local-reset" onClick={props.onResetLocalData}>
+            Resetar dados locais
+          </button>
+        ) : null}
       </footer>
     </main>
     </PullToRefresh>

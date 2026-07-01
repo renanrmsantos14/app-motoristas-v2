@@ -5438,6 +5438,18 @@ button:disabled {
   font-weight: 850;
 }
 
+.concept-footer .local-reset {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+}
+
 @media (min-width: 560px) {
   .concept-shell {
     max-width: 460px;
