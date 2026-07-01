@@ -93,7 +93,9 @@ namespace Betinhos.DriverRecordSharing
         public static readonly AccessRights MaintenanceAccessRights = AssignedRecordAccessRights;
         public static readonly AccessRights ServicePassengerAccessRights = AccessRights.ReadAccess;
         public static readonly AccessRights PassengerAccessRights = AccessRights.ReadAccess;
-        public static readonly AccessRights EmployeeSelfAccessRights = AccessRights.ReadAccess;
+        public static readonly AccessRights EmployeeSelfAccessRights =
+            AccessRights.ReadAccess |
+            AccessRights.AppendToAccess;
         public static readonly AccessRights EmployeeContactAccessRights = AccessRights.ReadAccess;
     }
 }

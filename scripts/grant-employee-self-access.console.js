@@ -3,7 +3,7 @@
  *
  * Objetivo:
  * - garantir que cada funcionario em cr40f_funcionarios com cr40f_emailmicrosoft
- *   tenha ReadAccess no proprio registro de funcionario.
+ *   tenha ReadAccess e AppendToAccess no proprio registro de funcionario.
  *
  * Padrao seguro:
  * - DRY_RUN = true nao altera nada.
@@ -17,7 +17,7 @@
   const DRY_RUN = true;
   const ONLY_WITH_EMAIL = true;
   const INCLUDE_DISMISSED = false;
-  const ACCESS_MASK = "ReadAccess";
+  const ACCESS_MASK = "ReadAccess, AppendToAccess";
 
   const EMPLOYEE_LOGICAL_NAME = "cr40f_funcionarios";
   const EMPLOYEE_SET = "cr40f_funcionarioses";
