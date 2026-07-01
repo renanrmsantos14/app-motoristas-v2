@@ -45,6 +45,7 @@ $csproj = @'
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <UseAppHost>false</UseAppHost>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -383,4 +384,6 @@ if ($GenerateOnly) {
 $argsList = @($EnvironmentUrl, $TechnicalUserEmail, $DllPath)
 
 Write-Step "run validation runner"
-dotnet run --project $projectFile -- @argsList
+dotnet build $projectFile
+$runnerDll = Join-Path $workDir "bin\Debug\net8.0\ValidateDriverRecordSharingPlugin.dll"
+dotnet $runnerDll @argsList
