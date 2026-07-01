@@ -24,13 +24,13 @@ namespace Betinhos.DriverRecordSharing
                 return;
             }
 
-            var currentRights = GetCurrentRights(target, principal);
+            var currentRights = GetCurrentExplicitRights(target, principal);
             var mergedRights = currentRights | requiredRights;
 
             if (currentRights == mergedRights)
             {
                 _tracing.Trace(
-                    "EnsureAccess skip target={0}:{1} principal={2}:{3} rights={4}",
+                    "EnsureAccess skip explicit target={0}:{1} principal={2}:{3} rights={4}",
                     target.LogicalName,
                     target.Id,
                     principal.LogicalName,
@@ -123,7 +123,7 @@ namespace Betinhos.DriverRecordSharing
                 return;
             }
 
-            var currentRights = GetCurrentRights(target, principal);
+            var currentRights = GetCurrentExplicitRights(target, principal);
             if (currentRights == AccessRights.None)
             {
                 _tracing.Trace(
@@ -206,7 +206,37 @@ namespace Betinhos.DriverRecordSharing
             return users;
         }
 
-        private AccessRights GetCurrentRights(EntityReference target, EntityReference principal)
+        private AccessRights GetCurrentExplicitRights(EntityReference target, EntityReference principal)
+        {
+            var response = (RetrieveSharedPrincipalsAndAccessResponse)_service.Execute(
+                new RetrieveSharedPrincipalsAndAccessRequest
+                {
+                    Target = target
+                });
+
+            if (response?.PrincipalAccesses == null)
+            {
+                return AccessRights.None;
+            }
+
+            foreach (var item in response.PrincipalAccesses)
+            {
+                if (item?.Principal == null)
+                {
+                    continue;
+                }
+
+                if (item.Principal.LogicalName == principal.LogicalName &&
+                    item.Principal.Id == principal.Id)
+                {
+                    return item.AccessMask;
+                }
+            }
+
+            return AccessRights.None;
+        }
+
+        private AccessRights GetEffectiveRights(EntityReference target, EntityReference principal)
         {
             var response = (RetrievePrincipalAccessResponse)_service.Execute(new RetrievePrincipalAccessRequest
             {
@@ -219,7 +249,7 @@ namespace Betinhos.DriverRecordSharing
 
         private void VerifyRequiredAccess(EntityReference target, EntityReference principal, AccessRights requiredRights)
         {
-            var confirmedRights = GetCurrentRights(target, principal);
+            var confirmedRights = GetEffectiveRights(target, principal);
             if ((confirmedRights & requiredRights) == requiredRights)
             {
                 _tracing.Trace(
