@@ -296,6 +296,11 @@ namespace Betinhos.DriverRecordSharing
                 return;
             }
 
+            accessHelper.EnsureAccess(
+                employeeReference,
+                driver.UserReference,
+                PluginConfig.EmployeeSelfAccessRights);
+
             var services = ListServicesForEmployeeBackfill(service, context.PrimaryEntityId, tracing);
             tracing.Trace(
                 "HandleEmployeeEmailBackfill employeeId={0} userId={1} services={2}",

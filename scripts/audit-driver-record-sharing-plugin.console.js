@@ -923,7 +923,48 @@
     });
     const auditOptions = makeEmployeeAuditOptions(employeeResolution);
     const serviceIds = await listServiceIdsForEmployee(normalizedId);
-    const recordResults = [];
+    const expectedEmployeeUsers = uniqueById(
+      (employeeResolution?.users || []).map((user) => ({
+        id: user.id,
+        name: user.name || user.email || user.id,
+        email: user.email
+      }))
+    );
+    const employeeSelfResult = {
+      entity: CONFIG.tables.employee.logicalName,
+      recordId: normalizedId,
+      caseType: "employee_self",
+      label: "Funcionario",
+      checks: [],
+      issues: []
+    };
+
+    if (employeeResolution?.status && employeeResolution.status !== "resolved") {
+      employeeSelfResult.issues.push(
+        makeIssue(
+          employeeResolution.status === "missing_email" ? "warning" : "error",
+          CONFIG.tables.employee.logicalName,
+          normalizedId,
+          "identity",
+          `Funcionario ${employee.name || normalizedId} ficou em estado ${employeeResolution.status}.`,
+          employee.email || ""
+        )
+      );
+    }
+
+    const employeeShares = await getSharedPrincipals(CONFIG.tables.employee.logicalName, normalizedId);
+    employeeSelfResult.checks.push(
+      compareShares(
+        "employee_self",
+        CONFIG.tables.employee.logicalName,
+        normalizedId,
+        expectedEmployeeUsers,
+        employeeShares,
+        auditOptions
+      )
+    );
+
+    const recordResults = [employeeSelfResult];
 
     for (const serviceId of serviceIds) {
       try {
