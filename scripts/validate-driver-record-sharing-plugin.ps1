@@ -3,6 +3,10 @@ param(
 
   [string] $TechnicalUserEmail = "",
 
+  [string] $DllPath = "",
+
+  [switch] $SkipBuild,
+
   [switch] $GenerateOnly
 )
 
@@ -14,6 +18,21 @@ function Write-Step([string] $Message) {
 }
 
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
+$pluginProject = Join-Path $root "plugins\DriverRecordSharing\DriverRecordSharing.csproj"
+
+if (-not $DllPath) {
+  $DllPath = Join-Path $root "plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll"
+}
+
+if (-not $SkipBuild -and -not $GenerateOnly) {
+  Write-Step "build plugin"
+  dotnet build $pluginProject -c Release
+}
+
+if (-not $GenerateOnly -and -not (Test-Path -LiteralPath $DllPath)) {
+  throw "DLL nao encontrada: $DllPath"
+}
+
 $workDir = Join-Path $root ".tmp\validate-driver-record-sharing-plugin"
 
 New-Item -ItemType Directory -Force -Path $workDir | Out-Null
@@ -47,6 +66,7 @@ const string PreImageAlias = "pre";
 
 var environmentUrl = args.ElementAtOrDefault(0) ?? "https://orgf261ae8e.crm2.dynamics.com/";
 var technicalUserEmail = args.ElementAtOrDefault(1) ?? "";
+var dllPath = args.ElementAtOrDefault(2) ?? "";
 var failures = new List<string>();
 
 var specs = new[]
@@ -116,7 +136,7 @@ if (!service.IsReady)
 }
 
 Log("checando assembly");
-var assemblyRows = FindMany(service, "pluginassembly", new ColumnSet("pluginassemblyid", "name", "version", "isolationmode", "sourcetype"), ("name", AssemblyName));
+var assemblyRows = FindMany(service, "pluginassembly", new ColumnSet("pluginassemblyid", "name", "version", "isolationmode", "sourcetype", "content"), ("name", AssemblyName));
 if (assemblyRows.Count != 1)
 {
   Fail(failures, $"Assembly {AssemblyName}: esperado 1, encontrado {assemblyRows.Count}.");
@@ -131,6 +151,49 @@ else Ok("Assembly isolationmode Sandbox");
 if (sourceType != 0) Fail(failures, $"Assembly sourcetype esperado Database(0), atual {sourceType}.");
 else Ok("Assembly source Database");
 Ok($"Assembly encontrado version={assembly.GetAttributeValue<string>("version") ?? "<sem-versao>"} id={assembly.Id}");
+
+if (!string.IsNullOrWhiteSpace(dllPath))
+{
+  if (!File.Exists(dllPath))
+  {
+    Fail(failures, $"DLL local nao encontrada para comparar conteudo: {dllPath}");
+  }
+  else
+  {
+    var localHash = Sha256Hex(File.ReadAllBytes(dllPath));
+    var remoteContent = assembly.GetAttributeValue<string>("content") ?? "";
+    if (string.IsNullOrWhiteSpace(remoteContent))
+    {
+      Fail(failures, "Assembly publicado esta sem campo content para comparar SHA-256.");
+    }
+    else
+    {
+      byte[] remoteBytes;
+      try
+      {
+        remoteBytes = Convert.FromBase64String(remoteContent);
+      }
+      catch (FormatException ex)
+      {
+        Fail(failures, $"Assembly publicado tem content Base64 invalido: {ex.Message}");
+        remoteBytes = Array.Empty<byte>();
+      }
+
+      if (remoteBytes.Length > 0)
+      {
+        var remoteHash = Sha256Hex(remoteBytes);
+        if (!string.Equals(localHash, remoteHash, StringComparison.OrdinalIgnoreCase))
+        {
+          Fail(failures, $"Assembly content divergente. local sha256={localHash}; prod sha256={remoteHash}. Rode o registro novamente.");
+        }
+        else
+        {
+          Ok($"Assembly content confere com DLL local sha256={localHash}");
+        }
+      }
+    }
+  }
+}
 
 Log("checando plugintype");
 var typeRows = FindMany(service, "plugintype", new ColumnSet("plugintypeid", "typename", "pluginassemblyid"), ("typename", PluginTypeName));
@@ -300,6 +363,12 @@ static string ModeLabel(int? mode) => mode switch
   _ => mode.Value.ToString()
 };
 
+static string Sha256Hex(byte[] bytes)
+{
+  var hash = System.Security.Cryptography.SHA256.HashData(bytes);
+  return Convert.ToHexString(hash).ToLowerInvariant();
+}
+
 internal sealed record StepSpec(string Label, string PrimaryEntity, string Message, int Mode, string FilteringAttributes, string[] PreImageAttributes);
 '@
 
@@ -311,7 +380,7 @@ if ($GenerateOnly) {
   return
 }
 
-$argsList = @($EnvironmentUrl, $TechnicalUserEmail)
+$argsList = @($EnvironmentUrl, $TechnicalUserEmail, $DllPath)
 
 Write-Step "run validation runner"
 dotnet run --project $projectFile -- @argsList
