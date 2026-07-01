@@ -36,7 +36,7 @@ if (-not (Test-Path -LiteralPath $DllPath)) {
   throw "DLL nao encontrada: $DllPath"
 }
 
-$workDir = Join-Path $root ".tmp\register-driver-record-sharing-plugin"
+$workDir = Join-Path $root "scripts\.driver-record-sharing-runners\register"
 New-Item -ItemType Directory -Force -Path $workDir | Out-Null
 
 $projectFile = Join-Path $workDir "RegisterDriverRecordSharingPlugin.csproj"
