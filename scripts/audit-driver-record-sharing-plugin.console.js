@@ -8,6 +8,7 @@
  * Comandos depois de colar:
  *   await window.DriverRecordSharingAudit.auditCurrentForm()
  *   await window.DriverRecordSharingAudit.auditRecord("cr40f_reservadeveculos", "GUID")
+ *   await window.DriverRecordSharingAudit.auditEmployee("GUID_FUNCIONARIO")
  *   await window.DriverRecordSharingAudit.runAll({ sampleSizePerEntity: 5 })
  *
  * O script verifica:
@@ -17,6 +18,9 @@
  * - problemas de identidade: email vazio, systemuser ausente, duplicado
  * - shares faltando
  * - shares sobrando
+ *
+ * auditEmployee valida apenas o usuario daquele funcionario. auditRecord/runAll
+ * validam o conjunto completo de usuarios esperados para cada registro.
  */
 (async () => {
   if (!window.Xrm?.Utility?.getGlobalContext) {
@@ -626,15 +630,28 @@
     };
   }
 
-  function compareShares(scope, targetEntity, targetId, expectedUsers, shareSet) {
+  function filterExpectedUsersForScope(expectedUsers, options) {
     const expected = uniqueById(expectedUsers || []);
-    const actualUsers = uniqueById((shareSet?.users || []).map((item) => ({
+    const expectedUserIds = options?.expectedUserIds || null;
+    if (!expectedUserIds?.size) {
+      return expected;
+    }
+
+    return expected.filter((item) => expectedUserIds.has(cleanGuid(item.id)));
+  }
+
+  function compareShares(scope, targetEntity, targetId, expectedUsers, shareSet, options) {
+    const expected = filterExpectedUsersForScope(expectedUsers, options);
+    const allActualUsers = uniqueById((shareSet?.users || []).map((item) => ({
       id: item.principalId,
       principalId: item.principalId,
       principalName: item.principalName,
       principalType: item.principalType,
       accessRightsMask: item.accessRightsMask
     })));
+    const actualUsers = options?.ignoreUnexpectedUsers
+      ? allActualUsers.filter((item) => expected.some((expectedUser) => sameGuid(expectedUser.id, item.principalId)))
+      : allActualUsers;
 
     const missingIds = setDifference(
       expected.map((item) => item.id),
@@ -647,7 +664,7 @@
 
     const missingUsers = expected.filter((item) => missingIds.some((missingId) => sameGuid(missingId, item.id)));
     const unexpectedUsers = actualUsers.filter((item) => unexpectedIds.some((unexpectedId) => sameGuid(unexpectedId, item.principalId)));
-    const nonUserShares = shareSet?.nonUsers || [];
+    const nonUserShares = options?.ignoreUnexpectedUsers ? [] : shareSet?.nonUsers || [];
 
     let status = "ok";
     if (missingUsers.length > 0) {
@@ -669,7 +686,7 @@
     };
   }
 
-  async function buildDirectRecordAudit(entityConfig, recordId) {
+  async function buildDirectRecordAudit(entityConfig, recordId, options) {
     const meta = await getEntityMeta(entityConfig.logicalName);
     const columns = [...entityConfig.driverLookups];
     if (entityConfig.includeServiceHierarchy) {
@@ -720,7 +737,7 @@
     );
 
     const mainShares = await getSharedPrincipals(entityConfig.logicalName, recordId);
-    result.checks.push(compareShares("main", entityConfig.logicalName, recordId, expectedUsers, mainShares));
+    result.checks.push(compareShares("main", entityConfig.logicalName, recordId, expectedUsers, mainShares, options));
 
     if (!entityConfig.includeServiceHierarchy) {
       return result;
@@ -730,7 +747,7 @@
     if (maintenanceLookup) {
       const maintenanceShares = await getSharedPrincipals(CONFIG.tables.maintenance.logicalName, maintenanceLookup.id);
       result.checks.push(
-        compareShares("maintenance", CONFIG.tables.maintenance.logicalName, maintenanceLookup.id, expectedUsers, maintenanceShares)
+        compareShares("maintenance", CONFIG.tables.maintenance.logicalName, maintenanceLookup.id, expectedUsers, maintenanceShares, options)
       );
     }
 
@@ -738,26 +755,26 @@
     if (requesterLookup) {
       const allowedUsers = await getAllowedUsersForPassenger(requesterLookup.id);
       const requesterShares = await getSharedPrincipals(CONFIG.tables.passenger.logicalName, requesterLookup.id);
-      result.checks.push(compareShares("requester", CONFIG.tables.passenger.logicalName, requesterLookup.id, allowedUsers, requesterShares));
+      result.checks.push(compareShares("requester", CONFIG.tables.passenger.logicalName, requesterLookup.id, allowedUsers, requesterShares, options));
     }
 
     const servicePassengers = await listServicePassengersByService(recordId);
     for (const link of servicePassengers) {
       const linkShares = await getSharedPrincipals(CONFIG.servicePassenger.logicalName, link.id);
-      result.checks.push(compareShares("service_passenger_link", CONFIG.servicePassenger.logicalName, link.id, expectedUsers, linkShares));
+      result.checks.push(compareShares("service_passenger_link", CONFIG.servicePassenger.logicalName, link.id, expectedUsers, linkShares, options));
     }
 
     const uniquePassengers = uniqueById(servicePassengers.map((item) => item.passenger).filter(Boolean));
     for (const passenger of uniquePassengers) {
       const allowedUsers = await getAllowedUsersForPassenger(passenger.id);
       const passengerShares = await getSharedPrincipals(CONFIG.tables.passenger.logicalName, passenger.id);
-      result.checks.push(compareShares("passenger", CONFIG.tables.passenger.logicalName, passenger.id, allowedUsers, passengerShares));
+      result.checks.push(compareShares("passenger", CONFIG.tables.passenger.logicalName, passenger.id, allowedUsers, passengerShares, options));
     }
 
     return result;
   }
 
-  async function buildServicePassengerAudit(recordId) {
+  async function buildServicePassengerAudit(recordId, options) {
     const record = await retrieveRecord(CONFIG.servicePassenger.logicalName, recordId, [
       "cr40f_servicosporpassageiroid",
       CONFIG.servicePassenger.serviceLookup,
@@ -778,12 +795,12 @@
     };
 
     const linkShares = await getSharedPrincipals(CONFIG.servicePassenger.logicalName, recordId);
-    result.checks.push(compareShares("service_passenger_link", CONFIG.servicePassenger.logicalName, recordId, serviceState.drivers, linkShares));
+    result.checks.push(compareShares("service_passenger_link", CONFIG.servicePassenger.logicalName, recordId, serviceState.drivers, linkShares, options));
 
     if (passengerLookup) {
       const allowedUsers = await getAllowedUsersForPassenger(passengerLookup.id);
       const passengerShares = await getSharedPrincipals(CONFIG.tables.passenger.logicalName, passengerLookup.id);
-      result.checks.push(compareShares("passenger", CONFIG.tables.passenger.logicalName, passengerLookup.id, allowedUsers, passengerShares));
+      result.checks.push(compareShares("passenger", CONFIG.tables.passenger.logicalName, passengerLookup.id, allowedUsers, passengerShares, options));
     }
 
     return result;
@@ -873,6 +890,14 @@
       CONFIG.tables.employee.name,
       CONFIG.tables.employee.email
     ]);
+    const employeeResolution = await resolveEmployee({
+      id: normalizedId,
+      name: employee[CONFIG.tables.employee.name] || normalizedId
+    });
+    const auditOptions = {
+      expectedUserIds: new Set((employeeResolution?.users || []).map((user) => cleanGuid(user.id)).filter(Boolean)),
+      ignoreUnexpectedUsers: true
+    };
 
     const serviceIds = await listServiceIdsForEmployee(normalizedId);
     console.log(
@@ -880,10 +905,22 @@
         `<${employee[CONFIG.tables.employee.email] || "sem email"}>: ${serviceIds.length} servico(s) no escopo do plugin.`
     );
 
+    if (employeeResolution?.status !== "resolved") {
+      console.warn(
+        `[DriverRecordSharingAudit] Funcionario ${employee[CONFIG.tables.employee.name] || normalizedId} ` +
+          `nao resolveu para usuario ativo unico: ${employeeResolution?.status || "unknown"}.`
+      );
+    } else {
+      console.log(
+        `[DriverRecordSharingAudit] auditEmployee limitado ao usuario ` +
+          `${employeeResolution.users[0].name || employeeResolution.users[0].email || employeeResolution.users[0].id}.`
+      );
+    }
+
     const results = [];
     for (const serviceId of serviceIds) {
       try {
-        results.push(await buildDirectRecordAudit(CONFIG.supportedDirectEntities[0], serviceId));
+        results.push(await buildDirectRecordAudit(CONFIG.supportedDirectEntities[0], serviceId, auditOptions));
       } catch (error) {
         results.push({
           entity: CONFIG.tables.service.logicalName,
