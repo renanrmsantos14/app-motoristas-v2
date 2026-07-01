@@ -84,7 +84,13 @@
         id: "cr40f_reservadeveculosid",
         driver: "cr40f_motorista",
         maintenance: "cr40f_om",
-        requester: "cr40f_solicitante"
+        requester: "cr40f_solicitante",
+        startDate: "cr40f_dataehorriodesada",
+        programmed: "new_foiprogramado",
+        exchange: "cr40f_ot",
+        category: "new_categoriadoitem",
+        backfillDaysBack: 45,
+        backfillCategories: [100000000, 100000001]
       },
       maintenance: {
         logicalName: "cr40f_manutencoes",
@@ -794,6 +800,42 @@
     return rows.map((row) => cleanGuid(row[meta.primaryIdAttribute])).filter(Boolean);
   }
 
+  async function listServiceIdsForEmployee(employeeId) {
+    const normalizedId = cleanGuid(employeeId);
+    if (!normalizedId) {
+      throw new Error("auditEmployee exige GUID valido do funcionario.");
+    }
+
+    const start = new Date();
+    start.setUTCHours(0, 0, 0, 0);
+    start.setUTCDate(start.getUTCDate() - CONFIG.tables.service.backfillDaysBack);
+
+    const categories = CONFIG.tables.service.backfillCategories || [];
+    const categoryConditions = categories
+      .map((value) => `<condition attribute="${CONFIG.tables.service.category}" operator="eq" value="${value}" />`)
+      .join("");
+
+    const fetch = [
+      "<fetch version=\"1.0\" mapping=\"logical\">",
+      `<entity name="${CONFIG.tables.service.logicalName}">`,
+      `<attribute name="${CONFIG.tables.service.id}" />`,
+      `<attribute name="${CONFIG.tables.service.startDate}" />`,
+      "<filter type=\"and\">",
+      `<condition attribute="${CONFIG.tables.service.driver}" operator="eq" value="${escapeXml(normalizedId)}" />`,
+      `<condition attribute="${CONFIG.tables.service.startDate}" operator="on-or-after" value="${start.toISOString()}" />`,
+      `<condition attribute="${CONFIG.tables.service.programmed}" operator="eq" value="1" />`,
+      `<condition attribute="${CONFIG.tables.service.exchange}" operator="null" />`,
+      categories.length ? `<filter type="or">${categoryConditions}</filter>` : "",
+      "</filter>",
+      `<order attribute="${CONFIG.tables.service.startDate}" descending="false" />`,
+      "</entity>",
+      "</fetch>"
+    ].join("");
+
+    const rows = await fetchXml(CONFIG.tables.service.logicalName, fetch);
+    return rows.map((row) => cleanGuid(row[CONFIG.tables.service.id])).filter(Boolean);
+  }
+
   async function auditRecord(logicalName, recordId) {
     const normalizedEntity = String(logicalName || "").trim().toLowerCase();
     const normalizedId = cleanGuid(recordId);
@@ -812,6 +854,45 @@
     }
 
     const report = finalizeReport([result]);
+    printReport(report);
+    return report;
+  }
+
+  async function auditEmployee(employeeId) {
+    const normalizedId = cleanGuid(employeeId);
+    if (!normalizedId) {
+      throw new Error("auditEmployee exige GUID valido do funcionario.");
+    }
+
+    const employee = await retrieveRecord(CONFIG.tables.employee.logicalName, normalizedId, [
+      CONFIG.tables.employee.id,
+      CONFIG.tables.employee.name,
+      CONFIG.tables.employee.email
+    ]);
+
+    const serviceIds = await listServiceIdsForEmployee(normalizedId);
+    console.log(
+      `[DriverRecordSharingAudit] Funcionario ${employee[CONFIG.tables.employee.name] || normalizedId} ` +
+        `<${employee[CONFIG.tables.employee.email] || "sem email"}>: ${serviceIds.length} servico(s) no escopo do plugin.`
+    );
+
+    const results = [];
+    for (const serviceId of serviceIds) {
+      try {
+        results.push(await buildDirectRecordAudit(CONFIG.supportedDirectEntities[0], serviceId));
+      } catch (error) {
+        results.push({
+          entity: CONFIG.tables.service.logicalName,
+          recordId: cleanGuid(serviceId),
+          caseType: "direct",
+          label: "Servico",
+          checks: [],
+          issues: [makeIssue("error", CONFIG.tables.service.logicalName, serviceId, "runtime", String(error?.message || error), "employee service audit failed")]
+        });
+      }
+    }
+
+    const report = finalizeReport(results);
     printReport(report);
     return report;
   }
@@ -1095,6 +1176,7 @@
     config: CONFIG,
     runAll,
     auditCurrentForm,
+    auditEmployee,
     auditRecord,
     getCurrentFormTarget
   };
@@ -1102,6 +1184,7 @@
   console.log("DriverRecordSharingAudit carregado.");
   console.log("Uso rapido:");
   console.log("  await window.DriverRecordSharingAudit.auditCurrentForm()");
+  console.log("  await window.DriverRecordSharingAudit.auditEmployee('GUID_FUNCIONARIO')");
   console.log("  await window.DriverRecordSharingAudit.auditRecord('cr40f_reservadeveculos', 'GUID')");
   console.log("  await window.DriverRecordSharingAudit.runAll({ sampleSizePerEntity: 5 })");
 })();
