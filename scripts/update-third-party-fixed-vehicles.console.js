@@ -33,7 +33,8 @@
     { motorista: "Leonardo Rocha", placa: "FCF3A04" },
     { motorista: "Lorran Lima Amorim Alves", placa: "GDP2G67" },
     { motorista: "Marcelo Rabelo", placa: "GDP2G67" },
-    { motorista: "Ronaldo", placa: "EXJ5A23" }
+    { motorista: "Ronaldo", placa: "EXJ5A23" },
+    { motorista: "Robson dos Santos", placa: "GGR4D15" }
   ];
 
   const SERVICE_ENTITY_SET = "cr40f_reservadeveculoses";
