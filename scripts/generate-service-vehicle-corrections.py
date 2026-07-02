@@ -252,6 +252,8 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
  * - consulta todos os servicos pelo GUID via Web API, sem abrir registro um por um;
  * - usa o motorista atual do lookup cr40f_motorista;
  * - calcula a placa pelo rastreador no horario atual do servico;
+ * - se o Dataverse esta sem veiculo, preenche com a placa do rastreador;
+ * - se o Dataverse ja tem veiculo diferente do rastreador, alerta sem sobrescrever;
  * - se motorista nao existe no rastreador, ou se ha ambiguidade, nao mexe.
  *
  * Uso:
@@ -303,6 +305,7 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
   }};
 
   const vehicleByPlate = new Map();
+  const vehicleById = new Map();
   const driverNameById = new Map();
   const actions = [];
   const simpleList = [];
@@ -315,8 +318,9 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
     agendaDriverMismatch: 0,
     resolvedVehicles: 0,
     alreadyCorrect: 0,
-    dryRunWouldUpdate: 0,
-    updated: 0,
+    dryRunWouldFillMissingVehicle: 0,
+    missingVehiclesFilled: 0,
+    divergenceAlerts: 0,
     skippedServiceNumberMismatch: 0,
     skippedNoLiveDriver: 0,
     skippedLiveDriverNotInTracker: 0,
@@ -446,6 +450,22 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
     return resolved;
   }}
 
+  async function resolveVehicleById(vehicleId) {{
+    const key = cleanGuid(vehicleId);
+    if (!key) return {{ id: "", plate: "" }};
+    if (vehicleById.has(key)) return vehicleById.get(key);
+    const record = await request(
+      "GET",
+      `/${{VEHICLE_ENTITY_SET}}(${{key}})?$select=${{VEHICLE_ID_FIELD}},${{VEHICLE_PLATE_FIELD}}`
+    );
+    const resolved = {{
+      id: cleanGuid(record?.[VEHICLE_ID_FIELD]),
+      plate: String(record?.[VEHICLE_PLATE_FIELD] || "").trim().toUpperCase()
+    }};
+    vehicleById.set(key, resolved);
+    return resolved;
+  }}
+
   async function readService(entry) {{
     const id = cleanGuid(entry.serviceId);
     return request(
@@ -548,15 +568,9 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
       }}
 
       const currentVehicleId = cleanGuid(service?.[SERVICE_VEHICLE_LOOKUP]);
+      const currentVehicle = await resolveVehicleById(currentVehicleId);
       if (currentVehicleId === vehicle.id) {{
         summary.alreadyCorrect += 1;
-        addSimpleRow(
-          entry.serviceNumber,
-          formatLocalDate(serviceDate),
-          liveDriverName,
-          service?.[VEHICLE_FORMATTED] || match.plate,
-          match.plate
-        );
         addAction({{
           action: "already_correct",
           serviceNumber: entry.serviceNumber,
@@ -567,8 +581,31 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
         continue;
       }}
 
+      if (currentVehicleId) {{
+        summary.divergenceAlerts += 1;
+        addSimpleRow(
+          entry.serviceNumber,
+          formatLocalDate(serviceDate),
+          liveDriverName,
+          currentVehicle.plate || service?.[VEHICLE_FORMATTED] || "",
+          match.plate
+        );
+        addAction({{
+          action: "divergence_only",
+          serviceNumber: entry.serviceNumber,
+          serviceId: entry.serviceId,
+          liveDriverName,
+          currentVehicle: currentVehicle.plate || service?.[VEHICLE_FORMATTED] || "",
+          trackerVehicle: match.plate,
+          serviceDate: formatLocalDate(serviceDate),
+          trackerWindowStart: match.window.start,
+          trackerWindowEnd: match.window.end
+        }});
+        continue;
+      }}
+
       const action = {{
-        action: DRY_RUN ? "would_update" : "updated",
+        action: DRY_RUN ? "would_fill_missing_vehicle" : "filled_missing_vehicle",
         serviceNumber: entry.serviceNumber,
         serviceId: entry.serviceId,
         liveDriverName,
@@ -583,7 +620,7 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
       }};
 
       if (DRY_RUN) {{
-        summary.dryRunWouldUpdate += 1;
+        summary.dryRunWouldFillMissingVehicle += 1;
         addSimpleRow(
           entry.serviceNumber,
           formatLocalDate(serviceDate),
@@ -598,7 +635,7 @@ def write_console_script(services, tracker_windows_by_driver, tracker_summary):
       await request("PATCH", `/${{SERVICE_ENTITY_SET}}(${{cleanGuid(entry.serviceId)}})`, {{
         [`${{SERVICE_VEHICLE_NAV}}@odata.bind`]: `/${{VEHICLE_ENTITY_SET}}(${{vehicle.id}})`
       }});
-      summary.updated += 1;
+      summary.missingVehiclesFilled += 1;
       addSimpleRow(
         entry.serviceNumber,
         formatLocalDate(serviceDate),
