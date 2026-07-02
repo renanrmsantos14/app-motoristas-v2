@@ -1,2 +1,5 @@
 node_modules
 scripts/.driver-record-sharing-runners/
+outputs/service-vehicle-tracker-*.json
+outputs/service-vehicle-tracker-*.csv
+scripts/update-service-vehicles-from-tracker.console.js
