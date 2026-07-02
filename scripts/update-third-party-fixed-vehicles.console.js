@@ -20,7 +20,19 @@
   const FIXED_SUPPLIER_VEHICLES = [
     { motorista: "Eduardo Cristiano de Oliveira", placa: "EZC9F51" },
     { motorista: "Gilberto Fernandes Garcia", placa: "TJC5D76" },
-    { motorista: "Jailton Pinheiro Oliveira", placa: "FPO8E53" }
+    { motorista: "Jailton Pinheiro Oliveira", placa: "FPO8E53" },
+    { motorista: "Altino Luiz Germano de Faria", placa: "UDY9B39" },
+    { motorista: "Anderson Vilela", placa: "GHD4I08" },
+    { motorista: "Cristiano Avelino", placa: "TCI5I44" },
+    { motorista: "Edson Cosme", placa: "RMQ9J24" },
+    { motorista: "Fabio Honorio", placa: "GCL9J98" },
+    { motorista: "Fábio Ramos", placa: "RJD1E61" },
+    { motorista: "Ismael Neto", placa: "UDO2F39" },
+    { motorista: "Johnatas de Oliveira Lima", placa: "RUB3F07" },
+    { motorista: "Leonardo Rocha", placa: "FCF3A04" },
+    { motorista: "Lorran Lima Amorim Alves", placa: "GDP2G67" },
+    { motorista: "Marcelo Rabelo", placa: "GDP2G67" },
+    { motorista: "Ronaldo", placa: "EXJ5A23" }
   ];
 
   const SERVICE_ENTITY_SET = "cr40f_reservadeveculoses";
