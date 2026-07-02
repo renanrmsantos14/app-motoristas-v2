@@ -3,7 +3,7 @@ import type { AgendaItem, DetailAction, DetailData, DetailField, MaintenancePhot
 import type { CollisionLookupNavigationNames, CollisionPhotoKind } from "./collisions";
 import {
   buildExpenseCreatePayload,
-  findExpenseCategoryByName,
+  findMaintenanceExpenseCategory,
   findExpensePaymentMethodByName,
   mapMaintenancePaymentToExpensePaymentNames,
   shouldUploadMaintenanceExpenseInvoices,
@@ -3599,7 +3599,7 @@ async function upsertMaintenanceExpense({
     loadExpenseLookupNavigationNamesRemote({ includeVeiculo: true, includeManutencao: true })
   ]);
 
-  const category = findExpenseCategoryByName(referenceData, ["Manutencao", "Manutenção"]);
+  const category = findMaintenanceExpenseCategory(referenceData);
   const paymentMethod = findExpensePaymentMethodByName(
     referenceData,
     mapMaintenancePaymentToExpensePaymentNames(getFieldValue(fields, "Forma de Pagamento"))

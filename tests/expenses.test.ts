@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildExpenseCreatePayload,
+  findMaintenanceExpenseCategory,
   findExpensePaymentMethodByName,
   mapMaintenancePaymentToExpensePaymentNames,
   matchesExpenseCitySearch,
@@ -264,6 +265,18 @@ test("mapeia pagamento de manutencao para formas existentes de despesas", () => 
   assert.equal(findExpensePaymentMethodByName(referenceData, pedidoNames)?.id, "pay-faturado");
   assert.equal(findExpensePaymentMethodByName(referenceData, pixNames)?.id, "pay-particular-reembolso");
   assert.deepEqual(mapMaintenancePaymentToExpensePaymentNames("Cart\u00e3o de cr\u00e9dito")[0], "Cartao de credito");
+});
+
+test("localiza categoria de manutencao mesmo com nome complementar", () => {
+  const category = findMaintenanceExpenseCategory({
+    ...referenceData,
+    categories: [
+      { id: "cat-outros", name: "Outros", order: 130, exigeVeiculo: false, exigeReserva: false, exigeKm: false, exigeLitros: false },
+      { id: "cat-manutencao-veiculo", name: "Manuten\u00e7\u00e3o de Ve\u00edculo", order: 120, exigeVeiculo: true, exigeReserva: false, exigeKm: false, exigeLitros: false }
+    ]
+  });
+
+  assert.equal(category?.id, "cat-manutencao-veiculo");
 });
 
 test("retry de manutencao reutiliza gasto completo sem reenviar anexos", () => {

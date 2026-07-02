@@ -12000,7 +12000,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.604","builtAt":"2026-07-01T16:39:15.703Z","builtAtLabel":"01/07/2026, 13:39"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.604","builtAt":"2026-07-02T13:30:35.790Z","builtAtLabel":"02/07/2026, 10:30"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -57635,6 +57635,9 @@ select,
     const wanted = new Set(names.map(normalizeText));
     return referenceData.categories.find((category) => wanted.has(normalizeText(category.name))) ?? null;
   }
+  function findMaintenanceExpenseCategory(referenceData) {
+    return findExpenseCategoryByName(referenceData, ["Manutencao", "Manuten\xE7\xE3o"]) ?? referenceData.categories.find((category) => normalizeText(category.name).includes("manutencao")) ?? null;
+  }
   function findExpensePaymentMethodByName(referenceData, names) {
     const wanted = new Set(names.map(normalizeText));
     return referenceData.paymentMethods.find((method) => wanted.has(normalizeText(method.name))) ?? null;
@@ -60941,7 +60944,7 @@ ${text}`);
       loadExpenseReferenceDataRemote(),
       loadExpenseLookupNavigationNamesRemote({ includeVeiculo: true, includeManutencao: true })
     ]);
-    const category = findExpenseCategoryByName(referenceData, ["Manutencao", "Manuten\xE7\xE3o"]);
+    const category = findMaintenanceExpenseCategory(referenceData);
     const paymentMethod = findExpensePaymentMethodByName(
       referenceData,
       mapMaintenancePaymentToExpensePaymentNames(getFieldValue(fields, "Forma de Pagamento"))

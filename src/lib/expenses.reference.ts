@@ -51,6 +51,12 @@ export function findExpenseCategoryByName(referenceData: ExpenseReferenceData, n
   return referenceData.categories.find((category) => wanted.has(normalizeText(category.name))) ?? null;
 }
 
+export function findMaintenanceExpenseCategory(referenceData: ExpenseReferenceData) {
+  return findExpenseCategoryByName(referenceData, ["Manutencao", "Manutenção"]) ??
+    referenceData.categories.find((category) => normalizeText(category.name).includes("manutencao")) ??
+    null;
+}
+
 export function findExpensePaymentMethodByName(referenceData: ExpenseReferenceData, names: string[]) {
   const wanted = new Set(names.map(normalizeText));
   return referenceData.paymentMethods.find((method) => wanted.has(normalizeText(method.name))) ?? null;
