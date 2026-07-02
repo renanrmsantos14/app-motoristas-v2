@@ -4,6 +4,7 @@
  * Regra:
  * - resolve fornecedor por cr40f_nomecompleto;
  * - resolve veiculo por cr40f_placa;
+ * - se o veiculo nao existe, cria com placa e Categoria do Veiculo = Terceiro;
  * - busca todos os servicos da Geral com aquele motorista;
  * - se o servico esta sem veiculo, preenche com o veiculo fixo;
  * - se ja tem veiculo diferente, alerta na lista e nao sobrescreve;
@@ -46,6 +47,8 @@
   const SERVICE_VEHICLE_NAV = "cr40f_Veiculo";
   const VEHICLE_ID_FIELD = "cr40f_veiculosid";
   const VEHICLE_PLATE_FIELD = "cr40f_placa";
+  const VEHICLE_CATEGORY_FIELD = "new_categoriadoveiculo";
+  const VEHICLE_CATEGORY_THIRD_PARTY = 100000001;
   const EMPLOYEE_ID_FIELD = "cr40f_funcionariosid";
   const EMPLOYEE_NAME_FIELD = "cr40f_nomecompleto";
   const VEHICLE_FORMATTED = `${SERVICE_VEHICLE_LOOKUP}@OData.Community.Display.V1.FormattedValue`;
@@ -76,6 +79,7 @@
     suppliersConfigured: FIXED_SUPPLIER_VEHICLES.length,
     suppliersResolved: 0,
     vehiclesResolved: 0,
+    vehiclesCreated: 0,
     servicesScanned: 0,
     alreadyCorrect: 0,
     dryRunWouldFillMissingVehicle: 0,
@@ -161,9 +165,10 @@
   }
 
   async function resolveVehicleByPlate(plate) {
+    const normalizedPlate = String(plate || "").replace(/\s+/g, "").trim().toUpperCase();
     const result = await request(
       "GET",
-      `/${VEHICLE_ENTITY_SET}?$select=${VEHICLE_ID_FIELD},${VEHICLE_PLATE_FIELD}&$filter=${VEHICLE_PLATE_FIELD} eq '${escapeODataText(plate)}'&$top=2`
+      `/${VEHICLE_ENTITY_SET}?$select=${VEHICLE_ID_FIELD},${VEHICLE_PLATE_FIELD}&$filter=${VEHICLE_PLATE_FIELD} eq '${escapeODataText(normalizedPlate)}'&$top=2`
     );
     const rows = result?.value || [];
     if (rows.length === 1) {
@@ -172,6 +177,30 @@
     }
     if (!rows.length) return { ok: false, reason: "not_found" };
     return { ok: false, reason: "duplicate", count: rows.length };
+  }
+
+  async function createThirdPartyVehicleByPlate(plate) {
+    const normalizedPlate = String(plate || "").replace(/\s+/g, "").trim().toUpperCase();
+    if (!normalizedPlate) throw new Error("Placa vazia para criacao de veiculo.");
+
+    actions.push({
+      action: DRY_RUN ? "would_create_third_party_vehicle" : "created_third_party_vehicle",
+      placa: normalizedPlate,
+      categoryField: VEHICLE_CATEGORY_FIELD,
+      categoryValue: VEHICLE_CATEGORY_THIRD_PARTY
+    });
+
+    if (DRY_RUN) {
+      return { ok: false, reason: "dry_run_created_vehicle" };
+    }
+
+    await request("POST", `/${VEHICLE_ENTITY_SET}`, {
+      [VEHICLE_PLATE_FIELD]: normalizedPlate,
+      [VEHICLE_CATEGORY_FIELD]: VEHICLE_CATEGORY_THIRD_PARTY
+    });
+    summary.vehiclesCreated += 1;
+
+    return resolveVehicleByPlate(normalizedPlate);
   }
 
   async function resolveVehicleById(vehicleId) {
@@ -210,12 +239,17 @@
         continue;
       }
 
-      const vehicle = await resolveVehicleByPlate(item.placa);
+      let vehicle = await resolveVehicleByPlate(item.placa);
       if (!vehicle.ok) {
-        if (vehicle.reason === "duplicate") summary.skippedVehicleDuplicate += 1;
-        else summary.skippedVehicleNotFound += 1;
-        addIssue(`vehicle_${vehicle.reason}`, { motorista: item.motorista, placa: item.placa, count: vehicle.count || 0 });
-        continue;
+        if (vehicle.reason === "not_found") {
+          vehicle = await createThirdPartyVehicleByPlate(item.placa);
+        }
+        if (!vehicle.ok) {
+          if (vehicle.reason === "duplicate") summary.skippedVehicleDuplicate += 1;
+          else summary.skippedVehicleNotFound += 1;
+          addIssue(`vehicle_${vehicle.reason}`, { motorista: item.motorista, placa: item.placa, count: vehicle.count || 0 });
+          continue;
+        }
       }
 
       const services = await loadServicesByDriver(employee.id);
