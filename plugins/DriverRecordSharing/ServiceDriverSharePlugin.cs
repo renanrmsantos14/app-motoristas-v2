@@ -251,6 +251,11 @@ namespace Betinhos.DriverRecordSharing
 
             if (definition.EntityName == PluginConfig.ServiceTable)
             {
+                MarkManualVehicleOriginIfNeeded(
+                    context,
+                    service,
+                    target,
+                    tracing);
                 serviceVehicleSynchronizer.SyncService(context.PrimaryEntityId);
             }
             else if (definition.EntityName == PluginConfig.ExchangeTable)
@@ -758,10 +763,37 @@ namespace Betinhos.DriverRecordSharing
             {
                 attributes.Add(PluginConfig.ServiceRequesterLookup);
                 attributes.Add(PluginConfig.ServiceStartDate);
+                attributes.Add(PluginConfig.ServiceVehicleLookup);
                 attributes.Add(PluginConfig.ServiceVehicleOrigin);
             }
 
             return attributes.ToArray();
+        }
+
+        private static void MarkManualVehicleOriginIfNeeded(
+            IPluginExecutionContext context,
+            IOrganizationService service,
+            Entity target,
+            ITracingService tracing)
+        {
+            if (context.MessageName != PluginConfig.CreateMessage &&
+                context.MessageName != PluginConfig.UpdateMessage)
+            {
+                return;
+            }
+
+            if (!target.Attributes.Contains(PluginConfig.ServiceVehicleLookup) ||
+                target.Attributes.Contains(PluginConfig.ServiceVehicleOrigin))
+            {
+                return;
+            }
+
+            var patch = new Entity(PluginConfig.ServiceTable, context.PrimaryEntityId);
+            patch[PluginConfig.ServiceVehicleOrigin] = new OptionSetValue(PluginConfig.ServiceVehicleOriginManual);
+            service.Update(patch);
+            tracing.Trace(
+                "MarkManualVehicleOriginIfNeeded set manual origin serviceId={0}.",
+                context.PrimaryEntityId);
         }
 
         private static Dictionary<Guid, ResolvedDriver> ResolveDriverSet(

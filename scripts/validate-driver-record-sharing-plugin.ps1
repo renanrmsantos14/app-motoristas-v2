@@ -73,7 +73,7 @@ var failures = new List<string>();
 var specs = new[]
 {
   new StepSpec("Servicos Create", "cr40f_reservadeveculos", "Create", 0, "", Array.Empty<string>()),
-  new StepSpec("Servicos Update", "cr40f_reservadeveculos", "Update", 0, "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,new_origemveiculo", new[] { "cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "new_origemveiculo" }),
+  new StepSpec("Servicos Update", "cr40f_reservadeveculos", "Update", 0, "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,cr40f_veiculo,new_origemveiculo", new[] { "cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "cr40f_veiculo", "new_origemveiculo" }),
   new StepSpec("Funcionarios Create", "cr40f_funcionarios", "Create", 0, "", Array.Empty<string>()),
   new StepSpec("Funcionarios Update", "cr40f_funcionarios", "Update", 0, "cr40f_emailmicrosoft", new[] { "cr40f_emailmicrosoft" }),
   new StepSpec("Servicos por passageiro Create", "cr40f_servicosporpassageiro", "Create", 1, "", Array.Empty<string>()),
