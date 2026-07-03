@@ -117,15 +117,15 @@ static void ExecuteActionWithRetry(Action action, string label, int maxAttempts 
 var specs = new[]
 {
   new StepSpec("Servicos Create", "cr40f_reservadeveculos", "Create", 0, "", Array.Empty<string>()),
-  new StepSpec("Servicos Update", "cr40f_reservadeveculos", "Update", 0, "cr40f_motorista,cr40f_solicitante", new[] { "cr40f_motorista", "cr40f_solicitante" }),
+  new StepSpec("Servicos Update", "cr40f_reservadeveculos", "Update", 0, "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,new_origemveiculo", new[] { "cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "new_origemveiculo" }),
   new StepSpec("Funcionarios Create", "cr40f_funcionarios", "Create", 0, "", Array.Empty<string>()),
   new StepSpec("Funcionarios Update", "cr40f_funcionarios", "Update", 0, "cr40f_emailmicrosoft", new[] { "cr40f_emailmicrosoft" }),
   new StepSpec("Servicos por passageiro Create", "cr40f_servicosporpassageiro", "Create", 1, "", Array.Empty<string>()),
   new StepSpec("Servicos por passageiro Update", "cr40f_servicosporpassageiro", "Update", 1, "cr40f_geral,cr40f_bancodedados", new[] { "cr40f_geral", "cr40f_bancodedados" }),
   new StepSpec("Trocas de carro Create", "cr40f_trocasdecarro", "Create", 0, "", Array.Empty<string>()),
-  new StepSpec("Trocas de carro Update", "cr40f_trocasdecarro", "Update", 0, "cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca", new[] { "cr40f_motorista1", "cr40f_motorista2", "cr40f_statusdatroca" }),
+  new StepSpec("Trocas de carro Update", "cr40f_trocasdecarro", "Update", 0, "cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca,cr40f_veiculo1antesdatroca,cr40f_veiculo2antesdatroca,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,new_tipodetroca", new[] { "cr40f_motorista1", "cr40f_motorista2", "cr40f_statusdatroca", "cr40f_veiculo1antesdatroca", "cr40f_veiculo2antesdatroca", "cr40f_iniciodajaneladetroca", "cr40f_fimdajaneladetroca", "new_tipodetroca" }),
   new StepSpec("Posse de veiculo Create", "new_possedeveiculo", "Create", 1, "", Array.Empty<string>()),
-  new StepSpec("Posse de veiculo Update", "new_possedeveiculo", "Update", 1, "new_motorista", new[] { "new_motorista" }),
+  new StepSpec("Posse de veiculo Update", "new_possedeveiculo", "Update", 1, "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse", new[] { "new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse" }),
   new StepSpec("Colisoes Create", "cr40f_colisao_v2", "Create", 1, "", Array.Empty<string>()),
   new StepSpec("Colisoes Update", "cr40f_colisao_v2", "Update", 1, "cr40f_motorista", new[] { "cr40f_motorista" }),
   new StepSpec("Recibos Create", "cr40f_recibos_v2", "Create", 1, "", Array.Empty<string>()),

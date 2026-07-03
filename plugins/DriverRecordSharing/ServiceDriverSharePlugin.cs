@@ -67,6 +67,7 @@ namespace Betinhos.DriverRecordSharing
                 var resolver = new DriverResolver(service, tracing);
                 var accessHelper = new DataverseAccessHelper(service, tracing);
                 var servicePassengerRepository = new ServicePassengerRepository(service, tracing);
+                var serviceVehicleSynchronizer = new ServiceVehicleSynchronizer(service, tracing);
 
                 if (context.PrimaryEntityName == PluginConfig.EmployeeTable)
                 {
@@ -112,6 +113,7 @@ namespace Betinhos.DriverRecordSharing
                     resolver,
                     accessHelper,
                     servicePassengerRepository,
+                    serviceVehicleSynchronizer,
                     tracing);
             }
             catch (InvalidPluginExecutionException ex)
@@ -139,6 +141,7 @@ namespace Betinhos.DriverRecordSharing
             DriverResolver resolver,
             DataverseAccessHelper accessHelper,
             ServicePassengerRepository servicePassengerRepository,
+            ServiceVehicleSynchronizer serviceVehicleSynchronizer,
             ITracingService tracing)
         {
             var hasUsablePreImage = true;
@@ -249,6 +252,19 @@ namespace Betinhos.DriverRecordSharing
                     resolver,
                     accessHelper,
                     tracing);
+            }
+
+            if (definition.EntityName == PluginConfig.ServiceTable)
+            {
+                serviceVehicleSynchronizer.SyncService(context.PrimaryEntityId);
+            }
+            else if (definition.EntityName == PluginConfig.ExchangeTable)
+            {
+                serviceVehicleSynchronizer.SyncServicesForExchangeChange(context.PrimaryEntityId, preImage);
+            }
+            else if (definition.EntityName == PluginConfig.VehiclePossessionTable)
+            {
+                serviceVehicleSynchronizer.SyncServicesForPossessionChange(context.PrimaryEntityId, preImage);
             }
 
             tracing.Trace(
@@ -692,12 +708,31 @@ namespace Betinhos.DriverRecordSharing
             if (definition?.EntityName == PluginConfig.ExchangeTable)
             {
                 columns.Add(PluginConfig.ExchangeStatus);
+                columns.Add(PluginConfig.ExchangeVehicle1Lookup);
+                columns.Add(PluginConfig.ExchangeVehicle2Lookup);
+                columns.Add(PluginConfig.ExchangeStartDate);
+                columns.Add(PluginConfig.ExchangeEndDate);
+                columns.Add(PluginConfig.ExchangeType);
+            }
+
+            if (definition?.EntityName == PluginConfig.VehiclePossessionTable)
+            {
+                columns.Add(PluginConfig.VehiclePossessionVehicleLookup);
+                columns.Add(PluginConfig.VehiclePossessionStartDate);
+                columns.Add(PluginConfig.VehiclePossessionEndDate);
+                columns.Add(PluginConfig.VehiclePossessionExchangeLookup);
             }
 
             if (definition?.IncludeServiceHierarchy == true)
             {
                 columns.Add(PluginConfig.ServiceMaintenanceLookup);
                 columns.Add(PluginConfig.ServiceRequesterLookup);
+                columns.Add(PluginConfig.ServiceStartDate);
+                columns.Add(PluginConfig.ServiceVehicleLookup);
+                columns.Add(PluginConfig.ServiceVehicleOrigin);
+                columns.Add(PluginConfig.ServiceProgrammedFlag);
+                columns.Add(PluginConfig.ServiceExchangeLookup);
+                columns.Add(PluginConfig.ServiceCategory);
             }
 
             return new ColumnSet(columns.ToArray());
@@ -710,11 +745,25 @@ namespace Betinhos.DriverRecordSharing
             if (definition?.EntityName == PluginConfig.ExchangeTable)
             {
                 attributes.Add(PluginConfig.ExchangeStatus);
+                attributes.Add(PluginConfig.ExchangeVehicle1Lookup);
+                attributes.Add(PluginConfig.ExchangeVehicle2Lookup);
+                attributes.Add(PluginConfig.ExchangeStartDate);
+                attributes.Add(PluginConfig.ExchangeEndDate);
+                attributes.Add(PluginConfig.ExchangeType);
+            }
+
+            if (definition?.EntityName == PluginConfig.VehiclePossessionTable)
+            {
+                attributes.Add(PluginConfig.VehiclePossessionVehicleLookup);
+                attributes.Add(PluginConfig.VehiclePossessionStartDate);
+                attributes.Add(PluginConfig.VehiclePossessionEndDate);
             }
 
             if (definition?.IncludeServiceHierarchy == true)
             {
                 attributes.Add(PluginConfig.ServiceRequesterLookup);
+                attributes.Add(PluginConfig.ServiceStartDate);
+                attributes.Add(PluginConfig.ServiceVehicleOrigin);
             }
 
             return attributes.ToArray();

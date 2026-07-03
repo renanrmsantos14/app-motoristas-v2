@@ -15,11 +15,17 @@ namespace Betinhos.DriverRecordSharing
         public const string ServiceMaintenanceLookup = "cr40f_om";
         public const string ServiceRequesterLookup = "cr40f_solicitante";
         public const string ServiceStartDate = "cr40f_dataehorriodesada";
+        public const string ServiceVehicleLookup = "cr40f_veiculo";
+        public const string ServiceVehicleOrigin = "new_origemveiculo";
+        public const int ServiceVehicleOriginAutomatic = 100000000;
+        public const int ServiceVehicleOriginManual = 100000001;
         public const string ServiceProgrammedFlag = "new_foiprogramado";
         public const string ServiceExchangeLookup = "cr40f_ot";
         public const string ServiceCategory = "new_categoriadoitem";
         public static readonly int[] ServiceBackfillCategories = { 100000000, 100000001 };
         public const int EmployeeBackfillDaysBack = 45;
+        public const int ServiceVehicleSyncDaysBack = 1;
+        public const int ServiceVehicleSyncDaysAhead = 90;
 
         public const string MaintenanceTable = "cr40f_manutencoes";
         public const string MaintenancePrimaryId = "cr40f_manutencoesid";
@@ -68,12 +74,25 @@ namespace Betinhos.DriverRecordSharing
         public const string ExchangePrimaryId = "cr40f_trocasdecarroid";
         public const string ExchangeDriver1Lookup = "cr40f_motorista1";
         public const string ExchangeDriver2Lookup = "cr40f_motorista2";
+        public const string ExchangeVehicle1Lookup = "cr40f_veiculo1antesdatroca";
+        public const string ExchangeVehicle2Lookup = "cr40f_veiculo2antesdatroca";
+        public const string ExchangeStartDate = "cr40f_iniciodajaneladetroca";
+        public const string ExchangeEndDate = "cr40f_fimdajaneladetroca";
         public const string ExchangeStatus = "cr40f_statusdatroca";
+        public const string ExchangeType = "new_tipodetroca";
         public const int ExchangeStatusProgrammed = 202410000;
+        public const int ExchangeStatusConfirmed = 100000001;
+        public const int ExchangeTypeSwap = 100000000;
+        public const int ExchangeTypeReturnToBase = 100000001;
+        public const int ExchangeTypeTakeFromBase = 100000002;
 
         public const string VehiclePossessionTable = "new_possedeveiculo";
         public const string VehiclePossessionPrimaryId = "new_possedeveiculoid";
         public const string VehiclePossessionDriverLookup = "new_motorista";
+        public const string VehiclePossessionVehicleLookup = "new_veiculo";
+        public const string VehiclePossessionStartDate = "new_iniciodaposse";
+        public const string VehiclePossessionEndDate = "new_fimdaposse";
+        public const string VehiclePossessionExchangeLookup = "new_trocadecarrorelacionada";
 
         public const string CollisionTable = "cr40f_colisao_v2";
         public const string CollisionPrimaryId = "cr40f_colisao_v2id";

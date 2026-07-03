@@ -86,7 +86,13 @@ const CATEGORY = {
 
 const EXCHANGE_STATUS = {
   programada: 202410000,
+  confirmada: 100000001,
   concluida: 202410001
+} as const;
+
+export const SERVICE_VEHICLE_ORIGIN = {
+  automatico: 100000000,
+  manual: 100000001
 } as const;
 
 const EXCHANGE_TYPE = {
@@ -231,7 +237,7 @@ const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> =
 };
 
 const GERAL_SELECT =
-  "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,modifiedon";
+  "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
 
 const MAINTENANCE_SELECT =
   "$select=cr40f_manutencoesid,cr40f_id,cr40f_descricao,cr40f_comentariosaomotorista,cr40f_graudamanutencao,cr40f_tipodoreparo,cr40f_status,cr40f_servicorealizado,cr40f_estabelecimento,cr40f_valor,cr40f_pagamento,_cr40f_placa_carro_value,_cr40f_realizado_por_nome_value,new_comentariosdocolaborador,cr40f_foto01,cr40f_linkdaevidencia,cr40f_foto03,new_linkdanotafiscal,new_linkdafotofinal1,new_linkdafotofinal2,new_linkdafotofinal3";
@@ -2911,7 +2917,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   dataverseLog("Janela da agenda calculada.", { start, end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
 
   const geralSelect =
-    "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,modifiedon";
+    "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
 
   const servicesResult = await retrieveMultiple(
     DATAVERSE.geral,
@@ -3262,7 +3268,10 @@ export async function saveVoucherRemote(payload: FinalizePayload) {
   payload.onProgress?.("Validando retorno do Flow.");
   assertFlowSuccess(flowResult, "FlowGerarVoucher");
   payload.onProgress?.("Atualizando status no Dataverse.");
+  payload.onProgress?.("Conferindo veiculo atual pela posse.");
+  const vehiclePatch = await buildCurrentPossessionVehiclePatchForService(dv.record);
   await updateOne(DATAVERSE.geral, dv.id, {
+    ...vehiclePatch,
     new_rascunhovoucher: null,
     cr40f_status: OPERATION_STATUS.concluido,
     new_datadefinalizacao: new Date().toISOString()
@@ -3319,12 +3328,56 @@ function mergeMotoristObservation(existingValue: unknown, observation: string) {
   return [managerText, motoristText].filter(Boolean).join("\n");
 }
 
+export function buildAutomaticServiceVehiclePatch(record: DataverseRecord | undefined, currentVehicleId: string) {
+  const vehicleId = cleanODataGuid(currentVehicleId);
+  if (!vehicleId || Number(record?.new_origemveiculo) === SERVICE_VEHICLE_ORIGIN.manual) return {};
+
+  const patch: Record<string, unknown> = {
+    new_origemveiculo: SERVICE_VEHICLE_ORIGIN.automatico
+  };
+  if (cleanODataGuid(record?._cr40f_veiculo_value) !== vehicleId) {
+    patch["cr40f_Veiculo@odata.bind"] = bind(DATAVERSE.veiculos, vehicleId);
+  }
+  return patch;
+}
+
+async function buildCurrentPossessionVehiclePatchForService(record: DataverseRecord | undefined) {
+  if (Number(record?.new_origemveiculo) === SERVICE_VEHICLE_ORIGIN.manual) return {};
+  const driverId = cleanODataGuid(record?._cr40f_motorista_value);
+  if (!driverId) return {};
+
+  const result = await retrieveMultiple(
+    DATAVERSE.posseVeiculos,
+    [
+      "$select=new_possedeveiculoid,_new_veiculo_value,new_iniciodaposse",
+      `$filter=_new_motorista_value eq ${driverId} and new_fimdaposse eq null`,
+      "$orderby=new_iniciodaposse desc",
+      "$top=2"
+    ].join("&")
+  );
+
+  if (result.entities.length === 0) {
+    dataverseWarn("Servico sem posse aberta para atualizar veiculo na finalizacao.", {
+      serviceId: record?.cr40f_id,
+      driverId
+    });
+    return {};
+  }
+  if (result.entities.length > 1) {
+    throw new Error("Motorista possui mais de uma posse de veiculo aberta. Corrija a tabela de posse antes de finalizar o servico.");
+  }
+
+  return buildAutomaticServiceVehiclePatch(record, result.entities[0]._new_veiculo_value);
+}
+
 export async function finalizeServiceRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
   if (!dv?.id) throw new Error("Serviço sem referência Dataverse.");
   dataverseLog("Finalização simples de serviço iniciada.", { detailId: payload.detail.id, dataverseId: dv.id });
   payload.onProgress?.("Atualizando serviço no Dataverse.");
+  const vehiclePatch = await buildCurrentPossessionVehiclePatchForService(dv.record);
   await updateOne(DATAVERSE.geral, dv.id, {
+    ...vehiclePatch,
     new_observacaofinal: mergeMotoristObservation(dv.record?.new_observacaofinal, getFieldValue(payload.fields, "Observação Final", "Observacao Final")),
     cr40f_status: OPERATION_STATUS.concluido,
     new_datadefinalizacao: new Date().toISOString()

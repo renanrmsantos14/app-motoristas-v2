@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildAutomaticServiceVehiclePatch,
   buildMaintenanceRequestAssignedVehiclesQuery,
   buildExchangeDisplay,
   buildMaintenanceRequestRecord,
@@ -8,6 +9,7 @@ import {
   buildReceiptEmailContent,
   getExchangeCompletionState,
   normalizeReceiptIdentifier,
+  SERVICE_VEHICLE_ORIGIN,
   shouldShowOpenExchangeForDriver
 } from "../src/lib/dataverse.ts";
 
@@ -104,6 +106,34 @@ test("fallback de veiculos da manutencao busca veiculo atual ou atribuido ao mot
     "statecode eq 0 and statuscode eq 1 and cr40f_statusdoveiculo eq 202410001 and (_cr40f_motoristaatual_value eq 22222222-2222-2222-2222-222222222222 or cr40f_veiculosid eq 11111111-1111-1111-1111-111111111111)"
   );
   assert.equal(params.get("$top"), "20");
+});
+
+test("patch automatico de veiculo da geral respeita origem manual", () => {
+  const patch = buildAutomaticServiceVehiclePatch(
+    {
+      new_origemveiculo: SERVICE_VEHICLE_ORIGIN.manual,
+      _cr40f_veiculo_value: "{11111111-1111-1111-1111-111111111111}"
+    },
+    "{22222222-2222-2222-2222-222222222222}"
+  );
+
+  assert.deepEqual(patch, {});
+});
+
+test("patch automatico de veiculo da geral atualiza lookup e origem", () => {
+  const patch = buildAutomaticServiceVehiclePatch(
+    {
+      new_origemveiculo: SERVICE_VEHICLE_ORIGIN.automatico,
+      _cr40f_veiculo_value: "{11111111-1111-1111-1111-111111111111}"
+    },
+    "{22222222-2222-2222-2222-222222222222}"
+  );
+
+  assert.equal(patch.new_origemveiculo, SERVICE_VEHICLE_ORIGIN.automatico);
+  assert.equal(
+    patch["cr40f_Veiculo@odata.bind"],
+    "/cr40f_veiculoses(22222222-2222-2222-2222-222222222222)"
+  );
 });
 
 test("troca entre motoristas fecha somente quando os dois confirmam", () => {
