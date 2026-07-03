@@ -103,6 +103,21 @@ namespace Betinhos.DriverRecordSharing
             var vehicle = ResolveVehicleForDriverAt(driver.Id, serviceDate.Value);
             if (vehicle == null)
             {
+                var staleVehicle = serviceEntity.GetAttributeValue<EntityReference>(PluginConfig.ServiceVehicleLookup);
+                if (staleVehicle != null)
+                {
+                    var clearPatch = new Entity(PluginConfig.ServiceTable, serviceEntity.Id);
+                    clearPatch[PluginConfig.ServiceVehicleLookup] = null;
+                    clearPatch[PluginConfig.ServiceVehicleOrigin] = new OptionSetValue(PluginConfig.ServiceVehicleOriginAutomatic);
+                    _service.Update(clearPatch);
+                    _tracing.Trace(
+                        "ServiceVehicleSynchronizer cleared stale vehicle serviceId={0} driverId={1} serviceDate={2:o}.",
+                        serviceEntity.Id,
+                        driver.Id,
+                        serviceDate.Value);
+                    return;
+                }
+
                 _tracing.Trace(
                     "ServiceVehicleSynchronizer no vehicle serviceId={0} driverId={1} serviceDate={2:o}.",
                     serviceEntity.Id,
@@ -246,9 +261,15 @@ namespace Betinhos.DriverRecordSharing
             query.Criteria.AddCondition(PluginConfig.ServiceDriverLookup, ConditionOperator.Equal, driverId);
             query.Criteria.AddCondition(PluginConfig.ServiceStartDate, ConditionOperator.OnOrAfter, start);
             query.Criteria.AddCondition(PluginConfig.ServiceStartDate, ConditionOperator.OnOrBefore, end);
-            query.Criteria.AddCondition(PluginConfig.ServiceProgrammedFlag, ConditionOperator.Equal, true);
-            query.Criteria.AddCondition(PluginConfig.ServiceExchangeLookup, ConditionOperator.Null);
-            query.Criteria.AddCondition(PluginConfig.ServiceCategory, ConditionOperator.Equal, PluginConfig.ServiceBackfillCategories[0]);
+            query.Criteria.AddCondition(
+                PluginConfig.ServiceStatus,
+                ConditionOperator.In,
+                PluginConfig.ServiceStatusConfirmed,
+                PluginConfig.ServiceStatusProgrammed);
+            query.Criteria.AddCondition(
+                PluginConfig.ServiceCategory,
+                ConditionOperator.In,
+                Array.ConvertAll(PluginConfig.ServiceBackfillCategories, value => (object)value));
 
             var originFilter = new FilterExpression(LogicalOperator.Or);
             originFilter.AddCondition(PluginConfig.ServiceVehicleOrigin, ConditionOperator.Null);
@@ -281,6 +302,7 @@ namespace Betinhos.DriverRecordSharing
                 PluginConfig.ServiceStartDate,
                 PluginConfig.ServiceVehicleLookup,
                 PluginConfig.ServiceVehicleOrigin,
+                PluginConfig.ServiceStatus,
                 PluginConfig.ServiceProgrammedFlag,
                 PluginConfig.ServiceExchangeLookup,
                 PluginConfig.ServiceCategory);

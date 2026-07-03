@@ -22,6 +22,9 @@ namespace Betinhos.DriverRecordSharing
         public const string ServiceProgrammedFlag = "new_foiprogramado";
         public const string ServiceExchangeLookup = "cr40f_ot";
         public const string ServiceCategory = "new_categoriadoitem";
+        public const string ServiceStatus = "cr40f_status";
+        public const int ServiceStatusConfirmed = 202410001;
+        public const int ServiceStatusProgrammed = 202410005;
         public static readonly int[] ServiceBackfillCategories = { 100000000, 100000001 };
         public const int EmployeeBackfillDaysBack = 45;
         public const int ServiceVehicleSyncDaysBack = 1;
