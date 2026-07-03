@@ -185,12 +185,7 @@ namespace Betinhos.DriverRecordSharing
                     LoadLookupReferences(preImage, definition.DriverLookupAttributes),
                     resolver,
                     DriverResolutionMode.BestEffortForRevoke)
-                : ResolvePreviouslySharedDrivers(
-                    targetReference,
-                    currentDrivers,
-                    accessHelper,
-                    resolver,
-                    tracing);
+                : new Dictionary<Guid, ResolvedDriver>();
 
             foreach (var driver in currentDrivers.Values)
             {
