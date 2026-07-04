@@ -10,7 +10,9 @@ param(
 
   [switch] $GenerateOnly,
 
-  [switch] $SkipBuild
+  [switch] $SkipBuild,
+
+  [switch] $DeviceCode
 )
 
 $ErrorActionPreference = "Stop"
@@ -132,15 +134,8 @@ var specs = new[]
   new StepSpec("Recibos Update", "cr40f_recibos_v2", "Update", 1, "cr40f_motorista", new[] { "cr40f_motorista" })
 };
 
-var connectionString =
-  $"AuthType=OAuth;" +
-  $"Url={environmentUrl.TrimEnd('/')};" +
-  "AppId=51f81489-12ee-4a9e-aaae-a2591f45987d;" +
-  "RedirectUri=http://localhost;" +
-  "LoginPrompt=Auto";
-
 Log("auth");
-using var service = new ServiceClient(connectionString);
+using var service = CreateServiceClient(environmentUrl);
 if (!service.IsReady)
 {
   throw new InvalidOperationException($"Falha ao conectar no Dataverse. {service.LastError}");
@@ -454,6 +449,24 @@ static bool SameCsv(string left, string right)
   return string.Equals(Normalize(left ?? ""), Normalize(right ?? ""), StringComparison.OrdinalIgnoreCase);
 }
 
+static ServiceClient CreateServiceClient(string environmentUrl)
+{
+  var accessToken = Environment.GetEnvironmentVariable("DRIVER_RECORD_SHARING_ACCESS_TOKEN");
+  if (!string.IsNullOrWhiteSpace(accessToken))
+  {
+    return new ServiceClient(new Uri(environmentUrl.TrimEnd('/')), _ => Task.FromResult(accessToken), true);
+  }
+
+  var connectionString =
+    $"AuthType=OAuth;" +
+    $"Url={environmentUrl.TrimEnd('/')};" +
+    "AppId=51f81489-12ee-4a9e-aaae-a2591f45987d;" +
+    "RedirectUri=http://localhost;" +
+    "LoginPrompt=Auto";
+
+  return new ServiceClient(connectionString);
+}
+
 internal sealed record StepSpec(string Label, string PrimaryEntity, string Message, int Mode, string FilteringAttributes, string[] PreImageAttributes);
 
 internal sealed record AssemblyInfo(string Version, string Culture, string PublicKeyToken);
@@ -480,12 +493,56 @@ if ($GenerateOnly) {
   return
 }
 
+if ($DeviceCode) {
+  if (-not (Get-Module -ListAvailable MSAL.PS)) {
+    throw "Modulo MSAL.PS nao encontrado. Instale com: Install-Module MSAL.PS -Scope CurrentUser"
+  }
+
+  Import-Module MSAL.PS -ErrorAction Stop
+  Write-Step "auth DeviceCode"
+  $environmentBaseUrl = $EnvironmentUrl.TrimEnd("/")
+  $scope = "$environmentBaseUrl/user_impersonation"
+  $redirectUri = [Uri] "http://localhost"
+  $clientApplication = New-MsalClientApplication `
+    -ClientId "51f81489-12ee-4a9e-aaae-a2591f45987d" `
+    -TenantId "organizations" `
+    -RedirectUri $redirectUri
+
+  Enable-MsalTokenCacheOnDisk -PublicClientApplication $clientApplication
+
+  try {
+    $tokenResult = Get-MsalToken `
+      -PublicClientApplication $clientApplication `
+      -Scopes $scope `
+      -Silent
+  }
+  catch {
+    $tokenResult = Get-MsalToken `
+      -PublicClientApplication $clientApplication `
+      -Scopes $scope `
+      -DeviceCode
+  }
+
+  if ([string]::IsNullOrWhiteSpace($tokenResult.AccessToken)) {
+    throw "Falha ao obter token MSAL para $scope"
+  }
+
+  $env:DRIVER_RECORD_SHARING_ACCESS_TOKEN = $tokenResult.AccessToken
+}
+
 $argsList = @($EnvironmentUrl, $DllPath, $TechnicalUserEmail)
 if ($DryRun) {
   $argsList += "--dry-run"
 }
 
-Write-Step "run registration runner"
-dotnet build $projectFile
-$runnerDll = Join-Path $workDir "bin\Debug\net8.0\RegisterDriverRecordSharingPlugin.dll"
-dotnet $runnerDll @argsList
+try {
+  Write-Step "run registration runner"
+  dotnet build $projectFile
+  $runnerDll = Join-Path $workDir "bin\Debug\net8.0\RegisterDriverRecordSharingPlugin.dll"
+  dotnet $runnerDll @argsList
+}
+finally {
+  if ($DeviceCode) {
+    Remove-Item Env:\DRIVER_RECORD_SHARING_ACCESS_TOKEN -ErrorAction SilentlyContinue
+  }
+}
