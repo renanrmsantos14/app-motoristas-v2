@@ -4816,6 +4816,15 @@ button:disabled {
   border: 1px solid rgba(255, 255, 255, 0.38);
 }
 
+.camera-permission-loading {
+  gap: 14px;
+}
+
+.camera-permission-loading > span {
+  font-size: 14px;
+  font-weight: 800;
+}
+
 .ios-native-camera-hit {
   position: absolute;
   inset: 0;

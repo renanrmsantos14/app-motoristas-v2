@@ -4412,6 +4412,13 @@ button:disabled {
   color: rgb(255, 255, 255);
   border: 1px solid rgba(255, 255, 255, 0.38);
 }
+.camera-permission-loading {
+  gap: 14px;
+}
+.camera-permission-loading > span {
+  font-size: 14px;
+  font-weight: 800;
+}
 .ios-native-camera-hit {
   position: absolute;
   inset: 0;
@@ -12000,7 +12007,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.611","builtAt":"2026-07-15T11:33:16.642Z","builtAtLabel":"15/07/2026, 08:33"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.620","builtAt":"2026-07-15T19:53:01.707Z","builtAtLabel":"15/07/2026, 16:53"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -83508,6 +83515,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   // src/screens/MediaCaptureScreen.tsx
   var import_react57 = __toESM(require_react(), 1);
   var import_jsx_runtime43 = __toESM(require_jsx_runtime(), 1);
+  var CAMERA_SUPPORT_MESSAGE_DELAY_MS = 1e3;
   function getTitleByKind2(kind) {
     if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
     if (kind === "FOTO1") return "Tire a foto 1 de 3";
@@ -83567,29 +83575,49 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       bitRate: 8e6
     };
   }
-  function buildTrackConstraints(mode, profile) {
-    return {
+  function buildTrackConstraints(mode, profile, continuousFocus = false) {
+    const constraints = {
       facingMode: { ideal: mode },
       height: { ideal: 1080, min: 720 },
       frameRate: { ideal: profile.frameRate, min: 24, max: profile.frameRate }
     };
+    if (continuousFocus) {
+      constraints.focusMode = { ideal: "continuous" };
+    }
+    return constraints;
   }
   async function preferTrackProfile(track, mode) {
     const preferredProfile = getPreferredVideoProfile(track);
+    let supportsContinuousFocus = false;
     try {
-      await track.applyConstraints(buildTrackConstraints(mode, preferredProfile));
-      return preferredProfile;
+      const capabilities = track.getCapabilities?.();
+      supportsContinuousFocus = capabilities?.focusMode?.includes("continuous") ?? false;
     } catch {
+    }
+    const applyProfile = async (profile, withContinuousFocus) => {
+      try {
+        await track.applyConstraints(buildTrackConstraints(mode, profile, withContinuousFocus));
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    if (await applyProfile(preferredProfile, supportsContinuousFocus)) {
+      return preferredProfile;
+    }
+    if (supportsContinuousFocus && await applyProfile(preferredProfile, false)) {
+      return preferredProfile;
     }
     const fallbackProfile = {
       label: "hd",
       frameRate: 30,
       bitRate: 8e6
     };
-    try {
-      await track.applyConstraints(buildTrackConstraints(mode, fallbackProfile));
+    if (await applyProfile(fallbackProfile, supportsContinuousFocus)) {
       return fallbackProfile;
-    } catch {
+    }
+    if (supportsContinuousFocus && await applyProfile(fallbackProfile, false)) {
+      return fallbackProfile;
     }
     return fallbackProfile;
   }
@@ -83641,6 +83669,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const recordedChunksRef = (0, import_react57.useRef)([]);
     const recordingStartedAtRef = (0, import_react57.useRef)(0);
     const defaultLaunchAttemptedRef = (0, import_react57.useRef)(false);
+    const cameraRequestSequenceRef = (0, import_react57.useRef)(0);
+    const supportMessageTimerRef = (0, import_react57.useRef)(null);
     const captureRequestedAtRef = (0, import_react57.useRef)(Date.now());
     const activeVideoProfileRef = (0, import_react57.useRef)({
       label: "hd",
@@ -83653,6 +83683,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [capturingPhoto, setCapturingPhoto] = (0, import_react57.useState)(false);
     const [ready, setReady] = (0, import_react57.useState)(false);
     const [starting, setStarting] = (0, import_react57.useState)(false);
+    const [showSupportMessage, setShowSupportMessage] = (0, import_react57.useState)(false);
     const [recording, setRecording] = (0, import_react57.useState)(false);
     const [recordingSeconds, setRecordingSeconds] = (0, import_react57.useState)(0);
     const useLiveCamera = shouldUseLiveCameraCapture();
@@ -83685,11 +83716,22 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       } catch {
       }
     };
+    const clearSupportMessageTimer = () => {
+      if (supportMessageTimerRef.current === null) return;
+      window.clearTimeout(supportMessageTimerRef.current);
+      supportMessageTimerRef.current = null;
+    };
     const startLiveCamera = async (mode = facingMode) => {
       if (!useLiveCamera || recording || processing) return false;
+      const requestSequence = ++cameraRequestSequenceRef.current;
       setStarting(true);
       setReady(false);
       setCameraError("");
+      setShowSupportMessage(false);
+      clearSupportMessageTimer();
+      supportMessageTimerRef.current = window.setTimeout(() => {
+        if (cameraRequestSequenceRef.current === requestSequence) setShowSupportMessage(true);
+      }, CAMERA_SUPPORT_MESSAGE_DELAY_MS);
       stopStream();
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -83702,10 +83744,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             audio: false
           });
         } catch {
+          if (cameraRequestSequenceRef.current !== requestSequence) return false;
           stream2 = await navigator.mediaDevices.getUserMedia({
             video: getFallbackCameraVideoConstraints(mode),
             audio: false
           });
+        }
+        if (cameraRequestSequenceRef.current !== requestSequence) {
+          stream2.getTracks().forEach((track) => track.stop());
+          return false;
         }
         streamRef.current = stream2;
         const videoTrack = stream2.getVideoTracks()[0];
@@ -83721,6 +83768,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setReady(true);
         return true;
       } catch (error2) {
+        if (cameraRequestSequenceRef.current !== requestSequence) return false;
         reportAppError(error2, {
           severity: "error",
           source: "media-capture",
@@ -83732,7 +83780,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         setCameraError(error2 instanceof Error ? error2.message : "Nao foi possivel abrir a camera.");
         return false;
       } finally {
-        setStarting(false);
+        if (cameraRequestSequenceRef.current === requestSequence) {
+          clearSupportMessageTimer();
+          setShowSupportMessage(false);
+          setStarting(false);
+        }
       }
     };
     const openNativePhotoCamera = () => {
@@ -83964,7 +84016,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       }
     };
     (0, import_react57.useEffect)(() => {
-      return () => stopStream();
+      return () => {
+        cameraRequestSequenceRef.current += 1;
+        clearSupportMessageTimer();
+        stopStream();
+      };
     }, []);
     (0, import_react57.useEffect)(() => {
       if (!recording) {
@@ -84024,37 +84080,38 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("button", { onClick: () => void startLiveCamera(), disabled: processing, children: "Abrir camera" })
           ] }) : null,
           processing ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading camera-processing", children: capturingPhoto ? "Capturando foto..." : "Preparando midia..." }) : null,
-          starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-loading", children: "Abrindo camera..." }) : null,
+          starting ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-loading camera-permission-loading", "aria-live": "polite", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "Abrindo camera..." }),
+            showSupportMessage ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: "Camera nao respondeu. Fale com o suporte de TI da Betinhos." }) : null
+          ] }) : null,
           cameraError ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "camera-error", children: [
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("strong", { children: "Camera indisponivel" }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("span", { children: cameraError }),
             /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("small", { children: useLiveRecording ? "Permita acesso a camera para capturar agora." : "Toque em tirar foto ou gravar video para abrir a camera do dispositivo." })
           ] }) : null
         ] }),
-        !useLivePreview ? /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)(import_jsx_runtime43.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
-            TextInputControl,
-            {
-              ref: photoInputRef,
-              className: "native-camera-input",
-              type: "file",
-              accept: "image/*",
-              capture: nativeCaptureMode,
-              onChange: handleNativeCapture
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
-            TextInputControl,
-            {
-              ref: videoInputRef,
-              className: "native-camera-input",
-              type: "file",
-              accept: nativeVideoAccept,
-              capture: nativeCaptureMode,
-              onChange: handleNativeCapture
-            }
-          )
-        ] }) : null,
+        /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+          TextInputControl,
+          {
+            ref: photoInputRef,
+            className: "native-camera-input",
+            type: "file",
+            accept: "image/*",
+            capture: nativeCaptureMode,
+            onChange: handleNativeCapture
+          }
+        ),
+        !useLivePreview ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(import_jsx_runtime43.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
+          TextInputControl,
+          {
+            ref: videoInputRef,
+            className: "native-camera-input",
+            type: "file",
+            accept: nativeVideoAccept,
+            capture: nativeCaptureMode,
+            onChange: handleNativeCapture
+          }
+        ) }) : null,
         /* @__PURE__ */ (0, import_jsx_runtime43.jsxs)("div", { className: "photo-actions photo-actions-ios camera-actions-pro", children: [
           /* @__PURE__ */ (0, import_jsx_runtime43.jsx)("div", { className: "camera-side-action camera-side-action-left", children: onCaptureVideo ? /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
             "button",

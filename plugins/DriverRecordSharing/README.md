@@ -27,6 +27,9 @@ Regras:
 - se houver mais de um `systemuser` ativo com o mesmo email, da erro
 - se o motorista mudar, o plugin concede acesso ao novo e revoga do antigo
 - em `cr40f_trocasdecarro`, se `cr40f_statusdatroca` estiver Programada, o motorista 1 recebe leitura do registro do motorista 2 e o motorista 2 recebe leitura do registro do motorista 1
+- quando `cr40f_reservadeveculos.cr40f_ot` estiver preenchido, plugin alinha `cr40f_status` <-> `cr40f_statusdatroca` nos pares com correspondencia direta: Programado/Programada, Confirmado/Confirmada, Concluido/Concluida, Cancelado/Cancelada
+- quando a troca vinculada ficar `Programada`, o plugin tambem garante `new_foiprogramado = true` nos servicos relacionados
+- plugin recalcula `cr40f_passageirosetelefonedecontato` (`Pax - VIEW`) a partir de `cr40f_servicosporpassageiro` + `cr40f_bancodedados` sempre que o vinculo do passageiro mudar ou quando nome/telefone do passageiro forem alterados
 - em `cr40f_trocasdecarro` Programada, se um lado nao tiver app/usuario ativo, o outro lado ainda recebe acesso ao funcionario dele; o salvamento nao falha so por motorista sem app
 - depois de `GrantAccess` ou `ModifyAccess`, o plugin rele `RetrievePrincipalAccess`; se os direitos obrigatorios nao forem confirmados, o salvamento falha
 - falhas do plugin tentam criar log critico em `new_appmotoristaslog`
@@ -141,7 +144,7 @@ Para todos os steps:
 
 - Message: `Update`
 - Primary Entity: `cr40f_reservadeveculos`
-- Filtering Attributes: `cr40f_motorista,cr40f_solicitante`
+- Filtering Attributes: `cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,cr40f_veiculo,new_origemveiculo,cr40f_ot,cr40f_status`
 - Execution Mode: `Synchronous`
 - Image: criar `Pre Image`
 
@@ -177,7 +180,23 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: criar `Pre Image`
 
-### 7. Trocas de carro - Create
+### 7. Servicos por passageiro - Delete
+
+- Message: `Delete`
+- Primary Entity: `cr40f_servicosporpassageiro`
+- Filtering Attributes: deixar vazio
+- Execution Mode: `Asynchronous`
+- Image: criar `Pre Image`
+
+### 8. Passageiros - Update
+
+- Message: `Update`
+- Primary Entity: `cr40f_bancodedados`
+- Filtering Attributes: `cr40f_nomedopassageiro,cr40f_telefone`
+- Execution Mode: `Asynchronous`
+- Image: criar `Pre Image`
+
+### 9. Trocas de carro - Create
 
 - Message: `Create`
 - Primary Entity: `cr40f_trocasdecarro`
@@ -185,15 +204,15 @@ Para todos os steps:
 - Execution Mode: `Synchronous`
 - Image: nao criar
 
-### 8. Trocas de carro - Update
+### 10. Trocas de carro - Update
 
 - Message: `Update`
 - Primary Entity: `cr40f_trocasdecarro`
-- Filtering Attributes: `cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca`
+- Filtering Attributes: `cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca,cr40f_veiculo1antesdatroca,cr40f_veiculo2antesdatroca,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,new_tipodetroca`
 - Execution Mode: `Synchronous`
 - Image: criar `Pre Image`
 
-### 9. Posse de veiculo - Create
+### 11. Posse de veiculo - Create
 
 - Message: `Create`
 - Primary Entity: `new_possedeveiculo`
@@ -201,7 +220,7 @@ Para todos os steps:
 - Execution Mode: `Asynchronous`
 - Image: nao criar
 
-### 10. Posse de veiculo - Update
+### 12. Posse de veiculo - Update
 
 - Message: `Update`
 - Primary Entity: `new_possedeveiculo`
@@ -281,6 +300,16 @@ Quando este step roda, o plugin busca servicos com:
 
 - `cr40f_geral`
 - `cr40f_bancodedados`
+
+### Delete de Servicos por passageiro
+
+- `cr40f_geral`
+- `cr40f_bancodedados`
+
+### Update de Passageiros
+
+- `cr40f_nomedopassageiro`
+- `cr40f_telefone`
 
 ### Update de Trocas de carro
 

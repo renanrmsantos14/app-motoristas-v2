@@ -1,0 +1,137 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing.Tests\\DriverRecordSharing.Tests.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing.Tests\\DriverRecordSharing.Tests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing.Tests\\DriverRecordSharing.Tests.csproj",
+        "projectName": "DriverRecordSharing.Tests",
+        "projectPath": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing.Tests\\DriverRecordSharing.Tests.csproj",
+        "packagesPath": "C:\\Users\\mendo\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing.Tests\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\mendo\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net462"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net462": {
+            "targetAlias": "net462",
+            "projectReferences": {
+              "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing\\DriverRecordSharing.csproj": {
+                "projectPath": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing\\DriverRecordSharing.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.200"
+      },
+      "frameworks": {
+        "net462": {
+          "targetAlias": "net462",
+          "dependencies": {
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.10.0, )"
+            },
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.9.0, )"
+            },
+            "xunit.runner.visualstudio": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.8.2, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing\\DriverRecordSharing.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing\\DriverRecordSharing.csproj",
+        "projectName": "Betinhos.DriverRecordSharing",
+        "projectPath": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing\\DriverRecordSharing.csproj",
+        "packagesPath": "C:\\Users\\mendo\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\plugins\\DriverRecordSharing\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\mendo\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net462"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net462": {
+            "targetAlias": "net462",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.200"
+      },
+      "frameworks": {
+        "net462": {
+          "targetAlias": "net462",
+          "dependencies": {
+            "Microsoft.CrmSdk.CoreAssemblies": {
+              "target": "Package",
+              "version": "[9.0.2.59, )"
+            },
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            },
+            "Microsoft.NETFramework.ReferenceAssemblies.net462": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

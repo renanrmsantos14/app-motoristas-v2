@@ -86,6 +86,13 @@ test("camera ao vivo evita proporcao fixa e pede qualidade HD quando possivel", 
   assert.match(mediaCaptureScreen, /iPhone\|iPad\|iPod/);
 });
 
+test("camera usa foco continuo somente quando o aparelho declara suporte", () => {
+  assert.match(mediaCaptureScreen, /focusMode\?\: string\[\]/);
+  assert.match(mediaCaptureScreen, /focusMode\?\.includes\("continuous"\)/);
+  assert.match(mediaCaptureScreen, /constraints\.focusMode = \{ ideal: "continuous" \}/);
+  assert.match(mediaCaptureScreen, /applyProfile\(preferredProfile, false\)/);
+});
+
 test("iphone usa captura nativa limpa para evitar fullscreen ao gravar video", () => {
   assert.match(mediaCaptureScreen, /configureInlineCameraVideo\(videoRef\.current\)/);
   assert.match(mediaCaptureScreen, /isAppleMobileDevice/);
@@ -113,4 +120,12 @@ test("foto android prioriza ImageCapture e jpeg com baixa compressao", () => {
   assert.match(mediaCaptureScreen, /readBlobAsDataUrl\(photoBlob\)/);
   assert.match(mediaCaptureScreen, /if \(!photoDataUrl && video\) photoDataUrl = await captureVideoFrameDataUrlAsync\(video\);/);
   assert.match(photoOrientation, /const PHOTO_OUTPUT_QUALITY = 0\.98;/);
+});
+
+test("camera pendente mostra suporte apos um segundo", () => {
+  assert.match(mediaCaptureScreen, /const CAMERA_SUPPORT_MESSAGE_DELAY_MS = 1000;/);
+  assert.match(mediaCaptureScreen, /setShowSupportMessage\(true\)/);
+  assert.match(mediaCaptureScreen, /Camera nao respondeu\. Fale com o suporte de TI da Betinhos\./);
+  assert.doesNotMatch(mediaCaptureScreen, /Liberar Câmera/);
+  assert.doesNotMatch(styles, /camera-permission-action/);
 });

@@ -62,12 +62,14 @@ namespace Betinhos.DriverRecordSharing
                     return;
                 }
 
-                var target = (Entity)context.InputParameters[PluginConfig.TargetParameterName];
+                var target = context.InputParameters[PluginConfig.TargetParameterName] as Entity;
                 var preImage = ResolvePreImage(context, tracing);
                 var resolver = new DriverResolver(service, tracing);
                 var accessHelper = new DataverseAccessHelper(service, tracing);
                 var servicePassengerRepository = new ServicePassengerRepository(service, tracing);
                 var serviceVehicleSynchronizer = new ServiceVehicleSynchronizer(service, tracing);
+                var serviceExchangeSynchronizer = new ServiceExchangeSynchronizer(service, tracing);
+                var servicePassengerViewSynchronizer = new ServicePassengerViewSynchronizer(service, tracing);
 
                 if (context.PrimaryEntityName == PluginConfig.EmployeeTable)
                 {
@@ -93,6 +95,28 @@ namespace Betinhos.DriverRecordSharing
                         resolver,
                         accessHelper,
                         servicePassengerRepository,
+                        servicePassengerViewSynchronizer,
+                        tracing);
+                    return;
+                }
+
+                if (context.PrimaryEntityName == PluginConfig.PassengerTable)
+                {
+                    HandlePassenger(
+                        context,
+                        target,
+                        preImage,
+                        servicePassengerViewSynchronizer,
+                        tracing);
+                    return;
+                }
+
+                if (context.PrimaryEntityName == PluginConfig.QuoteRequestTable)
+                {
+                    HandleQuoteRequest(
+                        context,
+                        service,
+                        target,
                         tracing);
                     return;
                 }
@@ -114,6 +138,7 @@ namespace Betinhos.DriverRecordSharing
                     accessHelper,
                     servicePassengerRepository,
                     serviceVehicleSynchronizer,
+                    serviceExchangeSynchronizer,
                     tracing);
             }
             catch (InvalidPluginExecutionException ex)
@@ -142,6 +167,7 @@ namespace Betinhos.DriverRecordSharing
             DataverseAccessHelper accessHelper,
             ServicePassengerRepository servicePassengerRepository,
             ServiceVehicleSynchronizer serviceVehicleSynchronizer,
+            ServiceExchangeSynchronizer serviceExchangeSynchronizer,
             ITracingService tracing)
         {
             var hasUsablePreImage = true;
@@ -256,10 +282,12 @@ namespace Betinhos.DriverRecordSharing
                     service,
                     target,
                     tracing);
+                serviceExchangeSynchronizer.SyncFromService(context.PrimaryEntityId);
                 serviceVehicleSynchronizer.SyncService(context.PrimaryEntityId);
             }
             else if (definition.EntityName == PluginConfig.ExchangeTable)
             {
+                serviceExchangeSynchronizer.SyncFromExchange(context.PrimaryEntityId);
                 serviceVehicleSynchronizer.SyncServicesForExchangeChange(context.PrimaryEntityId, preImage);
             }
             else if (definition.EntityName == PluginConfig.VehiclePossessionTable)
@@ -407,11 +435,14 @@ namespace Betinhos.DriverRecordSharing
             DriverResolver resolver,
             DataverseAccessHelper accessHelper,
             ServicePassengerRepository servicePassengerRepository,
+            ServicePassengerViewSynchronizer servicePassengerViewSynchronizer,
             ITracingService tracing)
         {
             var hasUsablePreImage = true;
+            var isDelete = context.MessageName == PluginConfig.DeleteMessage;
 
-            if (context.MessageName == PluginConfig.UpdateMessage)
+            if (context.MessageName == PluginConfig.UpdateMessage ||
+                context.MessageName == PluginConfig.DeleteMessage)
             {
                 hasUsablePreImage = EnsurePreImage(
                     context,
@@ -420,7 +451,8 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.ServicePassengerServiceLookup,
                     PluginConfig.ServicePassengerPassengerLookup);
 
-                if (!ContainsAnyAttribute(
+                if (context.MessageName == PluginConfig.UpdateMessage &&
+                    !ContainsAnyAttribute(
                     target,
                     PluginConfig.ServicePassengerServiceLookup,
                     PluginConfig.ServicePassengerPassengerLookup))
@@ -430,10 +462,14 @@ namespace Betinhos.DriverRecordSharing
                 }
             }
 
-            var currentLink = servicePassengerRepository.Load(context.PrimaryEntityId);
-            var previousLink = context.MessageName == PluginConfig.UpdateMessage && hasUsablePreImage
+            var currentLink = isDelete
+                ? null
+                : servicePassengerRepository.Load(context.PrimaryEntityId);
+            var previousLink = ((context.MessageName == PluginConfig.UpdateMessage && hasUsablePreImage) ||
+                (isDelete && hasUsablePreImage))
                 ? BuildPreImageLink(preImage, context.PrimaryEntityId)
                 : null;
+            var servicePassengerReference = currentLink?.ServicePassengerReference ?? previousLink?.ServicePassengerReference;
 
             var currentDrivers = ResolveDriversForService(
                 service,
@@ -446,34 +482,42 @@ namespace Betinhos.DriverRecordSharing
                     previousLink.ServiceReference,
                     resolver,
                     DriverResolutionMode.BestEffortForRevoke)
-                : ResolvePreviouslySharedDrivers(
-                    currentLink.ServicePassengerReference,
+                : servicePassengerReference != null
+                ? ResolvePreviouslySharedDrivers(
+                    servicePassengerReference,
                     currentDrivers,
                     accessHelper,
                     resolver,
-                    tracing);
+                    tracing)
+                : new Dictionary<Guid, ResolvedDriver>();
 
-            foreach (var driver in currentDrivers.Values)
+            if (currentLink != null)
             {
-                accessHelper.EnsureAccess(
-                    currentLink.ServicePassengerReference,
-                    driver.UserReference,
-                    PluginConfig.ServicePassengerAccessRights);
-
-                if (currentLink.PassengerReference != null)
+                foreach (var driver in currentDrivers.Values)
                 {
                     accessHelper.EnsureAccess(
-                        currentLink.PassengerReference,
+                        currentLink.ServicePassengerReference,
                         driver.UserReference,
-                        PluginConfig.PassengerAccessRights);
+                        PluginConfig.ServicePassengerAccessRights);
+
+                    if (currentLink.PassengerReference != null)
+                    {
+                        accessHelper.EnsureAccess(
+                            currentLink.PassengerReference,
+                            driver.UserReference,
+                            PluginConfig.PassengerAccessRights);
+                    }
                 }
             }
 
-            foreach (var driver in FindRemovedDrivers(previousDrivers, currentDrivers))
+            if (servicePassengerReference != null && !isDelete)
             {
-                accessHelper.RevokeAccess(
-                    currentLink.ServicePassengerReference,
-                    driver.UserReference);
+                foreach (var driver in FindRemovedDrivers(previousDrivers, currentDrivers))
+                {
+                    accessHelper.RevokeAccess(
+                        servicePassengerReference,
+                        driver.UserReference);
+                }
             }
 
             if (previousLink?.PassengerReference != null)
@@ -515,11 +559,86 @@ namespace Betinhos.DriverRecordSharing
                 }
             }
 
+            servicePassengerViewSynchronizer.SyncForServicePassengerChange(currentLink, previousLink);
             tracing.Trace(
-                "HandleServicePassenger done id={0} currentDrivers={1} previousDrivers={2}",
+                "HandleServicePassenger done id={0} message={1} currentDrivers={2} previousDrivers={3}",
                 context.PrimaryEntityId,
+                context.MessageName,
                 currentDrivers.Count,
                 previousDrivers.Count);
+        }
+
+        private static void HandlePassenger(
+            IPluginExecutionContext context,
+            Entity target,
+            Entity preImage,
+            ServicePassengerViewSynchronizer servicePassengerViewSynchronizer,
+            ITracingService tracing)
+        {
+            if (context.MessageName != PluginConfig.UpdateMessage)
+            {
+                return;
+            }
+
+            EnsurePreImage(
+                context,
+                preImage,
+                tracing,
+                PluginConfig.PassengerName,
+                PluginConfig.PassengerPhone);
+
+            if (!ContainsAnyAttribute(
+                target,
+                PluginConfig.PassengerName,
+                PluginConfig.PassengerPhone))
+            {
+                tracing.Trace("HandlePassenger skip because passenger name/phone did not change.");
+                return;
+            }
+
+            servicePassengerViewSynchronizer.SyncServicesForPassenger(context.PrimaryEntityId);
+            tracing.Trace("HandlePassenger synced services for passengerId={0}.", context.PrimaryEntityId);
+        }
+
+        private static void HandleQuoteRequest(
+            IPluginExecutionContext context,
+            IOrganizationService service,
+            Entity target,
+            ITracingService tracing)
+        {
+            if (context.MessageName != PluginConfig.UpdateMessage)
+            {
+                return;
+            }
+
+            if (target == null)
+            {
+                tracing.Trace("HandleQuoteRequest skip because target is null.");
+                return;
+            }
+
+            if (target.Attributes.Contains(PluginConfig.QuoteRequestLastSyncOrigin))
+            {
+                tracing.Trace(
+                    "HandleQuoteRequest keep incoming origin quoteId={0} origin={1}.",
+                    context.PrimaryEntityId,
+                    target.GetAttributeValue<string>(PluginConfig.QuoteRequestLastSyncOrigin) ?? string.Empty);
+                return;
+            }
+
+            var patch = BuildManualQuoteOriginPatchIfNeeded(context.PrimaryEntityId, target);
+            if (patch == null)
+            {
+                tracing.Trace(
+                    "HandleQuoteRequest skip because no monitored business field changed quoteId={0}.",
+                    context.PrimaryEntityId);
+                return;
+            }
+
+            service.Update(patch);
+            tracing.Trace(
+                "HandleQuoteRequest set manual origin quoteId={0}.",
+                context.PrimaryEntityId);
         }
 
         private static ServicePassengerLink BuildPreImageLink(Entity preImage, Guid servicePassengerId)
@@ -732,6 +851,7 @@ namespace Betinhos.DriverRecordSharing
                 columns.Add(PluginConfig.ServiceVehicleOrigin);
                 columns.Add(PluginConfig.ServiceProgrammedFlag);
                 columns.Add(PluginConfig.ServiceExchangeLookup);
+                columns.Add(PluginConfig.ServiceStatus);
                 columns.Add(PluginConfig.ServiceCategory);
             }
 
@@ -765,6 +885,8 @@ namespace Betinhos.DriverRecordSharing
                 attributes.Add(PluginConfig.ServiceStartDate);
                 attributes.Add(PluginConfig.ServiceVehicleLookup);
                 attributes.Add(PluginConfig.ServiceVehicleOrigin);
+                attributes.Add(PluginConfig.ServiceExchangeLookup);
+                attributes.Add(PluginConfig.ServiceStatus);
             }
 
             return attributes.ToArray();
@@ -794,6 +916,36 @@ namespace Betinhos.DriverRecordSharing
             tracing.Trace(
                 "MarkManualVehicleOriginIfNeeded set manual origin serviceId={0}.",
                 context.PrimaryEntityId);
+        }
+
+        private static Entity BuildManualQuoteOriginPatchIfNeeded(Guid quoteRequestId, Entity target)
+        {
+            if (target == null ||
+                target.Attributes.Contains(PluginConfig.QuoteRequestLastSyncOrigin) ||
+                !ContainsAnyAttribute(
+                    target,
+                    PluginConfig.QuoteRequestStatus,
+                    PluginConfig.QuoteRequestDeadline,
+                    PluginConfig.QuoteRequestQuotedValue,
+                    PluginConfig.QuoteRequestCommercialTerms,
+                    PluginConfig.QuoteRequestCustomerReplySent,
+                    PluginConfig.QuoteRequestCompany,
+                    PluginConfig.QuoteRequestContact,
+                    PluginConfig.QuoteRequestWhatsappPhone,
+                    PluginConfig.QuoteRequestCustomerEmail,
+                    PluginConfig.QuoteRequestOrigin,
+                    PluginConfig.QuoteRequestDestination,
+                    PluginConfig.QuoteRequestServiceDate,
+                    PluginConfig.QuoteRequestPassengerCount,
+                    PluginConfig.QuoteRequestNotes,
+                    PluginConfig.QuoteRequestPriority))
+            {
+                return null;
+            }
+
+            var patch = new Entity(PluginConfig.QuoteRequestTable, quoteRequestId);
+            patch[PluginConfig.QuoteRequestLastSyncOrigin] = PluginConfig.QuoteRequestLastSyncOriginManual;
+            return patch;
         }
 
         private static Dictionary<Guid, ResolvedDriver> ResolveDriverSet(
@@ -1151,7 +1303,8 @@ namespace Betinhos.DriverRecordSharing
             ITracingService tracing,
             params string[] requiredAttributes)
         {
-            if (context.MessageName != PluginConfig.UpdateMessage)
+            if (context.MessageName != PluginConfig.UpdateMessage &&
+                context.MessageName != PluginConfig.DeleteMessage)
             {
                 return false;
             }
@@ -1185,7 +1338,13 @@ namespace Betinhos.DriverRecordSharing
             IPluginExecutionContext context,
             ITracingService tracing)
         {
-            if (context == null || context.MessageName != PluginConfig.UpdateMessage)
+            if (context == null)
+            {
+                return null;
+            }
+
+            if (context.MessageName != PluginConfig.UpdateMessage &&
+                context.MessageName != PluginConfig.DeleteMessage)
             {
                 return null;
             }
@@ -1245,8 +1404,32 @@ namespace Betinhos.DriverRecordSharing
                 return false;
             }
 
-            if (!context.InputParameters.Contains(PluginConfig.TargetParameterName) ||
-                !(context.InputParameters[PluginConfig.TargetParameterName] is Entity))
+            if (!context.InputParameters.Contains(PluginConfig.TargetParameterName))
+            {
+                return false;
+            }
+
+            var targetParameter = context.InputParameters[PluginConfig.TargetParameterName];
+            var hasEntityTarget = targetParameter is Entity;
+            var hasReferenceTarget = targetParameter is EntityReference;
+
+            if (context.PrimaryEntityName == PluginConfig.ServicePassengerTable)
+            {
+                if (context.MessageName == PluginConfig.CreateMessage ||
+                    context.MessageName == PluginConfig.UpdateMessage)
+                {
+                    return hasEntityTarget;
+                }
+
+                if (context.MessageName == PluginConfig.DeleteMessage)
+                {
+                    return hasReferenceTarget;
+                }
+
+                return false;
+            }
+
+            if (!hasEntityTarget)
             {
                 return false;
             }
@@ -1257,14 +1440,19 @@ namespace Betinhos.DriverRecordSharing
                 return false;
             }
 
-            if (context.PrimaryEntityName == PluginConfig.ServicePassengerTable)
+            if (context.PrimaryEntityName == PluginConfig.PassengerTable)
             {
-                return true;
+                return context.MessageName == PluginConfig.UpdateMessage;
             }
 
             if (context.PrimaryEntityName == PluginConfig.EmployeeTable)
             {
                 return true;
+            }
+
+            if (context.PrimaryEntityName == PluginConfig.QuoteRequestTable)
+            {
+                return context.MessageName == PluginConfig.UpdateMessage;
             }
 
             return GetDirectEntityDefinition(context.PrimaryEntityName) != null;

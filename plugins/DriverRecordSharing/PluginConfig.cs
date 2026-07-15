@@ -6,6 +6,7 @@ namespace Betinhos.DriverRecordSharing
     {
         public const string CreateMessage = "Create";
         public const string UpdateMessage = "Update";
+        public const string DeleteMessage = "Delete";
         public const string PreImageAlias = "pre";
         public const string TargetParameterName = "Target";
 
@@ -21,9 +22,12 @@ namespace Betinhos.DriverRecordSharing
         public const int ServiceVehicleOriginManual = 100000001;
         public const string ServiceProgrammedFlag = "new_foiprogramado";
         public const string ServiceExchangeLookup = "cr40f_ot";
+        public const string ServicePassengerViewField = "cr40f_passageirosetelefonedecontato";
         public const string ServiceCategory = "new_categoriadoitem";
         public const string ServiceStatus = "cr40f_status";
+        public const int ServiceStatusCanceled = 202410002;
         public const int ServiceStatusConfirmed = 202410001;
+        public const int ServiceStatusCompleted = 202410008;
         public const int ServiceStatusProgrammed = 202410005;
         public static readonly int[] ServiceBackfillCategories = { 100000000, 100000001 };
         public const int EmployeeBackfillDaysBack = 45;
@@ -73,6 +77,26 @@ namespace Betinhos.DriverRecordSharing
         public const string ReceiptDriverLookup = "cr40f_motorista";
         public const string ReceiptServiceLookup = "cr40f_reserva";
 
+        public const string QuoteRequestTable = "cr40f_pedidodecotacao";
+        public const string QuoteRequestPrimaryId = "cr40f_pedidodecotacaoid";
+        public const string QuoteRequestLastSyncOrigin = "cr40f_origemultimasincronizacao";
+        public const string QuoteRequestLastSyncOriginManual = "Manual";
+        public const string QuoteRequestStatus = "cr40f_statuscotacao";
+        public const string QuoteRequestDeadline = "cr40f_prazoresponder";
+        public const string QuoteRequestQuotedValue = "cr40f_valorcotado";
+        public const string QuoteRequestCommercialTerms = "cr40f_condicaocomercial";
+        public const string QuoteRequestCustomerReplySent = "cr40f_respostaenviadacliente";
+        public const string QuoteRequestCompany = "cr40f_clienteempresa";
+        public const string QuoteRequestContact = "cr40f_contatocliente";
+        public const string QuoteRequestWhatsappPhone = "cr40f_telefonewhatsapp";
+        public const string QuoteRequestCustomerEmail = "cr40f_emailcliente";
+        public const string QuoteRequestOrigin = "cr40f_origem";
+        public const string QuoteRequestDestination = "cr40f_destino";
+        public const string QuoteRequestServiceDate = "cr40f_datahoraservico";
+        public const string QuoteRequestPassengerCount = "cr40f_quantidadepassageiros";
+        public const string QuoteRequestNotes = "cr40f_observacoespedido";
+        public const string QuoteRequestPriority = "cr40f_prioridade";
+
         public const string ExchangeTable = "cr40f_trocasdecarro";
         public const string ExchangePrimaryId = "cr40f_trocasdecarroid";
         public const string ExchangeDriver1Lookup = "cr40f_motorista1";
@@ -83,6 +107,8 @@ namespace Betinhos.DriverRecordSharing
         public const string ExchangeEndDate = "cr40f_fimdajaneladetroca";
         public const string ExchangeStatus = "cr40f_statusdatroca";
         public const string ExchangeType = "new_tipodetroca";
+        public const int ExchangeStatusCanceled = 202410002;
+        public const int ExchangeStatusCompleted = 202410001;
         public const int ExchangeStatusProgrammed = 202410000;
         public const int ExchangeStatusConfirmed = 100000001;
         public const int ExchangeTypeSwap = 100000000;
@@ -104,6 +130,7 @@ namespace Betinhos.DriverRecordSharing
         public const string PassengerTable = "cr40f_bancodedados";
         public const string PassengerPrimaryId = "cr40f_bancodedadosid";
         public const string PassengerName = "cr40f_nomedopassageiro";
+        public const string PassengerPhone = "cr40f_telefone";
 
         public static readonly AccessRights ServiceAccessRights =
             AccessRights.ReadAccess |

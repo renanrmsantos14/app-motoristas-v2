@@ -37,6 +37,16 @@ type BrowserImageCapture = {
 
 type BrowserImageCaptureConstructor = new (track: MediaStreamTrack) => BrowserImageCapture;
 
+type FocusAwareMediaTrackCapabilities = MediaTrackCapabilities & {
+  focusMode?: string[];
+};
+
+type FocusAwareMediaTrackConstraints = MediaTrackConstraints & {
+  focusMode?: ConstrainDOMString;
+};
+
+const CAMERA_SUPPORT_MESSAGE_DELAY_MS = 1000;
+
 function getTitleByKind(kind: MaintenancePhotoKind) {
   if (kind.startsWith("NOTAFISCAL")) return "Tire a foto da nota fiscal";
   if (kind === "FOTO1") return "Tire a foto 1 de 3";
@@ -107,22 +117,49 @@ function getPreferredVideoProfile(track: MediaStreamTrack): VideoCaptureProfile 
   };
 }
 
-function buildTrackConstraints(mode: "environment" | "user", profile: VideoCaptureProfile): MediaTrackConstraints {
-  return {
+function buildTrackConstraints(
+  mode: "environment" | "user",
+  profile: VideoCaptureProfile,
+  continuousFocus = false
+): MediaTrackConstraints {
+  const constraints: FocusAwareMediaTrackConstraints = {
     facingMode: { ideal: mode },
     height: { ideal: 1080, min: 720 },
     frameRate: { ideal: profile.frameRate, min: 24, max: profile.frameRate }
   };
+
+  if (continuousFocus) {
+    constraints.focusMode = { ideal: "continuous" };
+  }
+
+  return constraints;
 }
 
 async function preferTrackProfile(track: MediaStreamTrack, mode: "environment" | "user") {
   const preferredProfile = getPreferredVideoProfile(track);
+  let supportsContinuousFocus = false;
 
   try {
-    await track.applyConstraints(buildTrackConstraints(mode, preferredProfile));
-    return preferredProfile;
+    const capabilities = track.getCapabilities?.() as FocusAwareMediaTrackCapabilities | undefined;
+    supportsContinuousFocus = capabilities?.focusMode?.includes("continuous") ?? false;
   } catch {
-    // Ignore and keep fallback below.
+    // Keep current browser-selected focus behavior when capabilities are unavailable.
+  }
+
+  const applyProfile = async (profile: VideoCaptureProfile, withContinuousFocus: boolean) => {
+    try {
+      await track.applyConstraints(buildTrackConstraints(mode, profile, withContinuousFocus));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  if (await applyProfile(preferredProfile, supportsContinuousFocus)) {
+    return preferredProfile;
+  }
+  if (supportsContinuousFocus && await applyProfile(preferredProfile, false)) {
+    return preferredProfile;
   }
 
   const fallbackProfile: VideoCaptureProfile = {
@@ -131,11 +168,11 @@ async function preferTrackProfile(track: MediaStreamTrack, mode: "environment" |
     bitRate: 8_000_000
   };
 
-  try {
-    await track.applyConstraints(buildTrackConstraints(mode, fallbackProfile));
+  if (await applyProfile(fallbackProfile, supportsContinuousFocus)) {
     return fallbackProfile;
-  } catch {
-    // Keep browser-selected defaults when explicit constraints fail.
+  }
+  if (supportsContinuousFocus && await applyProfile(fallbackProfile, false)) {
+    return fallbackProfile;
   }
 
   return fallbackProfile;
@@ -197,6 +234,8 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const recordedChunksRef = useRef<Blob[]>([]);
   const recordingStartedAtRef = useRef(0);
   const defaultLaunchAttemptedRef = useRef(false);
+  const cameraRequestSequenceRef = useRef(0);
+  const supportMessageTimerRef = useRef<number | null>(null);
   const captureRequestedAtRef = useRef(Date.now());
   const activeVideoProfileRef = useRef<VideoCaptureProfile>({
     label: "hd",
@@ -209,6 +248,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   const [capturingPhoto, setCapturingPhoto] = useState(false);
   const [ready, setReady] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [showSupportMessage, setShowSupportMessage] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
 
@@ -246,12 +286,25 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
     }
   };
 
+  const clearSupportMessageTimer = () => {
+    if (supportMessageTimerRef.current === null) return;
+    window.clearTimeout(supportMessageTimerRef.current);
+    supportMessageTimerRef.current = null;
+  };
+
   const startLiveCamera = async (mode = facingMode) => {
     if (!useLiveCamera || recording || processing) return false;
+
+    const requestSequence = ++cameraRequestSequenceRef.current;
 
     setStarting(true);
     setReady(false);
     setCameraError("");
+    setShowSupportMessage(false);
+    clearSupportMessageTimer();
+    supportMessageTimerRef.current = window.setTimeout(() => {
+      if (cameraRequestSequenceRef.current === requestSequence) setShowSupportMessage(true);
+    }, CAMERA_SUPPORT_MESSAGE_DELAY_MS);
     stopStream();
 
     try {
@@ -266,10 +319,16 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
           audio: false
         });
       } catch {
+        if (cameraRequestSequenceRef.current !== requestSequence) return false;
         stream = await navigator.mediaDevices.getUserMedia({
           video: getFallbackCameraVideoConstraints(mode),
           audio: false
         });
+      }
+
+      if (cameraRequestSequenceRef.current !== requestSequence) {
+        stream.getTracks().forEach((track) => track.stop());
+        return false;
       }
 
       streamRef.current = stream;
@@ -288,6 +347,7 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       setReady(true);
       return true;
     } catch (error) {
+      if (cameraRequestSequenceRef.current !== requestSequence) return false;
       reportAppError(error, {
         severity: "error",
         source: "media-capture",
@@ -299,7 +359,11 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
       setCameraError(error instanceof Error ? error.message : "Nao foi possivel abrir a camera.");
       return false;
     } finally {
-      setStarting(false);
+      if (cameraRequestSequenceRef.current === requestSequence) {
+        clearSupportMessageTimer();
+        setShowSupportMessage(false);
+        setStarting(false);
+      }
     }
   };
 
@@ -548,7 +612,11 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
   };
 
   useEffect(() => {
-    return () => stopStream();
+    return () => {
+      cameraRequestSequenceRef.current += 1;
+      clearSupportMessageTimer();
+      stopStream();
+    };
   }, []);
 
   useEffect(() => {
@@ -631,7 +699,12 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
               ) : null}
 
               {processing ? <div className="camera-loading camera-processing">{capturingPhoto ? "Capturando foto..." : "Preparando midia..."}</div> : null}
-              {starting ? <div className="camera-loading">Abrindo camera...</div> : null}
+              {starting ? (
+                <div className="camera-loading camera-permission-loading" aria-live="polite">
+                  <span>Abrindo camera...</span>
+                  {showSupportMessage ? <span>Camera nao respondeu. Fale com o suporte de TI da Betinhos.</span> : null}
+                </div>
+              ) : null}
 
               {cameraError ? (
                 <div className="camera-error">
@@ -642,16 +715,17 @@ export function MediaCaptureScreen({ kind, title, onBack, onCapture, onCaptureVi
               ) : null}
             </div>
 
+            <TextInputControl
+              ref={photoInputRef}
+              className="native-camera-input"
+              type="file"
+              accept="image/*"
+              capture={nativeCaptureMode}
+              onChange={handleNativeCapture}
+            />
+
             {!useLivePreview ? (
               <>
-                <TextInputControl
-                  ref={photoInputRef}
-                  className="native-camera-input"
-                  type="file"
-                  accept="image/*"
-                  capture={nativeCaptureMode}
-                  onChange={handleNativeCapture}
-                />
                 <TextInputControl
                   ref={videoInputRef}
                   className="native-camera-input"
