@@ -7,6 +7,7 @@ import {
   buildMaintenanceRequestRecord,
   buildMaintenanceRequestVehiclesQuery,
   buildReceiptEmailContent,
+  finalizeExchangeRemote,
   getExchangeCompletionState,
   normalizeReceiptIdentifier,
   SERVICE_VEHICLE_ORIGIN,
@@ -192,6 +193,114 @@ test("troca com base fecha com confirmacao do motorista principal", () => {
 
   assert.equal(devolucaoBase.baseExchange, true);
   assert.equal(devolucaoBase.closesExchange, true);
+});
+
+test("retirada da base cria posse base automatica quando veiculo nao tem posse aberta", async () => {
+  const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const driverId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+  const exchangeId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+  const vehicleId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+  const geralId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+  const basePossessionId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+  const createdRecords: Array<{ entityName: string; data: Record<string, unknown> }> = [];
+  const updatedRecords: Array<{ entityName: string; id: string; data: Record<string, unknown> }> = [];
+  let basePossessionOpen = false;
+
+  const previousWindow = (globalThis as any).window;
+  const windowMock: any = {
+    location: { hostname: "org.crm2.dynamics.com" },
+    Xrm: {
+      Utility: {
+        getGlobalContext: () => ({
+          userSettings: { userId },
+          getClientUrl: () => "https://org.crm2.dynamics.com"
+        })
+      },
+      WebApi: {
+        retrieveRecord: async (entityName: string) => {
+          if (entityName === "systemuser") return { internalemailaddress: "driver@betinhos.com.br", fullname: "Driver" };
+          if (entityName === "cr40f_trocasdecarro") {
+            return {
+              cr40f_trocasdecarroid: exchangeId,
+              cr40f_id: "OT-1",
+              cr40f_statusdatroca: 202410000,
+              new_tipodetroca: 100000002,
+              _cr40f_motorista1_value: driverId,
+              _cr40f_veiculo2antesdatroca_value: vehicleId
+            };
+          }
+          throw new Error(`retrieveRecord inesperado: ${entityName}`);
+        },
+        retrieveMultipleRecords: async (entityName: string, options = "") => {
+          if (entityName === "cr40f_funcionarios") {
+            return {
+              entities: [
+                {
+                  cr40f_funcionariosid: driverId,
+                  cr40f_nomecompleto: "Driver",
+                  cr40f_emailmicrosoft: "driver@betinhos.com.br"
+                }
+              ]
+            };
+          }
+          if (entityName === "new_possedeveiculo") {
+            if (options.includes("_new_trocadecarrorelacionada_value")) return { entities: [] };
+            if (options.includes("_new_motorista_value eq null")) {
+              return { entities: basePossessionOpen ? [{ new_possedeveiculoid: basePossessionId }] : [] };
+            }
+            return { entities: [] };
+          }
+          throw new Error(`retrieveMultipleRecords inesperado: ${entityName}`);
+        },
+        updateRecord: async (entityName: string, id: string, data: Record<string, unknown>) => {
+          updatedRecords.push({ entityName, id, data });
+          if (entityName === "new_possedeveiculo" && id === basePossessionId) basePossessionOpen = false;
+          return {};
+        },
+        createRecord: async (entityName: string, data: Record<string, unknown>) => {
+          createdRecords.push({ entityName, data });
+          const isDriverPossession = "new_Motorista@odata.bind" in data;
+          if (entityName === "new_possedeveiculo" && !isDriverPossession) {
+            basePossessionOpen = true;
+            return { id: basePossessionId };
+          }
+          return { id: "11111111-1111-1111-1111-111111111111" };
+        }
+      }
+    }
+  };
+  windowMock.parent = windowMock;
+  (globalThis as any).window = windowMock;
+
+  try {
+    await finalizeExchangeRemote({
+      detail: {
+        type: "TROCA",
+        id: "OT-1",
+        title: "Retirada",
+        fields: [],
+        actions: [],
+        dataverse: {
+          entitySetName: "cr40f_trocasdecarros",
+          id: exchangeId,
+          record: { __geralId: geralId }
+        }
+      },
+      fields: {}
+    });
+  } finally {
+    (globalThis as any).window = previousWindow;
+  }
+
+  assert.equal(createdRecords.length, 2);
+  assert.equal(createdRecords[0].entityName, "new_possedeveiculo");
+  assert.equal(createdRecords[0].data["new_Veiculo@odata.bind"], `/cr40f_veiculoses(${vehicleId})`);
+  assert.equal(createdRecords[0].data["new_TrocadeCarroRelacionada@odata.bind"], `/cr40f_trocasdecarros(${exchangeId})`);
+  assert.equal("new_Motorista@odata.bind" in createdRecords[0].data, false);
+  assert.equal(createdRecords[1].data["new_Motorista@odata.bind"], `/cr40f_funcionarioses(${driverId})`);
+  assert.equal(updatedRecords.some((record) => record.entityName === "cr40f_trocasdecarro" && record.data.cr40f_statusdatroca === 202410001), true);
+  assert.equal(updatedRecords.some((record) => record.entityName === "new_possedeveiculo" && record.data.new_fimdaposse), true);
+  assert.equal(updatedRecords.some((record) => record.entityName === "cr40f_reservadeveculos" && record.data.cr40f_status === 202410008), true);
 });
 
 test("troca aberta aparece para motorista da troca sem depender da Geral", () => {

@@ -3505,22 +3505,34 @@ async function getSingleOpenPossessionByDriver(driverId: string, label: string):
   return { id: possessionId, vehicleId };
 }
 
-async function assertSingleOpenBasePossession(vehicleId: string) {
+async function ensureSingleOpenBasePossession(vehicleId: string, exchangeId: string) {
   if (!vehicleId) throw new Error("Retirada da base sem veiculo informado para receber.");
   const result = await retrieveMultiple(
     DATAVERSE.posseVeiculos,
     [
-      "$select=new_possedeveiculoid",
-      `$filter=_new_veiculo_value eq ${cleanGuid(vehicleId)} and _new_motorista_value eq null and new_fimdaposse eq null`,
-      "$top=2"
+      "$select=new_possedeveiculoid,_new_motorista_value,new_iniciodaposse",
+      `$filter=_new_veiculo_value eq ${cleanGuid(vehicleId)} and new_fimdaposse eq null`,
+      "$orderby=new_iniciodaposse desc",
+      "$top=3"
     ].join("&")
   );
-  if (result.entities.length === 0) {
-    throw new Error("Veiculo da retirada nao possui posse aberta na base no momento da finalizacao.");
-  }
-  if (result.entities.length > 1) {
+  const basePossessions = result.entities.filter((possession) => !cleanODataGuid(possession._new_motorista_value));
+  if (basePossessions.length > 1) {
     throw new Error("Veiculo da retirada possui mais de uma posse aberta na base. Corrija a tabela de posse antes de finalizar.");
   }
+  if (basePossessions.length === 1) {
+    if (result.entities.length > 1) {
+      throw new Error("Veiculo da retirada possui posse aberta na base e com motorista. Corrija a tabela de posse antes de finalizar.");
+    }
+    return;
+  }
+  if (result.entities.length > 0) {
+    throw new Error("Veiculo da retirada possui posse aberta com motorista. Corrija a tabela de posse antes de finalizar.");
+  }
+  if (!cleanGuid(exchangeId)) throw new Error("Retirada da base sem troca informada para criar posse base automatica.");
+
+  dataverseLog("Criando posse base automaticamente para retirada.", { vehicleId, exchangeId });
+  await createPossession(vehicleId, null, exchangeId);
 }
 
 function setExchangeVehiclePatch(patch: Record<string, unknown>, slot: "driver1" | "driver2", vehicleId: string) {
@@ -3549,7 +3561,7 @@ async function buildActualExchangeVehiclePatch(exchange: DataverseRecord, curren
 
   if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) {
     const vehicle2Id = getLookupId(exchange, "cr40f_veiculo2antesdatroca");
-    await assertSingleOpenBasePossession(vehicle2Id);
+    await ensureSingleOpenBasePossession(vehicle2Id, getRecordId(exchange, "cr40f_trocasdecarroid"));
     return { patch, exchange: actualExchange };
   }
 
