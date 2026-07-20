@@ -2910,11 +2910,10 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   const now = new Date();
   const isThirdPartyDriver = Number(driver.funcionario?.cr40f_tipodevinculo) === DRIVER_LINK_TYPE.terceiro;
   const historyLookbackDays = isThirdPartyDriver ? 45 : 5;
-  const start = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
   const end = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
   const historyStart = new Date(now.getTime() - historyLookbackDays * 24 * 60 * 60 * 1000).toISOString();
   const historyEnd = new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString();
-  dataverseLog("Janela da agenda calculada.", { start, end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
+  dataverseLog("Janela da agenda calculada.", { end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
 
   const geralSelect =
     "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
@@ -2923,7 +2922,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.geral,
     [
       geralSelect,
-      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
+      `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc",
       "$top=80"
     ].join("&")
@@ -2933,7 +2932,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.geral,
     [
       geralSelect,
-      `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
+      `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc",
       "$top=80"
     ].join("&")
