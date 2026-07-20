@@ -227,8 +227,8 @@ if (-not $Apply) {
 
 $assemblyBytes = [IO.File]::ReadAllBytes((Resolve-Path $DllPath))
 $assemblyName = [Reflection.AssemblyName]::GetAssemblyName((Resolve-Path $DllPath))
-$token = $assemblyName.GetPublicKeyToken()
-$publicKeyToken = if ($token) { ([BitConverter]::ToString($token)).Replace("-", "").ToLowerInvariant() } else { "" }
+$publicKeyTokenBytes = $assemblyName.GetPublicKeyToken()
+$publicKeyToken = if ($publicKeyTokenBytes) { ([BitConverter]::ToString($publicKeyTokenBytes)).Replace("-", "").ToLowerInvariant() } else { "" }
 $assemblyRows = @(Get-PluginAssembly)
 if ($assemblyRows.Count -gt 1) { throw "Assembly Betinhos.DriverRecordSharing duplicado." }
 if ($assemblyRows.Count -eq 1) {
