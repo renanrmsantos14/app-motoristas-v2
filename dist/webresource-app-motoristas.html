@@ -12007,7 +12007,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.625","builtAt":"2026-07-17T23:14:40.969Z","builtAtLabel":"17/07/2026, 20:14"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.627","builtAt":"2026-07-20T19:06:09.299Z","builtAtLabel":"20/07/2026, 16:06"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -27109,25 +27109,25 @@ select,
             if (fallbackText) {
               return fallbackText;
             }
-            var start;
+            var start2;
             var startValue = startText;
             var startLength = startValue.length;
             var end;
             var endValue = getText();
             var endLength = endValue.length;
-            for (start = 0; start < startLength; start++) {
-              if (startValue[start] !== endValue[start]) {
+            for (start2 = 0; start2 < startLength; start2++) {
+              if (startValue[start2] !== endValue[start2]) {
                 break;
               }
             }
-            var minEnd = startLength - start;
+            var minEnd = startLength - start2;
             for (end = 1; end <= minEnd; end++) {
               if (startValue[startLength - end] !== endValue[endLength - end]) {
                 break;
               }
             }
             var sliceTail = end > 1 ? 1 - end : void 0;
-            fallbackText = endValue.slice(start, sliceTail);
+            fallbackText = endValue.slice(start2, sliceTail);
             return fallbackText;
           }
           function getText() {
@@ -27987,7 +27987,7 @@ select,
           }
           function getModernOffsetsFromPoints(outerNode, anchorNode, anchorOffset, focusNode, focusOffset) {
             var length = 0;
-            var start = -1;
+            var start2 = -1;
             var end = -1;
             var indexWithinAnchor = 0;
             var indexWithinFocus = 0;
@@ -27997,7 +27997,7 @@ select,
               var next = null;
               while (true) {
                 if (node === anchorNode && (anchorOffset === 0 || node.nodeType === TEXT_NODE)) {
-                  start = length + anchorOffset;
+                  start2 = length + anchorOffset;
                 }
                 if (node === focusNode && (focusOffset === 0 || node.nodeType === TEXT_NODE)) {
                   end = length + focusOffset;
@@ -28016,7 +28016,7 @@ select,
                   break outer;
                 }
                 if (parentNode === anchorNode && ++indexWithinAnchor === anchorOffset) {
-                  start = length;
+                  start2 = length;
                 }
                 if (parentNode === focusNode && ++indexWithinFocus === focusOffset) {
                   end = length;
@@ -28029,11 +28029,11 @@ select,
               }
               node = next;
             }
-            if (start === -1 || end === -1) {
+            if (start2 === -1 || end === -1) {
               return null;
             }
             return {
-              start,
+              start: start2,
               end
             };
           }
@@ -28045,14 +28045,14 @@ select,
             }
             var selection = win.getSelection();
             var length = node.textContent.length;
-            var start = Math.min(offsets.start, length);
-            var end = offsets.end === void 0 ? start : Math.min(offsets.end, length);
-            if (!selection.extend && start > end) {
+            var start2 = Math.min(offsets.start, length);
+            var end = offsets.end === void 0 ? start2 : Math.min(offsets.end, length);
+            if (!selection.extend && start2 > end) {
               var temp = end;
-              end = start;
-              start = temp;
+              end = start2;
+              start2 = temp;
             }
-            var startMarker = getNodeForCharacterOffset(node, start);
+            var startMarker = getNodeForCharacterOffset(node, start2);
             var endMarker = getNodeForCharacterOffset(node, end);
             if (startMarker && endMarker) {
               if (selection.rangeCount === 1 && selection.anchorNode === startMarker.node && selection.anchorOffset === startMarker.offset && selection.focusNode === endMarker.node && selection.focusOffset === endMarker.offset) {
@@ -28061,7 +28061,7 @@ select,
               var range2 = doc.createRange();
               range2.setStart(startMarker.node, startMarker.offset);
               selection.removeAllRanges();
-              if (start > end) {
+              if (start2 > end) {
                 selection.addRange(range2);
                 selection.extend(endMarker.node, endMarker.offset);
               } else {
@@ -28169,13 +28169,13 @@ select,
             };
           }
           function setSelection(input, offsets) {
-            var start = offsets.start;
+            var start2 = offsets.start;
             var end = offsets.end;
             if (end === void 0) {
-              end = start;
+              end = start2;
             }
             if ("selectionStart" in input) {
-              input.selectionStart = start;
+              input.selectionStart = start2;
               input.selectionEnd = Math.min(end, input.value.length);
             } else {
               setOffsets(input, offsets);
@@ -33720,22 +33720,22 @@ select,
           }
           function mountTransition() {
             var _mountState = mountState(false), isPending = _mountState[0], setPending = _mountState[1];
-            var start = startTransition.bind(null, setPending);
+            var start2 = startTransition.bind(null, setPending);
             var hook = mountWorkInProgressHook();
-            hook.memoizedState = start;
-            return [isPending, start];
+            hook.memoizedState = start2;
+            return [isPending, start2];
           }
           function updateTransition() {
             var _updateState = updateState(), isPending = _updateState[0];
             var hook = updateWorkInProgressHook();
-            var start = hook.memoizedState;
-            return [isPending, start];
+            var start2 = hook.memoizedState;
+            return [isPending, start2];
           }
           function rerenderTransition() {
             var _rerenderState = rerenderState(), isPending = _rerenderState[0];
             var hook = updateWorkInProgressHook();
-            var start = hook.memoizedState;
-            return [isPending, start];
+            var start2 = hook.memoizedState;
+            return [isPending, start2];
           }
           var isUpdatingOpaqueValueInRenderPhase = false;
           function getIsUpdatingOpaqueValueInRenderPhaseInDEV() {
@@ -43933,7 +43933,7 @@ select,
         s.pending_buf[s.pending++] = b >>> 8 & 255;
         s.pending_buf[s.pending++] = b & 255;
       }
-      function read_buf(strm, buf, start, size) {
+      function read_buf(strm, buf, start2, size) {
         var len = strm.avail_in;
         if (len > size) {
           len = size;
@@ -43942,11 +43942,11 @@ select,
           return 0;
         }
         strm.avail_in -= len;
-        utils.arraySet(buf, strm.input, strm.next_in, len, start);
+        utils.arraySet(buf, strm.input, strm.next_in, len, start2);
         if (strm.state.wrap === 1) {
-          strm.adler = adler32(strm.adler, buf, len, start);
+          strm.adler = adler32(strm.adler, buf, len, start2);
         } else if (strm.state.wrap === 2) {
-          strm.adler = crc32(strm.adler, buf, len, start);
+          strm.adler = crc32(strm.adler, buf, len, start2);
         }
         strm.next_in += len;
         strm.total_in += len;
@@ -45216,7 +45216,7 @@ select,
       "use strict";
       var BAD = 30;
       var TYPE = 12;
-      module.exports = function inflate_fast(strm, start) {
+      module.exports = function inflate_fast(strm, start2) {
         var state;
         var _in;
         var last2;
@@ -45247,7 +45247,7 @@ select,
         last2 = _in + (strm.avail_in - 5);
         _out = strm.next_out;
         output = strm.output;
-        beg = _out - (start - strm.avail_out);
+        beg = _out - (start2 - strm.avail_out);
         end = _out + (strm.avail_out - 257);
         dmax = state.dmax;
         wsize = state.wsize;
@@ -52590,9 +52590,9 @@ select,
 
   // node_modules/motion-dom/dist/es/utils/delay.mjs
   function delay(callback, timeout) {
-    const start = time.now();
+    const start2 = time.now();
     const checkElapsed = ({ timestamp }) => {
-      const elapsed = timestamp - start;
+      const elapsed = timestamp - start2;
       if (elapsed >= timeout) {
         cancelFrame(checkElapsed);
         callback(elapsed - timeout);
@@ -57087,7 +57087,7 @@ select,
     const date = normalizeClipboardText(getClipboardField(detail, "Data e Hor\xE1rio de Sa\xEDda", "Data e Hor\xE1rio da Manuten\xE7\xE3o", "In\xEDcio da Janela", "In\xEDcio da Janela de Troca")) || "\u2014";
     const time2 = getClipboardTime(date);
     const passenger = normalizeClipboardText(getClipboardField(detail, "Passageiros e Telefones de Contato", "Passageiros"));
-    const start = normalizeClipboardText(getClipboardField(detail, "Endere\xE7o de Sa\xEDda", "Local de Sa\xEDda")) || "\u2014";
+    const start2 = normalizeClipboardText(getClipboardField(detail, "Endere\xE7o de Sa\xEDda", "Local de Sa\xEDda")) || "\u2014";
     const destination = normalizeClipboardText(getClipboardField(detail, "Destino")) || "\u2014";
     const observation = normalizeClipboardText(getClipboardField(detail, "Obs ao Motorista", "Coment\xE1rios ao Motorista", "Obs de Opera\xE7\xE3o", "Observa\xE7\xE3o", "Descri\xE7\xE3o do Cen\xE1rio Encontrado")) || "\u2014";
     const passengerProfile = normalizeClipboardText(getClipboardField(detail, "Perfil do Passageiro")) || "\u2014";
@@ -57100,7 +57100,7 @@ select,
       `*Receber:* ${getReceiveMarker(getClipboardField(detail, "Receber"))}`,
       `*Trajeto:* ${normalizeClipboardText(getClipboardField(detail, "Trajeto", "Descri\xE7\xE3o", "Descricao")) || "\u2014"}`,
       `*Passageiro:* ${passenger || "\u2014"}`,
-      `*Local de sa\xEDda:* ${start}`,
+      `*Local de sa\xEDda:* ${start2}`,
       `*Destino:* ${destination}`,
       `*Obs ao motorista:* ${observation}`,
       "",
@@ -59944,8 +59944,8 @@ ${text}`);
     if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) return "devolucaoBase";
     return "troca";
   }
-  function joinDateRange(start, end) {
-    const startText = start ? start.toLocaleString("pt-BR", {
+  function joinDateRange(start2, end) {
+    const startText = start2 ? start2.toLocaleString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -59960,7 +59960,7 @@ ${text}`);
   }
   function buildExchangeDisplay(exchange, driver) {
     const kind = getExchangeKind(exchange);
-    const start = toDate(exchange.cr40f_iniciodajaneladetroca);
+    const start2 = toDate(exchange.cr40f_iniciodajaneladetroca);
     const end = toDate(exchange.cr40f_fimdajaneladetroca);
     const driverId = cleanGuid2(driver?.id ?? "");
     const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === driverId;
@@ -59979,7 +59979,7 @@ ${text}`);
         title: "Retirada na Base",
         description: `Retirar ${receiving} na base`,
         summary: `Retire ${receiving} na base operacional.`,
-        window: joinDateRange(start, end),
+        window: joinDateRange(start2, end),
         fields: [
           { label: "O que fazer", value: `Retirar ve\xEDculo na base`, strong: true },
           { label: "Voc\xEA recebe", value: receiving, strong: true },
@@ -59995,7 +59995,7 @@ ${text}`);
         title: "Devolu\xE7\xE3o \xE0 Base",
         description: `Devolver ${delivering} na base`,
         summary: `Devolva ${delivering} na base operacional.`,
-        window: joinDateRange(start, end),
+        window: joinDateRange(start2, end),
         fields: [
           { label: "O que fazer", value: `Devolver ve\xEDculo na base`, strong: true },
           { label: "Voc\xEA entrega", value: delivering, strong: true },
@@ -60014,7 +60014,7 @@ ${text}`);
         title: "Troca entre Motoristas",
         description: `Entregar ${delivering} e receber ${receiving}`,
         summary: `Troque com ${contact}. Entregue ${delivering} e receba ${receiving}.`,
-        window: joinDateRange(start, end),
+        window: joinDateRange(start2, end),
         fields: [
           { label: "O que fazer", value: `Trocar ve\xEDculo com ${contact}`, strong: true },
           { label: "Voc\xEA entrega", value: delivering, strong: true },
@@ -60029,7 +60029,7 @@ ${text}`);
       title: "Troca entre Motoristas",
       description: `${notInformed(vehicle1)} por ${notInformed(vehicle2)}`,
       summary: `Troca entre ${notInformed(driver1)} e ${notInformed(driver2)}.`,
-      window: joinDateRange(start, end),
+      window: joinDateRange(start2, end),
       fields: [
         { label: "O que fazer", value: `Trocar ve\xEDculos`, strong: true },
         { label: "Motorista 1 entrega", value: notInformed(vehicle1), strong: true },
@@ -60264,7 +60264,7 @@ ${text}`);
     ].filter((field) => field.value);
   }
   function mapExchange(exchange, geral, driver) {
-    const start = toDate(exchange.cr40f_iniciodajaneladetroca);
+    const start2 = toDate(exchange.cr40f_iniciodajaneladetroca);
     const exchangeId = getRecordId(exchange, "cr40f_trocasdecarroid");
     const businessId = getBusinessId(exchange, exchangeId);
     const geralId = geral ? getGeralId(geral) : "";
@@ -60285,7 +60285,7 @@ ${text}`);
       id: `trc-${exchangeId}`,
       tipo: "TROCA",
       label: display.label,
-      time: formatAgendaTime(start),
+      time: formatAgendaTime(start2),
       description: display.description,
       priority: 0,
       searchText: `${businessId} ${exchangeId} ${display.label} ${display.description} ${display.summary} ${getLookupName(exchange, "cr40f_motorista1")} ${getLookupName(exchange, "cr40f_motorista2")}`.toLowerCase(),
@@ -60349,17 +60349,16 @@ ${text}`);
     const now2 = /* @__PURE__ */ new Date();
     const isThirdPartyDriver = Number(driver.funcionario?.cr40f_tipodevinculo) === DRIVER_LINK_TYPE.terceiro;
     const historyLookbackDays = isThirdPartyDriver ? 45 : 5;
-    const start = new Date(now2.getTime() - 24 * 60 * 60 * 1e3).toISOString();
     const end = new Date(now2.getTime() + 3 * 24 * 60 * 60 * 1e3).toISOString();
     const historyStart = new Date(now2.getTime() - historyLookbackDays * 24 * 60 * 60 * 1e3).toISOString();
     const historyEnd = new Date(now2.getTime() + 3 * 60 * 60 * 1e3).toISOString();
-    dataverseLog("Janela da agenda calculada.", { start, end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
+    dataverseLog("Janela da agenda calculada.", { end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
     const geralSelect = "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
     const servicesResult = await retrieveMultiple(
       DATAVERSE.geral,
       [
         geralSelect,
-        `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
+        `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
         "$orderby=cr40f_dataehorriodesada asc",
         "$top=80"
       ].join("&")
@@ -60368,7 +60367,7 @@ ${text}`);
       DATAVERSE.geral,
       [
         geralSelect,
-        `$filter=cr40f_dataehorriodesada ge ${start} and cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
+        `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
         "$orderby=cr40f_dataehorriodesada asc",
         "$top=80"
       ].join("&")
@@ -65931,10 +65930,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     }
     return total;
   };
-  var range = function(start, end) {
-    var arr = new Array(end - start);
+  var range = function(start2, end) {
+    var arr = new Array(end - start2);
     for (var idx = 0, len = arr.length; idx < len; idx++) {
-      arr[idx] = start + idx;
+      arr[idx] = start2 + idx;
     }
     return arr;
   };
@@ -71512,11 +71511,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   var Stream = (
     /** @class */
     function() {
-      function Stream2(buffer, start, length) {
+      function Stream2(buffer, start2, length) {
         this.bytes = buffer;
-        this.start = start || 0;
+        this.start = start2 || 0;
         this.pos = this.start;
-        this.end = !!start && !!length ? start + length : this.bytes.length;
+        this.end = !!start2 && !!length ? start2 + length : this.bytes.length;
       }
       Object.defineProperty(Stream2.prototype, "length", {
         get: function() {
@@ -71598,8 +71597,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       Stream2.prototype.moveStart = function() {
         this.start = this.pos;
       };
-      Stream2.prototype.makeSubStream = function(start, length) {
-        return new Stream2(this.bytes, start, length);
+      Stream2.prototype.makeSubStream = function(start2, length) {
+        return new Stream2(this.bytes, start2, length);
       };
       Stream2.prototype.decode = function() {
         return this.bytes;
@@ -71709,14 +71708,14 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       DecodeStream2.prototype.reset = function() {
         this.pos = 0;
       };
-      DecodeStream2.prototype.makeSubStream = function(start, length) {
-        var end = start + length;
+      DecodeStream2.prototype.makeSubStream = function(start2, length) {
+        var end = start2 + length;
         while (this.bufferLength <= end && !this.eof) {
           this.readBlock();
         }
         return new Stream_default(
           this.buffer,
-          start,
+          start2,
           length
           /* dict */
         );
@@ -73192,9 +73191,9 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           return [];
         var pageRanges = [];
         for (var i = 0; i < rng.size(); i += 2) {
-          var start = rng.lookup(i, PDFNumber_default).asNumber();
+          var start2 = rng.lookup(i, PDFNumber_default).asNumber();
           var end = rng.lookup(i + 1, PDFNumber_default).asNumber();
-          pageRanges.push({ start, end });
+          pageRanges.push({ start: start2, end });
         }
         return pageRanges;
       };
@@ -74906,8 +74905,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       ByteStream2.prototype.offset = function() {
         return this.idx;
       };
-      ByteStream2.prototype.slice = function(start, end) {
-        return this.bytes.slice(start, end);
+      ByteStream2.prototype.slice = function(start2, end) {
+        return this.bytes.slice(start2, end);
       };
       ByteStream2.prototype.position = function() {
         return { line: this.line, column: this.column, offset: this.idx };
@@ -75146,21 +75145,21 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         if (!this.matchKeyword(Keywords.streamEOF1) && !this.matchKeyword(Keywords.streamEOF2) && !this.matchKeyword(Keywords.streamEOF3) && !this.matchKeyword(Keywords.streamEOF4) && !this.matchKeyword(Keywords.stream)) {
           return dict;
         }
-        var start = this.bytes.offset();
+        var start2 = this.bytes.offset();
         var end;
         var Length = dict.get(PDFName_default.of("Length"));
         if (Length instanceof PDFNumber_default) {
-          end = start + Length.asNumber();
+          end = start2 + Length.asNumber();
           this.bytes.moveTo(end);
           this.skipWhitespaceAndComments();
           if (!this.matchKeyword(Keywords.endstream)) {
-            this.bytes.moveTo(start);
+            this.bytes.moveTo(start2);
             end = this.findEndOfStreamFallback(startPos);
           }
         } else {
           end = this.findEndOfStreamFallback(startPos);
         }
-        var contents = this.bytes.slice(start, end);
+        var contents = this.bytes.slice(start2, end);
         return PDFRawStream_default.of(dict, contents);
       };
       PDFObjectParser2.prototype.findEndOfStreamFallback = function(startPos) {
@@ -75497,7 +75496,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         var ref = this.parseIndirectObjectHeader();
         console.warn("Invalid object ref: " + ref);
         this.skipWhitespaceAndComments();
-        var start = this.bytes.offset();
+        var start2 = this.bytes.offset();
         var failed = true;
         while (!this.bytes.done()) {
           if (this.matchKeyword(Keywords.endobj)) {
@@ -75510,7 +75509,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         if (failed)
           throw new PDFInvalidObjectParsingError(startPos);
         var end = this.bytes.offset() - Keywords.endobj.length;
-        var object = PDFInvalidObject_default.of(this.bytes.slice(start, end));
+        var object = PDFInvalidObject_default.of(this.bytes.slice(start2, end));
         this.context.assign(ref, object);
         return ref;
       };
@@ -80279,8 +80278,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         assertIs(y, "y", ["number"]);
         this.node.normalize();
         this.getContentStream();
-        var start = this.createContentStream(pushGraphicsState(), translate(x, y));
-        var startRef = this.doc.context.register(start);
+        var start2 = this.createContentStream(pushGraphicsState(), translate(x, y));
+        var startRef = this.doc.context.register(start2);
         var end = this.createContentStream(popGraphicsState());
         var endRef = this.doc.context.register(end);
         this.node.wrapContentStreams(startRef, endRef);
@@ -80297,8 +80296,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         assertIs(y, "y", ["number"]);
         this.node.normalize();
         this.getContentStream();
-        var start = this.createContentStream(pushGraphicsState(), scale2(x, y));
-        var startRef = this.doc.context.register(start);
+        var start2 = this.createContentStream(pushGraphicsState(), scale2(x, y));
+        var startRef = this.doc.context.register(start2);
         var end = this.createContentStream(popGraphicsState());
         var endRef = this.doc.context.register(end);
         this.node.wrapContentStreams(startRef, endRef);
@@ -82433,12 +82432,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
   }
   function readVoucherDraft(detail, initialDraft) {
     if (initialDraft) {
-      const start = splitTime(initialDraft["Hor\xE1rio Inicial"] ?? initialDraft["Horario Inicial"]);
+      const start2 = splitTime(initialDraft["Hor\xE1rio Inicial"] ?? initialDraft["Horario Inicial"]);
       const waitStart = splitTime(initialDraft["Espera Inicio"] ?? initialDraft["Espera In\xEDcio"]);
       const waitEnd = splitTime(initialDraft["Espera Final"]);
       return {
-        hora_saida: start.hour,
-        min_saida: start.minute,
+        hora_saida: start2.hour,
+        min_saida: start2.minute,
         espera_ini_hora: waitStart.hour,
         espera_ini_min: waitStart.minute,
         espera_fim_hora: waitEnd.hour,
