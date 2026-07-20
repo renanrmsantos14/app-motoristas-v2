@@ -11,6 +11,10 @@ This repository contains the App Motoristas React webresource for Power Platform
 - `dist/` is generated output for the single-file webresource; do not edit it manually.
 - `docs/`, `system_architecture.md`, and audit files provide context.
 
+## Graphify Context Gate
+
+Before any Codex file or code change, query the existing `graphify-out/graph.json` with Graphify using terms from the requested change. Use the returned nodes and source locations as implementation context. If the Graphify CLI is unavailable or blocked, state the exact reason, inspect the existing graph JSON directly, and only then continue with targeted source reads. Do not rebuild the graph before a change unless it is missing or stale; rebuild it after relevant code changes.
+
 ## Build, Test, and Development Commands
 
 - `npm run dev` starts the local dev wrapper.
