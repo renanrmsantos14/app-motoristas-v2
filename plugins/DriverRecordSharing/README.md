@@ -60,6 +60,24 @@ Padrao:
 
 ## Parte 1: compilar agora
 
+### Alternativa PowerShell sem runner .NET
+
+Use quando a politica de Code Integrity bloquear o runner temporario do registrador padrao. Este script nao altera o registrador existente e so publica com `-Apply` explicito.
+
+```powershell
+# leitura e validacao dos pre-requisitos, sem publicar
+powershell -ExecutionPolicy Bypass -File .\scripts\register-driver-record-sharing-plugin-webapi.ps1 `
+  -EnvironmentUrl "https://SEU-AMBIENTE.crmX.dynamics.com/" `
+  -DeviceCode
+
+# publica e valida a configuracao final
+powershell -ExecutionPolicy Bypass -File .\scripts\register-driver-record-sharing-plugin-webapi.ps1 `
+  -EnvironmentUrl "https://SEU-AMBIENTE.crmX.dynamics.com/" `
+  -DeviceCode -Apply
+```
+
+O script usa somente PowerShell e Web API do Dataverse; nao gera nem executa DLL temporaria.
+
 ### Passo 1. Abrir PowerShell
 
 Abra o PowerShell.
