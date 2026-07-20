@@ -95,7 +95,13 @@ namespace Betinhos.DriverRecordSharing
 
             var driver = serviceEntity.GetAttributeValue<EntityReference>(PluginConfig.ServiceDriverLookup);
             var serviceDate = serviceEntity.GetAttributeValue<DateTime?>(PluginConfig.ServiceStartDate);
-            if (driver == null || !serviceDate.HasValue)
+            if (driver == null)
+            {
+                ClearAutomaticVehicleWithoutDriver(serviceEntity);
+                return;
+            }
+
+            if (!serviceDate.HasValue)
             {
                 return;
             }
@@ -141,6 +147,24 @@ namespace Betinhos.DriverRecordSharing
                 serviceEntity.Id,
                 driver.Id,
                 vehicle.Id);
+        }
+
+        private void ClearAutomaticVehicleWithoutDriver(Entity serviceEntity)
+        {
+            var currentVehicle = serviceEntity.GetAttributeValue<EntityReference>(PluginConfig.ServiceVehicleLookup);
+            if (currentVehicle == null)
+            {
+                return;
+            }
+
+            var patch = new Entity(PluginConfig.ServiceTable, serviceEntity.Id);
+            patch[PluginConfig.ServiceVehicleLookup] = null;
+            patch[PluginConfig.ServiceVehicleOrigin] = new OptionSetValue(PluginConfig.ServiceVehicleOriginAutomatic);
+            _service.Update(patch);
+            _tracing.Trace(
+                "ServiceVehicleSynchronizer cleared automatic vehicle without driver serviceId={0} vehicleId={1}.",
+                serviceEntity.Id,
+                currentVehicle.Id);
         }
 
         private EntityReference ResolveVehicleForDriverAt(Guid driverId, DateTime serviceDate)
