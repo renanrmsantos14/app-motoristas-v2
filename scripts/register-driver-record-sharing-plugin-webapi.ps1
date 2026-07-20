@@ -262,7 +262,7 @@ foreach ($spec in $specs) {
   $filterId = [string](Get-MessageFilter $messageId $spec.Entity).sdkmessagefilterid
   $stepRows = @(Get-Step $pluginTypeId $messageId $filterId)
   if ($stepRows.Count -gt 1) { throw "$($spec.Label): steps duplicados." }
-  $payload = @{ name = "DriverRecordSharing - $($spec.Label)"; description = "Criado pelo script register-driver-record-sharing-plugin-webapi.ps1"; "eventhandler@odata.bind" = (New-Bind "plugintypes" $pluginTypeId); "sdkmessageid@odata.bind" = (New-Bind "sdkmessages" $messageId); "sdkmessagefilterid@odata.bind" = (New-Bind "sdkmessagefilters" $filterId); stage = 40; mode = $spec.Mode; rank = 1; supporteddeployment = 0 }
+  $payload = @{ name = "DriverRecordSharing - $($spec.Label)"; description = "Criado pelo script register-driver-record-sharing-plugin-webapi.ps1"; "eventhandler_plugintype@odata.bind" = (New-Bind "plugintypes" $pluginTypeId); "sdkmessageid@odata.bind" = (New-Bind "sdkmessages" $messageId); "sdkmessagefilterid@odata.bind" = (New-Bind "sdkmessagefilters" $filterId); stage = 40; mode = $spec.Mode; rank = 1; supporteddeployment = 0 }
   if ($spec.Message -eq "Update") { $payload.filteringattributes = $spec.Filtering }
   if ($runAs) { $payload["impersonatinguserid@odata.bind"] = (New-Bind "systemusers" $runAs.systemuserid) }
   if ($stepRows.Count -eq 1) {
