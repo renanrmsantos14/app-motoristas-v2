@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { redactSensitiveLogValue } from "../src/lib/appErrorLogger.ts";
+import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, redactSensitiveLogValue } from "../src/lib/appErrorLogger.ts";
+
+test("mensagem de erro operacional orienta fechar e reabrir o aplicativo", () => {
+  assert.match(APP_OPERATION_ERROR_MESSAGE, /Feche e reabra o aplicativo/);
+});
+
+test("mensagem de conexão perdida orienta fechar e reabrir o aplicativo", () => {
+  assert.match(APP_CONNECTION_LOST_MESSAGE, /conexão com a internet foi perdida/i);
+});
 
 test("redactSensitiveLogValue remove dados sensiveis de strings", () => {
   const value = redactSensitiveLogValue(

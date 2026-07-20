@@ -1,5 +1,5 @@
 import React from "react";
-import { reportAppError } from "../../lib/appErrorLogger";
+import { APP_OPERATION_ERROR_MESSAGE, reportAppError } from "../../lib/appErrorLogger";
 
 type AppErrorBoundaryProps = {
   children: React.ReactNode;
@@ -32,8 +32,8 @@ export class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, App
     return (
       <div className="critical-error-card" role="alert" aria-live="assertive">
         <strong>Erro crítico no app.</strong>
-        <span>Falha registrada na tabela de log. Recarregue para continuar.</span>
-        <button type="button" onClick={() => window.location.reload()}>Recarregar</button>
+        <span>{APP_OPERATION_ERROR_MESSAGE}</span>
+        <button type="button" onClick={() => window.location.reload()}>Reabrir</button>
       </div>
     );
   }

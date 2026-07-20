@@ -48,6 +48,8 @@ export type AppErrorLogContext = {
 };
 
 const LOGICAL_NAME = "new_appmotoristaslog";
+export const APP_OPERATION_ERROR_MESSAGE = "Ocorreu um erro na operação. Feche e reabra o aplicativo antes de tentar novamente.";
+export const APP_CONNECTION_LOST_MESSAGE = "A conexão com a internet foi perdida. Feche e reabra o aplicativo antes de tentar novamente.";
 const QUEUE_KEY = "app-motoristas-error-log-queue-v1";
 const MAX_TEXT = 20000;
 const MAX_STACK = 100000;
@@ -232,6 +234,10 @@ function buildNoticeId(source: string, message: string, action: string, phase: s
 
 function buildUserFacingMessage(message: string, code: string, context: AppErrorLogContext) {
   const normalized = message.trim();
+
+  if (/failed to fetch|não foi possível conectar ao servidor|nao foi possivel conectar ao servidor|offline/i.test(normalized)) {
+    return APP_OPERATION_ERROR_MESSAGE;
+  }
   const privilegeMatch = normalized.match(/missing (prv[\w]+) privilege .* entity '([^']+)'/i);
   if (privilegeMatch) {
     const [, privilege, entityName] = privilegeMatch;

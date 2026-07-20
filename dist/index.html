@@ -12007,7 +12007,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.620","builtAt":"2026-07-15T19:53:01.707Z","builtAtLabel":"15/07/2026, 16:53"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.625","builtAt":"2026-07-17T23:14:40.969Z","builtAtLabel":"17/07/2026, 20:14"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -56482,6 +56482,8 @@ select,
 
   // src/lib/appErrorLogger.ts
   var LOGICAL_NAME = "new_appmotoristaslog";
+  var APP_OPERATION_ERROR_MESSAGE = "Ocorreu um erro na opera\xE7\xE3o. Feche e reabra o aplicativo antes de tentar novamente.";
+  var APP_CONNECTION_LOST_MESSAGE = "A conex\xE3o com a internet foi perdida. Feche e reabra o aplicativo antes de tentar novamente.";
   var QUEUE_KEY = "app-motoristas-error-log-queue-v1";
   var MAX_TEXT = 2e4;
   var MAX_STACK = 1e5;
@@ -56631,6 +56633,9 @@ select,
   }
   function buildUserFacingMessage(message, code, context) {
     const normalized = message.trim();
+    if (/failed to fetch|não foi possível conectar ao servidor|nao foi possivel conectar ao servidor|offline/i.test(normalized)) {
+      return APP_OPERATION_ERROR_MESSAGE;
+    }
     const privilegeMatch = normalized.match(/missing (prv[\w]+) privilege .* entity '([^']+)'/i);
     if (privilegeMatch) {
       const [, privilege, entityName] = privilegeMatch;
@@ -60876,22 +60881,33 @@ ${text}`);
     }
     return { id: possessionId, vehicleId };
   }
-  async function assertSingleOpenBasePossession(vehicleId) {
+  async function ensureSingleOpenBasePossession(vehicleId, exchangeId) {
     if (!vehicleId) throw new Error("Retirada da base sem veiculo informado para receber.");
     const result = await retrieveMultiple(
       DATAVERSE.posseVeiculos,
       [
-        "$select=new_possedeveiculoid",
-        `$filter=_new_veiculo_value eq ${cleanGuid2(vehicleId)} and _new_motorista_value eq null and new_fimdaposse eq null`,
-        "$top=2"
+        "$select=new_possedeveiculoid,_new_motorista_value,new_iniciodaposse",
+        `$filter=_new_veiculo_value eq ${cleanGuid2(vehicleId)} and new_fimdaposse eq null`,
+        "$orderby=new_iniciodaposse desc",
+        "$top=3"
       ].join("&")
     );
-    if (result.entities.length === 0) {
-      throw new Error("Veiculo da retirada nao possui posse aberta na base no momento da finalizacao.");
-    }
-    if (result.entities.length > 1) {
+    const basePossessions = result.entities.filter((possession) => !cleanODataGuid(possession._new_motorista_value));
+    if (basePossessions.length > 1) {
       throw new Error("Veiculo da retirada possui mais de uma posse aberta na base. Corrija a tabela de posse antes de finalizar.");
     }
+    if (basePossessions.length === 1) {
+      if (result.entities.length > 1) {
+        throw new Error("Veiculo da retirada possui posse aberta na base e com motorista. Corrija a tabela de posse antes de finalizar.");
+      }
+      return;
+    }
+    if (result.entities.length > 0) {
+      throw new Error("Veiculo da retirada possui posse aberta com motorista. Corrija a tabela de posse antes de finalizar.");
+    }
+    if (!cleanGuid2(exchangeId)) throw new Error("Retirada da base sem troca informada para criar posse base automatica.");
+    dataverseLog("Criando posse base automaticamente para retirada.", { vehicleId, exchangeId });
+    await createPossession(vehicleId, null, exchangeId);
   }
   function setExchangeVehiclePatch(patch, slot, vehicleId) {
     if (!vehicleId) return;
@@ -60916,7 +60932,7 @@ ${text}`);
     const exchangeType = normalizeText2(getFormatted(exchange, "new_tipodetroca"));
     if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) {
       const vehicle2Id = getLookupId(exchange, "cr40f_veiculo2antesdatroca");
-      await assertSingleOpenBasePossession(vehicle2Id);
+      await ensureSingleOpenBasePossession(vehicle2Id, getRecordId(exchange, "cr40f_trocasdecarroid"));
       return { patch, exchange: actualExchange };
     }
     if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) {
@@ -84242,6 +84258,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     return "info";
   }
   var VOUCHER_DRAFTS_STORAGE_KEY = "app-motoristas-voucher-drafts-v1";
+  var FINALIZE_DRAFT_ASSETS_STORAGE_KEY = "app-motoristas-finalize-draft-assets-v1";
   var SERVICE_OBSERVATION_DRAFTS_KEY = "app-motoristas-service-observation-drafts-v1";
   function getDetailDraftKey(detail) {
     return `${detail.type}:${detail.dataverse?.id ?? detail.id}`;
@@ -84275,6 +84292,28 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return {};
     }
   }
+  function loadFinalizeDraftAssets(storage = window.localStorage) {
+    try {
+      const raw = storage.getItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY);
+      if (!raw) return { signatures: {}, photos: {}, receiveProofs: {} };
+      const parsed = JSON.parse(raw);
+      return {
+        signatures: parsed.signatures && typeof parsed.signatures === "object" ? parsed.signatures : {},
+        photos: parsed.photos && typeof parsed.photos === "object" ? parsed.photos : {},
+        receiveProofs: parsed.receiveProofs && typeof parsed.receiveProofs === "object" ? parsed.receiveProofs : {}
+      };
+    } catch {
+      return { signatures: {}, photos: {}, receiveProofs: {} };
+    }
+  }
+  function serializeReceiveProofs(receiveProofs) {
+    return Object.fromEntries(
+      Object.entries(receiveProofs).map(([detailId, photos]) => [
+        detailId,
+        photos.filter((photo) => Boolean(photo.dataUrl)).map(({ previewUrl: _previewUrl, rawBlob: _rawBlob, ...photo }) => photo)
+      ])
+    );
+  }
   function isVideoMediaDraft(dataUrl, rawBlob) {
     return Boolean(rawBlob) || String(dataUrl ?? "").startsWith("data:video/");
   }
@@ -84302,7 +84341,15 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       () => isHashRoutingEnabled() && !isButtonPreviewMode && !isReceiptPreviewMode,
       [isButtonPreviewMode, isReceiptPreviewMode]
     );
-    const [store, setStore] = (0, import_react58.useState)(() => loadStore());
+    const [store, setStore] = (0, import_react58.useState)(() => {
+      const localStore = loadStore();
+      const savedAssets = loadFinalizeDraftAssets();
+      return {
+        ...localStore,
+        signatures: { ...localStore.signatures, ...savedAssets.signatures },
+        photos: { ...localStore.photos, ...savedAssets.photos }
+      };
+    });
     const initialHashRouteRef = (0, import_react58.useRef)(hashRoutingActive ? parseHashRoute(window.location.hash) : null);
     const initialHashDetail = initialHashRouteRef.current ? findDetailFromHashRoute(store, initialHashRouteRef.current) : null;
     const initialDetailRef = (0, import_react58.useRef)(initialHashRouteRef.current ? initialHashDetail : getInitialDetail(store));
@@ -84320,7 +84367,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [photoDraftIsVideo, setPhotoDraftIsVideo] = (0, import_react58.useState)(false);
     const [toast, setToastState] = (0, import_react58.useState)(null);
     const [dataLoading, setDataLoading] = (0, import_react58.useState)(null);
-    const [criticalError, setCriticalError] = (0, import_react58.useState)("");
+    const [criticalError, setCriticalErrorState] = (0, import_react58.useState)("");
     const [completingDetailKey, setCompletingDetailKey] = (0, import_react58.useState)("");
     const [queueHighlightDetailKey, setQueueHighlightDetailKey] = (0, import_react58.useState)("");
     const [remoteOperation, setRemoteOperation] = (0, import_react58.useState)(null);
@@ -84345,7 +84392,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [expensePhotoRawBlob, setExpensePhotoRawBlob] = (0, import_react58.useState)(null);
     const [expensePhotoIsVideo, setExpensePhotoIsVideo] = (0, import_react58.useState)(false);
     const [expensePreviewPhotoId, setExpensePreviewPhotoId] = (0, import_react58.useState)("");
-    const [receiveProofs, setReceiveProofs] = (0, import_react58.useState)({});
+    const [receiveProofs, setReceiveProofs] = (0, import_react58.useState)(() => loadFinalizeDraftAssets().receiveProofs);
     const [receiveUploadedCounts, setReceiveUploadedCounts] = (0, import_react58.useState)({});
     const [receivePhotoDraft, setReceivePhotoDraft] = (0, import_react58.useState)("");
     const [receivePhotoPreviewUrl, setReceivePhotoPreviewUrl] = (0, import_react58.useState)("");
@@ -84434,7 +84481,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       });
     };
     const setToast = (message, tone) => {
-      const trimmed = message.trim();
+      const trimmed = /failed to fetch|não foi possível conectar ao servidor|nao foi possivel conectar ao servidor|offline/i.test(message) ? APP_OPERATION_ERROR_MESSAGE : message.trim();
       if (!trimmed) {
         setToastState(null);
         return;
@@ -84445,6 +84492,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         tone: tone ?? inferToastTone(trimmed)
       });
     };
+    const setCriticalError = (message) => setCriticalErrorState(message ? APP_OPERATION_ERROR_MESSAGE : "");
     const setDataLoadingState = (loading) => {
       if (loading) setToastState(null);
       setDataLoading(loading);
@@ -84487,6 +84535,24 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         });
       }
     }, [isButtonPreviewMode, isReceiptPreviewMode, screen, voucherDrafts]);
+    (0, import_react58.useEffect)(() => {
+      if (isButtonPreviewMode || isReceiptPreviewMode) return;
+      try {
+        localStorage.setItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY, JSON.stringify({
+          signatures: store.signatures,
+          photos: store.photos,
+          receiveProofs: serializeReceiveProofs(receiveProofs)
+        }));
+      } catch (error2) {
+        reportAppError(error2, {
+          severity: "warning",
+          source: "app",
+          action: "persistFinalizeDraftAssets",
+          phase: "localStorage",
+          screen
+        });
+      }
+    }, [isButtonPreviewMode, isReceiptPreviewMode, screen, store.photos, store.signatures, receiveProofs]);
     (0, import_react58.useEffect)(() => {
       if (isButtonPreviewMode || isReceiptPreviewMode) return;
       if (!hasDataverseRuntime()) return;
@@ -84655,6 +84721,12 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       return () => window.clearTimeout(timer);
     }, [toast]);
     (0, import_react58.useEffect)(() => {
+      const showConnectionLostPopup = () => setCriticalErrorState(APP_CONNECTION_LOST_MESSAGE);
+      if (navigator.onLine === false) showConnectionLostPopup();
+      window.addEventListener("offline", showConnectionLostPopup);
+      return () => window.removeEventListener("offline", showConnectionLostPopup);
+    }, []);
+    (0, import_react58.useEffect)(() => {
       const onGlobalError = (event) => {
         const detail = event.detail;
         if (!detail?.userMessage) return;
@@ -84813,7 +84885,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(LoadingOverlay, { loading: dataLoading }),
       remoteOperation ? /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(FlowProgressOverlay, { operation: remoteOperation }) : null,
       criticalError ? /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "critical-error-overlay", role: "dialog", "aria-modal": "true", "aria-labelledby": "critical-error-title", children: /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)("div", { className: "critical-error-card", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "critical-error-kicker", children: "Falha no envio" }),
+        /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "critical-error-kicker", children: "Aten\xE7\xE3o" }),
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("h2", { id: "critical-error-title", children: "Processo n\xE3o foi conclu\xEDdo" }),
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("p", { children: criticalError }),
         /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("div", { className: "critical-error-actions", children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("button", { type: "button", onClick: () => setCriticalError(""), children: "Entendi" }) })
@@ -84856,6 +84928,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       clearCollisionPhotoDraftState();
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(VOUCHER_DRAFTS_STORAGE_KEY);
+      localStorage.removeItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY);
       localStorage.removeItem(SERVICE_OBSERVATION_DRAFTS_KEY);
       setStore(initialStore());
       setSelectedDetail(null);
@@ -84956,11 +85029,11 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       const finalFields = receiveProofCount > 0 ? { ...fields, "Comprovantes de Recebimento": `${receiveProofCount} comprovante(s) anexado(s).` } : fields;
       const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
       const voucherDraftKey = getVoucherDraftKey(detailToFinalize);
+      const isVoucher = detailToFinalize.type === "SERVICO" && ("Horario Inicial" in finalFields || "Hor\xE1rio Inicial" in finalFields);
       if (blockIfNotFirstPending(detailToFinalize)) return;
       if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);
       if (completingClearTimerRef.current) window.clearTimeout(completingClearTimerRef.current);
       if (remoteMode) {
-        const isVoucher = "Horario Inicial" in finalFields || "Hor\xE1rio Inicial" in finalFields;
         const operationTitle = detailToFinalize.type === "SERVICO" && isVoucher ? "Enviando voucher" : detailToFinalize.type === "MANUTENCAO" ? "Enviando manuten\xE7\xE3o" : detailToFinalize.type === "TROCA" ? "Finalizando troca" : "Finalizando servi\xE7o";
         const setProgress = (message) => {
           setRemoteOperation({
@@ -84992,8 +85065,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           }
           const signatureDataUrl = store.signatures[detailToFinalize.id];
           const photos = store.photos[detailToFinalize.id];
-          const isVoucher2 = "Horario Inicial" in finalFields || "Hor\xE1rio Inicial" in finalFields;
-          if (detailToFinalize.type === "SERVICO" && isVoucher2) {
+          if (detailToFinalize.type === "SERVICO" && isVoucher) {
             await saveVoucherRemote({ detail: detailToFinalize, fields: finalFields, signatureDataUrl, photos, onProgress: setProgress });
           } else if (detailToFinalize.type === "SERVICO") {
             await finalizeServiceRemote({ detail: detailToFinalize, fields: finalFields, signatureDataUrl, photos, onProgress: setProgress });
@@ -85007,9 +85079,25 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         } catch (error2) {
           logAppError(error2, "finalizeSelected", detailToFinalize.type);
           setRemoteOperation(null);
-          setCriticalError(error2 instanceof Error ? error2.message : "Falha ao finalizar no Dataverse.");
+          if (isVoucher) {
+            setVoucherDrafts((current) => ({ ...current, [voucherDraftKey]: finalFields }));
+          }
+          setCriticalError(APP_OPERATION_ERROR_MESSAGE);
           return;
         }
+        setStore((current) => {
+          const signatures = { ...current.signatures };
+          const photos = { ...current.photos };
+          delete signatures[detailToFinalize.id];
+          delete photos[detailToFinalize.id];
+          return { ...current, signatures, photos };
+        });
+        setReceiveProofs((current) => {
+          if (!current[detailToFinalize.id]) return current;
+          const next = { ...current };
+          delete next[detailToFinalize.id];
+          return next;
+        });
       }
       setCompletingDetailKey(detailKey);
       setVoucherDrafts((current) => {
@@ -86589,8 +86677,8 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (!this.state.hasError) return this.props.children;
       return /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("div", { className: "critical-error-card", role: "alert", "aria-live": "assertive", children: [
         /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("strong", { children: "Erro cr\xEDtico no app." }),
-        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("span", { children: "Falha registrada na tabela de log. Recarregue para continuar." }),
-        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("button", { type: "button", onClick: () => window.location.reload(), children: "Recarregar" })
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("span", { children: APP_OPERATION_ERROR_MESSAGE }),
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("button", { type: "button", onClick: () => window.location.reload(), children: "Reabrir" })
       ] });
     }
   };

@@ -61,7 +61,7 @@ import {
   type DriverContext,
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
-import { reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
+import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
 import {
   cancelDetailLocally,
   clearMaintenancePhotos,
@@ -248,7 +248,16 @@ function inferToastTone(message: string): ToastTone {
 }
 
 const VOUCHER_DRAFTS_STORAGE_KEY = "app-motoristas-voucher-drafts-v1";
+const FINALIZE_DRAFT_ASSETS_STORAGE_KEY = "app-motoristas-finalize-draft-assets-v1";
 const SERVICE_OBSERVATION_DRAFTS_KEY = "app-motoristas-service-observation-drafts-v1";
+
+type PersistedReceiveProof = Omit<ExpensePhoto, "previewUrl" | "rawBlob">;
+
+type PersistedFinalizeDraftAssets = {
+  signatures: Record<string, string>;
+  photos: LocalStore["photos"];
+  receiveProofs: Record<string, PersistedReceiveProof[]>;
+};
 
 function getDetailDraftKey(detail: DetailData) {
   return `${detail.type}:${detail.dataverse?.id ?? detail.id}`;
@@ -291,6 +300,32 @@ function loadVoucherDrafts(storage: Storage = window.localStorage): Record<strin
   }
 }
 
+function loadFinalizeDraftAssets(storage: Storage = window.localStorage): PersistedFinalizeDraftAssets {
+  try {
+    const raw = storage.getItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY);
+    if (!raw) return { signatures: {}, photos: {}, receiveProofs: {} };
+    const parsed = JSON.parse(raw) as Partial<PersistedFinalizeDraftAssets>;
+    return {
+      signatures: parsed.signatures && typeof parsed.signatures === "object" ? parsed.signatures : {},
+      photos: parsed.photos && typeof parsed.photos === "object" ? parsed.photos : {},
+      receiveProofs: parsed.receiveProofs && typeof parsed.receiveProofs === "object" ? parsed.receiveProofs : {}
+    };
+  } catch {
+    return { signatures: {}, photos: {}, receiveProofs: {} };
+  }
+}
+
+function serializeReceiveProofs(receiveProofs: Record<string, ExpensePhoto[]>): Record<string, PersistedReceiveProof[]> {
+  return Object.fromEntries(
+    Object.entries(receiveProofs).map(([detailId, photos]) => [
+      detailId,
+      photos
+        .filter((photo) => Boolean(photo.dataUrl))
+        .map(({ previewUrl: _previewUrl, rawBlob: _rawBlob, ...photo }) => photo)
+    ])
+  );
+}
+
 function isVideoMediaDraft(dataUrl?: string | null, rawBlob?: Blob | null) {
   return Boolean(rawBlob) || String(dataUrl ?? "").startsWith("data:video/");
 }
@@ -329,7 +364,15 @@ function App() {
     () => isHashRoutingEnabled() && !isButtonPreviewMode && !isReceiptPreviewMode,
     [isButtonPreviewMode, isReceiptPreviewMode]
   );
-  const [store, setStore] = useState<LocalStore>(() => loadStore());
+  const [store, setStore] = useState<LocalStore>(() => {
+    const localStore = loadStore();
+    const savedAssets = loadFinalizeDraftAssets();
+    return {
+      ...localStore,
+      signatures: { ...localStore.signatures, ...savedAssets.signatures },
+      photos: { ...localStore.photos, ...savedAssets.photos }
+    };
+  });
   const initialHashRouteRef = useRef<HashRoute | null>(hashRoutingActive ? parseHashRoute(window.location.hash) : null);
   const initialHashDetail = initialHashRouteRef.current ? findDetailFromHashRoute(store, initialHashRouteRef.current) : null;
   const initialDetailRef = useRef<DetailData | null>(initialHashRouteRef.current ? initialHashDetail : getInitialDetail(store));
@@ -349,7 +392,7 @@ function App() {
   const [photoDraftIsVideo, setPhotoDraftIsVideo] = useState(false);
   const [toast, setToastState] = useState<ToastState | null>(null);
   const [dataLoading, setDataLoading] = useState<LoadingOverlayState | null>(null);
-  const [criticalError, setCriticalError] = useState("");
+  const [criticalError, setCriticalErrorState] = useState("");
   const [completingDetailKey, setCompletingDetailKey] = useState("");
   const [queueHighlightDetailKey, setQueueHighlightDetailKey] = useState("");
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
@@ -374,7 +417,7 @@ function App() {
   const [expensePhotoRawBlob, setExpensePhotoRawBlob] = useState<Blob | null>(null);
   const [expensePhotoIsVideo, setExpensePhotoIsVideo] = useState(false);
   const [expensePreviewPhotoId, setExpensePreviewPhotoId] = useState("");
-  const [receiveProofs, setReceiveProofs] = useState<Record<string, ExpensePhoto[]>>({});
+  const [receiveProofs, setReceiveProofs] = useState<Record<string, ExpensePhoto[]>>(() => loadFinalizeDraftAssets().receiveProofs);
   const [receiveUploadedCounts, setReceiveUploadedCounts] = useState<Record<string, number>>({});
   const [receivePhotoDraft, setReceivePhotoDraft] = useState("");
   const [receivePhotoPreviewUrl, setReceivePhotoPreviewUrl] = useState("");
@@ -470,7 +513,9 @@ function App() {
   };
 
   const setToast = (message: string, tone?: ToastTone) => {
-    const trimmed = message.trim();
+    const trimmed = /failed to fetch|não foi possível conectar ao servidor|nao foi possivel conectar ao servidor|offline/i.test(message)
+      ? APP_OPERATION_ERROR_MESSAGE
+      : message.trim();
     if (!trimmed) {
       setToastState(null);
       return;
@@ -482,6 +527,8 @@ function App() {
       tone: tone ?? inferToastTone(trimmed)
     });
   };
+
+  const setCriticalError = (message: string) => setCriticalErrorState(message ? APP_OPERATION_ERROR_MESSAGE : "");
 
   const setDataLoadingState = (loading: LoadingOverlayState | null) => {
     if (loading) setToastState(null);
@@ -528,6 +575,25 @@ function App() {
       });
     }
   }, [isButtonPreviewMode, isReceiptPreviewMode, screen, voucherDrafts]);
+
+  useEffect(() => {
+    if (isButtonPreviewMode || isReceiptPreviewMode) return;
+    try {
+      localStorage.setItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY, JSON.stringify({
+        signatures: store.signatures,
+        photos: store.photos,
+        receiveProofs: serializeReceiveProofs(receiveProofs)
+      } satisfies PersistedFinalizeDraftAssets));
+    } catch (error) {
+      reportAppError(error, {
+        severity: "warning",
+        source: "app",
+        action: "persistFinalizeDraftAssets",
+        phase: "localStorage",
+        screen
+      });
+    }
+  }, [isButtonPreviewMode, isReceiptPreviewMode, screen, store.photos, store.signatures, receiveProofs]);
 
   useEffect(() => {
     if (isButtonPreviewMode || isReceiptPreviewMode) return;
@@ -703,6 +769,14 @@ function App() {
     const timer = window.setTimeout(() => setToastState(null), toast.tone === "error" ? 3600 : 3000);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    const showConnectionLostPopup = () => setCriticalErrorState(APP_CONNECTION_LOST_MESSAGE);
+
+    if (navigator.onLine === false) showConnectionLostPopup();
+    window.addEventListener("offline", showConnectionLostPopup);
+    return () => window.removeEventListener("offline", showConnectionLostPopup);
+  }, []);
 
   useEffect(() => {
     const onGlobalError = (event: Event) => {
@@ -906,7 +980,7 @@ function App() {
       {criticalError ? (
         <div className="critical-error-overlay" role="dialog" aria-modal="true" aria-labelledby="critical-error-title">
           <div className="critical-error-card">
-            <div className="critical-error-kicker">Falha no envio</div>
+            <div className="critical-error-kicker">Atenção</div>
             <h2 id="critical-error-title">Processo não foi concluído</h2>
             <p>{criticalError}</p>
             <div className="critical-error-actions">
@@ -960,6 +1034,7 @@ function App() {
 
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(VOUCHER_DRAFTS_STORAGE_KEY);
+    localStorage.removeItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY);
     localStorage.removeItem(SERVICE_OBSERVATION_DRAFTS_KEY);
 
     setStore(initialStore());
@@ -1075,13 +1150,13 @@ function App() {
         : fields;
     const detailKey = `${detailToFinalize.type}:${detailToFinalize.id}`;
     const voucherDraftKey = getVoucherDraftKey(detailToFinalize);
+    const isVoucher = detailToFinalize.type === "SERVICO" && ("Horario Inicial" in finalFields || "Horário Inicial" in finalFields);
     if (blockIfNotFirstPending(detailToFinalize)) return;
 
     if (finalizeTimerRef.current) window.clearTimeout(finalizeTimerRef.current);
     if (completingClearTimerRef.current) window.clearTimeout(completingClearTimerRef.current);
 
     if (remoteMode) {
-      const isVoucher = "Horario Inicial" in finalFields || "Horário Inicial" in finalFields;
       const operationTitle =
         detailToFinalize.type === "SERVICO" && isVoucher
           ? "Enviando voucher"
@@ -1124,8 +1199,6 @@ function App() {
 
         const signatureDataUrl = store.signatures[detailToFinalize.id];
         const photos = store.photos[detailToFinalize.id];
-        const isVoucher = "Horario Inicial" in finalFields || "Horário Inicial" in finalFields;
-
         if (detailToFinalize.type === "SERVICO" && isVoucher) {
           await saveVoucherRemote({ detail: detailToFinalize, fields: finalFields, signatureDataUrl, photos, onProgress: setProgress });
         } else if (detailToFinalize.type === "SERVICO") {
@@ -1140,9 +1213,26 @@ function App() {
       } catch (error) {
         logAppError(error, "finalizeSelected", detailToFinalize.type);
         setRemoteOperation(null);
-        setCriticalError(error instanceof Error ? error.message : "Falha ao finalizar no Dataverse.");
+        if (isVoucher) {
+          setVoucherDrafts((current) => ({ ...current, [voucherDraftKey]: finalFields }));
+        }
+        setCriticalError(APP_OPERATION_ERROR_MESSAGE);
         return;
       }
+
+      setStore((current) => {
+        const signatures = { ...current.signatures };
+        const photos = { ...current.photos };
+        delete signatures[detailToFinalize.id];
+        delete photos[detailToFinalize.id];
+        return { ...current, signatures, photos };
+      });
+      setReceiveProofs((current) => {
+        if (!current[detailToFinalize.id]) return current;
+        const next = { ...current };
+        delete next[detailToFinalize.id];
+        return next;
+      });
     }
 
     setCompletingDetailKey(detailKey);
