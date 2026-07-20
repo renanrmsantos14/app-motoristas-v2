@@ -125,6 +125,16 @@ function New-Bind([string] $EntitySet, [string] $Id) {
   return "/$EntitySet($Id)"
 }
 
+function Get-Sha256Hex([byte[]] $Bytes) {
+  $sha256 = [Security.Cryptography.SHA256]::Create()
+  try {
+    return ([BitConverter]::ToString($sha256.ComputeHash($Bytes))).Replace("-", "")
+  }
+  finally {
+    $sha256.Dispose()
+  }
+}
+
 $specs = @(
   [pscustomobject]@{ Label = "Servicos Create"; Entity = "cr40f_reservadeveculos"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @() },
   [pscustomobject]@{ Label = "Servicos Update"; Entity = "cr40f_reservadeveculos"; Message = "Update"; Mode = 0; Filtering = "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,cr40f_veiculo,new_origemveiculo,cr40f_ot,cr40f_status"; PreImage = @("cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "cr40f_veiculo", "new_origemveiculo", "cr40f_ot", "cr40f_status") },
@@ -185,7 +195,7 @@ function Assert-Configuration {
   if ([int]$assembly.isolationmode -ne 2 -or [int]$assembly.sourcetype -ne 0) { throw "Assembly nao esta Sandbox/Database." }
 
   $localHash = (Get-FileHash -LiteralPath $DllPath -Algorithm SHA256).Hash
-  $remoteHash = ([BitConverter]::ToString([Convert]::FromBase64String([string]$assembly.content))).Replace("-", "")
+  $remoteHash = Get-Sha256Hex ([Convert]::FromBase64String([string]$assembly.content))
   if ($localHash -ne $remoteHash) { throw "DLL publicada diverge da DLL local. local=$localHash; remoto=$remoteHash" }
 
   $types = @(Get-PluginType)
