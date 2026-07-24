@@ -8,7 +8,11 @@ param(
 
   [switch] $Apply,
 
-  [switch] $DeviceCode
+  [switch] $DeviceCode,
+
+  [switch] $AddExistingToSolution,
+
+  [string] $SolutionUniqueName = "AppBetinhos"
 )
 
 $ErrorActionPreference = "Stop"
@@ -188,15 +192,86 @@ function Get-PreImage($StepId) {
   return @(Get-DataverseRows "sdkmessageprocessingstepimages" "sdkmessageprocessingstepimageid,entityalias,imagetype,messagepropertyname,attributes" "_sdkmessageprocessingstepid_value eq $StepId and imagetype eq 0 and entityalias eq 'pre'")
 }
 
-function Assert-Configuration {
+function Get-Solution([string] $UniqueName) {
+  return Get-SingleRow "solutions" "solutionid,uniquename,ismanaged" "uniquename eq '$(Escape-ODataText $UniqueName)'" "Solucao $UniqueName"
+}
+
+function Get-SolutionComponent([string] $SolutionId, [string] $ComponentId, [int] $ComponentType) {
+  return @(Get-DataverseRows "solutioncomponents" "solutioncomponentid,objectid,componenttype" "_solutionid_value eq $SolutionId and objectid eq $ComponentId and componenttype eq $ComponentType")
+}
+
+function Ensure-SolutionComponent([string] $SolutionId, [string] $ComponentId, [int] $ComponentType, [string] $Label) {
+  $existing = @(Get-SolutionComponent $SolutionId $ComponentId $ComponentType)
+  if ($existing.Count -gt 1) { throw "${Label}: componente duplicado na solucao." }
+  if ($existing.Count -eq 1) {
+    Write-Step "solucao ja contem $Label"
+    return
+  }
+
+  Write-Step "adicionando $Label na solucao $SolutionUniqueName"
+  Invoke-DataverseRequest "POST" "AddSolutionComponent" @{
+    ComponentId = $ComponentId
+    ComponentType = $ComponentType
+    SolutionUniqueName = $SolutionUniqueName
+    AddRequiredComponents = $false
+  } | Out-Null
+
+  $created = @(Get-SolutionComponent $SolutionId $ComponentId $ComponentType)
+  if ($created.Count -ne 1) { throw "${Label}: componente nao foi incluido na solucao." }
+}
+
+function Add-PluginToSolution {
+  $solution = Get-Solution $SolutionUniqueName
+  if ([bool]$solution.ismanaged) { throw "Solucao $SolutionUniqueName e gerenciada; use uma solucao nao gerenciada no ambiente de desenvolvimento." }
+
+  $assembly = @(Get-PluginAssembly)
+  if ($assembly.Count -ne 1) { throw "Assembly Betinhos.DriverRecordSharing: esperado 1, encontrado $($assembly.Count)." }
+  $types = @(Get-PluginType)
+  if ($types.Count -ne 1) { throw "PluginType Betinhos.DriverRecordSharing.ServiceDriverSharePlugin: esperado 1, encontrado $($types.Count)." }
+
+  Ensure-SolutionComponent $solution.solutionid $assembly[0].pluginassemblyid 91 "assembly Betinhos.DriverRecordSharing"
+
+  $messages = Resolve-RegistrationContext
+  foreach ($spec in $specs) {
+    $filter = Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity
+    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid)
+    if ($steps.Count -ne 1) { throw "$($spec.Label): esperado 1 step, encontrado $($steps.Count)." }
+    $step = $steps[0]
+    Ensure-SolutionComponent $solution.solutionid $step.sdkmessageprocessingstepid 92 "step $($spec.Label)"
+  }
+}
+
+function Assert-PluginComponentInventory {
+  $solution = Get-Solution $SolutionUniqueName
+  if ([bool]$solution.ismanaged) { throw "Solucao $SolutionUniqueName e gerenciada; use uma solucao nao gerenciada no ambiente de desenvolvimento." }
+
+  $assembly = @(Get-PluginAssembly)
+  if ($assembly.Count -ne 1) { throw "Assembly Betinhos.DriverRecordSharing: esperado 1, encontrado $($assembly.Count)." }
+  $types = @(Get-PluginType)
+  if ($types.Count -ne 1) { throw "PluginType Betinhos.DriverRecordSharing.ServiceDriverSharePlugin: esperado 1, encontrado $($types.Count)." }
+
+  $messages = Resolve-RegistrationContext
+  foreach ($spec in $specs) {
+    $filter = Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity
+    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid)
+    if ($steps.Count -ne 1) { throw "$($spec.Label): esperado 1 step, encontrado $($steps.Count)." }
+    if ($spec.PreImage.Count -eq 0) { continue }
+    $images = @(Get-PreImage $steps[0].sdkmessageprocessingstepid)
+    if ($images.Count -ne 1) { throw "$($spec.Label): esperado 1 Pre Image, encontrado $($images.Count)." }
+  }
+}
+
+function Assert-Configuration([switch] $SkipAssemblyHash) {
   $assemblies = @(Get-PluginAssembly)
   if ($assemblies.Count -ne 1) { throw "Assembly Betinhos.DriverRecordSharing: esperado 1, encontrado $($assemblies.Count)." }
   $assembly = $assemblies[0]
   if ([int]$assembly.isolationmode -ne 2 -or [int]$assembly.sourcetype -ne 0) { throw "Assembly nao esta Sandbox/Database." }
 
-  $localHash = (Get-FileHash -LiteralPath $DllPath -Algorithm SHA256).Hash
-  $remoteHash = Get-Sha256Hex ([Convert]::FromBase64String([string]$assembly.content))
-  if ($localHash -ne $remoteHash) { throw "DLL publicada diverge da DLL local. local=$localHash; remoto=$remoteHash" }
+  if (-not $SkipAssemblyHash) {
+    $localHash = (Get-FileHash -LiteralPath $DllPath -Algorithm SHA256).Hash
+    $remoteHash = Get-Sha256Hex ([Convert]::FromBase64String([string]$assembly.content))
+    if ($localHash -ne $remoteHash) { throw "DLL publicada diverge da DLL local. local=$localHash; remoto=$remoteHash" }
+  }
 
   $types = @(Get-PluginType)
   if ($types.Count -ne 1 -or [string]$types[0]._pluginassemblyid_value -ne [string]$assembly.pluginassemblyid) { throw "PluginType nao aponta para assembly correto." }
@@ -222,13 +297,25 @@ function Assert-Configuration {
   }
 }
 
+$messages = Resolve-RegistrationContext
+foreach ($spec in $specs) { [void](Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity) }
+
+if ($AddExistingToSolution) {
+  Assert-PluginComponentInventory
+  if (-not $Apply) {
+    Write-Step "DRY RUN OK. Registro validado; use -Apply -AddExistingToSolution para incluir na solucao $SolutionUniqueName."
+    return
+  }
+  Add-PluginToSolution
+  Assert-PluginComponentInventory
+  Write-Step "PLUGIN ADICIONADO E VALIDADO NA SOLUCAO $SolutionUniqueName"
+  return
+}
+
 if (-not $DllPath) {
   $DllPath = Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..")) "plugins\DriverRecordSharing\bin\Release\net462\Betinhos.DriverRecordSharing.dll"
 }
 if (-not (Test-Path -LiteralPath $DllPath)) { throw "DLL nao encontrada: $DllPath" }
-
-$messages = Resolve-RegistrationContext
-foreach ($spec in $specs) { [void](Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity) }
 
 if (-not $Apply) {
   Write-Step "DRY RUN OK. Metadados dos $($specs.Count) steps conferidos; use -Apply para publicar."
