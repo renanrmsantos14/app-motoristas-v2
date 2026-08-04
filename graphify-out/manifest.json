@@ -1,532 +1,3107 @@
 {
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\dataverse-metadata-prefix-2026-06-01T11-28-09-842Z.json": {
+  "dataverse-metadata-prefix-2026-06-01T11-28-09-842Z.json": {
     "mtime": 1780313290.4487288,
     "ast_hash": "7d46e217eef0707dd079b505af3a38fe",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\package.json": {
-    "mtime": 1781013274.932488,
-    "ast_hash": "344bb4087e0155005ec22eeeab99b0ca",
+  "package.json": {
+    "mtime": 1785848498.6902916,
+    "ast_hash": "a0f4623b882a127d5283a90de69d92f1",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tsconfig.json": {
-    "mtime": 1780425313.6741276,
-    "ast_hash": "7dbe80a92b653e763f75e6cda20ded39",
+  "tsconfig.json": {
+    "mtime": 1781262817.3252323,
+    "ast_hash": "65ee8717ee953d369417add7fcf43e60",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tsconfig.node.json": {
+  "tsconfig.node.json": {
     "mtime": 1780425814.1436262,
     "ast_hash": "42c71f3f9f64d94f8145887b59354846",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\vite.config.ts": {
+  "vite.config.ts": {
     "mtime": 1780425314.8458922,
     "ast_hash": "0aac3985a73cd1a47caf6c0636375a92",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\docs\\dataverse-schema-index.json": {
+  "docs/dataverse-schema-index.json": {
     "mtime": 1780510334.3816402,
     "ast_hash": "5f3e40102f176086e0e2140781309244",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Header.json": {
+  "extracted-msapp/Header.json": {
     "mtime": 1780430282.0,
     "ast_hash": "b10a272f496881ce3c21887f665f2e4e",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Properties.json": {
+  "extracted-msapp/Properties.json": {
     "mtime": 1780430282.0,
     "ast_hash": "c87aed3f7c2f214b3ce8d1012bb70036",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\AppTests\\2.json": {
+  "extracted-msapp/AppTests/2.json": {
     "mtime": 1780430282.0,
     "ast_hash": "7af9e0e91a1d52735290e92257e5a6f3",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\1.json": {
+  "extracted-msapp/Controls/1.json": {
     "mtime": 1780430282.0,
     "ast_hash": "4d61be2f13adf7ed18232bd8324c95f9",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\156.json": {
+  "extracted-msapp/Controls/156.json": {
     "mtime": 1780430282.0,
     "ast_hash": "170bc9e17c8b021e43760cbb10da7a3b",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\207.json": {
+  "extracted-msapp/Controls/207.json": {
     "mtime": 1780430282.0,
     "ast_hash": "8158423aa0ff32ae3772fd491306f100",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\277.json": {
+  "extracted-msapp/Controls/277.json": {
     "mtime": 1780430282.0,
     "ast_hash": "de709ad97ad8f468deaae31208a09861",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\300.json": {
+  "extracted-msapp/Controls/300.json": {
     "mtime": 1780430282.0,
     "ast_hash": "4ee727802efeb03676b67d8f872694af",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\381.json": {
+  "extracted-msapp/Controls/381.json": {
     "mtime": 1780430282.0,
     "ast_hash": "3c3f5bf3293eab03dc75f967ccd4786e",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\4.json": {
+  "extracted-msapp/Controls/4.json": {
     "mtime": 1780430282.0,
     "ast_hash": "2815440f8542470f515e16dba3c4daa6",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\406.json": {
+  "extracted-msapp/Controls/406.json": {
     "mtime": 1780430282.0,
     "ast_hash": "5ff31ac3136058f01f196327838fe88b",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\425.json": {
+  "extracted-msapp/Controls/425.json": {
     "mtime": 1780430282.0,
     "ast_hash": "4d50853aea55047cfce15220a3c69599",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\471.json": {
+  "extracted-msapp/Controls/471.json": {
     "mtime": 1780430282.0,
     "ast_hash": "aebc4b15d37dece74601aa923170b6b6",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\48.json": {
+  "extracted-msapp/Controls/48.json": {
     "mtime": 1780430282.0,
     "ast_hash": "1c4789064ae426e1455ff86254ccfba2",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Controls\\587.json": {
+  "extracted-msapp/Controls/587.json": {
     "mtime": 1780430282.0,
     "ast_hash": "5a357d4f698ad9d3689911bfb6a9d988",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\DataSources.json": {
+  "extracted-msapp/References/DataSources.json": {
     "mtime": 1780430282.0,
     "ast_hash": "ab73aca9fcc2a51a0674d81761d5b3e9",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\ModernThemes.json": {
+  "extracted-msapp/References/ModernThemes.json": {
     "mtime": 1780430282.0,
     "ast_hash": "1d56bedc48f58e63bf6d434e944a5b20",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\QualifiedValues.json": {
+  "extracted-msapp/References/QualifiedValues.json": {
     "mtime": 1780430282.0,
     "ast_hash": "fca7a9085026c00d6b275f579bdfb5db",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\Resources.json": {
+  "extracted-msapp/References/Resources.json": {
     "mtime": 1780430282.0,
     "ast_hash": "5d7efdc4b0102f9819564ba297beb26d",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\Templates.json": {
+  "extracted-msapp/References/Templates.json": {
     "mtime": 1780430282.0,
     "ast_hash": "1a6e4fb498f91daa91378cf9b529d75d",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\References\\Themes.json": {
+  "extracted-msapp/References/Themes.json": {
     "mtime": 1780430282.0,
     "ast_hash": "d7df30cfb2cf028dc4a4eb64b24cec00",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Resources\\PublishInfo.json": {
+  "extracted-msapp/Resources/PublishInfo.json": {
     "mtime": 1780430282.0,
     "ast_hash": "f4f776bb97458b08b745729a37b8f22b",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\App.tsx": {
-    "mtime": 1781013192.3446767,
-    "ast_hash": "6ed984fa18f5d5fc25c37fc2ba55c394",
+  "src/App.tsx": {
+    "mtime": 1784301214.489593,
+    "ast_hash": "c025c4d01a5a5a9cae94bf486fe0eb64",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets.d.ts": {
-    "mtime": 1780486493.0771642,
-    "ast_hash": "ec4bd8eb4fe5a4ea9198be50e7cae0b5",
+  "src/assets.d.ts": {
+    "mtime": 1781546597.5782914,
+    "ast_hash": "ef4a3b70fdee4e7d72dee4f61ff7b8bc",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\main.tsx": {
-    "mtime": 1780949177.5883372,
-    "ast_hash": "43f698fcfcb314f61bb26d16d1e6f102",
+  "src/main.tsx": {
+    "mtime": 1782403099.185816,
+    "ast_hash": "5dacd5ed9916dfb3fcdf28abc8ee792c",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\react-dom-cjs.d.ts": {
-    "mtime": 1780426856.3327653,
-    "ast_hash": "846e459a2d757b51439b63758c244340",
+  "src/react-dom-cjs.d.ts": {
+    "mtime": 1782403163.95102,
+    "ast_hash": "a21d4188640dba96ef76f2a979fd4d07",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\types.ts": {
-    "mtime": 1781013053.4802449,
-    "ast_hash": "b3acd38e09518256b0b64e4660901082",
+  "src/types.ts": {
+    "mtime": 1782825540.8508513,
+    "ast_hash": "40e2176ba614a8fa991f476444b8f6b7",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\common\\Avatar.tsx": {
+  "src/components/common/Avatar.tsx": {
     "mtime": 1780427702.2559478,
     "ast_hash": "93c7c9d1c4409e445b4fca0208e28414",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\details\\DetailActionButton.tsx": {
-    "mtime": 1780494435.0980766,
-    "ast_hash": "4d5e0fbd234ee3c09e1f0b41f0e36c8b",
+  "src/components/details/DetailActionButton.tsx": {
+    "mtime": 1781527874.5840206,
+    "ast_hash": "f8183736998074fe02a51a047b493733",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\details\\DetailsField.tsx": {
-    "mtime": 1781010939.9000397,
-    "ast_hash": "da5ff5948a69df41c3cd6e2e0df94d8d",
+  "src/components/details/DetailsField.tsx": {
+    "mtime": 1782742508.7813811,
+    "ast_hash": "4ebe6fa72686cbbc74705ac46d87b940",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\details\\QuestionsBox.tsx": {
+  "src/components/details/QuestionsBox.tsx": {
     "mtime": 1780944364.3565469,
     "ast_hash": "9b72656b8519d40044e0d69dd5d60410",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\icons\\PowerIcon.tsx": {
+  "src/components/icons/PowerIcon.tsx": {
     "mtime": 1780486493.6556513,
     "ast_hash": "d79e19b4cdff4c3688651ef614e705b2",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\icons\\SystemIcon.tsx": {
-    "mtime": 1780942990.6543403,
-    "ast_hash": "a66446a2d49ec80a5b8bc8da48126b80",
+  "src/components/icons/SystemIcon.tsx": {
+    "mtime": 1781262817.222642,
+    "ast_hash": "288872903bb192ae73e7e8d50908f892",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\initial\\TileButton.tsx": {
+  "src/components/initial/TileButton.tsx": {
     "mtime": 1780427735.5954075,
     "ast_hash": "553f614f3113a37f70b168ec896ef3ad",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\layout\\AppShell.tsx": {
+  "src/components/layout/AppShell.tsx": {
     "mtime": 1780427702.6285837,
     "ast_hash": "52c45a34d8713cc0040d897f7e82a1d9",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\DetailsMenu.tsx": {
+  "src/components/navigation/DetailsMenu.tsx": {
     "mtime": 1780496556.956967,
     "ast_hash": "9a8526b5c252fde9e82c5c88f7a9fd11",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\FormMenu.tsx": {
+  "src/components/navigation/FormMenu.tsx": {
     "mtime": 1780930411.9534855,
     "ast_hash": "add09a32851f581503c896abef65f563",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\InitialMenu.tsx": {
+  "src/components/navigation/InitialMenu.tsx": {
     "mtime": 1781008996.7887473,
     "ast_hash": "69f5ebffb4904aa2cd226ee3f71008b4",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\navigation\\ServicesMenu.tsx": {
-    "mtime": 1780925426.5202763,
-    "ast_hash": "0bdf8e271cabdba21dc557f3dc2004f7",
+  "src/components/navigation/ServicesMenu.tsx": {
+    "mtime": 1781544508.4466023,
+    "ast_hash": "f2d08e079628757e5451e162b5f70a10",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\services\\AgendaCard.tsx": {
-    "mtime": 1780509059.3320131,
-    "ast_hash": "d5dc64d8a2dcccc8774cca4f6dc96808",
+  "src/components/services/AgendaCard.tsx": {
+    "mtime": 1782157580.3579173,
+    "ast_hash": "fd535e20f3909a6f0581fa179d93426c",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\services\\NotificationMarker.tsx": {
+  "src/components/services/NotificationMarker.tsx": {
     "mtime": 1780427736.2172556,
     "ast_hash": "dc1285e003a4d5054f47422de83467d3",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\services\\SearchBar.tsx": {
-    "mtime": 1780492750.1193862,
-    "ast_hash": "f65eb3bddccb25699954c8623838efd3",
+  "src/components/services/SearchBar.tsx": {
+    "mtime": 1781632058.5407493,
+    "ast_hash": "726eba4498e682740587887a01132c71",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\voucher\\VoucherInputRow.tsx": {
-    "mtime": 1780509578.2939892,
-    "ast_hash": "79872339b42a6c08df8454a67ac04b04",
+  "src/components/voucher/VoucherInputRow.tsx": {
+    "mtime": 1781702633.7577322,
+    "ast_hash": "3424d04dfd14c658b8fa9a63ff5d7c9b",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\voucher\\VoucherSection.tsx": {
+  "src/components/voucher/VoucherSection.tsx": {
     "mtime": 1780428121.68433,
     "ast_hash": "543b74a50457cc3408ef9ec6e43405bb",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\data\\mockData.ts": {
-    "mtime": 1781010107.059132,
-    "ast_hash": "f5777bdd7c3a2d3ef1ac1a0df9f5bbd7",
+  "src/data/mockData.ts": {
+    "mtime": 1782923685.8385334,
+    "ast_hash": "b82c17c20c45740e8ecef65df95f9bd0",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\hooks\\useAgendaSearch.ts": {
+  "src/hooks/useAgendaSearch.ts": {
     "mtime": 1780427701.2179153,
     "ast_hash": "5c7234c39f17a43d54d2b14488a34465",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\lib\\dataverse.ts": {
-    "mtime": 1781013063.9852788,
-    "ast_hash": "eb5e0d852e1e4684c9097050fb681f5e",
+  "src/lib/dataverse.ts": {
+    "mtime": 1785844487.2934027,
+    "ast_hash": "5d88f1432e8c182f48ac7be30f5f034b",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\lib\\localWorkflow.ts": {
-    "mtime": 1780945871.0532649,
-    "ast_hash": "1687238646327d7fd67cbeaa0f735b98",
+  "src/lib/localWorkflow.ts": {
+    "mtime": 1782330363.7256217,
+    "ast_hash": "4180516c6023ebcfabeba788871c7b90",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\DetailsScreen.tsx": {
-    "mtime": 1780947541.5131674,
-    "ast_hash": "c9602c1a009c610aef938aea18711018",
+  "src/screens/DetailsScreen.tsx": {
+    "mtime": 1782413575.5293329,
+    "ast_hash": "7adb59b97bdc1bc70f38df6bf307acac",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\FinalizeScreen.tsx": {
-    "mtime": 1780948790.7222755,
-    "ast_hash": "96dd3923c8a2ca1c9292369eec0ddf1f",
+  "src/screens/FinalizeScreen.tsx": {
+    "mtime": 1782412351.6551971,
+    "ast_hash": "7ac0c561eaafb42c1ba9668ff39564d3",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\HistoryDetailsScreen.tsx": {
-    "mtime": 1780922082.4730992,
-    "ast_hash": "7678a71b44ae60b1dace3852166e4f4d",
+  "src/screens/HistoryDetailsScreen.tsx": {
+    "mtime": 1782387206.7431226,
+    "ast_hash": "6c8fae6652933d4480e36ffbecdbab91",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\HistoryScreen.tsx": {
-    "mtime": 1780922965.0698235,
-    "ast_hash": "af3a9097fc5420a6cb682833bb06a770",
+  "src/screens/HistoryScreen.tsx": {
+    "mtime": 1781265072.235953,
+    "ast_hash": "2e8b3e973512dc089027e3e108c46c65",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\InitialScreen.tsx": {
-    "mtime": 1781013219.6023788,
-    "ast_hash": "d11e7e36a6d8096e0221468a8df3a8c0",
+  "src/screens/InitialScreen.tsx": {
+    "mtime": 1782920146.470523,
+    "ast_hash": "b32c307d0e4bdc120b04e77b020f562f",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\LocalCancelScreen.tsx": {
-    "mtime": 1780927625.7644343,
-    "ast_hash": "72ee7cb88d8057437824ff9968a6dc26",
+  "src/screens/LocalCancelScreen.tsx": {
+    "mtime": 1782323593.770149,
+    "ast_hash": "55a8347e61c7cd5271a513021e6066ec",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\MaintenancePhotoPreviewScreen.tsx": {
-    "mtime": 1780948686.9180758,
-    "ast_hash": "469b986340e994c5e8ff501aef316562",
+  "src/screens/MaintenancePhotoPreviewScreen.tsx": {
+    "mtime": 1782825623.9638462,
+    "ast_hash": "1dccee06dbdfaa5f96b3e08cd66457e4",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\MaintenancePhotoScreen.tsx": {
-    "mtime": 1781007426.7260852,
-    "ast_hash": "2e99d08947b584834ae794a9757d9fea",
+  "src/screens/ServicesScreen.tsx": {
+    "mtime": 1782327314.8306313,
+    "ast_hash": "a02855f185b702771084e556c1fd4d35",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\ServicesScreen.tsx": {
-    "mtime": 1780947747.3015811,
-    "ast_hash": "e71c84443484444950dc667e4f49fb45",
+  "src/screens/SignatureScreen.tsx": {
+    "mtime": 1782217056.321627,
+    "ast_hash": "a3fd1b2032d4f20e6b18bca961f46e25",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\SignatureScreen.tsx": {
-    "mtime": 1780929515.5550542,
-    "ast_hash": "f1240c0d7623cd6439f12a259f4fb002",
+  "src/screens/VoucherScreen.tsx": {
+    "mtime": 1782389297.497092,
+    "ast_hash": "1f650e7a50f948f1525b132106534722",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\VoucherScreen.tsx": {
-    "mtime": 1780934735.0358036,
-    "ast_hash": "bd2b3f15dfc60c41591612a0907fe647",
+  "tests/localWorkflow.test.ts": {
+    "mtime": 1782392670.1805582,
+    "ast_hash": "8c51954c02d096b9224141318840e9dd",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tests\\localWorkflow.test.ts": {
-    "mtime": 1780921896.5242088,
-    "ast_hash": "3894396ccc09e92349f9b341777115f6",
-    "semantic_hash": ""
-  },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\DESIGN_SYSTEM.html": {
+  "DESIGN_SYSTEM.html": {
     "mtime": 1780420212.5858428,
     "ast_hash": "2053be8597bddf0d37b43126e64f3d94",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\index.html": {
+  "index.html": {
     "mtime": 1781010911.212664,
     "ast_hash": "590a61fdd76d788b7984d2eed892f0a8",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\PENDENCIAS_PRODUCAO.md": {
+  "PENDENCIAS_PRODUCAO.md": {
     "mtime": 1780514382.8392172,
     "ast_hash": "3cfcb20c127c31eba167bff42f997e2c",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\README.md": {
+  "README.md": {
     "mtime": 1780511629.5401633,
     "ast_hash": "875db1b716697e3ebb7ca13164400048",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\docs\\superpowers\\plans\\2026-06-02-app-motoristas-webresource.md": {
+  "docs/superpowers/plans/2026-06-02-app-motoristas-webresource.md": {
     "mtime": 1780420434.3902993,
     "ast_hash": "31db3d1dc8b4652af8b2350338b545bb",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\App.pa.yaml": {
+  "extracted-msapp/Src/App.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "105ccd57906b641dfa95bb60ea6c9616",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaAssinaturaPassageiro.pa.yaml": {
+  "extracted-msapp/Src/TelaAssinaturaPassageiro.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "e501eb90f6efb85c3adb48f64fc04958",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaCanceladonoLocal.pa.yaml": {
+  "extracted-msapp/Src/TelaCanceladonoLocal.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "982b6675ee1cb8a3fd3f9e31becb8dfb",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaDetalhes.pa.yaml": {
+  "extracted-msapp/Src/TelaDetalhes.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "816ef8fe09a6c99be5b18e0ec0dc2b80",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaDetalhesHistorico.pa.yaml": {
+  "extracted-msapp/Src/TelaDetalhesHistorico.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "de77f49ffbc2b965e5f8d3d548a5d1d8",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaFinalizar.pa.yaml": {
+  "extracted-msapp/Src/TelaFinalizar.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "30997f5836bca1f7a701292aa0beb3c5",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaFotoManuten\u00e7\u00e3o.pa.yaml": {
+  "extracted-msapp/Src/TelaFotoManuten\u00e7\u00e3o.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "ef85f25ccc5d3c98bfc1366afaaf4b0f",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaHist\u00f3rico.pa.yaml": {
+  "extracted-msapp/Src/TelaHist\u00f3rico.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "5e8b736c0120287f924d24d4a618f236",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaInicial.pa.yaml": {
+  "extracted-msapp/Src/TelaInicial.pa.yaml": {
     "mtime": 1781009064.4964323,
     "ast_hash": "52f449820ac25afae580f9faef139cda",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaPreviewFotoManuten\u00e7\u00e3o.pa.yaml": {
+  "extracted-msapp/Src/TelaPreviewFotoManuten\u00e7\u00e3o.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "98662cb44decca8d8e81d8b9570ca000",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaServi\u00e7os.pa.yaml": {
+  "extracted-msapp/Src/TelaServi\u00e7os.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "7018e4667d84f90334a0457c27e57744",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\TelaVoucher.pa.yaml": {
+  "extracted-msapp/Src/TelaVoucher.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "e82a5902aeffb66e6c0581fc1bbff6f4",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Src\\_EditorState.pa.yaml": {
+  "extracted-msapp/Src/_EditorState.pa.yaml": {
     "mtime": 1780430282.0,
     "ast_hash": "2ec1580bafdbaaf02059922b74b9df40",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\Logo Betinhos B.png": {
+  "Logo Betinhos B.png": {
     "mtime": 1764071784.2389493,
     "ast_hash": "0fb821aa945a9f66577cff5ed43f5c7f",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Assets\\Images\\bd7d5f28-81c5-4c0e-9c19-59e59e1d22cf.png": {
+  "extracted-msapp/Assets/Images/bd7d5f28-81c5-4c0e-9c19-59e59e1d22cf.png": {
     "mtime": 1780430284.0,
     "ast_hash": "0fb821aa945a9f66577cff5ed43f5c7f",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\extracted-msapp\\Resources\\myhnyueu.jpg": {
+  "extracted-msapp/Resources/myhnyueu.jpg": {
     "mtime": 1780430282.0,
     "ast_hash": "09d32fe382e17122ef2d37380dea0354",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\car.svg": {
-    "mtime": 1780485641.9062865,
-    "ast_hash": "f757988740282f7d21a163cb7c524b72",
+  "src/assets/icons/car.svg": {
+    "mtime": 1781640195.6885536,
+    "ast_hash": "c02649e5bf11ff2d3ec40237cb13f3f7",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\check-svgrepo-com.svg": {
+  "src/assets/icons/check-svgrepo-com.svg": {
     "mtime": 1780509007.8045065,
     "ast_hash": "9a2a2bb0e5bebdd93d2b4ee34aefcaa3",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\clock.svg": {
+  "src/assets/icons/clock.svg": {
     "mtime": 1780485769.6611865,
     "ast_hash": "2601d27375af91a74656e7e887ea8ff3",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\money-check-dollar.svg": {
+  "src/assets/icons/money-check-dollar.svg": {
     "mtime": 1780485685.6034093,
     "ast_hash": "1511aa50a6f0e4bacf058580938a0a89",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\wrench.svg": {
+  "src/assets/icons/wrench.svg": {
     "mtime": 1780485737.344846,
     "ast_hash": "d3994f7ca1c440c36f5e32ca3211227a",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\scripts\\create-app-error-log-table-console.js": {
+  "scripts/create-app-error-log-table-console.js": {
     "mtime": 1781005184.173131,
     "ast_hash": "d0bd0b792cd04a57e9beb741873da149",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\scripts\\create-maintenance-photo-table-console.js": {
+  "scripts/create-maintenance-photo-table-console.js": {
     "mtime": 1780949314.1503115,
     "ast_hash": "24d3f408582b0198708e360c57bb30ae",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\scripts\\deploy-webresource.ps1": {
-    "mtime": 1780940288.7204332,
-    "ast_hash": "4a1d0a5a7377eb660144be15a0e9ee35",
+  "scripts/deploy-webresource.ps1": {
+    "mtime": 1785784591.6319306,
+    "ast_hash": "7bc2d3c182f2a92c7a007ebf8e6312a8",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\common\\FlowSubmitButton.tsx": {
-    "mtime": 1780927547.003189,
-    "ast_hash": "955fde9936dd82af7e2345ff594fde4d",
+  "src/components/common/PullToRefresh.tsx": {
+    "mtime": 1781544507.1847541,
+    "ast_hash": "2b56691cf4bf1908d47cf41d34b40a92",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\components\\common\\PullToRefresh.tsx": {
-    "mtime": 1780925410.913106,
-    "ast_hash": "55c73bb174ffdc63897ebc035cfb38d2",
+  "src/lib/appErrorLogger.ts": {
+    "mtime": 1784301214.484593,
+    "ast_hash": "039982513abddb922a26c671b87b237b",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\lib\\appErrorLogger.ts": {
-    "mtime": 1781005194.089691,
-    "ast_hash": "bd028bd53a8f90b40b1777a6a0ecbd8c",
+  "src/lib/expenses.ts": {
+    "mtime": 1781290652.109332,
+    "ast_hash": "4b3bfcf47f10637ed5d5f8bb77c1a458",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\lib\\expenses.ts": {
-    "mtime": 1781013246.9775343,
-    "ast_hash": "ab0f24e153e59c6b02a38f2f8246992a",
+  "src/lib/photoOrientation.ts": {
+    "mtime": 1782840107.1783767,
+    "ast_hash": "5c452e436b56afb31178a0f80ea8349b",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\lib\\photoOrientation.ts": {
-    "mtime": 1781007407.8923922,
-    "ast_hash": "56bafafc9a148fa654484f39b620881a",
+  "src/screens/ExpenseScreen.tsx": {
+    "mtime": 1782826499.182624,
+    "ast_hash": "962d0c5c236c395b5b85a0e7e9bd2a15",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\ExpenseScreen.tsx": {
-    "mtime": 1781013099.2046454,
-    "ast_hash": "ca290f9f8d1825d3a2eb03ad628df5e0",
+  "src/screens/MaintenanceRequestScreen.tsx": {
+    "mtime": 1782826502.781355,
+    "ast_hash": "79fb0b38d7611abd694dad108187ceaf",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\screens\\MaintenanceRequestScreen.tsx": {
-    "mtime": 1780945078.5050778,
-    "ast_hash": "8a6ceec2fcda6d43f2ff8e6c2f0d8210",
+  "tests/dataverse.test.ts": {
+    "mtime": 1785844406.2005465,
+    "ast_hash": "6fad71314811a224d11ce76fdf6a8884",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tests\\dataverse.test.ts": {
-    "mtime": 1780940503.5869403,
-    "ast_hash": "6bbd596632cf3bbab72dc78b7f01c964",
+  "tests/expenses.test.ts": {
+    "mtime": 1782999042.827258,
+    "ast_hash": "a94cdff4065a6c71de8a544b4a6ec6e9",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\tests\\expenses.test.ts": {
-    "mtime": 1781013177.025458,
-    "ast_hash": "577568ddb9c5e6ef433599b03007ddb7",
-    "semantic_hash": ""
-  },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\docs\\CHECKLIST.md": {
+  "docs/CHECKLIST.md": {
     "mtime": 1781005395.0836997,
     "ast_hash": "331656ae80544a6bec73be5fb5949f0e",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\App Motoristas\\src\\assets\\icons\\car-crash-svgrepo-com.svg": {
-    "mtime": 1781012339.4561164,
-    "ast_hash": "e5dcad9f7ccc37edabb5c6396433da03",
+  "src/assets/icons/car-crash-svgrepo-com.svg": {
+    "mtime": 1781640103.2310767,
+    "ast_hash": "7dfcc52589d4da42f2828cf67ac0e7aa",
+    "semantic_hash": ""
+  },
+  ".codex-xlsx/audit-data.json": {
+    "mtime": 1784748369.2207952,
+    "ast_hash": "e336246da9db8c41a83e618739312afc",
+    "semantic_hash": ""
+  },
+  ".codex-xlsx/audit-op-workbooks.mjs": {
+    "mtime": 1784747919.3756895,
+    "ast_hash": "6acd4bcd7ed061ef2cd2bfdb18336b2e",
+    "semantic_hash": ""
+  },
+  ".codex-xlsx/build_op_report.mjs": {
+    "mtime": 1784748641.3799875,
+    "ast_hash": "80f21e38fb9fb7bf8cfbb9fc9eda76a3",
+    "semantic_hash": ""
+  },
+  ".codex-xlsx/extract_audit_data.py": {
+    "mtime": 1784748346.2034104,
+    "ast_hash": "206f46707083007eab79d45013cdba12",
+    "semantic_hash": ""
+  },
+  ".codex-xlsx/inspect_sources.py": {
+    "mtime": 1784748242.7079463,
+    "ast_hash": "33ce85465b2d1990cf29edd2baeb0a7a",
+    "semantic_hash": ""
+  },
+  ".herenow/state.json": {
+    "mtime": 1782411165.3093534,
+    "ast_hash": "ad01e28ef3e12a54ca60d71ebd2a9d8c",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/EnableFuncionariosFieldSecurity.csproj": {
+    "mtime": 1781880863.989701,
+    "ast_hash": "03d6e073591999a813b3163bbbbfef82",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/Program.cs": {
+    "mtime": 1781880863.9911597,
+    "ast_hash": "cd040d29b5a2f4f629d24897a3408e94",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/bin/Debug/net8.0/EnableFuncionariosFieldSecurity.deps.json": {
+    "mtime": 1781880867.065473,
+    "ast_hash": "efde416b607594f052aa38d23bdec397",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/bin/Debug/net8.0/EnableFuncionariosFieldSecurity.runtimeconfig.json": {
+    "mtime": 1781880587.153349,
+    "ast_hash": "9fcdf880f73e74cf6347f8194b9f3509",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs": {
+    "mtime": 1781880473.2490928,
+    "ast_hash": "9b225453b5a8008eefb62f6c5c66ce15",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/obj/Debug/net8.0/EnableFuncionariosFieldSecurity.AssemblyInfo.cs": {
+    "mtime": 1781880474.0257058,
+    "ast_hash": "d91cd277105a5a7a0dedbdca54afb91a",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/obj/Debug/net8.0/EnableFuncionariosFieldSecurity.GlobalUsings.g.cs": {
+    "mtime": 1781880473.0526178,
+    "ast_hash": "9706b2dbf69f7db452e8b0d5baf54dcf",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/obj/Debug/net8.0/EnableFuncionariosFieldSecurity.sourcelink.json": {
+    "mtime": 1781880474.0614665,
+    "ast_hash": "28ab4ee1db84fe69210f4f3b0e3f5f1b",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/obj/EnableFuncionariosFieldSecurity.csproj.nuget.dgspec.json": {
+    "mtime": 1781880472.771265,
+    "ast_hash": "f3c7efa93d531e5a67b26a18b6329c1e",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/obj/project.assets.json": {
+    "mtime": 1781880472.7468662,
+    "ast_hash": "6a104ce4e544de4c75bfc783c77a6602",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/EnableVeiculosFieldSecurity.csproj": {
+    "mtime": 1781887645.438122,
+    "ast_hash": "03d6e073591999a813b3163bbbbfef82",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/Program.cs": {
+    "mtime": 1781887645.4399216,
+    "ast_hash": "3d753f2b92bbcf37869df39c442fece7",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/bin/Debug/net8.0/EnableVeiculosFieldSecurity.deps.json": {
+    "mtime": 1781887648.3970256,
+    "ast_hash": "e7058fd783331d0dbbae5cc51ebf08e1",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/bin/Debug/net8.0/EnableVeiculosFieldSecurity.runtimeconfig.json": {
+    "mtime": 1781887502.780003,
+    "ast_hash": "9fcdf880f73e74cf6347f8194b9f3509",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs": {
+    "mtime": 1781887495.3273025,
+    "ast_hash": "9b225453b5a8008eefb62f6c5c66ce15",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/obj/Debug/net8.0/EnableVeiculosFieldSecurity.AssemblyInfo.cs": {
+    "mtime": 1781887495.4373045,
+    "ast_hash": "3c67c89d6ee8a3851d50c4f4a9360ef4",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/obj/Debug/net8.0/EnableVeiculosFieldSecurity.GlobalUsings.g.cs": {
+    "mtime": 1781887494.9773002,
+    "ast_hash": "9706b2dbf69f7db452e8b0d5baf54dcf",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/obj/Debug/net8.0/EnableVeiculosFieldSecurity.sourcelink.json": {
+    "mtime": 1781887495.470541,
+    "ast_hash": "a3fb8ef737f14200b88157e85539c179",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/obj/EnableVeiculosFieldSecurity.csproj.nuget.dgspec.json": {
+    "mtime": 1781887494.7402992,
+    "ast_hash": "3af40851026d8a19ddefd8f1beec272c",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/obj/project.assets.json": {
+    "mtime": 1781887494.6953075,
+    "ast_hash": "4082b3f60ca8c96a6bda146532c8ead7",
+    "semantic_hash": ""
+  },
+  ".tmp/herenow-publish.ps1": {
+    "mtime": 1782411132.8344417,
+    "ast_hash": "7c56d8dc1daad5e5e65065d6aa927c3b",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/Program.cs": {
+    "mtime": 1782869055.0803587,
+    "ast_hash": "cc0201a42b336dbbe560a52d806cd31d",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/RegisterDriverRecordSharingPlugin.csproj": {
+    "mtime": 1782869055.0843556,
+    "ast_hash": "485fa2bd399ad2825e689cc2938e2ec8",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/bin/Debug/net8.0/RegisterDriverRecordSharingPlugin.deps.json": {
+    "mtime": 1782869055.0883594,
+    "ast_hash": "5cfb2d72e752c17fac3ebeab2c73b5d2",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/bin/Debug/net8.0/RegisterDriverRecordSharingPlugin.runtimeconfig.json": {
+    "mtime": 1782869055.100356,
+    "ast_hash": "9fcdf880f73e74cf6347f8194b9f3509",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs": {
+    "mtime": 1782849276.9672513,
+    "ast_hash": "9b225453b5a8008eefb62f6c5c66ce15",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/obj/Debug/net8.0/RegisterDriverRecordSharingPlugin.AssemblyInfo.cs": {
+    "mtime": 1782869055.1073666,
+    "ast_hash": "9287e2dbe5bf600da05dac009e66e666",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/obj/Debug/net8.0/RegisterDriverRecordSharingPlugin.GlobalUsings.g.cs": {
+    "mtime": 1782849276.7674344,
+    "ast_hash": "9706b2dbf69f7db452e8b0d5baf54dcf",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/obj/Debug/net8.0/RegisterDriverRecordSharingPlugin.sourcelink.json": {
+    "mtime": 1782869055.118217,
+    "ast_hash": "0ceb9108d57e596b48c20cee6807bd54",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/obj/RegisterDriverRecordSharingPlugin.csproj.nuget.dgspec.json": {
+    "mtime": 1782869055.1232624,
+    "ast_hash": "dd20312a8ff5d2680d706965def06a43",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/obj/project.assets.json": {
+    "mtime": 1782869055.1266987,
+    "ast_hash": "29467a90a124fae6a4beb29ad793fa17",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/Program.cs": {
+    "mtime": 1782869055.1297066,
+    "ast_hash": "89d2997f7be54e1b721ede07404dd84f",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/ValidateDriverRecordSharingPlugin.csproj": {
+    "mtime": 1782869055.1316953,
+    "ast_hash": "485fa2bd399ad2825e689cc2938e2ec8",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/bin/Debug/net8.0/ValidateDriverRecordSharingPlugin.deps.json": {
+    "mtime": 1782869055.1350183,
+    "ast_hash": "3b5c3bd03cd2ddc95d02e991fbb05456",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/bin/Debug/net8.0/ValidateDriverRecordSharingPlugin.runtimeconfig.json": {
+    "mtime": 1782869055.1473687,
+    "ast_hash": "9fcdf880f73e74cf6347f8194b9f3509",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs": {
+    "mtime": 1782849313.7676892,
+    "ast_hash": "9b225453b5a8008eefb62f6c5c66ce15",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/obj/Debug/net8.0/ValidateDriverRecordSharingPlugin.AssemblyInfo.cs": {
+    "mtime": 1782869055.153362,
+    "ast_hash": "2669fab35e52e0d1f4e8d9169c7c8bf0",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/obj/Debug/net8.0/ValidateDriverRecordSharingPlugin.GlobalUsings.g.cs": {
+    "mtime": 1782849313.6331615,
+    "ast_hash": "9706b2dbf69f7db452e8b0d5baf54dcf",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/obj/Debug/net8.0/ValidateDriverRecordSharingPlugin.sourcelink.json": {
+    "mtime": 1782869055.164364,
+    "ast_hash": "0ceb9108d57e596b48c20cee6807bd54",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/obj/ValidateDriverRecordSharingPlugin.csproj.nuget.dgspec.json": {
+    "mtime": 1782869055.1683595,
+    "ast_hash": "f18a94210453a8a2a060073b03e56e24",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/obj/project.assets.json": {
+    "mtime": 1782869055.1723607,
+    "ast_hash": "b51ce19b883471908c968b544b23f0c4",
+    "semantic_hash": ""
+  },
+  "backup/dataverse-choices-before.json": {
+    "mtime": 1781618402.1670191,
+    "ast_hash": "2b4429cf56fa18a24896c7ade617fe0b",
+    "semantic_hash": ""
+  },
+  "backup/dataverse-data-before.json": {
+    "mtime": 1781619824.8283794,
+    "ast_hash": "013f420420e378e0057afd2a22e1f4f1",
+    "semantic_hash": ""
+  },
+  "backup/dataverse-live-metadata-before.json": {
+    "mtime": 1781619824.9401534,
+    "ast_hash": "6191f77b7c5950a92a0ae93561a0e14e",
+    "semantic_hash": ""
+  },
+  "backup/dataverse-relationships-before.json": {
+    "mtime": 1781618402.1727395,
+    "ast_hash": "a63d208c532ea7d1455060d9b371b99c",
+    "semantic_hash": ""
+  },
+  "backup/dataverse-schema-before.json": {
+    "mtime": 1781618402.1564987,
+    "ast_hash": "ee93c16a1180249f6ae23d5d6fa4162d",
+    "semantic_hash": ""
+  },
+  "dataverse-name-map.json": {
+    "mtime": 1782231835.9378266,
+    "ast_hash": "7d8c48c24a1864af4fc6530da5aa7562",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/DriverRecordSharing.Tests.csproj": {
+    "mtime": 1783368019.141006,
+    "ast_hash": "b549aaefdaf21236c334953dd5c7b587",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/QuoteRequestOriginTests.cs": {
+    "mtime": 1783368043.9347584,
+    "ast_hash": "135e5fa9eaaa65010f0fd95c0ec2527e",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/obj/Debug/net462/.NETFramework,Version=v4.6.2.AssemblyAttributes.cs": {
+    "mtime": 1783368199.3309605,
+    "ast_hash": "0cffc0a0bae623c7da08cdd35065f415",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/obj/Debug/net462/DriverRecordSharing.Tests.AssemblyInfo.cs": {
+    "mtime": 1785844514.4390092,
+    "ast_hash": "40e0244d3cdf477a1bec02622df49caa",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/obj/Debug/net462/DriverRecordSharing.Tests.sourcelink.json": {
+    "mtime": 1785844514.508907,
+    "ast_hash": "1ac87abb345dc9416f9f0c14cc811a6d",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/obj/DriverRecordSharing.Tests.csproj.nuget.dgspec.json": {
+    "mtime": 1783368192.8472612,
+    "ast_hash": "b99cfab0050dc73e84a38c491be1450c",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/obj/project.assets.json": {
+    "mtime": 1783368192.8382623,
+    "ast_hash": "13f80867b526c9169c79390a02a16232",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/DataverseAccessHelper.cs": {
+    "mtime": 1782868064.6994724,
+    "ast_hash": "e6e961e01b012df1b5fd82f03c34572a",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/DriverRecordSharing.csproj": {
+    "mtime": 1781783943.6029165,
+    "ast_hash": "16c334cf03dd9d4366d4588acf9e541c",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/DriverResolver.cs": {
+    "mtime": 1782135902.5683372,
+    "ast_hash": "cf3cefeedb2b68b0e4aad7df068b033e",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/OperationalLogWriter.cs": {
+    "mtime": 1782744707.8244996,
+    "ast_hash": "0f8734544af69a83f03448f5bb4edb96",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/PluginConfig.cs": {
+    "mtime": 1785782256.3826478,
+    "ast_hash": "3eecfc79f245ac255d50c8aae31b2194",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/ServiceDriverSharePlugin.cs": {
+    "mtime": 1785785254.1805995,
+    "ast_hash": "919f0cc733850bef6a3f472781951f7c",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/ServiceExchangeSynchronizer.cs": {
+    "mtime": 1785845179.6580937,
+    "ast_hash": "7c51d34d114715d0617928ee72ffd50e",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/ServicePassengerRepository.cs": {
+    "mtime": 1782149672.867225,
+    "ast_hash": "45c563b02c51b981199b5f7aea02de84",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/ServicePassengerViewSynchronizer.cs": {
+    "mtime": 1783357617.4667203,
+    "ast_hash": "1702126d43b25474e69ad5ddb4d7bb03",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/ServiceVehicleSynchronizer.cs": {
+    "mtime": 1785785687.3089333,
+    "ast_hash": "4751543689eb8db944ee35cb663da6eb",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/VehiclePossessionIntegrityValidator.cs": {
+    "mtime": 1784646101.474564,
+    "ast_hash": "f8f1ca18754a8d874ab98110d3ad8b0f",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/generate-strong-name-key.ps1": {
+    "mtime": 1781783943.7325437,
+    "ast_hash": "ba6732a1b5670a80908e35b6d843bb5f",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/Debug/net462/.NETFramework,Version=v4.6.2.AssemblyAttributes.cs": {
+    "mtime": 1783368194.5756876,
+    "ast_hash": "0cffc0a0bae623c7da08cdd35065f415",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/Debug/net462/DriverRecordSharing.sourcelink.json": {
+    "mtime": 1785844507.0494578,
+    "ast_hash": "1ac87abb345dc9416f9f0c14cc811a6d",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/DriverRecordSharing.csproj.nuget.dgspec.json": {
+    "mtime": 1785783495.7036598,
+    "ast_hash": "7d008f76beaf4bad3d254c54410f51ae",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/Release/net462/.NETFramework,Version=v4.6.2.AssemblyAttributes.cs": {
+    "mtime": 1781781561.4830983,
+    "ast_hash": "0cffc0a0bae623c7da08cdd35065f415",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/Release/net462/DriverRecordSharing.sourcelink.json": {
+    "mtime": 1785845430.3409173,
+    "ast_hash": "1ac87abb345dc9416f9f0c14cc811a6d",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/project.assets.json": {
+    "mtime": 1785783495.6923542,
+    "ast_hash": "733fcbf5cefcdb6513d73062d19ac221",
+    "semantic_hash": ""
+  },
+  "public/screens/manifest.json": {
+    "mtime": 1781029135.772471,
+    "ast_hash": "2328afd440431ff663293186e216f41a",
+    "semantic_hash": ""
+  },
+  "receipt-name-map.json": {
+    "mtime": 1781888960.7794888,
+    "ast_hash": "592417a503b0e929d239bb41f956c83e",
+    "semantic_hash": ""
+  },
+  "scripts/add-funcionario-recibo-personalizado-permission.console.js": {
+    "mtime": 1781292351.006152,
+    "ast_hash": "3836691031a97268e978b680ae033d18",
+    "semantic_hash": ""
+  },
+  "scripts/add-receipt-language-column.console.js": {
+    "mtime": 1781705896.7489774,
+    "ast_hash": "cf269fd28fffb31c933b3965004f5751",
+    "semantic_hash": ""
+  },
+  "scripts/add-vehicle-category-to-form-view.console.js": {
+    "mtime": 1781267310.1159496,
+    "ast_hash": "83519cf0eb26fff9803b56c2c0f5cc6e",
+    "semantic_hash": ""
+  },
+  "scripts/audit-collision-attachment-picklists.console.js": {
+    "mtime": 1781543869.184919,
+    "ast_hash": "a6e5cfe60c807168be8387b403e5b12b",
+    "semantic_hash": ""
+  },
+  "scripts/audit-current-user-model-app-access.console.js": {
+    "mtime": 1782133891.1837993,
+    "ast_hash": "92fb2c3c9bfee41d8e9c9a31bc05e892",
+    "semantic_hash": ""
+  },
+  "scripts/audit-driver-record-sharing-plugin.console.js": {
+    "mtime": 1782909710.635067,
+    "ast_hash": "5afd6864d89684ef77502f50028ba718",
+    "semantic_hash": ""
+  },
+  "scripts/audit-op-workbooks.mjs": {
+    "mtime": 1784747798.4449182,
+    "ast_hash": "764ba24fcd90dedcb702733fe0ebad38",
+    "semantic_hash": ""
+  },
+  "scripts/audit-service-driver-access-gaps.console.js": {
+    "mtime": 1782736870.379093,
+    "ast_hash": "4751d6b5636231efc0d4974c424f2bd8",
+    "semantic_hash": ""
+  },
+  "scripts/backfill-existing-service-driver-sharing.console.js": {
+    "mtime": 1782735148.437886,
+    "ast_hash": "b038c2e152b069ade9056f593be7a68e",
+    "semantic_hash": ""
+  },
+  "scripts/backfill-maintenance-sharing-from-services.console.js": {
+    "mtime": 1782132467.3662138,
+    "ast_hash": "cab8291a30a976f4ba5a36f9dbd95cfe",
+    "semantic_hash": ""
+  },
+  "scripts/configure-cidades-despesas-forms.console.js": {
+    "mtime": 1781273416.4269106,
+    "ast_hash": "4f3f664aaff67abc0c13bfd9f7aa80fb",
+    "semantic_hash": ""
+  },
+  "scripts/configure-maintenance-expense-lookup.console.js": {
+    "mtime": 1782408791.0032961,
+    "ast_hash": "677dfd7c3ab145a81cc1e68719b432f2",
+    "semantic_hash": ""
+  },
+  "scripts/create-collision-v2-schema.console.js": {
+    "mtime": 1781621234.9438164,
+    "ast_hash": "54780de0d7be8c939fe1de29f50ae93f",
+    "semantic_hash": ""
+  },
+  "scripts/create-collision-v2-schema.ps1": {
+    "mtime": 1782231844.708621,
+    "ast_hash": "cfe77028c1796d0b4b37cbd37ec59405",
+    "semantic_hash": ""
+  },
+  "scripts/create-docker-slides.mjs": {
+    "mtime": 1781647150.8573115,
+    "ast_hash": "270fcb65783ba5c38e2c929fc33e6757",
+    "semantic_hash": ""
+  },
+  "scripts/create-expense-reference-forms.console.js": {
+    "mtime": 1781269540.4175515,
+    "ast_hash": "80d72ee460482f6c8f632fd9df601d59",
+    "semantic_hash": ""
+  },
+  "scripts/create-receipt-v2-schema.console.js": {
+    "mtime": 1781628416.2883868,
+    "ast_hash": "d16bf88ae5e339c3516b5feb8854038a",
+    "semantic_hash": ""
+  },
+  "scripts/criar-despesas-operacionais-dataverse.console.js": {
+    "mtime": 1781110893.8180013,
+    "ast_hash": "c6da899120be79db6a1a1366a53f3dfe",
+    "semantic_hash": ""
+  },
+  "scripts/delete-expense-dataverse-tables-console.js": {
+    "mtime": 1781026486.3999357,
+    "ast_hash": "ab7f99d06e940eea43408feafba5c8a2",
+    "semantic_hash": ""
+  },
+  "scripts/diagnose-dataverse-staged-metadata-lock.console.js": {
+    "mtime": 1781550938.1615827,
+    "ast_hash": "db7db245d4f5207473058c73737116fa",
+    "semantic_hash": ""
+  },
+  "scripts/enable-funcionarios-field-security.console.js": {
+    "mtime": 1781880133.3846307,
+    "ast_hash": "7b276c0a49abcd8d963b2349fcb051e9",
+    "semantic_hash": ""
+  },
+  "scripts/enable-funcionarios-field-security.ps1": {
+    "mtime": 1782231847.168437,
+    "ast_hash": "589f203fb18554743beed82eaaab783e",
+    "semantic_hash": ""
+  },
+  "scripts/enable-veiculos-field-security.ps1": {
+    "mtime": 1782231839.6672928,
+    "ast_hash": "984601a9e202c6797275305c16eb4511",
+    "semantic_hash": ""
+  },
+  "scripts/export-collision-rebuild-backup.console.js": {
+    "mtime": 1781619804.124092,
+    "ast_hash": "9687f8558934446db1f562960c88969b",
+    "semantic_hash": ""
+  },
+  "scripts/export-collision-rebuild-backup.ps1": {
+    "mtime": 1782231850.7844107,
+    "ast_hash": "6401313e19f21dd449adf7481477c8f7",
+    "semantic_hash": ""
+  },
+  "scripts/find-solution-missing-option-labels.ps1": {
+    "mtime": 1781553260.4994445,
+    "ast_hash": "af3b500316acb7e020bd1958e6d7f51d",
+    "semantic_hash": ""
+  },
+  "scripts/fix-collision-attachment-choice-labels.console.js": {
+    "mtime": 1781551054.0401301,
+    "ast_hash": "aaaa6e04145cfd6bf4af134de3fc7e38",
+    "semantic_hash": ""
+  },
+  "scripts/generate-service-vehicle-corrections.py": {
+    "mtime": 1782999712.0869577,
+    "ast_hash": "79755749a22ea60716306503bda559d1",
+    "semantic_hash": ""
+  },
+  "scripts/grant-employee-self-access.console.js": {
+    "mtime": 1782913838.6704888,
+    "ast_hash": "0d496a6985c334b2df9aa2f11f724963",
+    "semantic_hash": ""
+  },
+  "scripts/grant-service-driver-access-gaps.console.js": {
+    "mtime": 1782736873.4619443,
+    "ast_hash": "41aeeb5c4e1e329abfa20373fc869474",
+    "semantic_hash": ""
+  },
+  "scripts/import-despesas-operacionais-csv.ps1": {
+    "mtime": 1782231848.9103115,
+    "ast_hash": "c77e73e0e56794f8f16dcddcf2cf6199",
+    "semantic_hash": ""
+  },
+  "scripts/register-driver-record-sharing-plugin-webapi.ps1": {
+    "mtime": 1785785750.2517223,
+    "ast_hash": "a7f7044e583181251326ef633940a64f",
+    "semantic_hash": ""
+  },
+  "scripts/register-driver-record-sharing-plugin.ps1": {
+    "mtime": 1785784864.249632,
+    "ast_hash": "2ed7818293de9040232eccef4063ac48",
+    "semantic_hash": ""
+  },
+  "scripts/repair-collision-option-labels-in-solution-zip.ps1": {
+    "mtime": 1781551478.3824317,
+    "ast_hash": "190317eb851af640452d74eb81dc995f",
+    "semantic_hash": ""
+  },
+  "scripts/repair-despesas-operacionais-relacionamentos.console.js": {
+    "mtime": 1781110928.632823,
+    "ast_hash": "a2b379b942fa90aec0f65a1a269b008a",
+    "semantic_hash": ""
+  },
+  "scripts/repair-expense-schema-org23.ps1": {
+    "mtime": 1782231852.9360921,
+    "ast_hash": "ae681557fe71a0d466ba16c3d5617b34",
+    "semantic_hash": ""
+  },
+  "scripts/seed-cidades-brasil.console.js": {
+    "mtime": 1781287940.165061,
+    "ast_hash": "936cdde91be0fd01135ed88a351fd1cc",
+    "semantic_hash": ""
+  },
+  "scripts/seed-despesas-operacionais.console.js": {
+    "mtime": 1781291723.164623,
+    "ast_hash": "d5ae7ff30ad6cd4a74fbbeb4e528dc5b",
+    "semantic_hash": ""
+  },
+  "scripts/setup-service-vehicle-origin.console.js": {
+    "mtime": 1783084855.1654463,
+    "ast_hash": "df4d63ae34b0d3f8db667bed0d0ac20c",
+    "semantic_hash": ""
+  },
+  "scripts/test-onedrive-photo-preview.ps1": {
+    "mtime": 1782231841.8236477,
+    "ast_hash": "c674c108758eace9c37a503b1fe7ccce",
+    "semantic_hash": ""
+  },
+  "scripts/tmp-via-dutra.spec.js": {
+    "mtime": 1781091215.888414,
+    "ast_hash": "0bfdc8f8769b59de02c746eff29a6b0a",
+    "semantic_hash": ""
+  },
+  "scripts/unify-receipt-tables.console.js": {
+    "mtime": 1781629470.5834978,
+    "ast_hash": "71c92d965ee475c7bd7833a7a905f5f2",
+    "semantic_hash": ""
+  },
+  "scripts/update-third-party-fixed-vehicles.console.js": {
+    "mtime": 1783024031.552446,
+    "ast_hash": "20d5d38c01c756614f189c24f8c894ba",
+    "semantic_hash": ""
+  },
+  "scripts/validate-driver-record-sharing-plugin.ps1": {
+    "mtime": 1785784867.808541,
+    "ast_hash": "4f1d9a4642a4c45bc50566efb3a32675",
+    "semantic_hash": ""
+  },
+  "src/app/agendaVisibility.ts": {
+    "mtime": 1782328122.5161362,
+    "ast_hash": "da94a436cba9fd8fd92c5391fb612805",
+    "semantic_hash": ""
+  },
+  "src/app/bootstrap.ts": {
+    "mtime": 1782820655.8096035,
+    "ast_hash": "c075f16a86a9de14afe08b5efc0697ec",
+    "semantic_hash": ""
+  },
+  "src/app/detailFlow.ts": {
+    "mtime": 1781290468.171215,
+    "ast_hash": "5116cdf94c95516f7df71571d5f491d1",
+    "semantic_hash": ""
+  },
+  "src/app/navigation.ts": {
+    "mtime": 1781630539.5248518,
+    "ast_hash": "5e00cfc0500946e5252443489810444c",
+    "semantic_hash": ""
+  },
+  "src/components/app/AppErrorBoundary.tsx": {
+    "mtime": 1784300254.909937,
+    "ast_hash": "62b94cca2f4fa76d180ea0557d6168fd",
+    "semantic_hash": ""
+  },
+  "src/components/common/ActionButton.tsx": {
+    "mtime": 1781635089.42679,
+    "ast_hash": "f3e9aad0e2bfcfcfab45a894198e0979",
+    "semantic_hash": ""
+  },
+  "src/components/common/FormFields.tsx": {
+    "mtime": 1782224091.961623,
+    "ast_hash": "e3669ade39f5adfc2ce236c774fccd72",
+    "semantic_hash": ""
+  },
+  "src/components/common/LoadingOverlay.tsx": {
+    "mtime": 1781636117.6568048,
+    "ast_hash": "cd9165f2842f0c90905b7e9f0c46beae",
+    "semantic_hash": ""
+  },
+  "src/components/common/LocalToast.tsx": {
+    "mtime": 1781544071.7765448,
+    "ast_hash": "bdbc2b43b4013b634ca05eb9c60c5bf1",
+    "semantic_hash": ""
+  },
+  "src/components/common/PhotoAddButton.tsx": {
+    "mtime": 1781702147.6108966,
+    "ast_hash": "55aa06a0a0b7e63a60368e87ddffba6e",
+    "semantic_hash": ""
+  },
+  "src/components/common/SearchableSelect.tsx": {
+    "mtime": 1781705786.5724661,
+    "ast_hash": "eebccc4220ec0b42cdf7a4bc5801d25b",
+    "semantic_hash": ""
+  },
+  "src/lib/collisions.ts": {
+    "mtime": 1782825589.5497887,
+    "ast_hash": "9ec5c83ab96dc6f7af46d5def9bda71e",
+    "semantic_hash": ""
+  },
+  "src/lib/detailHtml.ts": {
+    "mtime": 1781262817.2541795,
+    "ast_hash": "8f91a2bc482f961a3dd3555a0eb7d00e",
+    "semantic_hash": ""
+  },
+  "src/lib/detailMedia.ts": {
+    "mtime": 1781265260.296027,
+    "ast_hash": "06ae3e23a225a8e8d11fefcca68c0ac6",
+    "semantic_hash": ""
+  },
+  "src/lib/expenses.defaults.ts": {
+    "mtime": 1781291592.8883626,
+    "ast_hash": "e62c95028238bb0cceacec9645d93f1e",
+    "semantic_hash": ""
+  },
+  "src/lib/expenses.payload.ts": {
+    "mtime": 1782408154.0380597,
+    "ast_hash": "6f208492f17216db572ef179b39758e1",
+    "semantic_hash": ""
+  },
+  "src/lib/expenses.reference.ts": {
+    "mtime": 1782999006.2442827,
+    "ast_hash": "12aa025be2e13a5e7bbd7cac5b5f6c96",
+    "semantic_hash": ""
+  },
+  "src/lib/expenses.types.ts": {
+    "mtime": 1782825568.5714917,
+    "ast_hash": "7dcb04c4f2f86f5404109a33b36aae79",
+    "semantic_hash": ""
+  },
+  "src/lib/fieldLookup.ts": {
+    "mtime": 1781262817.2650225,
+    "ast_hash": "9b26e14f03e12e2249adeb5bd9193ec8",
+    "semantic_hash": ""
+  },
+  "src/lib/maintenanceFinalize.ts": {
+    "mtime": 1782408821.8812609,
+    "ast_hash": "08abe0cf6aed976b995685eb6391584b",
+    "semantic_hash": ""
+  },
+  "src/lib/mapLinks.ts": {
+    "mtime": 1781017999.041245,
+    "ast_hash": "3d2d946a9ae172c27a72be1b50918e18",
+    "semantic_hash": ""
+  },
+  "src/lib/mediaDrafts.ts": {
+    "mtime": 1782825533.1697357,
+    "ast_hash": "1143b77781f564c62b8113320eb2bd2d",
+    "semantic_hash": ""
+  },
+  "src/lib/personalReceipt.ts": {
+    "mtime": 1782328499.4373226,
+    "ast_hash": "b5883d118889cc873e582f257618076e",
+    "semantic_hash": ""
+  },
+  "src/lib/receiptLanguage.ts": {
+    "mtime": 1782299886.6998317,
+    "ast_hash": "e4cfb2819ca7dbb534dcac6626fd87f9",
+    "semantic_hash": ""
+  },
+  "src/lib/receiptPdf.ts": {
+    "mtime": 1782299886.704833,
+    "ast_hash": "3955dbf3bf88c01cb2fd77058cb7bc6a",
+    "semantic_hash": ""
+  },
+  "src/lib/receiptSvg.ts": {
+    "mtime": 1782299886.7078333,
+    "ast_hash": "4af392f8d33137156700f27424bfd7c4",
+    "semantic_hash": ""
+  },
+  "src/screens/ButtonPreviewScreen.tsx": {
+    "mtime": 1782842103.1991725,
+    "ast_hash": "d2dc1d31b564842cfe793a482bb9a89d",
+    "semantic_hash": ""
+  },
+  "src/screens/CollisionScreen.tsx": {
+    "mtime": 1781702993.6438975,
+    "ast_hash": "af1c638920893290b820766bcf51eb58",
+    "semantic_hash": ""
+  },
+  "src/screens/CollisionStartScreen.tsx": {
+    "mtime": 1781262817.2744973,
+    "ast_hash": "4186e7794a03689feecb165ab09573fd",
+    "semantic_hash": ""
+  },
+  "src/screens/MediaCaptureScreen.tsx": {
+    "mtime": 1784145163.6920466,
+    "ast_hash": "f386622595a50c9ac62da5fe9bdc912c",
+    "semantic_hash": ""
+  },
+  "src/screens/ReceiptScreen.tsx": {
+    "mtime": 1782328501.6540859,
+    "ast_hash": "cb2d9a8feeb8c6d72a931bec74ccfcd2",
+    "semantic_hash": ""
+  },
+  "src/screens/ReceiveScreen.tsx": {
+    "mtime": 1782826501.0155632,
+    "ast_hash": "bc174dda253bc245a85d81cf4ba3f29a",
+    "semantic_hash": ""
+  },
+  "test-results/.last-run.json": {
+    "mtime": 1781091228.6121197,
+    "ast_hash": "ff6d5dab1dfd50cea584142bc288ce9e",
+    "semantic_hash": ""
+  },
+  "tests/appErrorLogger.test.ts": {
+    "mtime": 1784301214.4925983,
+    "ast_hash": "a0eabdfed6be7082849b3598ef37218b",
+    "semantic_hash": ""
+  },
+  "tests/bootstrap.test.ts": {
+    "mtime": 1782820709.076621,
+    "ast_hash": "6d5fcc19ce4a6faff7874ffacde9662b",
+    "semantic_hash": ""
+  },
+  "tests/collisions.test.ts": {
+    "mtime": 1781269593.6580896,
+    "ast_hash": "c1dc4541300fa32e1ae8ba6b5da21565",
+    "semantic_hash": ""
+  },
+  "tests/detailHtml.test.ts": {
+    "mtime": 1781262817.3148217,
+    "ast_hash": "4ec69c4f6e4054333ff6c133228d4403",
+    "semantic_hash": ""
+  },
+  "tests/detailMedia.test.ts": {
+    "mtime": 1781265280.0784917,
+    "ast_hash": "d1e84de8471e3ab7b10501f71b6ce08a",
+    "semantic_hash": ""
+  },
+  "tests/fieldLookup.test.ts": {
+    "mtime": 1781262817.3202145,
+    "ast_hash": "4a976bfc48855d421cda4cb46fe2d7a5",
+    "semantic_hash": ""
+  },
+  "tests/maintenanceFinalize.test.ts": {
+    "mtime": 1782408952.473689,
+    "ast_hash": "65e844176c8d1835911dbb678de22c4f",
+    "semantic_hash": ""
+  },
+  "tests/mapLinks.test.ts": {
+    "mtime": 1781017974.1987572,
+    "ast_hash": "cd990f09171b03a349efb2158ea3a5ed",
+    "semantic_hash": ""
+  },
+  "tests/media.test.ts": {
+    "mtime": 1782398336.4581585,
+    "ast_hash": "8f76407aab68a806921b327b44bd1b10",
+    "semantic_hash": ""
+  },
+  "tests/mediaLayout.test.ts": {
+    "mtime": 1784145163.6940458,
+    "ast_hash": "8da070c4160ce205a759d7b60d554bab",
+    "semantic_hash": ""
+  },
+  "tests/receiptSvg.test.ts": {
+    "mtime": 1781609825.9466386,
+    "ast_hash": "35449fc09cc644744e5ebae8374ad03c",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/CanvasApps/cr40f_funesoperacionais_d5e5a_AdditionalUris0_identity.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "bcfdf5686674c7969a535ecdcd52b988",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/CanvasApps/cr40f_pgina1_8cac9_AdditionalUris0_identity.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "29224392b33e4daf17c788bb7d75be21",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/CanvasApps/cr40f_reservarveculos_9ec70_AdditionalUris0_identity.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "fda7e53cc555903523c292ffd1df4405",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/CanvasApps/new_appbetinhosmotoristas_8fcab_AdditionalUris0_identity.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "ed8fec806db2567461ba3b4e7a72e9a4",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/CanvasApps/new_pgina2_f0001_AdditionalUris0_identity.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "35fffdc16b434e808069a54b6e3c6b12",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Formulas/cr40f_composicaodeprecos-new_subtotal.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "49c5bd03627cdad13133a23b61fab9a5",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Formulas/cr40f_composicaodeprecos-new_valortotal.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "7c9fca058a70d605ac523f5bbcb2aaba",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Formulas/cr40f_statusdamanutencao-bpf_duration.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "94cb32563ade1a8dc8a73490fb36cff5",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0AdequaodeRota-BF266CC7-4007-F111-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "0e521c88f4b0e95cbfca1030134ec508",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0AdequaodeRotaporKM-BA137DBE-4107-F111-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "b603f725148fd5ed2f4b226a171c0492",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Ajuste-768C01BF-4507-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "9cba9252493db9cdecf61c6cfb198db8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Ajuste-96415E6A-3734-F111-88B4-6045BD3C4061.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "5539887f294570ee718957341bceb376",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0ArcoMetropolitano-E12FDBC5-4207-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "99f34087311120584ec23c132a8c8d08",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0AyrtonSenna-DBFD4FF6-4207-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "eab4cb0d05a921e4a6cd9a8751585c1b",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Combustvel-ED9CA81D-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "9bfe0a971f3fbab338ddac539956871f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0DesviosEntreCidades-5C8C9C3D-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "f977e65398e9b14fbab603e4617079f4",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Diria-CD6770BE-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "04d28aa98a87e37d6bccf9c77f449253",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0HoraMotorista-7F7FFA1D-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "045166dbac8691e7edf3ff8a3b03457a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Locao-4355F029-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "1c05e4a4a1292b71541e5ae8c25972c6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0PassageirosAdicionais-A694E349-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "af03af9ff3e3370fde2f277140f46a21",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Passagens-15936261-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "fcde5bd842639094a9c9cbb312726e9d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Pedgios-9D805571-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "698ca546c54e08c2367bb16a150ddb5f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0Rodoanel-E950A28A-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "ade0700680eaa0d7fb2eb0b1ef1a5700",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0espera-3F1E60D7-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "cfdda62f944cfc96abd563388c4adb84",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/0estacionamento-CCC80502-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "8303a07e34487c41dc595eb464dc7c62",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Aprovado-E111664E-4EDF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "0563dcd24e7c8cde0553f4ccc10cd64a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/ConcluirRetiradaouDevoluo-3B753311-CF39-F111-BEC6-7CED8DA8964D.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "48d1cc258850b474510b55a8f611f3de",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Concluirquandoosdoisconclurem-B75515F4-9239-F111-88B4-70A8A5A983D7.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "e76ad31f440fb8260ea3bc8c6313eba2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/CpiadeNovaregradenegcios-6259BA10-7CD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "7aac99c29992dfb2eb5bec064f42ea8d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/DefinirCategoriadoItem-88CFC205-BA18-F111-8341-6045BD3C7605.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "6d3e2372a7518d399c016562887e8fb9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowAPIRDStationBDparaLeads-0FCE14C4-4A34-F111-88B4-6045BD3C4061.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "a8924a581c018dce4377c154169c0452",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowAtribuirVeculoAutomticoGeral-DB569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "d836869ebd28ba908d314081412d42d9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowAtualizarSempreFoiProgramado-10E9105C-C42E-F111-88B4-7CED8DB0FC7D.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "a72c9c57a0e49e405e330dc26a5ca360",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowAtualizarStatusdePagamento-402F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "7a4685b0a9ef95a93065a515dad8ceb8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowAvisoPedidoRetroativo-48BD4DCD-E93F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "1d6fdad12ee5fa2bed0840e0b475738a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowAvisoServiosdeMadrugada-4E6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "40de9b2affef6d39b5544481d6a6976b",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowCamposProtegidos-7DC8040D-2822-F111-8342-6045BD38748F.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "c776b790339326d030eec7c367029437",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowCriarServiodeManutenonaGeral-AD2686C1-CAE2-F011-8406-000D3AC180F4.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "978d3806dc8a0d2e647a11d3ee0a1382",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowCriareAtualizarCP4-B874B974-7529-F111-88B4-7CED8DA86705.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "7fb6361fc2a81372d58c612e45b057ec",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaCP-StatusdeFaturamentonaGeral-49BD4DCD-E93F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "884ed839f0c4a80047cd6533ab6b6cde",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusGeral-Manutenes-8AE9969F-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "317bad913981a502a3741ae8e1742245",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusGeral-TrocasdeCarro-9B569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "a09faa651213871cc18f0db366094eb6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusManutenes-Geral-9E569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "9413a563b36830dee026c1cf23efefb2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusOP-Geral-6D2A60BB-4334-F111-88B4-6045BD3C4061.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "b0355f29a8563fefabbab5e170a668c3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusOP-Pagantes-D0D43D01-2D43-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "4c481bcf29b14242ba386420de7724a9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusPagantes-OP-4C6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "004b1f550d2d6e36d24e47daf0a2b53c",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusTrocasdeCarro-Geral-70433A56-D811-F111-8341-7CED8DB14BC5.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "a26306aaa438d2328a21cf51cbf2c8d8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusdeFaturamentonaGeral-CP-AE1333C5-EB3F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "21fbb94bd38a373bf28a39cb9ce82fca",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixaStatusdeFaturamentonaGeral-OP-22AF6806-0043-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "135a41d3431ccbc4fd87ddb76ebec01f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDarBaixanaOP-GeralStatusdeFaturamento-21AF6806-0043-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "103c0df6f1b4e0bb546e6c6eb7ebb438",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowDefinirUTC-3paranovosusurios-1477727B-990E-F111-8341-7CED8DB14575.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "75797efdd7e1817afb895217f68f7466",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowEmailTripConfirmation-8A6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "29362973575598caf37d779a5afab3e2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowEnviarLembretedePagamento-8B6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "d656c01d954d6e184a34beaf1233b292",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowEnviarReciboAutomtico-4F6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "638813dd00d3e046e63bcef57209db33",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowFormsdeManuteno-AppBetinhos-96B4056D-68DF-F011-8406-002248E14E09.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "5b833055cd364ca848e0822231850d75",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowGerarContrato-422F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "2c7b79fae96dd0256218de81d5de3c4d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowGerarLinkdePagamento-0BCD0073-68DF-F011-8406-002248E14E09.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "db9492ab6cef8f84d032ccb1e9dd5649",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowGerarReciboManual-518868F7-6AE3-F011-8406-00224836E105.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "01dafbeb3896cde9d1c7c5ea1a4f35ee",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowGerarVoucherAppMotoristas-61907C19-C610-F111-8341-7CED8DA828D4.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "8aa5c71af73a3b838ab02962958ee1a6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowGerarVoucherAppMotoristasv2-EE0A68B9-3063-F111-AB0C-7CED8DB12F4C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "c332bf340361ba38f4db11ed16ba0938",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowManualListarPastasColaboradores-3F2F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "c0409883f1d7b84eabf31527adf99e3c",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotficaoOPdoServioNoGerada3diasInterno-7C12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "5b48ba59fdde355884ad90ccb5434084",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoEmailMultanoIndicada-412F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "d89faa68c7767fcfaba6d2ebd3470e56",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoLembreteQueryTenarisInterno-7F12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "326d2e2cc24ba6948e5477b6f8380959",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoNovoRequerAnliseInterno-3B12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "2814a8e05d1e55ca72a490379b05e706",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoNovoServioDiaPosteriorAppInterno-AD12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "bd0daa63e9206bc1c7c65d7360cea1a3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoNovoServioEmergencialAppInterno-D9569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "fe585f8e627a9c78cd6c4bc5b377f9da",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoNovoServioMotoristas-4FB94870-AED9-F011-8543-000D3A886267.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "c1dc3dd2c72ecd23b35ba3b21595c881",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoServioEditadoInternoeMotoristas-3A12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "d5e27206dc4c7e158dccabcd3a94e7d0",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoServioNoVisualizadoInternoeMotoristas-7E12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "8cb1cd6c7b27b1c5d74ec99693f46470",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoServioRetiradodaAgendaMotoristas-3912FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "0bba8037c59471b64eaa324eb1e4dafa",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoServioSemMotoristaDesignadoInterno-A190189E-3A22-F111-8342-6045BD38748F.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "587b6a61ab68b3ca87e799ce5fabfc57",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoServioSemVoucherInterno-3812FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "89c8af595fb800f1e9a415eb1e624b0d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoServiosSemCRdaSemanaInterno-7D12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "629ec89b9409393d8322b78d59294136",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificaoServiosdeAmanhaReceberFinanceiro-A912FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "c33c073745c55a3a7c2000bf97a011cf",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNotificarCondutorMultas-2EFF1DA8-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "ad37cac1412e23da69c95e3d1fff37ca",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowNovoSistemaTenaris-Dataverse-CBCD9564-1B1E-F111-88B1-7CED8DA87540.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "ce12f27cab77f3dd1c8c7833f08bbe49",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowReceber-Planner-4D6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "338572cbc029b3f1d45a35271ee079de",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowResetarVisualizaodoMotoristaeFoiProgramadoaotr-777F3CF7-6529-F111-88B4-7CED8DA86705.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "ca2f6829c808498b22a14e9ad6ab03e0",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowSalvarAnexoCurrculo-Onedrive-44C091AA-0B53-F111-BEC6-000D3AC01483.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "7d4cbaddfa1b56e53f4fefd63574000e",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowSalvarAnexoDespesa-9BE7D4DF-F44E-F111-BEC6-70A8A5A978EC.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "16b555051cedf556a53421283ae10544",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowSalvarArquivosOnedrive-36C84D31-C668-F111-AB0C-7CED8DB14558.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "0486a4c97def10a18bfd4cf2e61e0f6a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowSalvarFotoBD-Onedrive-7AF1B60F-ED5D-F111-A825-70A8A5A95B84.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "48ba38f33f94a3702ce89e2a11c98fc1",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowSalvarFotosManutenoAppMotoristas-9D569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "2de49750b7b3df53b50cf62a63856d70",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/FlowSalvarFotosManutenoAppMotoristasv2-BDC1E4AF-3E63-F111-AB0C-7CED8DB12F4C.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "77fc3ed47a746ab9bab7a9aef7a45893",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Flow_Gerar_OP-A442FAAE-A3DA-F011-8543-7CED8DA92499.json": {
+    "mtime": 1781556440.0,
+    "ast_hash": "880277e225d4df7cb98a1a5779d1ec38",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Foiprogramado-A8991159-342C-F111-88B4-6045BD394F68.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "041ce3a6c4ca2680f015931b328427fd",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Novaregradenegcios-36530F9D-7FD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "b46edcf6908188a7caba47d1b6eefce3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Novaregradenegcios-B21324FF-7BD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "c9f93073e594377f326d1bf72a4e62ad",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Realizado-54559482-4EDF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "e8d951360f2475ece60a63e358a4c9b3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/ResetarConcluidoMot1eMot2-89B342C4-3D21-F111-88B2-000D3A886185.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "6d095e0ab7c185953bb475e59a4cc064",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/STATUSDAMANUTENO-AEF79286-2BDF-F011-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "cb8b2a4d08ea0af240fdbd46f0a4605e",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/Solicitado-17BF357A-42DF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "0ae9cc39376293647eaffe66147b874f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Workflows/TravarseProgramarsemmotoristadesignado-B99DF642-E118-F111-8341-6045BD3C7605.xaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "ba64c2fabc090843152154a8047568b2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/CanvasApps/cr40f_funesoperacionais_d5e5a_AdditionalUris0_identity.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "bcfdf5686674c7969a535ecdcd52b988",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/CanvasApps/cr40f_pgina1_8cac9_AdditionalUris0_identity.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "29224392b33e4daf17c788bb7d75be21",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/CanvasApps/cr40f_reservarveculos_9ec70_AdditionalUris0_identity.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "fda7e53cc555903523c292ffd1df4405",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/CanvasApps/new_appbetinhosmotoristas_8fcab_AdditionalUris0_identity.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "ed8fec806db2567461ba3b4e7a72e9a4",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/CanvasApps/new_pgina2_f0001_AdditionalUris0_identity.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "35fffdc16b434e808069a54b6e3c6b12",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Formulas/cr40f_composicaodeprecos-new_subtotal.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "49c5bd03627cdad13133a23b61fab9a5",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Formulas/cr40f_composicaodeprecos-new_valortotal.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "7c9fca058a70d605ac523f5bbcb2aaba",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Formulas/cr40f_statusdamanutencao-bpf_duration.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "94cb32563ade1a8dc8a73490fb36cff5",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0AdequaodeRota-BF266CC7-4007-F111-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "0e521c88f4b0e95cbfca1030134ec508",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0AdequaodeRotaporKM-BA137DBE-4107-F111-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "b603f725148fd5ed2f4b226a171c0492",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Ajuste-768C01BF-4507-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "9cba9252493db9cdecf61c6cfb198db8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Ajuste-96415E6A-3734-F111-88B4-6045BD3C4061.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "5539887f294570ee718957341bceb376",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0ArcoMetropolitano-E12FDBC5-4207-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "99f34087311120584ec23c132a8c8d08",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0AyrtonSenna-DBFD4FF6-4207-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "eab4cb0d05a921e4a6cd9a8751585c1b",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Combustvel-ED9CA81D-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "9bfe0a971f3fbab338ddac539956871f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0DesviosEntreCidades-5C8C9C3D-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "f977e65398e9b14fbab603e4617079f4",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Diria-CD6770BE-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "04d28aa98a87e37d6bccf9c77f449253",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0HoraMotorista-7F7FFA1D-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "045166dbac8691e7edf3ff8a3b03457a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Locao-4355F029-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "1c05e4a4a1292b71541e5ae8c25972c6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0PassageirosAdicionais-A694E349-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "af03af9ff3e3370fde2f277140f46a21",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Passagens-15936261-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "fcde5bd842639094a9c9cbb312726e9d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Pedgios-9D805571-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "698ca546c54e08c2367bb16a150ddb5f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0Rodoanel-E950A28A-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "ade0700680eaa0d7fb2eb0b1ef1a5700",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0espera-3F1E60D7-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "cfdda62f944cfc96abd563388c4adb84",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/0estacionamento-CCC80502-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "8303a07e34487c41dc595eb464dc7c62",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Aprovado-E111664E-4EDF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "0563dcd24e7c8cde0553f4ccc10cd64a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/ConcluirRetiradaouDevoluo-3B753311-CF39-F111-BEC6-7CED8DA8964D.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "48d1cc258850b474510b55a8f611f3de",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Concluirquandoosdoisconclurem-B75515F4-9239-F111-88B4-70A8A5A983D7.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "e76ad31f440fb8260ea3bc8c6313eba2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/CpiadeNovaregradenegcios-6259BA10-7CD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "7aac99c29992dfb2eb5bec064f42ea8d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/DefinirCategoriadoItem-88CFC205-BA18-F111-8341-6045BD3C7605.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "6d3e2372a7518d399c016562887e8fb9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowAPIRDStationBDparaLeads-0FCE14C4-4A34-F111-88B4-6045BD3C4061.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "a8924a581c018dce4377c154169c0452",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowAtribuirVeculoAutomticoGeral-DB569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "d836869ebd28ba908d314081412d42d9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowAtualizarSempreFoiProgramado-10E9105C-C42E-F111-88B4-7CED8DB0FC7D.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "a72c9c57a0e49e405e330dc26a5ca360",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowAtualizarStatusdePagamento-402F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "7a4685b0a9ef95a93065a515dad8ceb8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowAvisoPedidoRetroativo-48BD4DCD-E93F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "1d6fdad12ee5fa2bed0840e0b475738a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowAvisoServiosdeMadrugada-4E6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "40de9b2affef6d39b5544481d6a6976b",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowCamposProtegidos-7DC8040D-2822-F111-8342-6045BD38748F.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "c776b790339326d030eec7c367029437",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowCriarServiodeManutenonaGeral-AD2686C1-CAE2-F011-8406-000D3AC180F4.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "978d3806dc8a0d2e647a11d3ee0a1382",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowCriareAtualizarCP4-B874B974-7529-F111-88B4-7CED8DA86705.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "7fb6361fc2a81372d58c612e45b057ec",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaCP-StatusdeFaturamentonaGeral-49BD4DCD-E93F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "884ed839f0c4a80047cd6533ab6b6cde",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusGeral-Manutenes-8AE9969F-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "317bad913981a502a3741ae8e1742245",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusGeral-TrocasdeCarro-9B569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "a09faa651213871cc18f0db366094eb6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusManutenes-Geral-9E569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "9413a563b36830dee026c1cf23efefb2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusOP-Geral-6D2A60BB-4334-F111-88B4-6045BD3C4061.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "b0355f29a8563fefabbab5e170a668c3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusOP-Pagantes-D0D43D01-2D43-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "4c481bcf29b14242ba386420de7724a9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusPagantes-OP-4C6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "004b1f550d2d6e36d24e47daf0a2b53c",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusTrocasdeCarro-Geral-70433A56-D811-F111-8341-7CED8DB14BC5.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "a26306aaa438d2328a21cf51cbf2c8d8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusdeFaturamentonaGeral-CP-AE1333C5-EB3F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "21fbb94bd38a373bf28a39cb9ce82fca",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixaStatusdeFaturamentonaGeral-OP-22AF6806-0043-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "135a41d3431ccbc4fd87ddb76ebec01f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDarBaixanaOP-GeralStatusdeFaturamento-21AF6806-0043-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "103c0df6f1b4e0bb546e6c6eb7ebb438",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowDefinirUTC-3paranovosusurios-1477727B-990E-F111-8341-7CED8DB14575.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "75797efdd7e1817afb895217f68f7466",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowEmailTripConfirmation-8A6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "29362973575598caf37d779a5afab3e2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowEnviarLembretedePagamento-8B6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "d656c01d954d6e184a34beaf1233b292",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowEnviarReciboAutomtico-4F6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "638813dd00d3e046e63bcef57209db33",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowFormsdeManuteno-AppBetinhos-96B4056D-68DF-F011-8406-002248E14E09.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "5b833055cd364ca848e0822231850d75",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowGerarContrato-422F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "2c7b79fae96dd0256218de81d5de3c4d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowGerarLinkdePagamento-0BCD0073-68DF-F011-8406-002248E14E09.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "db9492ab6cef8f84d032ccb1e9dd5649",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowGerarReciboManual-518868F7-6AE3-F011-8406-00224836E105.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "01dafbeb3896cde9d1c7c5ea1a4f35ee",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowGerarVoucherAppMotoristas-61907C19-C610-F111-8341-7CED8DA828D4.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "8aa5c71af73a3b838ab02962958ee1a6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowGerarVoucherAppMotoristasv2-EE0A68B9-3063-F111-AB0C-7CED8DB12F4C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "c332bf340361ba38f4db11ed16ba0938",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowManualListarPastasColaboradores-3F2F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "c0409883f1d7b84eabf31527adf99e3c",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotficaoOPdoServioNoGerada3diasInterno-7C12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "5b48ba59fdde355884ad90ccb5434084",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoEmailMultanoIndicada-412F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "d89faa68c7767fcfaba6d2ebd3470e56",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoLembreteQueryTenarisInterno-7F12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "326d2e2cc24ba6948e5477b6f8380959",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoNovoRequerAnliseInterno-3B12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "2814a8e05d1e55ca72a490379b05e706",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoNovoServioDiaPosteriorAppInterno-AD12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "bd0daa63e9206bc1c7c65d7360cea1a3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoNovoServioEmergencialAppInterno-D9569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "fe585f8e627a9c78cd6c4bc5b377f9da",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoNovoServioMotoristas-4FB94870-AED9-F011-8543-000D3A886267.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "c1dc3dd2c72ecd23b35ba3b21595c881",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoServioEditadoInternoeMotoristas-3A12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "d5e27206dc4c7e158dccabcd3a94e7d0",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoServioNoVisualizadoInternoeMotoristas-7E12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "8cb1cd6c7b27b1c5d74ec99693f46470",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoServioRetiradodaAgendaMotoristas-3912FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "0bba8037c59471b64eaa324eb1e4dafa",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoServioSemMotoristaDesignadoInterno-A190189E-3A22-F111-8342-6045BD38748F.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "587b6a61ab68b3ca87e799ce5fabfc57",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoServioSemVoucherInterno-3812FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "89c8af595fb800f1e9a415eb1e624b0d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoServiosSemCRdaSemanaInterno-7D12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "629ec89b9409393d8322b78d59294136",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificaoServiosdeAmanhaReceberFinanceiro-A912FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "c33c073745c55a3a7c2000bf97a011cf",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNotificarCondutorMultas-2EFF1DA8-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "ad37cac1412e23da69c95e3d1fff37ca",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowNovoSistemaTenaris-Dataverse-CBCD9564-1B1E-F111-88B1-7CED8DA87540.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "ce12f27cab77f3dd1c8c7833f08bbe49",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowReceber-Planner-4D6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "338572cbc029b3f1d45a35271ee079de",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowResetarVisualizaodoMotoristaeFoiProgramadoaotr-777F3CF7-6529-F111-88B4-7CED8DA86705.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "ca2f6829c808498b22a14e9ad6ab03e0",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowSalvarAnexoCurrculo-Onedrive-44C091AA-0B53-F111-BEC6-000D3AC01483.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "7d4cbaddfa1b56e53f4fefd63574000e",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowSalvarAnexoDespesa-9BE7D4DF-F44E-F111-BEC6-70A8A5A978EC.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "16b555051cedf556a53421283ae10544",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowSalvarArquivosOnedrive-36C84D31-C668-F111-AB0C-7CED8DB14558.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "0486a4c97def10a18bfd4cf2e61e0f6a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowSalvarFotoBD-Onedrive-7AF1B60F-ED5D-F111-A825-70A8A5A95B84.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "48ba38f33f94a3702ce89e2a11c98fc1",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowSalvarFotosManutenoAppMotoristas-9D569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "2de49750b7b3df53b50cf62a63856d70",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/FlowSalvarFotosManutenoAppMotoristasv2-BDC1E4AF-3E63-F111-AB0C-7CED8DB12F4C.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "77fc3ed47a746ab9bab7a9aef7a45893",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Flow_Gerar_OP-A442FAAE-A3DA-F011-8543-7CED8DA92499.json": {
+    "mtime": 1781562054.0,
+    "ast_hash": "880277e225d4df7cb98a1a5779d1ec38",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Foiprogramado-A8991159-342C-F111-88B4-6045BD394F68.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "041ce3a6c4ca2680f015931b328427fd",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Novaregradenegcios-36530F9D-7FD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "b46edcf6908188a7caba47d1b6eefce3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Novaregradenegcios-B21324FF-7BD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "c9f93073e594377f326d1bf72a4e62ad",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Realizado-54559482-4EDF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "e8d951360f2475ece60a63e358a4c9b3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/ResetarConcluidoMot1eMot2-89B342C4-3D21-F111-88B2-000D3A886185.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "6d095e0ab7c185953bb475e59a4cc064",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/STATUSDAMANUTENO-AEF79286-2BDF-F011-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "cb8b2a4d08ea0af240fdbd46f0a4605e",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/Solicitado-17BF357A-42DF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "0ae9cc39376293647eaffe66147b874f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Workflows/TravarseProgramarsemmotoristadesignado-B99DF642-E118-F111-8341-6045BD3C7605.xaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "ba64c2fabc090843152154a8047568b2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/CanvasApps/cr40f_funesoperacionais_d5e5a_AdditionalUris0_identity.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "bcfdf5686674c7969a535ecdcd52b988",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/CanvasApps/cr40f_pgina1_8cac9_AdditionalUris0_identity.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "29224392b33e4daf17c788bb7d75be21",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/CanvasApps/cr40f_reservarveculos_9ec70_AdditionalUris0_identity.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "fda7e53cc555903523c292ffd1df4405",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/CanvasApps/new_appbetinhosmotoristas_8fcab_AdditionalUris0_identity.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "ed8fec806db2567461ba3b4e7a72e9a4",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/CanvasApps/new_pgina2_f0001_AdditionalUris0_identity.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "35fffdc16b434e808069a54b6e3c6b12",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Formulas/cr40f_composicaodeprecos-new_subtotal.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "49c5bd03627cdad13133a23b61fab9a5",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Formulas/cr40f_composicaodeprecos-new_valortotal.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "7c9fca058a70d605ac523f5bbcb2aaba",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Formulas/cr40f_statusdamanutencao-bpf_duration.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "94cb32563ade1a8dc8a73490fb36cff5",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0AdequaodeRota-BF266CC7-4007-F111-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "0e521c88f4b0e95cbfca1030134ec508",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0AdequaodeRotaporKM-BA137DBE-4107-F111-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "b603f725148fd5ed2f4b226a171c0492",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Ajuste-768C01BF-4507-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "9cba9252493db9cdecf61c6cfb198db8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Ajuste-96415E6A-3734-F111-88B4-6045BD3C4061.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "5539887f294570ee718957341bceb376",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0ArcoMetropolitano-E12FDBC5-4207-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "99f34087311120584ec23c132a8c8d08",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0AyrtonSenna-DBFD4FF6-4207-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "eab4cb0d05a921e4a6cd9a8751585c1b",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Combustvel-ED9CA81D-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "9bfe0a971f3fbab338ddac539956871f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0DesviosEntreCidades-5C8C9C3D-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "f977e65398e9b14fbab603e4617079f4",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Diria-CD6770BE-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "04d28aa98a87e37d6bccf9c77f449253",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0HoraMotorista-7F7FFA1D-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "045166dbac8691e7edf3ff8a3b03457a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Locao-4355F029-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "1c05e4a4a1292b71541e5ae8c25972c6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0PassageirosAdicionais-A694E349-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "af03af9ff3e3370fde2f277140f46a21",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Passagens-15936261-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "fcde5bd842639094a9c9cbb312726e9d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Pedgios-9D805571-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "698ca546c54e08c2367bb16a150ddb5f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0Rodoanel-E950A28A-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "ade0700680eaa0d7fb2eb0b1ef1a5700",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0espera-3F1E60D7-4307-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "cfdda62f944cfc96abd563388c4adb84",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/0estacionamento-CCC80502-4407-F111-8406-7CED8DB11A3D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "8303a07e34487c41dc595eb464dc7c62",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Aprovado-E111664E-4EDF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "0563dcd24e7c8cde0553f4ccc10cd64a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/ConcluirRetiradaouDevoluo-3B753311-CF39-F111-BEC6-7CED8DA8964D.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "48d1cc258850b474510b55a8f611f3de",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Concluirquandoosdoisconclurem-B75515F4-9239-F111-88B4-70A8A5A983D7.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "e76ad31f440fb8260ea3bc8c6313eba2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/CpiadeNovaregradenegcios-6259BA10-7CD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "7aac99c29992dfb2eb5bec064f42ea8d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/DefinirCategoriadoItem-88CFC205-BA18-F111-8341-6045BD3C7605.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "6d3e2372a7518d399c016562887e8fb9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowAPIRDStationBDparaLeads-0FCE14C4-4A34-F111-88B4-6045BD3C4061.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "a8924a581c018dce4377c154169c0452",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowAtribuirVeculoAutomticoGeral-DB569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "d836869ebd28ba908d314081412d42d9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowAtualizarSempreFoiProgramado-10E9105C-C42E-F111-88B4-7CED8DB0FC7D.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "a72c9c57a0e49e405e330dc26a5ca360",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowAtualizarStatusdePagamento-402F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "7a4685b0a9ef95a93065a515dad8ceb8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowAvisoPedidoRetroativo-48BD4DCD-E93F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "1d6fdad12ee5fa2bed0840e0b475738a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowAvisoServiosdeMadrugada-4E6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "40de9b2affef6d39b5544481d6a6976b",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowCamposProtegidos-7DC8040D-2822-F111-8342-6045BD38748F.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "c776b790339326d030eec7c367029437",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowCriarServiodeManutenonaGeral-AD2686C1-CAE2-F011-8406-000D3AC180F4.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "978d3806dc8a0d2e647a11d3ee0a1382",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowCriareAtualizarCP4-B874B974-7529-F111-88B4-7CED8DA86705.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "7fb6361fc2a81372d58c612e45b057ec",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaCP-StatusdeFaturamentonaGeral-49BD4DCD-E93F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "884ed839f0c4a80047cd6533ab6b6cde",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusGeral-Manutenes-8AE9969F-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "317bad913981a502a3741ae8e1742245",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusGeral-TrocasdeCarro-9B569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "a09faa651213871cc18f0db366094eb6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusManutenes-Geral-9E569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "9413a563b36830dee026c1cf23efefb2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusOP-Geral-6D2A60BB-4334-F111-88B4-6045BD3C4061.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "b0355f29a8563fefabbab5e170a668c3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusOP-Pagantes-D0D43D01-2D43-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "4c481bcf29b14242ba386420de7724a9",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusPagantes-OP-4C6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "004b1f550d2d6e36d24e47daf0a2b53c",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusTrocasdeCarro-Geral-70433A56-D811-F111-8341-7CED8DB14BC5.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "a26306aaa438d2328a21cf51cbf2c8d8",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusdeFaturamentonaGeral-CP-AE1333C5-EB3F-F111-BEC6-002248DEDE64.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "21fbb94bd38a373bf28a39cb9ce82fca",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixaStatusdeFaturamentonaGeral-OP-22AF6806-0043-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "135a41d3431ccbc4fd87ddb76ebec01f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDarBaixanaOP-GeralStatusdeFaturamento-21AF6806-0043-F111-BEC6-7CED8DA82EE9.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "103c0df6f1b4e0bb546e6c6eb7ebb438",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowDefinirUTC-3paranovosusurios-1477727B-990E-F111-8341-7CED8DB14575.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "75797efdd7e1817afb895217f68f7466",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowEmailTripConfirmation-8A6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "29362973575598caf37d779a5afab3e2",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowEnviarLembretedePagamento-8B6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "d656c01d954d6e184a34beaf1233b292",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowEnviarReciboAutomtico-4F6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "638813dd00d3e046e63bcef57209db33",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowFormsdeManuteno-AppBetinhos-96B4056D-68DF-F011-8406-002248E14E09.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "5b833055cd364ca848e0822231850d75",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowGerarContrato-422F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "2c7b79fae96dd0256218de81d5de3c4d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowGerarLinkdePagamento-0BCD0073-68DF-F011-8406-002248E14E09.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "db9492ab6cef8f84d032ccb1e9dd5649",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowGerarReciboManual-518868F7-6AE3-F011-8406-00224836E105.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "01dafbeb3896cde9d1c7c5ea1a4f35ee",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowGerarVoucherAppMotoristas-61907C19-C610-F111-8341-7CED8DA828D4.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "8aa5c71af73a3b838ab02962958ee1a6",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowGerarVoucherAppMotoristasv2-EE0A68B9-3063-F111-AB0C-7CED8DB12F4C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "c332bf340361ba38f4db11ed16ba0938",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowManualListarPastasColaboradores-3F2F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "c0409883f1d7b84eabf31527adf99e3c",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotficaoOPdoServioNoGerada3diasInterno-7C12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "5b48ba59fdde355884ad90ccb5434084",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoEmailMultanoIndicada-412F23A2-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "d89faa68c7767fcfaba6d2ebd3470e56",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoLembreteQueryTenarisInterno-7F12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "326d2e2cc24ba6948e5477b6f8380959",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoNovoRequerAnliseInterno-3B12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "2814a8e05d1e55ca72a490379b05e706",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoNovoServioDiaPosteriorAppInterno-AD12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "bd0daa63e9206bc1c7c65d7360cea1a3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoNovoServioEmergencialAppInterno-D9569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "fe585f8e627a9c78cd6c4bc5b377f9da",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoNovoServioMotoristas-4FB94870-AED9-F011-8543-000D3A886267.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "c1dc3dd2c72ecd23b35ba3b21595c881",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoServioEditadoInternoeMotoristas-3A12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "d5e27206dc4c7e158dccabcd3a94e7d0",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoServioNoVisualizadoInternoeMotoristas-7E12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "8cb1cd6c7b27b1c5d74ec99693f46470",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoServioRetiradodaAgendaMotoristas-3912FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "0bba8037c59471b64eaa324eb1e4dafa",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoServioSemMotoristaDesignadoInterno-A190189E-3A22-F111-8342-6045BD38748F.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "587b6a61ab68b3ca87e799ce5fabfc57",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoServioSemVoucherInterno-3812FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "89c8af595fb800f1e9a415eb1e624b0d",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoServiosSemCRdaSemanaInterno-7D12FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "629ec89b9409393d8322b78d59294136",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificaoServiosdeAmanhaReceberFinanceiro-A912FCE1-EC26-F111-88B4-7CED8DA87663.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "c33c073745c55a3a7c2000bf97a011cf",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNotificarCondutorMultas-2EFF1DA8-0EFD-F011-8406-002248E0A05F.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "ad37cac1412e23da69c95e3d1fff37ca",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowNovoSistemaTenaris-Dataverse-CBCD9564-1B1E-F111-88B1-7CED8DA87540.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "ce12f27cab77f3dd1c8c7833f08bbe49",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowReceber-Planner-4D6A5E89-A706-F111-8406-7CED8DA8AEDD.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "338572cbc029b3f1d45a35271ee079de",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowResetarVisualizaodoMotoristaeFoiProgramadoaotr-777F3CF7-6529-F111-88B4-7CED8DA86705.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "ca2f6829c808498b22a14e9ad6ab03e0",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowSalvarAnexoCurrculo-Onedrive-44C091AA-0B53-F111-BEC6-000D3AC01483.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "7d4cbaddfa1b56e53f4fefd63574000e",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowSalvarAnexoDespesa-9BE7D4DF-F44E-F111-BEC6-70A8A5A978EC.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "16b555051cedf556a53421283ae10544",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowSalvarArquivosOnedrive-36C84D31-C668-F111-AB0C-7CED8DB14558.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "0486a4c97def10a18bfd4cf2e61e0f6a",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowSalvarFotoBD-Onedrive-7AF1B60F-ED5D-F111-A825-70A8A5A95B84.json": {
+    "mtime": 1781629756.0,
+    "ast_hash": "48ba38f33f94a3702ce89e2a11c98fc1",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowSalvarFotosManutenoAppMotoristas-9D569999-4216-F111-8341-7CED8DA9296C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "2de49750b7b3df53b50cf62a63856d70",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/FlowSalvarFotosManutenoAppMotoristasv2-BDC1E4AF-3E63-F111-AB0C-7CED8DB12F4C.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "77fc3ed47a746ab9bab7a9aef7a45893",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Flow_Gerar_OP-A442FAAE-A3DA-F011-8543-7CED8DA92499.json": {
+    "mtime": 1781629758.0,
+    "ast_hash": "880277e225d4df7cb98a1a5779d1ec38",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Foiprogramado-A8991159-342C-F111-88B4-6045BD394F68.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "041ce3a6c4ca2680f015931b328427fd",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Novaregradenegcios-36530F9D-7FD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "b46edcf6908188a7caba47d1b6eefce3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Novaregradenegcios-B21324FF-7BD0-F011-8543-002248DFDAD4.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "c9f93073e594377f326d1bf72a4e62ad",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Realizado-54559482-4EDF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "e8d951360f2475ece60a63e358a4c9b3",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/ResetarConcluidoMot1eMot2-89B342C4-3D21-F111-88B2-000D3A886185.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "6d095e0ab7c185953bb475e59a4cc064",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/STATUSDAMANUTENO-AEF79286-2BDF-F011-8407-7CED8DA7D478.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "cb8b2a4d08ea0af240fdbd46f0a4605e",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/Solicitado-17BF357A-42DF-F011-8406-7CED8DB0E954.xaml": {
+    "mtime": 1781629758.0,
+    "ast_hash": "0ae9cc39376293647eaffe66147b874f",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Workflows/TravarseProgramarsemmotoristadesignado-B99DF642-E118-F111-8341-6045BD3C7605.xaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "ba64c2fabc090843152154a8047568b2",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-154812.json": {
+    "mtime": 1781290161.9129379,
+    "ast_hash": "bb958d870387d504cd4a28b2f29e541f",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-154939.json": {
+    "mtime": 1781290236.3081098,
+    "ast_hash": "e8643ceb994a86ff582e2bfe62139141",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-160148.json": {
+    "mtime": 1781290916.9392505,
+    "ast_hash": "4ee37ba5e5dd487f99820e1baf64f784",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-160549.json": {
+    "mtime": 1781291157.418275,
+    "ast_hash": "311356d5e141780f2fe8c8d8b116710c",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-160822.json": {
+    "mtime": 1781291309.762462,
+    "ast_hash": "e6956f4f510de4e4822209d25dad255d",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-160841.json": {
+    "mtime": 1781291331.8760943,
+    "ast_hash": "5466a82d98308852a672732831f02a83",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-160859.json": {
+    "mtime": 1781291355.1217146,
+    "ast_hash": "817ffa08134b4acd1565706e94316e77",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-162202.json": {
+    "mtime": 1781292129.1507568,
+    "ast_hash": "15cac6e2055e3a9b4019c839e3970584",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-162743.json": {
+    "mtime": 1781292500.7543004,
+    "ast_hash": "94b2451a830440f9e7e6aca48808c429",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-162936.json": {
+    "mtime": 1781292585.2710133,
+    "ast_hash": "55389bdddae47d5ba962e368e010e93b",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-163058.json": {
+    "mtime": 1781292667.3930364,
+    "ast_hash": "fe8563120474db269bc4462f858082bf",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-163215.json": {
+    "mtime": 1781292837.8550184,
+    "ast_hash": "4ad6939f887c1414af9e99c2a23bf70d",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-163747.json": {
+    "mtime": 1781293075.8259916,
+    "ast_hash": "afe29e99491c8fc508c87ff053a5cab7",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-164049.json": {
+    "mtime": 1781293255.6287525,
+    "ast_hash": "fee7093ed299e84df8e25858d260d35a",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-164111.json": {
+    "mtime": 1781293346.001223,
+    "ast_hash": "f56d82df46c239a00fd5e8c4e5941120",
+    "semantic_hash": ""
+  },
+  "tmp/import-despesas-operacionais-20260612-164234.json": {
+    "mtime": 1781520898.450836,
+    "ast_hash": "dde14d68e5677ff815337ba39cc20497",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-funcionarios-field-security/obj/Debug/net8.0/EnableFuncionariosFieldSecurity.csproj.FileListAbsolute.txt": {
+    "mtime": 1781880587.8111806,
+    "ast_hash": "fcc4f597e6e62cae6649e60475cc6f0d",
+    "semantic_hash": ""
+  },
+  ".tmp/enable-veiculos-field-security/obj/Debug/net8.0/EnableVeiculosFieldSecurity.csproj.FileListAbsolute.txt": {
+    "mtime": 1781887502.7970538,
+    "ast_hash": "c57f15da9473c86d7838f8c1d182e6ca",
+    "semantic_hash": ""
+  },
+  ".tmp/register-driver-record-sharing-plugin/obj/Debug/net8.0/RegisterDriverRecordSharingPlugin.csproj.FileListAbsolute.txt": {
+    "mtime": 1782869055.1133602,
+    "ast_hash": "dd6345c062bcfa4cfae95e424abf4034",
+    "semantic_hash": ""
+  },
+  ".tmp/validate-driver-record-sharing-plugin/obj/Debug/net8.0/ValidateDriverRecordSharingPlugin.csproj.FileListAbsolute.txt": {
+    "mtime": 1782869055.159361,
+    "ast_hash": "5e37bde8b8c85f64b8cc23fbad68a491",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1784547631.3381627,
+    "ast_hash": "9af3dde57e433d6a0e9b7b60bb85a8a9",
+    "semantic_hash": ""
+  },
+  "AUDITORIA_APP_MOTORISTAS_2026-06-11.md": {
+    "mtime": 1781262817.1453252,
+    "ast_hash": "70dc329728adf35661065f8bf6181aed",
+    "semantic_hash": ""
+  },
+  "backup/code-references-before.txt": {
+    "mtime": 1781618402.7098265,
+    "ast_hash": "b6ff6576e5bb9ab33e298c4a7db11029",
+    "semantic_hash": ""
+  },
+  "backup/code-references-solution-168.txt": {
+    "mtime": 1781619511.865886,
+    "ast_hash": "c2c447e489005ceef911d9d8410d98af",
+    "semantic_hash": ""
+  },
+  "dataverse-rebuild-report.md": {
+    "mtime": 1781622019.9295027,
+    "ast_hash": "dc5ee39e5f40931b415cc51038d46491",
+    "semantic_hash": ""
+  },
+  "docs/dataverse-plugin-flowchart.html": {
+    "mtime": 1782138546.6448014,
+    "ast_hash": "553a254b33bcdcfc1e9879d42636f0e0",
+    "semantic_hash": ""
+  },
+  "implementation_plan.md": {
+    "mtime": 1785780455.5576122,
+    "ast_hash": "3e01d32299e6cf125ba0e65f070ba150",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/obj/Debug/net462/DriverRecordSharing.Tests.csproj.FileListAbsolute.txt": {
+    "mtime": 1783368200.3952253,
+    "ast_hash": "4dfd1e8091140784453fe27df68252d4",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/README.md": {
+    "mtime": 1784550345.9370885,
+    "ast_hash": "8cd9aae6a6047d7a907bb0511f5cd634",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/Debug/net462/DriverRecordSharing.csproj.FileListAbsolute.txt": {
+    "mtime": 1783368199.1460364,
+    "ast_hash": "694e580511ebe8efd34363bedeba2e7b",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/obj/Release/net462/DriverRecordSharing.csproj.FileListAbsolute.txt": {
+    "mtime": 1784651482.2329466,
+    "ast_hash": "13d825fe566371287a9f928db39e21b7",
+    "semantic_hash": ""
+  },
+  "receipt-rebuild-report.md": {
+    "mtime": 1781629272.3598044,
+    "ast_hash": "2b89ceb5308eac28f2020d3f0e1ad5ef",
+    "semantic_hash": ""
+  },
+  "system_architecture.md": {
+    "mtime": 1781290700.75503,
+    "ast_hash": "7469c6c59628891f2e144439ae3d0487",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Formulas/cr40f_composicaodeprecos-FormulaDefinitions.yaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "c887fdcb8463163ce711e6e660634b88",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_164_unpacked/Formulas/cr40f_reservadeveculos-FormulaDefinitions.yaml": {
+    "mtime": 1781556440.0,
+    "ast_hash": "74a3bc8c2af66e4fdd077c7c0e0f6138",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Formulas/cr40f_composicaodeprecos-FormulaDefinitions.yaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "c887fdcb8463163ce711e6e660634b88",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_165_unpacked_check/Formulas/cr40f_reservadeveculos-FormulaDefinitions.yaml": {
+    "mtime": 1781562054.0,
+    "ast_hash": "74a3bc8c2af66e4fdd077c7c0e0f6138",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Formulas/cr40f_composicaodeprecos-FormulaDefinitions.yaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "c887fdcb8463163ce711e6e660634b88",
+    "semantic_hash": ""
+  },
+  "tmp/AppBetinhos_168_managed_unpacked/Formulas/cr40f_reservadeveculos-FormulaDefinitions.yaml": {
+    "mtime": 1781629756.0,
+    "ast_hash": "74a3bc8c2af66e4fdd077c7c0e0f6138",
+    "semantic_hash": ""
+  },
+  "outputs/containers-docker-apresentacao.pdf": {
+    "mtime": 1781646964.705935,
+    "ast_hash": "3efe1180bcc392042fa5400904a9b29d",
+    "semantic_hash": ""
+  },
+  "Logo Betinhos Preta.png": {
+    "mtime": 1730401648.0,
+    "ast_hash": "eedcd7254a177c3159d07d7a5470f682",
+    "semantic_hash": ""
+  },
+  "NLA.jpg": {
+    "mtime": 1781534545.6104424,
+    "ast_hash": "ec17138baf8dc40fe6cb2b21114a6633",
+    "semantic_hash": ""
+  },
+  "QrCode-Avalia\u00e7\u00e3o.png": {
+    "mtime": 1781541784.593682,
+    "ast_hash": "57a74f7c30848086f3de51055e0ce670",
+    "semantic_hash": ""
+  },
+  "outputs/019f8b3b-ce55-75c2-8dd3-9768fcf6534b/Relatorio Auditoria de OPs 22-07-2026-previews/Auditoria-por-OP.png": {
+    "mtime": 1784748757.171998,
+    "ast_hash": "9b438c915f3c8c8df6aea44ce1be3a1a",
+    "semantic_hash": ""
+  },
+  "outputs/019f8b3b-ce55-75c2-8dd3-9768fcf6534b/Relatorio Auditoria de OPs 22-07-2026-previews/Diverg\u00eancias.png": {
+    "mtime": 1784748758.4812877,
+    "ast_hash": "2a25594789d50c99869144744bb1e634",
+    "semantic_hash": ""
+  },
+  "outputs/019f8b3b-ce55-75c2-8dd3-9768fcf6534b/Relatorio Auditoria de OPs 22-07-2026-previews/Resumo.png": {
+    "mtime": 1784748750.5648577,
+    "ast_hash": "7e023bf568bdab8a00636e05ff1171c0",
+    "semantic_hash": ""
+  },
+  "public/screens/01-home.png": {
+    "mtime": 1782403586.1410222,
+    "ast_hash": "2d5caae953c5ed014441599c83bce443",
+    "semantic_hash": ""
+  },
+  "public/screens/02-services.png": {
+    "mtime": 1782403586.9934611,
+    "ast_hash": "2e8c1febf018effeeebb5146adf57702",
+    "semantic_hash": ""
+  },
+  "public/screens/03-details.png": {
+    "mtime": 1782403588.2913425,
+    "ast_hash": "0d57a5357eb9da77f187b44f224b542d",
+    "semantic_hash": ""
+  },
+  "public/screens/04-voucher.png": {
+    "mtime": 1782403589.1731582,
+    "ast_hash": "b578a6ad7e5e37c206691ca397c39f65",
+    "semantic_hash": ""
+  },
+  "public/screens/05-signature.png": {
+    "mtime": 1782403590.0827658,
+    "ast_hash": "db9787240b3c5ffd7114ab3fbb47aaa0",
+    "semantic_hash": ""
+  },
+  "public/screens/06-maintenance.png": {
+    "mtime": 1782403591.59574,
+    "ast_hash": "1e044206e66520301c45cbb4d4b92b03",
+    "semantic_hash": ""
+  },
+  "public/screens/07-finalize-maintenance.png": {
+    "mtime": 1781029132.9968877,
+    "ast_hash": "901667a6f4e97d53597ecfff64f11726",
+    "semantic_hash": ""
+  },
+  "public/screens/08-expenses.png": {
+    "mtime": 1781029135.0219681,
+    "ast_hash": "8e179b97da89520679af612c85929179",
+    "semantic_hash": ""
+  },
+  "src/assets/icons/invoice-receipt.svg": {
+    "mtime": 1781544573.7065632,
+    "ast_hash": "dc8c4598174e89f3a64e71f454998fd7",
+    "semantic_hash": ""
+  },
+  "src/assets/icons/save-receipt.svg": {
+    "mtime": 1781543108.6032705,
+    "ast_hash": "1d614920ed4ba492d05d61124856ce96",
+    "semantic_hash": ""
+  },
+  "src/assets/icons/share-receipt.svg": {
+    "mtime": 1781543115.3552463,
+    "ast_hash": "50d63c53d46e6371c947d671253a9c5b",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/ServiceExchangeSynchronizerTests.cs": {
+    "mtime": 1785845390.9925704,
+    "ast_hash": "ece86e06d09f2b4e2848eb1837a5f3df",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/ExchangePossessionFinalizerTests.cs": {
+    "mtime": 1785845118.7979405,
+    "ast_hash": "121dcbc1c6915ff2d3ee0c4f8430eb50",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/VehiclePossessionOpenKeyProjectorTests.cs": {
+    "mtime": 1785784862.831504,
+    "ast_hash": "8c66c0f87405bc322a4a4e280df3f3a5",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/ExchangeLifecycleCoordinator.cs": {
+    "mtime": 1785844489.006876,
+    "ast_hash": "1ad71dc0d78e1f7fe7e530a098ffe113",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/ExchangePossessionFinalizer.cs": {
+    "mtime": 1785782769.6943922,
+    "ast_hash": "dd5359945d03cac124799100d0df5664",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing/VehiclePossessionOpenKeyProjector.cs": {
+    "mtime": 1785784861.5858576,
+    "ast_hash": "5de553be623ac357714acbf83749d3e0",
+    "semantic_hash": ""
+  },
+  "scripts/provision-possession-concurrency-keys.ps1": {
+    "mtime": 1785784671.8922918,
+    "ast_hash": "f8dadbc75ed93ad6cea4027e49d3a572",
+    "semantic_hash": ""
+  },
+  "task.md": {
+    "mtime": 1785780458.8700187,
+    "ast_hash": "a165af40902fc595bcafc4dda2500c5d",
+    "semantic_hash": ""
+  },
+  "plugins/DriverRecordSharing.Tests/ServiceVehicleSynchronizerTests.cs": {
+    "mtime": 1785785689.491007,
+    "ast_hash": "0531a40a04d2585a8775059d675725a7",
+    "semantic_hash": ""
+  },
+  "scripts/reconcile-exchange-generals.ps1": {
+    "mtime": 1785785065.2466626,
+    "ast_hash": "dc0d27d23f06c583262b54ceb05637b8",
     "semantic_hash": ""
   }
 }

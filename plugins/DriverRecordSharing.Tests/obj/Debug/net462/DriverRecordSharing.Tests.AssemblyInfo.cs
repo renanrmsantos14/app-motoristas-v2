@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DriverRecordSharing.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ee0e978cd86831bd9e3ad67d370661cebc1ddf1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+50b851535c1da756bb8af9c424bf12abc9619899")]
 [assembly: System.Reflection.AssemblyProductAttribute("DriverRecordSharing.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DriverRecordSharing.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
