@@ -67,12 +67,13 @@ namespace Betinhos.DriverRecordSharing
                 return;
             }
 
-            var patchServiceProgrammedFlag = expectedExchangeStatus == PluginConfig.ExchangeStatusProgrammed &&
-                serviceEntity.GetAttributeValue<bool?>(PluginConfig.ServiceProgrammedFlag) != true;
+            var expectedProgrammedFlag = expectedExchangeStatus == PluginConfig.ExchangeStatusProgrammed;
+            var patchServiceProgrammedFlag =
+                (serviceEntity.GetAttributeValue<bool?>(PluginConfig.ServiceProgrammedFlag) == true) != expectedProgrammedFlag;
             if (patchServiceProgrammedFlag)
             {
-                var servicePatch = new Entity(PluginConfig.ServiceTable, serviceEntity.Id);
-                servicePatch[PluginConfig.ServiceProgrammedFlag] = true;
+                var servicePatch = new Entity(PluginConfig.ServiceTable) { Id = serviceEntity.Id };
+                servicePatch[PluginConfig.ServiceProgrammedFlag] = expectedProgrammedFlag;
                 _service.Update(servicePatch);
                 _tracing.Trace(
                     "ServiceExchangeSynchronizer enforced programmed flag serviceId={0}.",
@@ -206,9 +207,9 @@ namespace Betinhos.DriverRecordSharing
                     changed = true;
                 }
 
-                if (forceProgrammedFlag && !currentProgrammedFlag)
+                if (currentProgrammedFlag != forceProgrammedFlag)
                 {
-                    patch[PluginConfig.ServiceProgrammedFlag] = true;
+                    patch[PluginConfig.ServiceProgrammedFlag] = forceProgrammedFlag;
                     changed = true;
                 }
 
@@ -225,7 +226,7 @@ namespace Betinhos.DriverRecordSharing
                     currentStatus.HasValue ? currentStatus.Value.ToString() : "null",
                     expectedServiceStatus,
                     currentProgrammedFlag,
-                    forceProgrammedFlag || currentProgrammedFlag);
+                    forceProgrammedFlag);
             }
         }
 

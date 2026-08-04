@@ -20,13 +20,29 @@ namespace Betinhos.DriverRecordSharing.Tests
             exchange["cr40f_fimdajaneladetroca"] = new DateTime(2026, 8, 4, 10, 30, 0, DateTimeKind.Utc);
             var service = new MemoryService(exchange);
 
-            InvokeLifecycle(service, exchange.Id, "Create", null);
+            InvokeEnsureGeneral(service, exchange);
 
             var general = Assert.Single(service.Records("cr40f_reservadeveculos"));
             Assert.Equal(202410005, general.GetAttributeValue<OptionSetValue>("cr40f_status").Value);
             Assert.Equal(100000002, general.GetAttributeValue<OptionSetValue>("new_categoriadoitem").Value);
             Assert.True(general.GetAttributeValue<bool>("new_foiprogramado"));
             Assert.Equal(exchange.Id, general.GetAttributeValue<EntityReference>("cr40f_ot").Id);
+        }
+
+        [Fact]
+        public void ConfirmedExchangeCreatesConfirmedNonProgrammedGeneral()
+        {
+            var driver = Guid.NewGuid();
+            var vehicle = Guid.NewGuid();
+            var exchange = Exchange(100000002, driver, null, null, vehicle, 100000001);
+            exchange["cr40f_iniciodajaneladetroca"] = new DateTime(2026, 8, 5, 10, 0, 0, DateTimeKind.Utc);
+            exchange["cr40f_fimdajaneladetroca"] = new DateTime(2026, 8, 5, 10, 30, 0, DateTimeKind.Utc);
+            var service = new MemoryService(exchange);
+
+            var general = InvokeEnsureGeneral(service, exchange);
+
+            Assert.Equal(202410001, general.GetAttributeValue<OptionSetValue>("cr40f_status").Value);
+            Assert.False(general.GetAttributeValue<bool>("new_foiprogramado"));
         }
 
         [Fact]
@@ -360,6 +376,21 @@ namespace Betinhos.DriverRecordSharing.Tests
             var target = service.Retrieve("cr40f_trocasdecarro", exchangeId, new ColumnSet(true));
             type.GetMethod("Process", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 .Invoke(instance, new object[] { exchangeId, message, target, preImage });
+        }
+
+        private static Entity InvokeEnsureGeneral(IOrganizationService service, Entity exchange)
+        {
+            var type = typeof(ServiceDriverSharePlugin).Assembly.GetType(
+                "Betinhos.DriverRecordSharing.ExchangeLifecycleCoordinator",
+                throwOnError: true);
+            var instance = Activator.CreateInstance(
+                type,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                binder: null,
+                args: new object[] { service, new NullTracingService() },
+                culture: null);
+            return (Entity)type.GetMethod("EnsureGeneral", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(instance, new object[] { exchange });
         }
 
         private static bool InvokeHasStructuralChange(Entity target, Entity preImage)

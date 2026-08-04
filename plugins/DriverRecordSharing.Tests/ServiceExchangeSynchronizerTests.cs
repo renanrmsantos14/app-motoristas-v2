@@ -70,6 +70,32 @@ namespace Betinhos.DriverRecordSharing.Tests
             Assert.Equal(end, exchange.GetAttributeValue<DateTime>("cr40f_fimdajaneladetroca"));
         }
 
+        [Fact]
+        public void ConfirmedGeneralClearsProgrammedFlagAndConfirmsExchange()
+        {
+            var serviceId = Guid.NewGuid();
+            var exchangeId = Guid.NewGuid();
+            var service = new InMemoryOrganizationService(
+                new Entity("cr40f_reservadeveculos", serviceId)
+                {
+                    ["cr40f_ot"] = new EntityReference("cr40f_trocasdecarro", exchangeId),
+                    ["cr40f_status"] = new OptionSetValue(202410001),
+                    ["new_foiprogramado"] = true
+                },
+                new Entity("cr40f_trocasdecarro", exchangeId)
+                {
+                    ["cr40f_statusdatroca"] = new OptionSetValue(202410000)
+                });
+
+            InvokeSyncFromServiceEntity(service, service.Record("cr40f_reservadeveculos", serviceId));
+
+            Assert.False(service.Record("cr40f_reservadeveculos", serviceId).GetAttributeValue<bool>("new_foiprogramado"));
+            Assert.Equal(
+                100000001,
+                service.Record("cr40f_trocasdecarro", exchangeId)
+                    .GetAttributeValue<OptionSetValue>("cr40f_statusdatroca").Value);
+        }
+
         private static void InvokeSyncFromService(IOrganizationService service, Guid serviceId)
         {
             var type = typeof(ServiceDriverSharePlugin).Assembly.GetType(
@@ -83,6 +109,26 @@ namespace Betinhos.DriverRecordSharing.Tests
                 culture: null);
             type.GetMethod("SyncFromService", BindingFlags.Instance | BindingFlags.Public)
                 .Invoke(instance, new object[] { serviceId, null });
+        }
+
+        private static void InvokeSyncFromServiceEntity(IOrganizationService service, Entity serviceEntity)
+        {
+            var type = typeof(ServiceDriverSharePlugin).Assembly.GetType(
+                "Betinhos.DriverRecordSharing.ServiceExchangeSynchronizer",
+                throwOnError: true);
+            var instance = Activator.CreateInstance(
+                type,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                binder: null,
+                args: new object[] { service, new NullTracingService() },
+                culture: null);
+            type.GetMethod(
+                    "SyncFromService",
+                    BindingFlags.Instance | BindingFlags.NonPublic,
+                    binder: null,
+                    types: new[] { typeof(Entity), typeof(Entity) },
+                    modifiers: null)
+                .Invoke(instance, new object[] { serviceEntity, null });
         }
 
         private sealed class NullTracingService : ITracingService

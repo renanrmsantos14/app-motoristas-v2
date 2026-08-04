@@ -2439,7 +2439,7 @@ export function getExchangeCompletionState(record: DataverseRecord, isDriver1: b
 
 export function shouldShowOpenExchangeForDriver(exchange: DataverseRecord, driverId: string) {
   const status = Number(exchange.cr40f_statusdatroca);
-  if (status !== EXCHANGE_STATUS.programada && status !== EXCHANGE_STATUS.confirmada) return false;
+  if (status !== EXCHANGE_STATUS.programada) return false;
   const cleanDriverId = cleanGuid(driverId);
   const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === cleanDriverId;
   const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === cleanDriverId;
@@ -2996,7 +2996,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.trocas,
     [
       EXCHANGE_SELECT,
-      `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and (cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada} or cr40f_statusdatroca eq ${EXCHANGE_STATUS.confirmada})`,
+      `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada}`,
       "$orderby=cr40f_iniciodajaneladetroca asc",
       "$top=80"
     ].join("&")

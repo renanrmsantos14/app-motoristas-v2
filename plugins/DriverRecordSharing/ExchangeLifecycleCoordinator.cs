@@ -98,7 +98,7 @@ namespace Betinhos.DriverRecordSharing
             general[PluginConfig.ServiceVehicleLookup] = ResolveGeneralVehicle(exchange);
             general[PluginConfig.ServiceStartDate] = exchange.GetAttributeValue<DateTime?>(PluginConfig.ExchangeStartDate);
             general[PluginConfig.ServiceEndDate] = exchange.GetAttributeValue<DateTime?>(PluginConfig.ExchangeEndDate);
-            general[PluginConfig.ServiceProgrammedFlag] = true;
+            general[PluginConfig.ServiceProgrammedFlag] = status == PluginConfig.ExchangeStatusProgrammed;
             general[PluginConfig.ServiceCategory] = new OptionSetValue(PluginConfig.ServiceCategoryExchange);
             general[PluginConfig.ServiceBillingStatus] = new OptionSetValue(PluginConfig.ServiceBillingStatusNotBillable);
             general[PluginConfig.ServiceStatus] = new OptionSetValue(MapServiceStatus(status));

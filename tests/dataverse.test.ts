@@ -372,7 +372,7 @@ test("troca aberta nao aparece quando motorista logado ja concluiu sua parte", (
   );
 });
 
-test("troca aberta aparece quando status e Confirmada", () => {
+test("troca confirmada fica oculta do motorista", () => {
   assert.equal(
     shouldShowOpenExchangeForDriver(
       {
@@ -384,7 +384,7 @@ test("troca aberta aparece quando status e Confirmada", () => {
       },
       "driver-2"
     ),
-    true
+    false
   );
 });
 

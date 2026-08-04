@@ -12007,7 +12007,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.638","builtAt":"2026-08-04T11:20:41.731Z","builtAtLabel":"04/08/2026, 08:20"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.639","builtAt":"2026-08-04T12:15:01.221Z","builtAtLabel":"04/08/2026, 09:15"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -59933,7 +59933,7 @@ ${text}`);
   }
   function shouldShowOpenExchangeForDriver(exchange, driverId) {
     const status = Number(exchange.cr40f_statusdatroca);
-    if (status !== EXCHANGE_STATUS.programada && status !== EXCHANGE_STATUS.confirmada) return false;
+    if (status !== EXCHANGE_STATUS.programada) return false;
     const cleanDriverId = cleanGuid2(driverId);
     const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === cleanDriverId;
     const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === cleanDriverId;
@@ -60423,7 +60423,7 @@ ${text}`);
       DATAVERSE.trocas,
       [
         EXCHANGE_SELECT,
-        `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and (cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada} or cr40f_statusdatroca eq ${EXCHANGE_STATUS.confirmada})`,
+        `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada}`,
         "$orderby=cr40f_iniciodajaneladetroca asc",
         "$top=80"
       ].join("&")
