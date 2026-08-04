@@ -16,6 +16,7 @@ namespace Betinhos.DriverRecordSharing
         public const string ServiceMaintenanceLookup = "cr40f_om";
         public const string ServiceRequesterLookup = "cr40f_solicitante";
         public const string ServiceStartDate = "cr40f_dataehorriodesada";
+        public const string ServiceEndDate = "cr40f_horrioprevistoderetorno";
         public const string ServiceVehicleLookup = "cr40f_veiculo";
         public const string ServiceVehicleOrigin = "new_origemveiculo";
         public const int ServiceVehicleOriginAutomatic = 100000000;
@@ -25,6 +26,10 @@ namespace Betinhos.DriverRecordSharing
         public const string ServicePassengerViewField = "cr40f_passageirosetelefonedecontato";
         public const string ServiceCategory = "new_categoriadoitem";
         public const string ServiceStatus = "cr40f_status";
+        public const string ServiceFinalizedAt = "new_datadefinalizacao";
+        public const string ServiceBillingStatus = "cr40f_statusdefaturamento";
+        public const int ServiceBillingStatusNotBillable = 202410011;
+        public const int ServiceCategoryExchange = 100000002;
         public const int ServiceStatusCanceled = 202410002;
         public const int ServiceStatusConfirmed = 202410001;
         public const int ServiceStatusCompleted = 202410008;
@@ -107,6 +112,11 @@ namespace Betinhos.DriverRecordSharing
         public const string ExchangeEndDate = "cr40f_fimdajaneladetroca";
         public const string ExchangeStatus = "cr40f_statusdatroca";
         public const string ExchangeType = "new_tipodetroca";
+        public const string ExchangeObservation = "cr40f_observacao";
+        public const string ExchangeDriver1Completed = "new_concluidomotorista1";
+        public const string ExchangeDriver2Completed = "new_concluidomotorista2";
+        public const string ExchangeDriver1Observation = "new_observacaodomotorista1";
+        public const string ExchangeDriver2Observation = "new_observacaodomotorista2";
         public const int ExchangeStatusCanceled = 202410002;
         public const int ExchangeStatusCompleted = 202410001;
         public const int ExchangeStatusProgrammed = 202410000;
@@ -122,6 +132,8 @@ namespace Betinhos.DriverRecordSharing
         public const string VehiclePossessionStartDate = "new_iniciodaposse";
         public const string VehiclePossessionEndDate = "new_fimdaposse";
         public const string VehiclePossessionExchangeLookup = "new_trocadecarrorelacionada";
+        public const string VehiclePossessionOpenDriverKey = "new_chavemotoristaposseaberta";
+        public const string VehiclePossessionOpenVehicleKey = "new_chaveveiculoposseaberta";
 
         public const string CollisionTable = "cr40f_colisao_v2";
         public const string CollisionPrimaryId = "cr40f_colisao_v2id";

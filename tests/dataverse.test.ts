@@ -8,11 +8,45 @@ import {
   buildMaintenanceRequestVehiclesQuery,
   buildReceiptEmailContent,
   finalizeExchangeRemote,
+  getDriverContext,
   getExchangeCompletionState,
   normalizeReceiptIdentifier,
   SERVICE_VEHICLE_ORIGIN,
   shouldShowOpenExchangeForDriver
 } from "../src/lib/dataverse.ts";
+
+test("identidade bloqueia email Microsoft duplicado entre funcionarios ativos", async () => {
+  const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const previousWindow = (globalThis as any).window;
+  const windowMock: any = {
+    location: { hostname: "org.crm2.dynamics.com" },
+    Xrm: {
+      Utility: {
+        getGlobalContext: () => ({
+          userSettings: { userId },
+          getClientUrl: () => "https://org.crm2.dynamics.com"
+        })
+      },
+      WebApi: {
+        retrieveRecord: async () => ({ internalemailaddress: "duplicado@betinhos.com.br", fullname: "Duplicado" }),
+        retrieveMultipleRecords: async () => ({
+          entities: [
+            { cr40f_funcionariosid: "11111111-1111-1111-1111-111111111111" },
+            { cr40f_funcionariosid: "22222222-2222-2222-2222-222222222222" }
+          ]
+        })
+      }
+    }
+  };
+  windowMock.parent = windowMock;
+  (globalThis as any).window = windowMock;
+
+  try {
+    await assert.rejects(getDriverContext(), /Mais de um funcionario ativo usa o mesmo Email Microsoft/);
+  } finally {
+    (globalThis as any).window = previousWindow;
+  }
+});
 
 test("solicitacao de manutencao monta apenas campos de requisicao", () => {
   const record = buildMaintenanceRequestRecord({
@@ -195,20 +229,19 @@ test("troca com base fecha com confirmacao do motorista principal", () => {
   assert.equal(devolucaoBase.closesExchange, true);
 });
 
-test("retirada da base cria posse base automatica quando veiculo nao tem posse aberta", async () => {
+test("app grava somente a confirmacao e deixa a transacao de posse para o plugin", async () => {
   const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
   const driverId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
   const exchangeId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
-  const vehicleId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
-  const geralId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
-  const basePossessionId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
-  const createdRecords: Array<{ entityName: string; data: Record<string, unknown> }> = [];
-  const updatedRecords: Array<{ entityName: string; id: string; data: Record<string, unknown> }> = [];
-  let basePossessionOpen = false;
+  const updates: Array<{ entityName: string; id: string; data: Record<string, unknown> }> = [];
+  let rejectUpdate = false;
 
   const previousWindow = (globalThis as any).window;
   const windowMock: any = {
     location: { hostname: "org.crm2.dynamics.com" },
+    fetch: async () => {
+      throw new Error("O app nao deve executar lote nem gravar posse diretamente.");
+    },
     Xrm: {
       Utility: {
         getGlobalContext: () => ({
@@ -225,8 +258,7 @@ test("retirada da base cria posse base automatica quando veiculo nao tem posse a
               cr40f_id: "OT-1",
               cr40f_statusdatroca: 202410000,
               new_tipodetroca: 100000002,
-              _cr40f_motorista1_value: driverId,
-              _cr40f_veiculo2antesdatroca_value: vehicleId
+              _cr40f_motorista1_value: driverId
             };
           }
           throw new Error(`retrieveRecord inesperado: ${entityName}`);
@@ -243,29 +275,14 @@ test("retirada da base cria posse base automatica quando veiculo nao tem posse a
               ]
             };
           }
-          if (entityName === "new_possedeveiculo") {
-            if (options.includes("_new_trocadecarrorelacionada_value")) return { entities: [] };
-            if (options.includes("_new_motorista_value eq null")) {
-              return { entities: basePossessionOpen ? [{ new_possedeveiculoid: basePossessionId }] : [] };
-            }
-            return { entities: [] };
-          }
           throw new Error(`retrieveMultipleRecords inesperado: ${entityName}`);
         },
         updateRecord: async (entityName: string, id: string, data: Record<string, unknown>) => {
-          updatedRecords.push({ entityName, id, data });
-          if (entityName === "new_possedeveiculo" && id === basePossessionId) basePossessionOpen = false;
+          if (rejectUpdate) throw new Error("Posse divergente detectada pelo plugin.");
+          updates.push({ entityName, id, data });
           return {};
         },
-        createRecord: async (entityName: string, data: Record<string, unknown>) => {
-          createdRecords.push({ entityName, data });
-          const isDriverPossession = "new_Motorista@odata.bind" in data;
-          if (entityName === "new_possedeveiculo" && !isDriverPossession) {
-            basePossessionOpen = true;
-            return { id: basePossessionId };
-          }
-          return { id: "11111111-1111-1111-1111-111111111111" };
-        }
+        createRecord: async () => ({ id: "11111111-1111-1111-1111-111111111111" })
       }
     }
   };
@@ -283,24 +300,44 @@ test("retirada da base cria posse base automatica quando veiculo nao tem posse a
         dataverse: {
           entitySetName: "cr40f_trocasdecarros",
           id: exchangeId,
-          record: { __geralId: geralId }
+          record: {}
         }
       },
       fields: {}
     });
+    rejectUpdate = true;
+    await assert.rejects(
+      finalizeExchangeRemote({
+        detail: {
+          type: "TROCA",
+          id: "OT-1",
+          title: "Retirada",
+          fields: [],
+          actions: [],
+          dataverse: {
+            entitySetName: "cr40f_trocasdecarros",
+            id: exchangeId,
+            record: {}
+          }
+        },
+        fields: {}
+      }),
+      /Posse divergente detectada pelo plugin/
+    );
   } finally {
     (globalThis as any).window = previousWindow;
   }
 
-  assert.equal(createdRecords.length, 2);
-  assert.equal(createdRecords[0].entityName, "new_possedeveiculo");
-  assert.equal(createdRecords[0].data["new_Veiculo@odata.bind"], `/cr40f_veiculoses(${vehicleId})`);
-  assert.equal(createdRecords[0].data["new_TrocadeCarroRelacionada@odata.bind"], `/cr40f_trocasdecarros(${exchangeId})`);
-  assert.equal("new_Motorista@odata.bind" in createdRecords[0].data, false);
-  assert.equal(createdRecords[1].data["new_Motorista@odata.bind"], `/cr40f_funcionarioses(${driverId})`);
-  assert.equal(updatedRecords.some((record) => record.entityName === "cr40f_trocasdecarro" && record.data.cr40f_statusdatroca === 202410001), true);
-  assert.equal(updatedRecords.some((record) => record.entityName === "new_possedeveiculo" && record.data.new_fimdaposse), true);
-  assert.equal(updatedRecords.some((record) => record.entityName === "cr40f_reservadeveculos" && record.data.cr40f_status === 202410008), true);
+  assert.deepEqual(updates, [
+    {
+      entityName: "cr40f_trocasdecarro",
+      id: exchangeId,
+      data: {
+        new_concluidomotorista1: true,
+        new_observacaodomotorista1: "Sem observação."
+      }
+    }
+  ]);
 });
 
 test("troca aberta aparece para motorista da troca sem depender da Geral", () => {
@@ -335,7 +372,23 @@ test("troca aberta nao aparece quando motorista logado ja concluiu sua parte", (
   );
 });
 
-test("troca aberta nao aparece quando status nao e Programada", () => {
+test("troca aberta aparece quando status e Confirmada", () => {
+  assert.equal(
+    shouldShowOpenExchangeForDriver(
+      {
+        _cr40f_motorista1_value: "driver-1",
+        _cr40f_motorista2_value: "driver-2",
+        cr40f_statusdatroca: 100000001,
+        new_concluidomotorista1: false,
+        new_concluidomotorista2: false
+      },
+      "driver-2"
+    ),
+    true
+  );
+});
+
+test("troca aberta nao aparece quando status e Concluida", () => {
   assert.equal(
     shouldShowOpenExchangeForDriver(
       {
@@ -375,6 +428,25 @@ test("descricao da troca entre motoristas usa perspectiva do motorista logado", 
   assert.match(display.summary, /Bruno/);
   assert.match(display.window, /11:00 - 12:00/);
   assert.doesNotMatch(display.window, /:\d{2}:/);
+});
+
+test("transferencia para motorista sem veiculo nao inventa entrega ou recebimento", () => {
+  const exchange = {
+    new_tipodetroca: 100000000,
+    _cr40f_motorista1_value: "driver-1",
+    "_cr40f_motorista1_value@OData.Community.Display.V1.FormattedValue": "Ana",
+    _cr40f_motorista2_value: "driver-2",
+    "_cr40f_motorista2_value@OData.Community.Display.V1.FormattedValue": "Bruno",
+    __cr40f_veiculo1antesdatrocaLabel: "Corolla Preto - ABC1D23"
+  };
+
+  const giver = buildExchangeDisplay(exchange, { id: "driver-1", email: "", fullName: "Ana", funcionario: {} });
+  const receiver = buildExchangeDisplay(exchange, { id: "driver-2", email: "", fullName: "Bruno", funcionario: {} });
+
+  assert.match(giver.description, /Entregar Corolla Preto - ABC1D23 para Bruno/);
+  assert.doesNotMatch(giver.description, /receber Não informado/);
+  assert.match(receiver.description, /Receber Corolla Preto - ABC1D23 de Ana/);
+  assert.doesNotMatch(receiver.description, /Entregar Não informado/);
 });
 
 test("detalhe da troca expoe telefone clicavel do outro motorista", () => {

@@ -550,8 +550,11 @@ export async function getDriverContext(): Promise<DriverContext> {
 
   const result = await retrieveMultiple(
     DATAVERSE.funcionarios,
-    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado&$filter=cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=1`
+    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado,cr40f_datadedemissao&$filter=statecode eq 0 and cr40f_datadedemissao eq null and cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=2`
   );
+  if (result.entities.length > 1) {
+    throw new Error("Mais de um funcionario ativo usa o mesmo Email Microsoft. Corrija o cadastro antes de continuar.");
+  }
   const funcionario = result.entities[0] ?? null;
   if (!funcionario) throw new Error("Motorista nao encontrado em Funcionarios pelo Email Microsoft.");
 
@@ -2435,7 +2438,8 @@ export function getExchangeCompletionState(record: DataverseRecord, isDriver1: b
 }
 
 export function shouldShowOpenExchangeForDriver(exchange: DataverseRecord, driverId: string) {
-  if (Number(exchange.cr40f_statusdatroca) !== EXCHANGE_STATUS.programada) return false;
+  const status = Number(exchange.cr40f_statusdatroca);
+  if (status !== EXCHANGE_STATUS.programada && status !== EXCHANGE_STATUS.confirmada) return false;
   const cleanDriverId = cleanGuid(driverId);
   const isDriver1 = cleanODataGuid(exchange._cr40f_motorista1_value) === cleanDriverId;
   const isDriver2 = cleanODataGuid(exchange._cr40f_motorista2_value) === cleanDriverId;
@@ -2522,6 +2526,29 @@ export function buildExchangeDisplay(exchange: DataverseRecord, driver?: DriverC
   }
 
   if (isDriver1 || isDriver2) {
+    if (!vehicle2.trim()) {
+      const transferredVehicle = notInformed(vehicle1);
+      const contact = notInformed(otherDriver, "Outro motorista não informado");
+      const otherDriverPhone = String(exchange.__otherDriverPhone ?? "").trim();
+      const giver = isDriver1;
+      return {
+        label: "Transferência de Veículo",
+        title: "Transferência de Veículo",
+        description: giver
+          ? `Entregar ${transferredVehicle} para ${contact}`
+          : `Receber ${transferredVehicle} de ${contact}`,
+        summary: giver
+          ? `Entregue ${transferredVehicle} para ${contact}.`
+          : `Receba ${transferredVehicle} de ${contact}.`,
+        window: joinDateRange(start, end),
+        fields: [
+          { label: "O que fazer", value: giver ? `Entregar veículo para ${contact}` : `Receber veículo de ${contact}`, strong: true },
+          { label: giver ? "Você entrega" : "Você recebe", value: transferredVehicle, strong: true },
+          { label: "Encontrar com", value: contact },
+          ...(otherDriverPhone ? [{ label: "Telefone do motorista", value: otherDriverPhone, contact: { phone: otherDriverPhone } }] : [])
+        ]
+      };
+    }
     const delivering = notInformed(currentVehicle);
     const receiving = notInformed(nextVehicle);
     const contact = notInformed(otherDriver, "Outro motorista não informado");
@@ -2952,12 +2979,12 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     })
   );
 
-  const programmedExchangeGeralResult = await retrieveMultiple(
+  const programmedExchangeGeralResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
       geralSelect,
       `$filter=new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.troca} and _cr40f_ot_value ne null`,
-      "$top=120"
+      "$orderby=cr40f_dataehorriodesada asc"
     ].join("&")
   );
 
@@ -2969,7 +2996,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     DATAVERSE.trocas,
     [
       EXCHANGE_SELECT,
-      `$filter=cr40f_iniciodajaneladetroca le ${end} and cr40f_fimdajaneladetroca ge ${start} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada}`,
+      `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and (cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada} or cr40f_statusdatroca eq ${EXCHANGE_STATUS.confirmada})`,
       "$orderby=cr40f_iniciodajaneladetroca asc",
       "$top=80"
     ].join("&")
@@ -3025,12 +3052,12 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     })
   );
 
-  const historyExchangeGeralResult = await retrieveMultiple(
+  const historyExchangeGeralResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
       geralSelect,
       `$filter=new_categoriadoitem eq ${CATEGORY.troca} and _cr40f_ot_value ne null`,
-      "$top=120"
+      "$orderby=cr40f_dataehorriodesada desc"
     ].join("&")
   );
   const historyExchangeGeralById = new Map(
@@ -3422,206 +3449,6 @@ export async function markDetailViewedRemote(detail: DetailData) {
   });
 }
 
-async function closeOpenPossessionByDriver(driverId: string) {
-  if (!driverId) return;
-  const result = await retrieveMultiple(
-    DATAVERSE.posseVeiculos,
-    `$select=new_possedeveiculoid&$filter=_new_motorista_value eq ${cleanGuid(driverId)} and new_fimdaposse eq null&$top=1`
-  );
-  const possession = result.entities[0];
-  if (!possession?.new_possedeveiculoid) return;
-  await updateOne(DATAVERSE.posseVeiculos, possession.new_possedeveiculoid, {
-    new_fimdaposse: new Date().toISOString()
-  });
-}
-
-async function closeOpenBasePossession(vehicleId: string) {
-  if (!vehicleId) return;
-  const result = await retrieveMultiple(
-    DATAVERSE.posseVeiculos,
-    `$select=new_possedeveiculoid&$filter=_new_veiculo_value eq ${cleanGuid(vehicleId)} and _new_motorista_value eq null and new_fimdaposse eq null&$top=1`
-  );
-  const possession = result.entities[0];
-  if (!possession?.new_possedeveiculoid) return;
-  await updateOne(DATAVERSE.posseVeiculos, possession.new_possedeveiculoid, {
-    new_fimdaposse: new Date().toISOString()
-  });
-}
-
-async function createPossession(vehicleId: string, driverId: string | null, exchangeId: string) {
-  if (!vehicleId) return;
-  const driverFilter = driverId ? `_new_motorista_value eq ${cleanGuid(driverId)}` : "_new_motorista_value eq null";
-  const duplicate = await retrieveMultiple(
-    DATAVERSE.posseVeiculos,
-    `$select=new_possedeveiculoid&$filter=_new_veiculo_value eq ${cleanGuid(vehicleId)} and ${driverFilter} and _new_trocadecarrorelacionada_value eq ${cleanGuid(exchangeId)}&$top=1`
-  );
-  if (duplicate.entities[0]?.new_possedeveiculoid) {
-    await updateOne(DATAVERSE.posseVeiculos, duplicate.entities[0].new_possedeveiculoid, {
-      new_fimdaposse: null
-    });
-    return;
-  }
-  const data: Record<string, unknown> = {
-    new_iniciodaposse: new Date().toISOString(),
-    new_fimdaposse: null,
-    "new_Veiculo@odata.bind": bind(DATAVERSE.veiculos, vehicleId),
-    "new_TrocadeCarroRelacionada@odata.bind": bind(DATAVERSE.trocas, exchangeId)
-  };
-  if (driverId) data["new_Motorista@odata.bind"] = bind(DATAVERSE.funcionarios, driverId);
-  await createOne(DATAVERSE.posseVeiculos, data);
-}
-
-type CurrentPossession = {
-  id: string;
-  vehicleId: string;
-};
-
-async function getSingleOpenPossessionByDriver(driverId: string, label: string): Promise<CurrentPossession> {
-  if (!cleanGuid(driverId)) {
-    throw new Error(`${label} nao informado para validar posse de veiculo.`);
-  }
-  const result = await retrieveMultiple(
-    DATAVERSE.posseVeiculos,
-    [
-      "$select=new_possedeveiculoid,_new_veiculo_value,new_iniciodaposse",
-      `$filter=_new_motorista_value eq ${cleanGuid(driverId)} and new_fimdaposse eq null`,
-      "$orderby=new_iniciodaposse desc",
-      "$top=2"
-    ].join("&")
-  );
-  if (result.entities.length === 0) {
-    throw new Error(`${label} nao possui posse de veiculo aberta no momento da finalizacao.`);
-  }
-  if (result.entities.length > 1) {
-    throw new Error(`${label} possui mais de uma posse de veiculo aberta. Corrija a tabela de posse antes de finalizar a troca.`);
-  }
-  const possession = result.entities[0];
-  const possessionId = cleanODataGuid(possession.new_possedeveiculoid);
-  const vehicleId = cleanODataGuid(possession._new_veiculo_value);
-  if (!possessionId || !vehicleId) {
-    throw new Error(`${label} possui posse aberta sem veiculo vinculado.`);
-  }
-  return { id: possessionId, vehicleId };
-}
-
-async function ensureSingleOpenBasePossession(vehicleId: string, exchangeId: string) {
-  if (!vehicleId) throw new Error("Retirada da base sem veiculo informado para receber.");
-  const result = await retrieveMultiple(
-    DATAVERSE.posseVeiculos,
-    [
-      "$select=new_possedeveiculoid,_new_motorista_value,new_iniciodaposse",
-      `$filter=_new_veiculo_value eq ${cleanGuid(vehicleId)} and new_fimdaposse eq null`,
-      "$orderby=new_iniciodaposse desc",
-      "$top=3"
-    ].join("&")
-  );
-  const basePossessions = result.entities.filter((possession) => !cleanODataGuid(possession._new_motorista_value));
-  if (basePossessions.length > 1) {
-    throw new Error("Veiculo da retirada possui mais de uma posse aberta na base. Corrija a tabela de posse antes de finalizar.");
-  }
-  if (basePossessions.length === 1) {
-    if (result.entities.length > 1) {
-      throw new Error("Veiculo da retirada possui posse aberta na base e com motorista. Corrija a tabela de posse antes de finalizar.");
-    }
-    return;
-  }
-  if (result.entities.length > 0) {
-    throw new Error("Veiculo da retirada possui posse aberta com motorista. Corrija a tabela de posse antes de finalizar.");
-  }
-  if (!cleanGuid(exchangeId)) throw new Error("Retirada da base sem troca informada para criar posse base automatica.");
-
-  dataverseLog("Criando posse base automaticamente para retirada.", { vehicleId, exchangeId });
-  await createPossession(vehicleId, null, exchangeId);
-}
-
-function setExchangeVehiclePatch(patch: Record<string, unknown>, slot: "driver1" | "driver2", vehicleId: string) {
-  if (!vehicleId) return;
-  const navigationName = slot === "driver1" ? "cr40f_Veiculo1AntesdaTroca" : "cr40f_Veiculo2AntesdaTroca";
-  patch[`${navigationName}@odata.bind`] = bind(DATAVERSE.veiculos, vehicleId);
-}
-
-function withActualExchangeVehicle(exchange: DataverseRecord, slot: "driver1" | "driver2", vehicleId: string) {
-  const lookupName = slot === "driver1" ? "_cr40f_veiculo1antesdatroca_value" : "_cr40f_veiculo2antesdatroca_value";
-  return {
-    ...exchange,
-    [lookupName]: vehicleId
-  };
-}
-
-async function buildActualExchangeVehiclePatch(exchange: DataverseRecord, currentDriverId: string, closesExchange: boolean) {
-  const patch: Record<string, unknown> = {};
-  let actualExchange = exchange;
-  const driver1Id = getLookupId(exchange, "cr40f_motorista1");
-  const driver2Id = getLookupId(exchange, "cr40f_motorista2");
-  const isCurrentDriver1 = driver1Id === cleanGuid(currentDriverId);
-  const isCurrentDriver2 = driver2Id === cleanGuid(currentDriverId);
-  const exchangeTypeValue = Number(exchange.new_tipodetroca);
-  const exchangeType = normalizeText(getFormatted(exchange, "new_tipodetroca"));
-
-  if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) {
-    const vehicle2Id = getLookupId(exchange, "cr40f_veiculo2antesdatroca");
-    await ensureSingleOpenBasePossession(vehicle2Id, getRecordId(exchange, "cr40f_trocasdecarroid"));
-    return { patch, exchange: actualExchange };
-  }
-
-  if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) {
-    const possession = await getSingleOpenPossessionByDriver(driver1Id, "Motorista da devolucao");
-    setExchangeVehiclePatch(patch, "driver1", possession.vehicleId);
-    actualExchange = withActualExchangeVehicle(actualExchange, "driver1", possession.vehicleId);
-    return { patch, exchange: actualExchange };
-  }
-
-  if (closesExchange || isCurrentDriver1) {
-    const driver1Possession = await getSingleOpenPossessionByDriver(driver1Id, "Motorista 1");
-    setExchangeVehiclePatch(patch, "driver1", driver1Possession.vehicleId);
-    actualExchange = withActualExchangeVehicle(actualExchange, "driver1", driver1Possession.vehicleId);
-  }
-
-  if (closesExchange || isCurrentDriver2) {
-    const driver2Possession = await getSingleOpenPossessionByDriver(driver2Id, "Motorista 2");
-    setExchangeVehiclePatch(patch, "driver2", driver2Possession.vehicleId);
-    actualExchange = withActualExchangeVehicle(actualExchange, "driver2", driver2Possession.vehicleId);
-  }
-
-  return { patch, exchange: actualExchange };
-}
-
-async function applyExchangePossessionRemote(exchange: DataverseRecord, exchangeId: string) {
-  const driver1Id = getLookupId(exchange, "cr40f_motorista1");
-  const driver2Id = getLookupId(exchange, "cr40f_motorista2");
-  const vehicle1Id = getLookupId(exchange, "cr40f_veiculo1antesdatroca");
-  const vehicle2Id = getLookupId(exchange, "cr40f_veiculo2antesdatroca");
-  const exchangeTypeValue = Number(exchange.new_tipodetroca);
-  const exchangeType = normalizeText(getFormatted(exchange, "new_tipodetroca"));
-
-  dataverseLog("Aplicando posse da troca concluida.", {
-    exchangeId,
-    exchangeTypeValue,
-    exchangeType,
-    driver1Id,
-    driver2Id,
-    vehicle1Id,
-    vehicle2Id
-  });
-
-  if (exchangeTypeValue === EXCHANGE_TYPE.retiradaBase || exchangeType.includes("retirada")) {
-    await closeOpenBasePossession(vehicle2Id);
-    await createPossession(vehicle2Id, driver1Id, exchangeId);
-    return;
-  }
-
-  if (exchangeTypeValue === EXCHANGE_TYPE.devolucaoBase || exchangeType.includes("devolucao") || exchangeType.includes("devolu")) {
-    await closeOpenPossessionByDriver(driver1Id);
-    await createPossession(vehicle1Id, null, exchangeId);
-    return;
-  }
-
-  await closeOpenPossessionByDriver(driver1Id);
-  await closeOpenPossessionByDriver(driver2Id);
-  await createPossession(vehicle2Id, driver1Id, exchangeId);
-  await createPossession(vehicle1Id, driver2Id, exchangeId);
-}
-
 function getRequiredMaintenanceExpenseOptionId(value: string, label: string) {
   if (!value) throw new Error(`${label} obrigatorio para registrar gasto da manutencao.`);
   return value;
@@ -3875,10 +3702,7 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
   const dv = payload.detail.dataverse;
   if (!dv?.id) throw new Error("Troca sem referência Dataverse.");
   const driver = await getDriverContext();
-  const record: DataverseRecord = {
-    ...(await retrieveOne(DATAVERSE.trocas, dv.id, EXCHANGE_SELECT)),
-    __geralId: dv.record?.__geralId
-  };
+  const record = await retrieveOne(DATAVERSE.trocas, dv.id, EXCHANGE_SELECT);
   const isDriver1 = cleanODataGuid(record._cr40f_motorista1_value) === cleanGuid(driver.id);
   const isDriver2 = cleanODataGuid(record._cr40f_motorista2_value) === cleanGuid(driver.id);
   if (!isDriver1 && !isDriver2) throw new Error("Motorista atual não pertence a esta troca.");
@@ -3895,13 +3719,7 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
   }
 
   const completion = getExchangeCompletionState(record, isDriver1, isDriver2);
-  if (completion.closesExchange) {
-    exchangePatch.cr40f_statusdatroca = EXCHANGE_STATUS.concluida;
-  }
-  const actualVehicles = await buildActualExchangeVehiclePatch(record, driver.id, completion.closesExchange);
-  Object.assign(exchangePatch, actualVehicles.patch);
-
-  dataverseLog("Finalização de troca iniciada.", {
+  dataverseLog("Confirmação de troca iniciada.", {
     detailId: payload.detail.id,
     dataverseId: dv.id,
     isDriver1,
@@ -3910,20 +3728,12 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
     closesExchange: completion.closesExchange
   });
 
-  payload.onProgress?.("Atualizando troca no Dataverse.");
+  payload.onProgress?.(
+    completion.closesExchange
+      ? "Confirmando e aplicando a troca no servidor."
+      : "Registrando sua confirmação da troca."
+  );
   await updateOne(DATAVERSE.trocas, dv.id, exchangePatch);
-
-  const geralId = cleanODataGuid(record.__geralId);
-  if (geralId && completion.closesExchange) {
-    payload.onProgress?.("Atualizando posse dos veículos.");
-    await applyExchangePossessionRemote(actualVehicles.exchange, dv.id);
-    payload.onProgress?.("Concluindo item da agenda.");
-    await updateOne(DATAVERSE.geral, geralId, {
-      new_observacaofinal: observation,
-      cr40f_status: OPERATION_STATUS.concluido,
-      new_datadefinalizacao: new Date().toISOString()
-    });
-  }
 }
 
 

@@ -16,7 +16,7 @@ namespace Betinhos.DriverRecordSharing
             _tracing = tracing ?? throw new ArgumentNullException(nameof(tracing));
         }
 
-        public void SyncFromService(Guid serviceId)
+        public void SyncFromService(Guid serviceId, Entity changedFields = null)
         {
             if (serviceId == Guid.Empty)
             {
@@ -27,7 +27,7 @@ namespace Betinhos.DriverRecordSharing
                 PluginConfig.ServiceTable,
                 serviceId,
                 BuildServiceColumnSet());
-            SyncFromService(serviceEntity);
+            SyncFromService(serviceEntity, changedFields);
         }
 
         public void SyncFromExchange(Guid exchangeId)
@@ -44,7 +44,7 @@ namespace Betinhos.DriverRecordSharing
             SyncFromExchange(exchangeEntity);
         }
 
-        private void SyncFromService(Entity serviceEntity)
+        private void SyncFromService(Entity serviceEntity, Entity changedFields)
         {
             if (serviceEntity == null)
             {
@@ -84,13 +84,56 @@ namespace Betinhos.DriverRecordSharing
                 exchangeReference.Id,
                 BuildExchangeColumnSet());
             var currentExchangeStatus = exchangeEntity.GetAttributeValue<OptionSetValue>(PluginConfig.ExchangeStatus)?.Value;
-            if (currentExchangeStatus == expectedExchangeStatus)
+            var exchangePatch = new Entity(PluginConfig.ExchangeTable, exchangeEntity.Id);
+            var changed = false;
+            if (currentExchangeStatus != expectedExchangeStatus)
             {
-                return;
+                exchangePatch[PluginConfig.ExchangeStatus] = new OptionSetValue(expectedExchangeStatus);
+                changed = true;
             }
 
-            var exchangePatch = new Entity(PluginConfig.ExchangeTable, exchangeEntity.Id);
-            exchangePatch[PluginConfig.ExchangeStatus] = new OptionSetValue(expectedExchangeStatus);
+            if (ShouldSynchronize(changedFields, PluginConfig.ServiceDriverLookup))
+            {
+                changed |= CopyReferenceIfChanged(
+                    serviceEntity,
+                    exchangeEntity,
+                    exchangePatch,
+                    PluginConfig.ServiceDriverLookup,
+                    PluginConfig.ExchangeDriver1Lookup);
+            }
+            var exchangeVehicleAttribute = exchangeEntity.GetAttributeValue<OptionSetValue>(PluginConfig.ExchangeType)?.Value ==
+                PluginConfig.ExchangeTypeTakeFromBase
+                ? PluginConfig.ExchangeVehicle2Lookup
+                : PluginConfig.ExchangeVehicle1Lookup;
+            if (ShouldSynchronize(changedFields, PluginConfig.ServiceVehicleLookup))
+            {
+                changed |= CopyReferenceIfChanged(
+                    serviceEntity,
+                    exchangeEntity,
+                    exchangePatch,
+                    PluginConfig.ServiceVehicleLookup,
+                    exchangeVehicleAttribute);
+            }
+            if (ShouldSynchronize(changedFields, PluginConfig.ServiceStartDate))
+            {
+                changed |= CopyValueIfChanged(
+                    serviceEntity,
+                    exchangeEntity,
+                    exchangePatch,
+                    PluginConfig.ServiceStartDate,
+                    PluginConfig.ExchangeStartDate);
+            }
+            if (ShouldSynchronize(changedFields, PluginConfig.ServiceEndDate))
+            {
+                changed |= CopyValueIfChanged(
+                    serviceEntity,
+                    exchangeEntity,
+                    exchangePatch,
+                    PluginConfig.ServiceEndDate,
+                    PluginConfig.ExchangeEndDate);
+            }
+            if (!changed) return;
+
             _service.Update(exchangePatch);
             _tracing.Trace(
                 "ServiceExchangeSynchronizer updated exchangeId={0} from serviceId={1} status={2}->{3}.",
@@ -98,6 +141,39 @@ namespace Betinhos.DriverRecordSharing
                 serviceEntity.Id,
                 currentExchangeStatus.HasValue ? currentExchangeStatus.Value.ToString() : "null",
                 expectedExchangeStatus);
+        }
+
+        private static bool ShouldSynchronize(Entity changedFields, string attribute)
+        {
+            return changedFields == null || changedFields.Contains(attribute);
+        }
+
+        private static bool CopyReferenceIfChanged(
+            Entity source,
+            Entity current,
+            Entity patch,
+            string sourceAttribute,
+            string targetAttribute)
+        {
+            var expected = source.GetAttributeValue<EntityReference>(sourceAttribute);
+            var actual = current.GetAttributeValue<EntityReference>(targetAttribute);
+            if (expected?.Id == actual?.Id) return false;
+            patch[targetAttribute] = expected;
+            return true;
+        }
+
+        private static bool CopyValueIfChanged(
+            Entity source,
+            Entity current,
+            Entity patch,
+            string sourceAttribute,
+            string targetAttribute)
+        {
+            source.Attributes.TryGetValue(sourceAttribute, out var expected);
+            current.Attributes.TryGetValue(targetAttribute, out var actual);
+            if (Equals(expected, actual)) return false;
+            patch[targetAttribute] = expected;
+            return true;
         }
 
         private void SyncFromExchange(Entity exchangeEntity)
@@ -240,14 +316,24 @@ namespace Betinhos.DriverRecordSharing
                 PluginConfig.ServicePrimaryId,
                 PluginConfig.ServiceExchangeLookup,
                 PluginConfig.ServiceStatus,
-                PluginConfig.ServiceProgrammedFlag);
+                PluginConfig.ServiceProgrammedFlag,
+                PluginConfig.ServiceDriverLookup,
+                PluginConfig.ServiceVehicleLookup,
+                PluginConfig.ServiceStartDate,
+                PluginConfig.ServiceEndDate);
         }
 
         private static ColumnSet BuildExchangeColumnSet()
         {
             return new ColumnSet(
                 PluginConfig.ExchangePrimaryId,
-                PluginConfig.ExchangeStatus);
+                PluginConfig.ExchangeStatus,
+                PluginConfig.ExchangeType,
+                PluginConfig.ExchangeDriver1Lookup,
+                PluginConfig.ExchangeVehicle1Lookup,
+                PluginConfig.ExchangeVehicle2Lookup,
+                PluginConfig.ExchangeStartDate,
+                PluginConfig.ExchangeEndDate);
         }
     }
 }

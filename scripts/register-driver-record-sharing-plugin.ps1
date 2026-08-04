@@ -119,7 +119,7 @@ static void ExecuteActionWithRetry(Action action, string label, int maxAttempts 
 var specs = new[]
 {
   new StepSpec("Servicos Create", "cr40f_reservadeveculos", "Create", 0, "", Array.Empty<string>()),
-  new StepSpec("Servicos Update", "cr40f_reservadeveculos", "Update", 0, "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,cr40f_veiculo,new_origemveiculo,cr40f_ot,cr40f_status", new[] { "cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "cr40f_veiculo", "new_origemveiculo", "cr40f_ot", "cr40f_status" }),
+  new StepSpec("Servicos Update", "cr40f_reservadeveculos", "Update", 0, "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,cr40f_horrioprevistoderetorno,cr40f_veiculo,new_origemveiculo,cr40f_ot,cr40f_status,new_datadefinalizacao", new[] { "cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "cr40f_horrioprevistoderetorno", "cr40f_veiculo", "new_origemveiculo", "cr40f_ot", "cr40f_status", "new_datadefinalizacao" }),
   new StepSpec("Funcionarios Create", "cr40f_funcionarios", "Create", 0, "", Array.Empty<string>()),
   new StepSpec("Funcionarios Update", "cr40f_funcionarios", "Update", 0, "cr40f_emailmicrosoft", new[] { "cr40f_emailmicrosoft" }),
   new StepSpec("Servicos por passageiro Create", "cr40f_servicosporpassageiro", "Create", 1, "", Array.Empty<string>()),
@@ -127,9 +127,11 @@ var specs = new[]
   new StepSpec("Servicos por passageiro Delete", "cr40f_servicosporpassageiro", "Delete", 1, "", new[] { "cr40f_geral", "cr40f_bancodedados" }),
   new StepSpec("Passageiros Update", "cr40f_bancodedados", "Update", 1, "cr40f_nomedopassageiro,cr40f_telefone", new[] { "cr40f_nomedopassageiro", "cr40f_telefone" }),
   new StepSpec("Trocas de carro Create", "cr40f_trocasdecarro", "Create", 0, "", Array.Empty<string>()),
-  new StepSpec("Trocas de carro Update", "cr40f_trocasdecarro", "Update", 0, "cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca,cr40f_veiculo1antesdatroca,cr40f_veiculo2antesdatroca,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,new_tipodetroca", new[] { "cr40f_motorista1", "cr40f_motorista2", "cr40f_statusdatroca", "cr40f_veiculo1antesdatroca", "cr40f_veiculo2antesdatroca", "cr40f_iniciodajaneladetroca", "cr40f_fimdajaneladetroca", "new_tipodetroca" }),
-  new StepSpec("Posse de veiculo Create", "new_possedeveiculo", "Create", 1, "", Array.Empty<string>()),
-  new StepSpec("Posse de veiculo Update", "new_possedeveiculo", "Update", 1, "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse", new[] { "new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse" }),
+  new StepSpec("Trocas de carro Update", "cr40f_trocasdecarro", "Update", 0, "cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca,cr40f_veiculo1antesdatroca,cr40f_veiculo2antesdatroca,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,new_tipodetroca,new_concluidomotorista1,new_concluidomotorista2,new_observacaodomotorista1,new_observacaodomotorista2", new[] { "cr40f_motorista1", "cr40f_motorista2", "cr40f_statusdatroca", "cr40f_veiculo1antesdatroca", "cr40f_veiculo2antesdatroca", "cr40f_iniciodajaneladetroca", "cr40f_fimdajaneladetroca", "new_tipodetroca", "new_concluidomotorista1", "new_concluidomotorista2", "new_observacaodomotorista1", "new_observacaodomotorista2" }),
+  new StepSpec("Posse de veiculo Create PreOperation", "new_possedeveiculo", "Create", 0, "", Array.Empty<string>(), 20),
+  new StepSpec("Posse de veiculo Update PreOperation", "new_possedeveiculo", "Update", 0, "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse", new[] { "new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse" }, 20),
+  new StepSpec("Posse de veiculo Create", "new_possedeveiculo", "Create", 0, "", Array.Empty<string>()),
+  new StepSpec("Posse de veiculo Update", "new_possedeveiculo", "Update", 0, "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse", new[] { "new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse" }),
   new StepSpec("Colisoes Create", "cr40f_colisao_v2", "Create", 1, "", Array.Empty<string>()),
   new StepSpec("Colisoes Update", "cr40f_colisao_v2", "Update", 1, "cr40f_motorista", new[] { "cr40f_motorista" }),
   new StepSpec("Recibos Create", "cr40f_recibos_v2", "Create", 1, "", Array.Empty<string>()),
@@ -176,7 +178,7 @@ foreach (var spec in specs)
 {
   var messageId = RequireSingleId(service, "sdkmessage", new ColumnSet("sdkmessageid"), ("name", spec.Message));
   var filterId = RequireMessageFilter(service, messageId, spec.PrimaryEntity);
-  var step = FindStep(service, pluginTypeId, messageId, filterId);
+  var step = FindStep(service, pluginTypeId, messageId, filterId, spec.Stage);
   if (step == null)
   {
     throw new InvalidOperationException($"Step ausente: {spec.Label}");
@@ -184,10 +186,11 @@ foreach (var spec in specs)
 
   var mode = step.GetAttributeValue<OptionSetValue>("mode")?.Value;
   var stage = step.GetAttributeValue<OptionSetValue>("stage")?.Value;
+  var asyncAutoDelete = step.GetAttributeValue<bool>("asyncautodelete");
   var filtering = step.GetAttributeValue<string>("filteringattributes") ?? "";
-  if (mode != spec.Mode || stage != 40 || !SameCsv(filtering, spec.FilteringAttributes))
+  if (mode != spec.Mode || stage != spec.Stage || asyncAutoDelete != (spec.Mode == 1) || !SameCsv(filtering, spec.FilteringAttributes))
   {
-    throw new InvalidOperationException($"Step divergente: {spec.Label}. mode={mode}, stage={stage}, filtering={filtering}");
+    throw new InvalidOperationException($"Step divergente: {spec.Label}. mode={mode}, stage={stage}, asyncautodelete={asyncAutoDelete}, filtering={filtering}");
   }
 
   var image = FindPreImage(service, step.Id);
@@ -268,7 +271,7 @@ static Guid UpsertPluginType(ServiceClient service, Guid assemblyId, bool dryRun
 
 static Guid UpsertStep(ServiceClient service, StepSpec spec, Guid pluginTypeId, Guid messageId, Guid filterId, EntityReference? runAsUser, bool dryRun)
 {
-  var existing = FindStep(service, pluginTypeId, messageId, filterId);
+  var existing = FindStep(service, pluginTypeId, messageId, filterId, spec.Stage);
   var name = $"DriverRecordSharing - {spec.Label}";
   var record = new Entity("sdkmessageprocessingstep")
   {
@@ -277,8 +280,9 @@ static Guid UpsertStep(ServiceClient service, StepSpec spec, Guid pluginTypeId, 
     ["eventhandler"] = Ref("plugintype", pluginTypeId),
     ["sdkmessageid"] = Ref("sdkmessage", messageId),
     ["sdkmessagefilterid"] = Ref("sdkmessagefilter", filterId),
-    ["stage"] = new OptionSetValue(40),
+    ["stage"] = new OptionSetValue(spec.Stage),
     ["mode"] = new OptionSetValue(spec.Mode),
+    ["asyncautodelete"] = spec.Mode == 1,
     ["rank"] = 1,
     ["supporteddeployment"] = new OptionSetValue(0)
   };
@@ -381,7 +385,7 @@ static Guid RequireSingleId(ServiceClient service, string logicalName, ColumnSet
   return row.Id;
 }
 
-static Entity? FindStep(ServiceClient service, Guid pluginTypeId, Guid messageId, Guid filterId)
+static Entity? FindStep(ServiceClient service, Guid pluginTypeId, Guid messageId, Guid filterId, int stage)
 {
   if (pluginTypeId == Guid.Empty || messageId == Guid.Empty || filterId == Guid.Empty)
   {
@@ -390,12 +394,13 @@ static Entity? FindStep(ServiceClient service, Guid pluginTypeId, Guid messageId
 
   var query = new QueryExpression("sdkmessageprocessingstep")
   {
-    ColumnSet = new ColumnSet("sdkmessageprocessingstepid", "name", "mode", "stage", "filteringattributes"),
+    ColumnSet = new ColumnSet("sdkmessageprocessingstepid", "name", "mode", "stage", "asyncautodelete", "filteringattributes"),
     TopCount = 2
   };
   query.Criteria.AddCondition("eventhandler", ConditionOperator.Equal, pluginTypeId);
   query.Criteria.AddCondition("sdkmessageid", ConditionOperator.Equal, messageId);
   query.Criteria.AddCondition("sdkmessagefilterid", ConditionOperator.Equal, filterId);
+  query.Criteria.AddCondition("stage", ConditionOperator.Equal, stage);
   var rows = ExecuteWithRetry(() => service.RetrieveMultiple(query).Entities, "RetrieveMultiple sdkmessageprocessingstep");
   if (rows.Count > 1)
   {
@@ -470,7 +475,7 @@ static ServiceClient CreateServiceClient(string environmentUrl)
   return new ServiceClient(connectionString);
 }
 
-internal sealed record StepSpec(string Label, string PrimaryEntity, string Message, int Mode, string FilteringAttributes, string[] PreImageAttributes);
+internal sealed record StepSpec(string Label, string PrimaryEntity, string Message, int Mode, string FilteringAttributes, string[] PreImageAttributes, int Stage = 40);
 
 internal sealed record AssemblyInfo(string Version, string Culture, string PublicKeyToken);
 

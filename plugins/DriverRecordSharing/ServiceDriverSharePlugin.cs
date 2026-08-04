@@ -64,11 +64,19 @@ namespace Betinhos.DriverRecordSharing
 
                 var target = context.InputParameters[PluginConfig.TargetParameterName] as Entity;
                 var preImage = ResolvePreImage(context, tracing);
+                if (context.Stage == 20 && context.PrimaryEntityName == PluginConfig.VehiclePossessionTable)
+                {
+                    VehiclePossessionOpenKeyProjector.Apply(target, preImage);
+                    tracing.Trace("ServiceDriverSharePlugin projected open-possession keys in PreOperation.");
+                    return;
+                }
                 var resolver = new DriverResolver(service, tracing);
                 var accessHelper = new DataverseAccessHelper(service, tracing);
                 var servicePassengerRepository = new ServicePassengerRepository(service, tracing);
                 var serviceVehicleSynchronizer = new ServiceVehicleSynchronizer(service, tracing);
+                var vehiclePossessionIntegrityValidator = new VehiclePossessionIntegrityValidator(service);
                 var serviceExchangeSynchronizer = new ServiceExchangeSynchronizer(service, tracing);
+                var exchangeLifecycleCoordinator = new ExchangeLifecycleCoordinator(service, tracing);
                 var servicePassengerViewSynchronizer = new ServicePassengerViewSynchronizer(service, tracing);
 
                 if (context.PrimaryEntityName == PluginConfig.EmployeeTable)
@@ -138,6 +146,8 @@ namespace Betinhos.DriverRecordSharing
                     accessHelper,
                     servicePassengerRepository,
                     serviceVehicleSynchronizer,
+                    vehiclePossessionIntegrityValidator,
+                    exchangeLifecycleCoordinator,
                     serviceExchangeSynchronizer,
                     tracing);
             }
@@ -167,6 +177,8 @@ namespace Betinhos.DriverRecordSharing
             DataverseAccessHelper accessHelper,
             ServicePassengerRepository servicePassengerRepository,
             ServiceVehicleSynchronizer serviceVehicleSynchronizer,
+            VehiclePossessionIntegrityValidator vehiclePossessionIntegrityValidator,
+            ExchangeLifecycleCoordinator exchangeLifecycleCoordinator,
             ServiceExchangeSynchronizer serviceExchangeSynchronizer,
             ITracingService tracing)
         {
@@ -282,16 +294,18 @@ namespace Betinhos.DriverRecordSharing
                     service,
                     target,
                     tracing);
-                serviceExchangeSynchronizer.SyncFromService(context.PrimaryEntityId);
+                serviceExchangeSynchronizer.SyncFromService(context.PrimaryEntityId, target);
                 serviceVehicleSynchronizer.SyncService(context.PrimaryEntityId);
             }
             else if (definition.EntityName == PluginConfig.ExchangeTable)
             {
+                exchangeLifecycleCoordinator.Process(context.PrimaryEntityId, context.MessageName, target, preImage);
                 serviceExchangeSynchronizer.SyncFromExchange(context.PrimaryEntityId);
                 serviceVehicleSynchronizer.SyncServicesForExchangeChange(context.PrimaryEntityId, preImage);
             }
             else if (definition.EntityName == PluginConfig.VehiclePossessionTable)
             {
+                vehiclePossessionIntegrityValidator.Validate(context.PrimaryEntityId);
                 serviceVehicleSynchronizer.SyncServicesForPossessionChange(context.PrimaryEntityId, preImage);
             }
 
@@ -832,6 +846,8 @@ namespace Betinhos.DriverRecordSharing
                 columns.Add(PluginConfig.ExchangeStartDate);
                 columns.Add(PluginConfig.ExchangeEndDate);
                 columns.Add(PluginConfig.ExchangeType);
+                columns.Add(PluginConfig.ExchangeDriver1Completed);
+                columns.Add(PluginConfig.ExchangeDriver2Completed);
             }
 
             if (definition?.EntityName == PluginConfig.VehiclePossessionTable)
@@ -870,6 +886,8 @@ namespace Betinhos.DriverRecordSharing
                 attributes.Add(PluginConfig.ExchangeStartDate);
                 attributes.Add(PluginConfig.ExchangeEndDate);
                 attributes.Add(PluginConfig.ExchangeType);
+                attributes.Add(PluginConfig.ExchangeDriver1Completed);
+                attributes.Add(PluginConfig.ExchangeDriver2Completed);
             }
 
             if (definition?.EntityName == PluginConfig.VehiclePossessionTable)

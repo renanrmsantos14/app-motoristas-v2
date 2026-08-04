@@ -6,6 +6,8 @@ param(
 
   [string] $DllPath = "",
 
+  [string] $SolutionUniqueName = "AppBetinhos",
+
   [switch] $Apply,
 
   [switch] $DeviceCode
@@ -63,6 +65,24 @@ if ([string]::IsNullOrWhiteSpace($script:token)) {
   throw "Falha ao obter token para $script:baseUrl"
 }
 
+function Get-DataverseErrorDetail($ErrorRecord) {
+  if (-not [string]::IsNullOrWhiteSpace([string]$ErrorRecord.ErrorDetails.Message)) {
+    return [string]$ErrorRecord.ErrorDetails.Message
+  }
+
+  try {
+    $responseStream = $ErrorRecord.Exception.Response.GetResponseStream()
+    if ($null -ne $responseStream) {
+      $reader = New-Object IO.StreamReader($responseStream)
+      try { return $reader.ReadToEnd() }
+      finally { $reader.Dispose() }
+    }
+  }
+  catch {}
+
+  return [string]$ErrorRecord.Exception.Message
+}
+
 function Invoke-DataverseRequest {
   param(
     [Parameter(Mandatory = $true)] [string] $Method,
@@ -76,6 +96,7 @@ function Invoke-DataverseRequest {
     "OData-MaxVersion" = "4.0"
     "OData-Version" = "4.0"
     Prefer = "return=representation"
+    "MSCRM.SolutionUniqueName" = $SolutionUniqueName
   }
   if ($Method -eq "PATCH") {
     $headers["If-Match"] = "*"
@@ -98,12 +119,16 @@ function Invoke-DataverseRequest {
     }
     catch {
       $lastError = $_
-      if ($attempt -eq 4) { break }
-      Write-Step "$Method $Path falhou tentativa $attempt/4: $($_.Exception.Message)"
+      $statusCode = $null
+      try { $statusCode = [int]$_.Exception.Response.StatusCode } catch {}
+      $isTransient = $null -eq $statusCode -or $statusCode -eq 408 -or $statusCode -eq 429 -or $statusCode -ge 500
+      $canRetry = $Method -in @("GET", "PATCH") -and $isTransient
+      if ($attempt -eq 4 -or -not $canRetry) { break }
+      Write-Step "$Method $Path falhou tentativa $attempt/4: $(Get-DataverseErrorDetail $_)"
       Start-Sleep -Seconds ($attempt * 2)
     }
   }
-  throw "Dataverse $Method $Path falhou apos 4 tentativas. $($lastError.Exception.Message)"
+  throw "Dataverse $Method $Path falhou: $(Get-DataverseErrorDetail $lastError)"
 }
 
 function Get-DataverseRows([string] $EntitySet, [string] $Select, [string] $Filter) {
@@ -137,7 +162,7 @@ function Get-Sha256Hex([byte[]] $Bytes) {
 
 $specs = @(
   [pscustomobject]@{ Label = "Servicos Create"; Entity = "cr40f_reservadeveculos"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @() },
-  [pscustomobject]@{ Label = "Servicos Update"; Entity = "cr40f_reservadeveculos"; Message = "Update"; Mode = 0; Filtering = "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,cr40f_veiculo,new_origemveiculo,cr40f_ot,cr40f_status"; PreImage = @("cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "cr40f_veiculo", "new_origemveiculo", "cr40f_ot", "cr40f_status") },
+  [pscustomobject]@{ Label = "Servicos Update"; Entity = "cr40f_reservadeveculos"; Message = "Update"; Mode = 0; Filtering = "cr40f_motorista,cr40f_solicitante,cr40f_dataehorriodesada,cr40f_horrioprevistoderetorno,cr40f_veiculo,new_origemveiculo,cr40f_ot,cr40f_status,new_datadefinalizacao"; PreImage = @("cr40f_motorista", "cr40f_solicitante", "cr40f_dataehorriodesada", "cr40f_horrioprevistoderetorno", "cr40f_veiculo", "new_origemveiculo", "cr40f_ot", "cr40f_status", "new_datadefinalizacao") },
   [pscustomobject]@{ Label = "Funcionarios Create"; Entity = "cr40f_funcionarios"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @() },
   [pscustomobject]@{ Label = "Funcionarios Update"; Entity = "cr40f_funcionarios"; Message = "Update"; Mode = 0; Filtering = "cr40f_emailmicrosoft"; PreImage = @("cr40f_emailmicrosoft") },
   [pscustomobject]@{ Label = "Servicos por passageiro Create"; Entity = "cr40f_servicosporpassageiro"; Message = "Create"; Mode = 1; Filtering = ""; PreImage = @() },
@@ -145,9 +170,11 @@ $specs = @(
   [pscustomobject]@{ Label = "Servicos por passageiro Delete"; Entity = "cr40f_servicosporpassageiro"; Message = "Delete"; Mode = 1; Filtering = ""; PreImage = @("cr40f_geral", "cr40f_bancodedados") },
   [pscustomobject]@{ Label = "Passageiros Update"; Entity = "cr40f_bancodedados"; Message = "Update"; Mode = 1; Filtering = "cr40f_nomedopassageiro,cr40f_telefone"; PreImage = @("cr40f_nomedopassageiro", "cr40f_telefone") },
   [pscustomobject]@{ Label = "Trocas de carro Create"; Entity = "cr40f_trocasdecarro"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @() },
-  [pscustomobject]@{ Label = "Trocas de carro Update"; Entity = "cr40f_trocasdecarro"; Message = "Update"; Mode = 0; Filtering = "cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca,cr40f_veiculo1antesdatroca,cr40f_veiculo2antesdatroca,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,new_tipodetroca"; PreImage = @("cr40f_motorista1", "cr40f_motorista2", "cr40f_statusdatroca", "cr40f_veiculo1antesdatroca", "cr40f_veiculo2antesdatroca", "cr40f_iniciodajaneladetroca", "cr40f_fimdajaneladetroca", "new_tipodetroca") },
-  [pscustomobject]@{ Label = "Posse de veiculo Create"; Entity = "new_possedeveiculo"; Message = "Create"; Mode = 1; Filtering = ""; PreImage = @() },
-  [pscustomobject]@{ Label = "Posse de veiculo Update"; Entity = "new_possedeveiculo"; Message = "Update"; Mode = 1; Filtering = "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse"; PreImage = @("new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse") },
+  [pscustomobject]@{ Label = "Trocas de carro Update"; Entity = "cr40f_trocasdecarro"; Message = "Update"; Mode = 0; Filtering = "cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca,cr40f_veiculo1antesdatroca,cr40f_veiculo2antesdatroca,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,new_tipodetroca,new_concluidomotorista1,new_concluidomotorista2,new_observacaodomotorista1,new_observacaodomotorista2"; PreImage = @("cr40f_motorista1", "cr40f_motorista2", "cr40f_statusdatroca", "cr40f_veiculo1antesdatroca", "cr40f_veiculo2antesdatroca", "cr40f_iniciodajaneladetroca", "cr40f_fimdajaneladetroca", "new_tipodetroca", "new_concluidomotorista1", "new_concluidomotorista2", "new_observacaodomotorista1", "new_observacaodomotorista2") },
+  [pscustomobject]@{ Label = "Posse de veiculo Create PreOperation"; Entity = "new_possedeveiculo"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 20 },
+  [pscustomobject]@{ Label = "Posse de veiculo Update PreOperation"; Entity = "new_possedeveiculo"; Message = "Update"; Mode = 0; Filtering = "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse"; PreImage = @("new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse"); Stage = 20 },
+  [pscustomobject]@{ Label = "Posse de veiculo Create"; Entity = "new_possedeveiculo"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @() },
+  [pscustomobject]@{ Label = "Posse de veiculo Update"; Entity = "new_possedeveiculo"; Message = "Update"; Mode = 0; Filtering = "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse"; PreImage = @("new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse") },
   [pscustomobject]@{ Label = "Colisoes Create"; Entity = "cr40f_colisao_v2"; Message = "Create"; Mode = 1; Filtering = ""; PreImage = @() },
   [pscustomobject]@{ Label = "Colisoes Update"; Entity = "cr40f_colisao_v2"; Message = "Update"; Mode = 1; Filtering = "cr40f_motorista"; PreImage = @("cr40f_motorista") },
   [pscustomobject]@{ Label = "Recibos Create"; Entity = "cr40f_recibos_v2"; Message = "Create"; Mode = 1; Filtering = ""; PreImage = @() },
@@ -180,8 +207,8 @@ function Get-PluginType {
   return @(Get-DataverseRows "plugintypes" "plugintypeid,typename,_pluginassemblyid_value" "typename eq 'Betinhos.DriverRecordSharing.ServiceDriverSharePlugin'")
 }
 
-function Get-Step($PluginTypeId, $MessageId, $FilterId) {
-  return @(Get-DataverseRows "sdkmessageprocessingsteps" "sdkmessageprocessingstepid,name,mode,stage,filteringattributes,supporteddeployment,statecode,_impersonatinguserid_value" "_eventhandler_value eq $PluginTypeId and _sdkmessageid_value eq $MessageId and _sdkmessagefilterid_value eq $FilterId")
+function Get-Step($PluginTypeId, $MessageId, $FilterId, [int] $Stage) {
+  return @(Get-DataverseRows "sdkmessageprocessingsteps" "sdkmessageprocessingstepid,name,mode,stage,filteringattributes,supporteddeployment,statecode,asyncautodelete,_impersonatinguserid_value" "_eventhandler_value eq $PluginTypeId and _sdkmessageid_value eq $MessageId and _sdkmessagefilterid_value eq $FilterId and stage eq $Stage")
 }
 
 function Get-PreImage($StepId) {
@@ -204,11 +231,12 @@ function Assert-Configuration {
   $messages = Resolve-RegistrationContext
 
   foreach ($spec in $specs) {
+    $stage = if ($spec.PSObject.Properties['Stage']) { [int]$spec.Stage } else { 40 }
     $filter = Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity
-    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid)
+    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid $stage)
     if ($steps.Count -ne 1) { throw "$($spec.Label): esperado 1 step, encontrado $($steps.Count)." }
     $step = $steps[0]
-    if ([int]$step.mode -ne $spec.Mode -or [int]$step.stage -ne 40 -or [int]$step.supporteddeployment -ne 0 -or [int]$step.statecode -ne 0) { throw "$($spec.Label): modo, estagio, deployment ou estado divergente." }
+    if ([int]$step.mode -ne $spec.Mode -or [int]$step.stage -ne $stage -or [int]$step.supporteddeployment -ne 0 -or [int]$step.statecode -ne 0 -or [bool]$step.asyncautodelete -ne ($spec.Mode -eq 1)) { throw "$($spec.Label): modo, estagio, deployment, estado ou asyncautodelete divergente." }
     Assert-SameCsv $spec.Filtering ([string]$step.filteringattributes) "$($spec.Label): filtro"
     if ($runAs -and [string]$step._impersonatinguserid_value -ne [string]$runAs.systemuserid) { throw "$($spec.Label): Run As divergente." }
     $images = @(Get-PreImage $step.sdkmessageprocessingstepid)
@@ -236,9 +264,6 @@ if (-not $Apply) {
 }
 
 $assemblyBytes = [IO.File]::ReadAllBytes((Resolve-Path $DllPath))
-$assemblyName = [Reflection.AssemblyName]::GetAssemblyName((Resolve-Path $DllPath))
-$publicKeyTokenBytes = $assemblyName.GetPublicKeyToken()
-$publicKeyToken = if ($publicKeyTokenBytes) { ([BitConverter]::ToString($publicKeyTokenBytes)).Replace("-", "").ToLowerInvariant() } else { "" }
 $assemblyRows = @(Get-PluginAssembly)
 if ($assemblyRows.Count -gt 1) { throw "Assembly Betinhos.DriverRecordSharing duplicado." }
 if ($assemblyRows.Count -eq 1) {
@@ -248,6 +273,9 @@ if ($assemblyRows.Count -eq 1) {
 }
 else {
   Write-Step "criando assembly"
+  $assemblyName = [Reflection.AssemblyName]::GetAssemblyName((Resolve-Path $DllPath))
+  $publicKeyTokenBytes = $assemblyName.GetPublicKeyToken()
+  $publicKeyToken = if ($publicKeyTokenBytes) { ([BitConverter]::ToString($publicKeyTokenBytes)).Replace("-", "").ToLowerInvariant() } else { "" }
   $created = Invoke-DataverseRequest "POST" "pluginassemblies" @{
     name = "Betinhos.DriverRecordSharing"; content = [Convert]::ToBase64String($assemblyBytes); isolationmode = 2; sourcetype = 0
     version = [string]$assemblyName.Version; culture = if ($assemblyName.CultureName) { $assemblyName.CultureName } else { "neutral" }; publickeytoken = $publicKeyToken
@@ -268,11 +296,12 @@ else {
 
 $runAs = Get-RunAsUser
 foreach ($spec in $specs) {
+  $stage = if ($spec.PSObject.Properties['Stage']) { [int]$spec.Stage } else { 40 }
   $messageId = [string]$messages[$spec.Message].sdkmessageid
   $filterId = [string](Get-MessageFilter $messageId $spec.Entity).sdkmessagefilterid
-  $stepRows = @(Get-Step $pluginTypeId $messageId $filterId)
+  $stepRows = @(Get-Step $pluginTypeId $messageId $filterId $stage)
   if ($stepRows.Count -gt 1) { throw "$($spec.Label): steps duplicados." }
-  $payload = @{ name = "DriverRecordSharing - $($spec.Label)"; description = "Criado pelo script register-driver-record-sharing-plugin-webapi.ps1"; "eventhandler_plugintype@odata.bind" = (New-Bind "plugintypes" $pluginTypeId); "sdkmessageid@odata.bind" = (New-Bind "sdkmessages" $messageId); "sdkmessagefilterid@odata.bind" = (New-Bind "sdkmessagefilters" $filterId); stage = 40; mode = $spec.Mode; rank = 1; supporteddeployment = 0 }
+  $payload = @{ name = "DriverRecordSharing - $($spec.Label)"; description = "Criado pelo script register-driver-record-sharing-plugin-webapi.ps1"; "eventhandler_plugintype@odata.bind" = (New-Bind "plugintypes" $pluginTypeId); "sdkmessageid@odata.bind" = (New-Bind "sdkmessages" $messageId); "sdkmessagefilterid@odata.bind" = (New-Bind "sdkmessagefilters" $filterId); stage = $stage; mode = $spec.Mode; asyncautodelete = ($spec.Mode -eq 1); rank = 1; supporteddeployment = 0 }
   if ($spec.Message -eq "Update") { $payload.filteringattributes = $spec.Filtering }
   if ($runAs) { $payload["impersonatinguserid@odata.bind"] = (New-Bind "systemusers" $runAs.systemuserid) }
   if ($stepRows.Count -eq 1) {

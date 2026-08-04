@@ -166,4 +166,16 @@ if (-not $NoPublish) {
     -Body $publishBody | Out-Null
 }
 
-Write-Step "ok $WebResourceName"
+Write-Step "verify remote content"
+$remote = Invoke-RestMethod -Method Get -Uri "$apiBaseUrl/webresourceset($webResourceId)?`$select=content" -Headers $headers
+if ([string]$remote.content -ne $contentBase64) {
+  throw "Conteudo remoto diverge do arquivo local apos o deploy: $WebResourceName"
+}
+$sha256 = [Security.Cryptography.SHA256]::Create()
+try {
+  $hash = ([BitConverter]::ToString($sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($html)))).Replace("-", "")
+}
+finally {
+  $sha256.Dispose()
+}
+Write-Step "ok $WebResourceName sha256=$hash"

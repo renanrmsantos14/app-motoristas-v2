@@ -84,6 +84,14 @@ namespace Betinhos.DriverRecordSharing
                 return;
             }
 
+            if (serviceEntity.GetAttributeValue<EntityReference>(PluginConfig.ServiceExchangeLookup) != null)
+            {
+                _tracing.Trace(
+                    "ServiceVehicleSynchronizer skip exchange General serviceId={0}.",
+                    serviceEntity.Id);
+                return;
+            }
+
             var origin = serviceEntity.GetAttributeValue<OptionSetValue>(PluginConfig.ServiceVehicleOrigin)?.Value;
             if (origin == PluginConfig.ServiceVehicleOriginManual)
             {
@@ -169,13 +177,7 @@ namespace Betinhos.DriverRecordSharing
 
         private EntityReference ResolveVehicleForDriverAt(Guid driverId, DateTime serviceDate)
         {
-            var currentVehicle = FindPossessionVehicleAt(driverId, serviceDate);
-            foreach (var exchange in ListPlannedExchanges(driverId, serviceDate))
-            {
-                currentVehicle = ApplyExchange(driverId, exchange, currentVehicle);
-            }
-
-            return currentVehicle;
+            return FindPossessionVehicleAt(driverId, serviceDate);
         }
 
         private EntityReference FindPossessionVehicleAt(Guid driverId, DateTime serviceDate)
@@ -202,70 +204,13 @@ namespace Betinhos.DriverRecordSharing
             var results = _service.RetrieveMultiple(query);
             if (results.Entities.Count > 1)
             {
-                _tracing.Trace(
-                    "ServiceVehicleSynchronizer ambiguous possession driverId={0} serviceDate={1:o} count={2}.",
-                    driverId,
-                    serviceDate,
-                    results.Entities.Count);
+                throw new InvalidPluginExecutionException(
+                    "Não foi possível definir o veículo do serviço: o motorista possui mais de uma posse válida para a data. Corrija as posses duplicadas e tente novamente.");
             }
 
             return results.Entities.Count == 0
                 ? null
                 : results.Entities[0].GetAttributeValue<EntityReference>(PluginConfig.VehiclePossessionVehicleLookup);
-        }
-
-        private IReadOnlyList<Entity> ListPlannedExchanges(Guid driverId, DateTime serviceDate)
-        {
-            var query = new QueryExpression(PluginConfig.ExchangeTable)
-            {
-                ColumnSet = BuildExchangeColumnSet(),
-                NoLock = true
-            };
-            query.Criteria.AddCondition(PluginConfig.ExchangeStartDate, ConditionOperator.OnOrBefore, serviceDate);
-            query.Criteria.AddCondition(
-                PluginConfig.ExchangeStatus,
-                ConditionOperator.In,
-                PluginConfig.ExchangeStatusProgrammed,
-                PluginConfig.ExchangeStatusConfirmed);
-
-            var driverFilter = new FilterExpression(LogicalOperator.Or);
-            driverFilter.AddCondition(PluginConfig.ExchangeDriver1Lookup, ConditionOperator.Equal, driverId);
-            driverFilter.AddCondition(PluginConfig.ExchangeDriver2Lookup, ConditionOperator.Equal, driverId);
-            query.Criteria.AddFilter(driverFilter);
-            query.Orders.Add(new OrderExpression(PluginConfig.ExchangeStartDate, OrderType.Ascending));
-
-            return _service.RetrieveMultiple(query).Entities;
-        }
-
-        private static EntityReference ApplyExchange(Guid driverId, Entity exchange, EntityReference currentVehicle)
-        {
-            var driver1 = exchange.GetAttributeValue<EntityReference>(PluginConfig.ExchangeDriver1Lookup);
-            var driver2 = exchange.GetAttributeValue<EntityReference>(PluginConfig.ExchangeDriver2Lookup);
-            var vehicle1 = exchange.GetAttributeValue<EntityReference>(PluginConfig.ExchangeVehicle1Lookup);
-            var vehicle2 = exchange.GetAttributeValue<EntityReference>(PluginConfig.ExchangeVehicle2Lookup);
-            var exchangeType = exchange.GetAttributeValue<OptionSetValue>(PluginConfig.ExchangeType)?.Value;
-
-            if (exchangeType == PluginConfig.ExchangeTypeTakeFromBase)
-            {
-                return driver1 != null && driver1.Id == driverId ? vehicle2 ?? currentVehicle : currentVehicle;
-            }
-
-            if (exchangeType == PluginConfig.ExchangeTypeReturnToBase)
-            {
-                return driver1 != null && driver1.Id == driverId ? null : currentVehicle;
-            }
-
-            if (driver1 != null && driver1.Id == driverId)
-            {
-                return vehicle2 ?? currentVehicle;
-            }
-
-            if (driver2 != null && driver2.Id == driverId)
-            {
-                return vehicle1 ?? currentVehicle;
-            }
-
-            return currentVehicle;
         }
 
         private IReadOnlyList<Entity> ListFutureServices(Guid driverId)
