@@ -182,6 +182,7 @@ namespace Betinhos.DriverRecordSharing
 
         private EntityReference FindPossessionVehicleAt(Guid driverId, DateTime serviceDate)
         {
+            var serviceInstant = AsUtc(serviceDate);
             var query = new QueryExpression(PluginConfig.VehiclePossessionTable)
             {
                 ColumnSet = new ColumnSet(
@@ -189,28 +190,55 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.VehiclePossessionVehicleLookup,
                     PluginConfig.VehiclePossessionStartDate,
                     PluginConfig.VehiclePossessionEndDate),
-                NoLock = true,
-                TopCount = 2
+                NoLock = true
             };
             query.Criteria.AddCondition(PluginConfig.VehiclePossessionDriverLookup, ConditionOperator.Equal, driverId);
-            query.Criteria.AddCondition(PluginConfig.VehiclePossessionStartDate, ConditionOperator.OnOrBefore, serviceDate);
-
-            var endFilter = new FilterExpression(LogicalOperator.Or);
-            endFilter.AddCondition(PluginConfig.VehiclePossessionEndDate, ConditionOperator.Null);
-            endFilter.AddCondition(PluginConfig.VehiclePossessionEndDate, ConditionOperator.GreaterThan, serviceDate);
-            query.Criteria.AddFilter(endFilter);
+            query.Criteria.AddCondition(PluginConfig.VehiclePossessionStartDate, ConditionOperator.OnOrBefore, serviceInstant);
             query.Orders.Add(new OrderExpression(PluginConfig.VehiclePossessionStartDate, OrderType.Descending));
 
             var results = _service.RetrieveMultiple(query);
-            if (results.Entities.Count > 1)
+            var activePossessions = new List<Entity>();
+            foreach (var possession in results.Entities)
+            {
+                var start = possession.GetAttributeValue<DateTime?>(PluginConfig.VehiclePossessionStartDate);
+                var end = possession.GetAttributeValue<DateTime?>(PluginConfig.VehiclePossessionEndDate);
+                if (!start.HasValue || AsUtc(start.Value) > serviceInstant)
+                {
+                    continue;
+                }
+
+                if (end.HasValue && AsUtc(end.Value) <= serviceInstant)
+                {
+                    continue;
+                }
+
+                activePossessions.Add(possession);
+            }
+
+            if (activePossessions.Count > 1)
             {
                 throw new InvalidPluginExecutionException(
                     "Não foi possível definir o veículo do serviço: o motorista possui mais de uma posse válida para a data. Corrija as posses duplicadas e tente novamente.");
             }
 
-            return results.Entities.Count == 0
+            return activePossessions.Count == 0
                 ? null
-                : results.Entities[0].GetAttributeValue<EntityReference>(PluginConfig.VehiclePossessionVehicleLookup);
+                : activePossessions[0].GetAttributeValue<EntityReference>(PluginConfig.VehiclePossessionVehicleLookup);
+        }
+
+        private static DateTime AsUtc(DateTime value)
+        {
+            if (value.Kind == DateTimeKind.Utc)
+            {
+                return value;
+            }
+
+            if (value.Kind == DateTimeKind.Local)
+            {
+                return value.ToUniversalTime();
+            }
+
+            return DateTime.SpecifyKind(value, DateTimeKind.Utc);
         }
 
         private IReadOnlyList<Entity> ListFutureServices(Guid driverId)

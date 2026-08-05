@@ -12,9 +12,7 @@ param(
 
   [switch] $DeviceCode,
 
-  [switch] $AddExistingToSolution,
-
-  [string] $SolutionUniqueName = "AppBetinhos"
+  [switch] $AddExistingToSolution
 )
 
 $ErrorActionPreference = "Stop"
