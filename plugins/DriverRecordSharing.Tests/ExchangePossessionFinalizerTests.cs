@@ -18,6 +18,7 @@ namespace Betinhos.DriverRecordSharing.Tests
             var exchange = Exchange(100000002, driver, null, null, vehicle, 202410000);
             exchange["cr40f_iniciodajaneladetroca"] = new DateTime(2026, 8, 4, 10, 0, 0, DateTimeKind.Utc);
             exchange["cr40f_fimdajaneladetroca"] = new DateTime(2026, 8, 4, 10, 30, 0, DateTimeKind.Utc);
+            exchange["cr40f_id"] = "TR-123";
             var service = new MemoryService(exchange);
 
             InvokeEnsureGeneral(service, exchange);
@@ -27,6 +28,10 @@ namespace Betinhos.DriverRecordSharing.Tests
             Assert.Equal(100000002, general.GetAttributeValue<OptionSetValue>("new_categoriadoitem").Value);
             Assert.True(general.GetAttributeValue<bool>("new_foiprogramado"));
             Assert.Equal(exchange.Id, general.GetAttributeValue<EntityReference>("cr40f_ot").Id);
+            Assert.Equal("Troca de carro", general.GetAttributeValue<string>("cr40f_passageirosetelefonedecontato"));
+            Assert.Equal("Troca de carro", general.GetAttributeValue<string>("cr40f_enderecodesada"));
+            Assert.Equal("Troca de carro", general.GetAttributeValue<string>("cr40f_destino"));
+            Assert.Equal("Troca de carro | ID da troca: TR-123", general.GetAttributeValue<string>("cr40f_obsdeoperao"));
         }
 
         [Fact]

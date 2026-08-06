@@ -78,7 +78,11 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.ServiceDriverLookup,
                     PluginConfig.ServiceVehicleLookup,
                     PluginConfig.ServiceStartDate,
-                    PluginConfig.ServiceEndDate),
+                    PluginConfig.ServiceEndDate,
+                    PluginConfig.ServicePassengerViewField,
+                    PluginConfig.ServiceAddressViewField,
+                    PluginConfig.ServiceDestinationViewField,
+                    PluginConfig.ServiceOperationNotesField),
                 TopCount = 2,
                 NoLock = false
             };
@@ -102,6 +106,7 @@ namespace Betinhos.DriverRecordSharing
             general[PluginConfig.ServiceCategory] = new OptionSetValue(PluginConfig.ServiceCategoryExchange);
             general[PluginConfig.ServiceBillingStatus] = new OptionSetValue(PluginConfig.ServiceBillingStatusNotBillable);
             general[PluginConfig.ServiceStatus] = new OptionSetValue(MapServiceStatus(status));
+            ApplyExchangeViewFields(exchange, general);
             if (status == PluginConfig.ExchangeStatusCompleted)
             {
                 general[PluginConfig.ServiceFinalizedAt] = DateTime.UtcNow;
@@ -119,7 +124,11 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.ServiceDriverLookup,
                     PluginConfig.ServiceVehicleLookup,
                     PluginConfig.ServiceStartDate,
-                    PluginConfig.ServiceEndDate));
+                    PluginConfig.ServiceEndDate,
+                    PluginConfig.ServicePassengerViewField,
+                    PluginConfig.ServiceAddressViewField,
+                    PluginConfig.ServiceDestinationViewField,
+                    PluginConfig.ServiceOperationNotesField));
         }
 
         private void SynchronizeGeneralCore(Entity exchange, Entity general)
@@ -133,6 +142,7 @@ namespace Betinhos.DriverRecordSharing
             CopyReferenceIfChanged(general, patch, PluginConfig.ServiceVehicleLookup, ResolveGeneralVehicle(exchange));
             CopyValueIfChanged(exchange, general, patch, PluginConfig.ExchangeStartDate, PluginConfig.ServiceStartDate);
             CopyValueIfChanged(exchange, general, patch, PluginConfig.ExchangeEndDate, PluginConfig.ServiceEndDate);
+            ApplyExchangeViewFields(exchange, general, patch);
             if (patch.Attributes.Count == 0) return;
 
             _service.Update(patch);
@@ -156,6 +166,25 @@ namespace Betinhos.DriverRecordSharing
             if (!Equals(expected, actual)) patch[targetAttribute] = expected;
         }
 
+        private static void ApplyExchangeViewFields(Entity exchange, Entity general, Entity patch = null)
+        {
+            var target = patch ?? general;
+            var exchangeId = exchange.GetAttributeValue<string>(PluginConfig.ExchangeBusinessId);
+            var identifier = string.IsNullOrWhiteSpace(exchangeId) ? exchange.Id.ToString() : exchangeId.Trim();
+            CopyTextIfChanged(general, target, PluginConfig.ServicePassengerViewField, "Troca de carro");
+            CopyTextIfChanged(general, target, PluginConfig.ServiceAddressViewField, "Troca de carro");
+            CopyTextIfChanged(general, target, PluginConfig.ServiceDestinationViewField, "Troca de carro");
+            CopyTextIfChanged(general, target, PluginConfig.ServiceOperationNotesField, $"Troca de carro | ID da troca: {identifier}");
+        }
+
+        private static void CopyTextIfChanged(Entity current, Entity patch, string attribute, string expected)
+        {
+            if (!string.Equals(current.GetAttributeValue<string>(attribute), expected, StringComparison.Ordinal))
+            {
+                patch[attribute] = expected;
+            }
+        }
+
         private Entity RetrieveExchange(Guid exchangeId)
         {
             return _service.Retrieve(
@@ -169,6 +198,7 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.ExchangeVehicle2Lookup,
                     PluginConfig.ExchangeStartDate,
                     PluginConfig.ExchangeEndDate,
+                    PluginConfig.ExchangeBusinessId,
                     PluginConfig.ExchangeStatus,
                     PluginConfig.ExchangeType,
                     PluginConfig.ExchangeDriver1Completed,

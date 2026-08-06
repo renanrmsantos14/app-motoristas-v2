@@ -24,6 +24,9 @@ namespace Betinhos.DriverRecordSharing
         public const string ServiceProgrammedFlag = "new_foiprogramado";
         public const string ServiceExchangeLookup = "cr40f_ot";
         public const string ServicePassengerViewField = "cr40f_passageirosetelefonedecontato";
+        public const string ServiceAddressViewField = "cr40f_enderecodesada";
+        public const string ServiceDestinationViewField = "cr40f_destino";
+        public const string ServiceOperationNotesField = "cr40f_obsdeoperao";
         public const string ServiceCategory = "new_categoriadoitem";
         public const string ServiceStatus = "cr40f_status";
         public const string ServiceFinalizedAt = "new_datadefinalizacao";
@@ -104,6 +107,7 @@ namespace Betinhos.DriverRecordSharing
 
         public const string ExchangeTable = "cr40f_trocasdecarro";
         public const string ExchangePrimaryId = "cr40f_trocasdecarroid";
+        public const string ExchangeBusinessId = "cr40f_id";
         public const string ExchangeDriver1Lookup = "cr40f_motorista1";
         public const string ExchangeDriver2Lookup = "cr40f_motorista2";
         public const string ExchangeVehicle1Lookup = "cr40f_veiculo1antesdatroca";
