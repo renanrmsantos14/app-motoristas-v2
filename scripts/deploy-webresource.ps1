@@ -12,6 +12,8 @@ param(
 
   [string] $ClientId = "51f81489-12ee-4a9e-aaae-a2591f45987d",
 
+  [string] $SolutionUniqueName = "",
+
   [switch] $SkipBuild,
 
   [switch] $DeviceCode,
@@ -28,6 +30,56 @@ function Write-Step([string] $Message) {
 
 function Escape-ODataString([string] $Value) {
   return $Value.Replace("'", "''")
+}
+
+function Invoke-DataverseGet([string] $Uri, [hashtable] $RequestHeaders) {
+  $lastError = $null
+  for ($attempt = 1; $attempt -le 4; $attempt++) {
+    try {
+      return Invoke-RestMethod -Method Get -Uri $Uri -Headers $RequestHeaders
+    }
+    catch {
+      $lastError = $_
+      if ($attempt -eq 4) { break }
+      Write-Step "GET falhou tentativa $attempt/4; repetindo"
+      Start-Sleep -Seconds ($attempt * 2)
+    }
+  }
+  throw $lastError
+}
+
+function Ensure-SolutionComponent([string] $SolutionName, [string] $ComponentId, [int] $ComponentType) {
+  if ([string]::IsNullOrWhiteSpace($SolutionName)) { return }
+
+  $escapedSolutionName = Escape-ODataString $SolutionName
+  $solutionLookupUrl = "$apiBaseUrl/solutions?`$select=solutionid&`$filter=uniquename eq '$escapedSolutionName'"
+  $solutionLookup = Invoke-DataverseGet -Uri $solutionLookupUrl -RequestHeaders $headers
+  if (-not $solutionLookup.value -or $solutionLookup.value.Count -ne 1) {
+    throw "Solucao esperada uma vez, encontrada $($solutionLookup.value.Count): $SolutionName"
+  }
+
+  $solutionId = $solutionLookup.value[0].solutionid
+  $componentLookupUrl = "$apiBaseUrl/solutioncomponents?`$select=solutioncomponentid&`$filter=_solutionid_value eq $solutionId and objectid eq $ComponentId and componenttype eq $ComponentType"
+  $componentLookup = Invoke-DataverseGet -Uri $componentLookupUrl -RequestHeaders $headers
+  if ($componentLookup.value.Count -gt 1) {
+    throw "WebResource duplicado na solucao $SolutionName"
+  }
+  if ($componentLookup.value.Count -eq 0) {
+    Write-Step "adicionando $WebResourceName na solucao $SolutionName"
+    $addComponentBody = @{
+      ComponentId = $ComponentId
+      ComponentType = $ComponentType
+      SolutionUniqueName = $SolutionName
+      AddRequiredComponents = $false
+    } | ConvertTo-Json -Depth 4
+    Invoke-RestMethod -Method Post -Uri "$apiBaseUrl/AddSolutionComponent" -Headers $headers -ContentType "application/json; charset=utf-8" -Body $addComponentBody | Out-Null
+  }
+
+  $verified = Invoke-DataverseGet -Uri $componentLookupUrl -RequestHeaders $headers
+  if ($verified.value.Count -ne 1) {
+    throw "WebResource nao foi confirmado na solucao $SolutionName"
+  }
+  Write-Step "solucao ok $SolutionName"
 }
 
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
@@ -97,7 +149,7 @@ $apiBaseUrl = "$environmentBaseUrl/api/data/v9.2"
 if ([string]::IsNullOrWhiteSpace($WebResourceName)) {
   Write-Step "lookup html webresource contendo '$SearchText'"
   $lookupUrl = "$apiBaseUrl/webresourceset?`$select=webresourceid,name,displayname,webresourcetype&`$filter=webresourcetype eq 1"
-  $lookup = Invoke-RestMethod -Method Get -Uri $lookupUrl -Headers $headers
+  $lookup = Invoke-DataverseGet -Uri $lookupUrl -RequestHeaders $headers
   $matches = @(
     $lookup.value | Where-Object {
       ($_.name -and $_.name.IndexOf($SearchText, [StringComparison]::OrdinalIgnoreCase) -ge 0) -or
@@ -122,7 +174,7 @@ else {
   $lookupUrl = "$apiBaseUrl/webresourceset?`$select=webresourceid,name,displayname&`$filter=name eq '$escapedName'"
 
   Write-Step "lookup $WebResourceName"
-  $lookup = Invoke-RestMethod -Method Get -Uri $lookupUrl -Headers $headers
+  $lookup = Invoke-DataverseGet -Uri $lookupUrl -RequestHeaders $headers
 
   if (-not $lookup.value -or $lookup.value.Count -eq 0) {
     throw "WebResource nao encontrado: $WebResourceName"
@@ -136,6 +188,7 @@ else {
 }
 
 $webResourceId = $webResource.webresourceid
+Ensure-SolutionComponent $SolutionUniqueName $webResourceId 61
 $html = Get-Content -Path $resolvedFilePath -Raw -Encoding UTF8
 $contentBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($html))
 
@@ -167,7 +220,7 @@ if (-not $NoPublish) {
 }
 
 Write-Step "verify remote content"
-$remote = Invoke-RestMethod -Method Get -Uri "$apiBaseUrl/webresourceset($webResourceId)?`$select=content" -Headers $headers
+$remote = Invoke-DataverseGet -Uri "$apiBaseUrl/webresourceset($webResourceId)?`$select=content" -RequestHeaders $headers
 if ([string]$remote.content -ne $contentBase64) {
   throw "Conteudo remoto diverge do arquivo local apos o deploy: $WebResourceName"
 }

@@ -9,6 +9,16 @@ namespace Betinhos.DriverRecordSharing
         public const string DeleteMessage = "Delete";
         public const string PreImageAlias = "pre";
         public const string TargetParameterName = "Target";
+        public const string ExchangeLifecycleAuthorizedVariable = "Betinhos.ExchangeLifecycleAuthorized";
+        public const string ExchangeLifecycleReasonParameter = "new_Motivo";
+        public const string ExchangeManualCompletionReason = "new_motivodeconclusaomanual";
+        public const string ExchangeCancellationReason = "new_motivodecancelamento";
+        public const string ExchangeReversalReason = "new_motivodereversao";
+        public const string ExchangeOriginalReversalLookup = "new_trocaoriginalrevertida";
+        public const string ExchangeRevertedFlag = "new_revertida";
+        public const string ExchangeActionExecutorLookup = "new_executadopor";
+        public const string RevertCompensationOutput = "new_TrocaCompensatoriaId";
+        public const string VersionNumber = "versionnumber";
 
         public const string ServiceTable = "cr40f_reservadeveculos";
         public const string ServicePrimaryId = "cr40f_reservadeveculosid";
@@ -24,7 +34,7 @@ namespace Betinhos.DriverRecordSharing
         public const string ServiceProgrammedFlag = "new_foiprogramado";
         public const string ServiceExchangeLookup = "cr40f_ot";
         public const string ServicePassengerViewField = "cr40f_passageirosetelefonedecontato";
-        public const string ServiceAddressViewField = "cr40f_enderecodesada";
+        public const string ServiceAddressViewField = "cr40f_endereodesada";
         public const string ServiceDestinationViewField = "cr40f_destino";
         public const string ServiceOperationNotesField = "cr40f_obsdeoperao";
         public const string ServiceCategory = "new_categoriadoitem";

@@ -44,6 +44,7 @@ namespace Betinhos.DriverRecordSharing
             var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
             var factory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
             var service = factory.CreateOrganizationService(context.UserId);
+            var systemService = factory.CreateOrganizationService(null);
 
             try
             {
@@ -62,6 +63,12 @@ namespace Betinhos.DriverRecordSharing
                     return;
                 }
 
+                if (context.Stage == 10)
+                {
+                    ExchangeMutationGuard.Validate(context, service, tracing);
+                    return;
+                }
+
                 var target = context.InputParameters[PluginConfig.TargetParameterName] as Entity;
                 var preImage = ResolvePreImage(context, tracing);
                 if (context.Stage == 20 && context.PrimaryEntityName == PluginConfig.VehiclePossessionTable)
@@ -75,8 +82,8 @@ namespace Betinhos.DriverRecordSharing
                 var servicePassengerRepository = new ServicePassengerRepository(service, tracing);
                 var serviceVehicleSynchronizer = new ServiceVehicleSynchronizer(service, tracing);
                 var vehiclePossessionIntegrityValidator = new VehiclePossessionIntegrityValidator(service);
-                var serviceExchangeSynchronizer = new ServiceExchangeSynchronizer(service, tracing);
-                var exchangeLifecycleCoordinator = new ExchangeLifecycleCoordinator(service, tracing);
+                var serviceExchangeSynchronizer = new ServiceExchangeSynchronizer(systemService, tracing);
+                var exchangeLifecycleCoordinator = new ExchangeLifecycleCoordinator(service, systemService, tracing);
                 var servicePassengerViewSynchronizer = new ServicePassengerViewSynchronizer(service, tracing);
 
                 if (context.PrimaryEntityName == PluginConfig.EmployeeTable)
@@ -294,12 +301,11 @@ namespace Betinhos.DriverRecordSharing
                     service,
                     target,
                     tracing);
-                serviceExchangeSynchronizer.SyncFromService(context.PrimaryEntityId, target);
                 serviceVehicleSynchronizer.SyncService(context.PrimaryEntityId);
             }
             else if (definition.EntityName == PluginConfig.ExchangeTable)
             {
-                exchangeLifecycleCoordinator.Process(context.PrimaryEntityId, context.MessageName, target, preImage);
+                exchangeLifecycleCoordinator.Process(context, context.PrimaryEntityId, context.MessageName, target, preImage);
                 serviceExchangeSynchronizer.SyncFromExchange(context.PrimaryEntityId);
                 serviceVehicleSynchronizer.SyncServicesForExchangeChange(context.PrimaryEntityId, preImage);
             }
@@ -1447,13 +1453,22 @@ namespace Betinhos.DriverRecordSharing
                 return false;
             }
 
-            if (!hasEntityTarget)
+            if (!hasEntityTarget && !hasReferenceTarget)
             {
                 return false;
             }
 
-            if (context.MessageName != PluginConfig.CreateMessage &&
-                context.MessageName != PluginConfig.UpdateMessage)
+            if (context.MessageName == PluginConfig.DeleteMessage)
+            {
+                return hasReferenceTarget &&
+                    (context.PrimaryEntityName == PluginConfig.ServiceTable ||
+                     context.PrimaryEntityName == PluginConfig.ExchangeTable ||
+                     context.PrimaryEntityName == PluginConfig.VehiclePossessionTable);
+            }
+
+            if (!hasEntityTarget ||
+                (context.MessageName != PluginConfig.CreateMessage &&
+                 context.MessageName != PluginConfig.UpdateMessage))
             {
                 return false;
             }

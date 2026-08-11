@@ -7,18 +7,34 @@ namespace Betinhos.DriverRecordSharing
     internal sealed class ExchangeLifecycleCoordinator
     {
         private readonly IOrganizationService _service;
+        private readonly IOrganizationService _lifecycleService;
         private readonly ITracingService _tracing;
         private readonly ExchangePossessionFinalizer _finalizer;
 
         public ExchangeLifecycleCoordinator(IOrganizationService service, ITracingService tracing)
+            : this(service, service, tracing)
+        {
+        }
+
+        public ExchangeLifecycleCoordinator(
+            IOrganizationService service,
+            IOrganizationService lifecycleService,
+            ITracingService tracing)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
+            _lifecycleService = lifecycleService ?? throw new ArgumentNullException(nameof(lifecycleService));
             _tracing = tracing ?? throw new ArgumentNullException(nameof(tracing));
-            _finalizer = new ExchangePossessionFinalizer(service, tracing);
+            _finalizer = new ExchangePossessionFinalizer(lifecycleService, tracing);
         }
 
         public void Process(Guid exchangeId, string messageName, Entity target, Entity preImage)
         {
+            Process(null, exchangeId, messageName, target, preImage);
+        }
+
+        public void Process(IPluginExecutionContext context, Guid exchangeId, string messageName, Entity target, Entity preImage)
+        {
+            LifecycleAuthorization.Authorize(context);
             var exchange = RetrieveExchange(exchangeId);
             var status = exchange.GetAttributeValue<OptionSetValue>(PluginConfig.ExchangeStatus)?.Value;
             var previousStatus = preImage?.GetAttributeValue<OptionSetValue>(PluginConfig.ExchangeStatus)?.Value;
@@ -87,7 +103,7 @@ namespace Betinhos.DriverRecordSharing
                 NoLock = false
             };
             query.Criteria.AddCondition(PluginConfig.ServiceExchangeLookup, ConditionOperator.Equal, exchange.Id);
-            var rows = _service.RetrieveMultiple(query).Entities;
+            var rows = _lifecycleService.RetrieveMultiple(query).Entities;
             if (rows.Count > 1)
             {
                 throw new InvalidPluginExecutionException(
@@ -111,10 +127,10 @@ namespace Betinhos.DriverRecordSharing
             {
                 general[PluginConfig.ServiceFinalizedAt] = DateTime.UtcNow;
             }
-            var id = _service.Create(general);
+            var id = _lifecycleService.Create(general);
             general.Id = id;
             _tracing.Trace("ExchangeLifecycleCoordinator created General exchangeId={0} generalId={1}.", exchange.Id, id);
-            return _service.Retrieve(
+            return _lifecycleService.Retrieve(
                 PluginConfig.ServiceTable,
                 id,
                 new ColumnSet(
@@ -145,7 +161,7 @@ namespace Betinhos.DriverRecordSharing
             ApplyExchangeViewFields(exchange, general, patch);
             if (patch.Attributes.Count == 0) return;
 
-            _service.Update(patch);
+            _lifecycleService.Update(patch);
             _tracing.Trace("ExchangeLifecycleCoordinator synchronized General core exchangeId={0} generalId={1}.", exchange.Id, general.Id);
         }
 
@@ -187,7 +203,7 @@ namespace Betinhos.DriverRecordSharing
 
         private Entity RetrieveExchange(Guid exchangeId)
         {
-            return _service.Retrieve(
+            return _lifecycleService.Retrieve(
                 PluginConfig.ExchangeTable,
                 exchangeId,
                 new ColumnSet(

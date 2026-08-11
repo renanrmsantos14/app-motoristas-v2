@@ -233,7 +233,14 @@ namespace Betinhos.DriverRecordSharing
             };
             query.Criteria.AddCondition(lookup, ConditionOperator.Equal, id);
             query.Criteria.AddCondition(PluginConfig.VehiclePossessionEndDate, ConditionOperator.Null);
-            return new List<Entity>(_service.RetrieveMultiple(query).Entities);
+            var rows = new List<Entity>(_service.RetrieveMultiple(query).Entities);
+            _tracing.Trace(
+                "Open possession lookup lookup={0} id={1:D} count={2} possessionIds={3}.",
+                lookup,
+                id,
+                rows.Count,
+                string.Join(",", rows.ConvertAll(row => row.Id.ToString("D"))));
+            return rows;
         }
 
         private bool HasAnyPossession(string lookup, Guid id)

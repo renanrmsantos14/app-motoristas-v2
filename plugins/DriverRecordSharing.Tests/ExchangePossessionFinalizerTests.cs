@@ -29,7 +29,7 @@ namespace Betinhos.DriverRecordSharing.Tests
             Assert.True(general.GetAttributeValue<bool>("new_foiprogramado"));
             Assert.Equal(exchange.Id, general.GetAttributeValue<EntityReference>("cr40f_ot").Id);
             Assert.Equal("Troca de carro", general.GetAttributeValue<string>("cr40f_passageirosetelefonedecontato"));
-            Assert.Equal("Troca de carro", general.GetAttributeValue<string>("cr40f_enderecodesada"));
+            Assert.Equal("Troca de carro", general.GetAttributeValue<string>("cr40f_endereodesada"));
             Assert.Equal("Troca de carro", general.GetAttributeValue<string>("cr40f_destino"));
             Assert.Equal("Troca de carro | ID da troca: TR-123", general.GetAttributeValue<string>("cr40f_obsdeoperao"));
         }
@@ -139,6 +139,24 @@ namespace Betinhos.DriverRecordSharing.Tests
             Assert.Null(opened.GetAttributeValue<EntityReference>("new_motorista"));
             Assert.Equal(vehicle, opened.GetAttributeValue<EntityReference>("new_veiculo").Id);
             Assert.Equal(effectiveAt, opened.GetAttributeValue<DateTime>("new_iniciodaposse"));
+        }
+
+        [Fact]
+        public void ReturnToBaseTracesTheOpenPossessionLookupForTheDriver()
+        {
+            var driver = Guid.NewGuid();
+            var vehicle = Guid.NewGuid();
+            var exchange = Exchange(100000001, driver, null, vehicle, null);
+            var possession = Possession(driver, vehicle, new DateTime(2026, 8, 3, 10, 0, 0, DateTimeKind.Utc));
+            var service = new MemoryService(exchange, possession);
+            var tracing = new CollectingTracingService();
+
+            InvokeFinalize(service, exchange.Id, new DateTime(2026, 8, 3, 14, 10, 0, DateTimeKind.Utc), tracing);
+
+            Assert.Contains(tracing.Entries, entry =>
+                entry.Contains("Open possession lookup", StringComparison.Ordinal) &&
+                entry.Contains(driver.ToString("D"), StringComparison.Ordinal) &&
+                entry.Contains("count=1", StringComparison.Ordinal));
         }
 
         [Fact]
@@ -349,6 +367,11 @@ namespace Betinhos.DriverRecordSharing.Tests
 
         private static void InvokeFinalize(IOrganizationService service, Guid exchangeId, DateTime effectiveAt)
         {
+            InvokeFinalize(service, exchangeId, effectiveAt, new NullTracingService());
+        }
+
+        private static void InvokeFinalize(IOrganizationService service, Guid exchangeId, DateTime effectiveAt, ITracingService tracing)
+        {
             var type = typeof(ServiceDriverSharePlugin).Assembly.GetType(
                 "Betinhos.DriverRecordSharing.ExchangePossessionFinalizer",
                 throwOnError: true);
@@ -356,7 +379,7 @@ namespace Betinhos.DriverRecordSharing.Tests
                 type,
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                 binder: null,
-                args: new object[] { service, new NullTracingService() },
+                args: new object[] { service, tracing },
                 culture: null);
             type.GetMethod(
                     "Finalize",
@@ -379,7 +402,12 @@ namespace Betinhos.DriverRecordSharing.Tests
                 args: new object[] { service, new NullTracingService() },
                 culture: null);
             var target = service.Retrieve("cr40f_trocasdecarro", exchangeId, new ColumnSet(true));
-            type.GetMethod("Process", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            type.GetMethod(
+                    "Process",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                    binder: null,
+                    types: new[] { typeof(Guid), typeof(string), typeof(Entity), typeof(Entity) },
+                    modifiers: null)
                 .Invoke(instance, new object[] { exchangeId, message, target, preImage });
         }
 
@@ -410,6 +438,16 @@ namespace Betinhos.DriverRecordSharing.Tests
         private sealed class NullTracingService : ITracingService
         {
             public void Trace(string format, params object[] args) { }
+        }
+
+        private sealed class CollectingTracingService : ITracingService
+        {
+            public List<string> Entries { get; } = new List<string>();
+
+            public void Trace(string format, params object[] args)
+            {
+                Entries.Add(string.Format(format, args));
+            }
         }
 
         private sealed class MemoryService : IOrganizationService

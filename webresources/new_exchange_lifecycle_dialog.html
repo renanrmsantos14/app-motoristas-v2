@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ciclo da troca</title>
+  <style>
+    :root { color-scheme: light; font-family: "Segoe UI", sans-serif; }
+    body { margin: 0; padding: 24px; color: #1f2937; background: #fff; }
+    h1 { margin: 0 0 8px; font-size: 20px; }
+    p { color: #4b5563; line-height: 1.45; }
+    label { display: block; margin: 20px 0 6px; font-weight: 600; }
+    textarea { width: 100%; min-height: 120px; padding: 10px; box-sizing: border-box; border: 1px solid #9ca3af; border-radius: 6px; font: inherit; resize: vertical; }
+    textarea:focus { outline: 2px solid #2563eb; outline-offset: 1px; }
+    .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+    button { border: 0; border-radius: 6px; padding: 10px 16px; font-weight: 600; cursor: pointer; }
+    #cancel { background: #e5e7eb; color: #111827; }
+    #confirm { background: #2563eb; color: white; }
+    #confirm.danger { background: #b91c1c; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #status { min-height: 22px; margin-top: 12px; color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 id="title">Ação da troca</h1>
+    <p id="consequence"></p>
+    <label for="reason">Motivo obrigatório</label>
+    <textarea id="reason" maxlength="2000" aria-describedby="status" autofocus></textarea>
+    <div class="actions">
+      <button id="cancel" type="button">Cancelar</button>
+      <button id="confirm" type="button">Confirmar</button>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+  </main>
+  <script>
+    (function () {
+      var config = { action: "", id: "" };
+      var labels = {
+        new_ConcluirTrocaDeCarro: ["Concluir troca", "A troca será concluída e as posses serão finalizadas na mesma transação."],
+        new_CancelarTrocaDeCarro: ["Cancelar troca", "A troca será cancelada sem alterar o histórico de posses."],
+        new_ReverterTrocaDeCarro: ["Reverter troca", "Será criado um evento inverso com o horário atual. O evento original permanecerá no histórico."]
+      };
+
+      function xrm() { return window.parent && window.parent.Xrm ? window.parent.Xrm : window.Xrm; }
+      function close() { try { window.close(); } catch (e) {} }
+      function readConfig() {
+        var raw = new URLSearchParams(window.location.search).get("data") || "";
+        try { config = JSON.parse(raw); }
+        catch (e) { try { config = JSON.parse(decodeURIComponent(raw)); } catch (ignored) {} }
+      }
+      function execute() {
+        var reason = document.getElementById("reason").value.trim();
+        var status = document.getElementById("status");
+        if (!reason) { status.textContent = "Informe o motivo."; document.getElementById("reason").focus(); return; }
+        if (reason.length > 2000) { status.textContent = "O motivo deve ter no máximo 2.000 caracteres."; return; }
+        var confirmButton = document.getElementById("confirm");
+        var cancelButton = document.getElementById("cancel");
+        confirmButton.disabled = true; cancelButton.disabled = true; status.textContent = "Processando…";
+        var request = {
+          entity: { entityType: "cr40f_trocasdecarro", id: config.id },
+          new_Motivo: reason,
+          getMetadata: function () {
+            return {
+              boundParameter: "entity",
+              operationType: 0,
+              operationName: config.action,
+              parameterTypes: {
+                entity: { typeName: "mscrm.cr40f_trocasdecarro", structuralProperty: 5 },
+                new_Motivo: { typeName: "Edm.String", structuralProperty: 1 }
+              }
+            };
+          }
+        };
+        xrm().WebApi.online.execute(request).then(function () {
+          status.textContent = "Concluído.";
+          close();
+        }, function (error) {
+          confirmButton.disabled = false; cancelButton.disabled = false;
+          status.textContent = error && error.message ? error.message : "Falha no servidor.";
+        });
+      }
+      readConfig();
+      var copy = labels[config.action] || ["Ação da troca", "Confirme a operação para continuar."];
+      document.getElementById("title").textContent = copy[0];
+      document.getElementById("consequence").textContent = copy[1];
+      if (config.action === "new_ReverterTrocaDeCarro") document.getElementById("confirm").className = "danger";
+      document.getElementById("confirm").addEventListener("click", execute);
+      document.getElementById("cancel").addEventListener("click", close);
+      document.getElementById("reason").addEventListener("keydown", function (event) { if (event.key === "Escape") close(); });
+    }());
+  </script>
+</body>
+</html>

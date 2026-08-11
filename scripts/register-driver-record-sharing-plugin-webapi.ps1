@@ -140,6 +140,16 @@ function Get-DataverseRows([string] $EntitySet, [string] $Select, [string] $Filt
   return @($response.value)
 }
 
+function Assert-RequiredTable([string] $LogicalName) {
+  try {
+    $rows = @(Get-DataverseRows "EntityDefinitions(LogicalName='$LogicalName')" "MetadataId,LogicalName" "")
+  }
+  catch {
+    throw "Tabela obrigatoria $LogicalName nao esta disponivel neste ambiente DEV: $(Get-DataverseErrorDetail $_)"
+  }
+  if ($rows.Count -ne 1) { throw "Tabela obrigatoria $LogicalName nao esta disponivel neste ambiente DEV." }
+}
+
 function Get-SingleRow([string] $EntitySet, [string] $Select, [string] $Filter, [string] $Label) {
   $rows = @(Get-DataverseRows $EntitySet $Select $Filter)
   if ($rows.Count -ne 1) {
@@ -173,6 +183,14 @@ $specs = @(
   [pscustomobject]@{ Label = "Passageiros Update"; Entity = "cr40f_bancodedados"; Message = "Update"; Mode = 1; Filtering = "cr40f_nomedopassageiro,cr40f_telefone"; PreImage = @("cr40f_nomedopassageiro", "cr40f_telefone") },
   [pscustomobject]@{ Label = "Trocas de carro Create"; Entity = "cr40f_trocasdecarro"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @() },
   [pscustomobject]@{ Label = "Trocas de carro Update"; Entity = "cr40f_trocasdecarro"; Message = "Update"; Mode = 0; Filtering = "cr40f_motorista1,cr40f_motorista2,cr40f_statusdatroca,cr40f_veiculo1antesdatroca,cr40f_veiculo2antesdatroca,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,new_tipodetroca,new_concluidomotorista1,new_concluidomotorista2,new_observacaodomotorista1,new_observacaodomotorista2"; PreImage = @("cr40f_motorista1", "cr40f_motorista2", "cr40f_statusdatroca", "cr40f_veiculo1antesdatroca", "cr40f_veiculo2antesdatroca", "cr40f_iniciodajaneladetroca", "cr40f_fimdajaneladetroca", "new_tipodetroca", "new_concluidomotorista1", "new_concluidomotorista2", "new_observacaodomotorista1", "new_observacaodomotorista2") },
+  [pscustomobject]@{ Label = "Trocas de carro Update PreValidation"; Entity = "cr40f_trocasdecarro"; Message = "Update"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
+  [pscustomobject]@{ Label = "Trocas de carro Delete PreValidation"; Entity = "cr40f_trocasdecarro"; Message = "Delete"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
+  [pscustomobject]@{ Label = "Servicos de troca Create PreValidation"; Entity = "cr40f_reservadeveiculos"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
+  [pscustomobject]@{ Label = "Servicos de troca Update PreValidation"; Entity = "cr40f_reservadeveiculos"; Message = "Update"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
+  [pscustomobject]@{ Label = "Servicos de troca Delete PreValidation"; Entity = "cr40f_reservadeveiculos"; Message = "Delete"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
+  [pscustomobject]@{ Label = "Posse de veiculo Create PreValidation"; Entity = "new_possedeveiculo"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
+  [pscustomobject]@{ Label = "Posse de veiculo Update PreValidation"; Entity = "new_possedeveiculo"; Message = "Update"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
+  [pscustomobject]@{ Label = "Posse de veiculo Delete PreValidation"; Entity = "new_possedeveiculo"; Message = "Delete"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 10 },
   [pscustomobject]@{ Label = "Posse de veiculo Create PreOperation"; Entity = "new_possedeveiculo"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @(); Stage = 20 },
   [pscustomobject]@{ Label = "Posse de veiculo Update PreOperation"; Entity = "new_possedeveiculo"; Message = "Update"; Mode = 0; Filtering = "new_motorista,new_veiculo,new_iniciodaposse,new_fimdaposse"; PreImage = @("new_motorista", "new_veiculo", "new_iniciodaposse", "new_fimdaposse"); Stage = 20 },
   [pscustomobject]@{ Label = "Posse de veiculo Create"; Entity = "new_possedeveiculo"; Message = "Create"; Mode = 0; Filtering = ""; PreImage = @() },
@@ -183,6 +201,10 @@ $specs = @(
   [pscustomobject]@{ Label = "Recibos Update"; Entity = "cr40f_recibos_v2"; Message = "Update"; Mode = 1; Filtering = "cr40f_motorista"; PreImage = @("cr40f_motorista") },
   [pscustomobject]@{ Label = "Pedido de cotacao Update"; Entity = "cr40f_pedidodecotacao"; Message = "Update"; Mode = 0; Filtering = "cr40f_origemultimasincronizacao,cr40f_statuscotacao,cr40f_prazoresponder,cr40f_valorcotado,cr40f_condicaocomercial,cr40f_respostaenviadacliente,cr40f_clienteempresa,cr40f_contatocliente,cr40f_telefonewhatsapp,cr40f_emailcliente,cr40f_origem,cr40f_destino,cr40f_datahoraservico,cr40f_quantidadepassageiros,cr40f_observacoespedido,cr40f_prioridade"; PreImage = @() }
 )
+
+Assert-RequiredTable "cr40f_trocasdecarro"
+Assert-RequiredTable "cr40f_reservadeveiculos"
+Assert-RequiredTable "new_possedeveiculo"
 
 function Resolve-RegistrationContext {
   $messages = @{}
@@ -209,8 +231,12 @@ function Get-PluginType {
   return @(Get-DataverseRows "plugintypes" "plugintypeid,typename,_pluginassemblyid_value" "typename eq 'Betinhos.DriverRecordSharing.ServiceDriverSharePlugin'")
 }
 
+function Get-CommandPluginType {
+  return @(Get-DataverseRows "plugintypes" "plugintypeid,typename,_pluginassemblyid_value" "typename eq 'Betinhos.DriverRecordSharing.ExchangeLifecycleCommandPlugin'")
+}
+
 function Get-Step($PluginTypeId, $MessageId, $FilterId, [int] $Stage) {
-  return @(Get-DataverseRows "sdkmessageprocessingsteps" "sdkmessageprocessingstepid,name,mode,stage,filteringattributes,supporteddeployment,statecode,asyncautodelete,_impersonatinguserid_value" "_eventhandler_value eq $PluginTypeId and _sdkmessageid_value eq $MessageId and _sdkmessagefilterid_value eq $FilterId and stage eq $Stage")
+  return @(Get-DataverseRows "sdkmessageprocessingsteps" "sdkmessageprocessingstepid,name,mode,stage,filteringattributes,supporteddeployment,statecode,asyncautodelete,_impersonatinguserid_value" "_eventhandler_value eq $PluginTypeId and _sdkmessageid_value eq $MessageId and _sdkmessagefilterid_value eq $FilterId and stage eq $Stage and statecode eq 0")
 }
 
 function Get-PreImage($StepId) {
@@ -253,13 +279,17 @@ function Add-PluginToSolution {
   if ($assembly.Count -ne 1) { throw "Assembly Betinhos.DriverRecordSharing: esperado 1, encontrado $($assembly.Count)." }
   $types = @(Get-PluginType)
   if ($types.Count -ne 1) { throw "PluginType Betinhos.DriverRecordSharing.ServiceDriverSharePlugin: esperado 1, encontrado $($types.Count)." }
+  $commandTypes = @(Get-CommandPluginType)
+  if ($commandTypes.Count -ne 1) { throw "PluginType Betinhos.DriverRecordSharing.ExchangeLifecycleCommandPlugin: esperado 1, encontrado $($commandTypes.Count)." }
 
   Ensure-SolutionComponent $solution.solutionid $assembly[0].pluginassemblyid 91 "assembly Betinhos.DriverRecordSharing"
+  Ensure-SolutionComponent $solution.solutionid $commandTypes[0].plugintypeid 90 "plugin type ExchangeLifecycleCommandPlugin"
 
   $messages = Resolve-RegistrationContext
   foreach ($spec in $specs) {
+    $stage = if ($spec.PSObject.Properties['Stage']) { [int]$spec.Stage } else { 40 }
     $filter = Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity
-    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid)
+    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid $stage)
     if ($steps.Count -ne 1) { throw "$($spec.Label): esperado 1 step, encontrado $($steps.Count)." }
     $step = $steps[0]
     Ensure-SolutionComponent $solution.solutionid $step.sdkmessageprocessingstepid 92 "step $($spec.Label)"
@@ -274,11 +304,14 @@ function Assert-PluginComponentInventory {
   if ($assembly.Count -ne 1) { throw "Assembly Betinhos.DriverRecordSharing: esperado 1, encontrado $($assembly.Count)." }
   $types = @(Get-PluginType)
   if ($types.Count -ne 1) { throw "PluginType Betinhos.DriverRecordSharing.ServiceDriverSharePlugin: esperado 1, encontrado $($types.Count)." }
+  $commandTypes = @(Get-CommandPluginType)
+  if ($commandTypes.Count -ne 1) { throw "PluginType Betinhos.DriverRecordSharing.ExchangeLifecycleCommandPlugin: esperado 1, encontrado $($commandTypes.Count)." }
 
   $messages = Resolve-RegistrationContext
   foreach ($spec in $specs) {
+    $stage = if ($spec.PSObject.Properties['Stage']) { [int]$spec.Stage } else { 40 }
     $filter = Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity
-    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid)
+    $steps = @(Get-Step $types[0].plugintypeid $messages[$spec.Message].sdkmessageid $filter.sdkmessagefilterid $stage)
     if ($steps.Count -ne 1) { throw "$($spec.Label): esperado 1 step, encontrado $($steps.Count)." }
     if ($spec.PreImage.Count -eq 0) { continue }
     $images = @(Get-PreImage $steps[0].sdkmessageprocessingstepid)
@@ -300,6 +333,8 @@ function Assert-Configuration([switch] $SkipAssemblyHash) {
 
   $types = @(Get-PluginType)
   if ($types.Count -ne 1 -or [string]$types[0]._pluginassemblyid_value -ne [string]$assembly.pluginassemblyid) { throw "PluginType nao aponta para assembly correto." }
+  $commandTypes = @(Get-CommandPluginType)
+  if ($commandTypes.Count -ne 1 -or [string]$commandTypes[0]._pluginassemblyid_value -ne [string]$assembly.pluginassemblyid) { throw "PluginType de comandos nao aponta para assembly correto." }
   $runAs = Get-RunAsUser
   $messages = Resolve-RegistrationContext
 
@@ -326,15 +361,9 @@ function Assert-Configuration([switch] $SkipAssemblyHash) {
 $messages = Resolve-RegistrationContext
 foreach ($spec in $specs) { [void](Get-MessageFilter $messages[$spec.Message].sdkmessageid $spec.Entity) }
 
-if ($AddExistingToSolution) {
+if ($AddExistingToSolution -and -not $Apply) {
   Assert-PluginComponentInventory
-  if (-not $Apply) {
-    Write-Step "DRY RUN OK. Registro validado; use -Apply -AddExistingToSolution para incluir na solucao $SolutionUniqueName."
-    return
-  }
-  Add-PluginToSolution
-  Assert-PluginComponentInventory
-  Write-Step "PLUGIN ADICIONADO E VALIDADO NA SOLUCAO $SolutionUniqueName"
+  Write-Step "DRY RUN OK. Registro validado; use -Apply -AddExistingToSolution para incluir na solucao $SolutionUniqueName."
   return
 }
 
@@ -379,6 +408,17 @@ else {
   $pluginTypeId = [string]$created.plugintypeid
 }
 
+$commandTypeRows = @(Get-CommandPluginType)
+if ($commandTypeRows.Count -gt 1) { throw "PluginType ExchangeLifecycleCommandPlugin duplicado." }
+if ($commandTypeRows.Count -eq 1) {
+  $commandPluginTypeId = [string]$commandTypeRows[0].plugintypeid
+}
+else {
+  Write-Step "criando PluginType ExchangeLifecycleCommandPlugin"
+  $created = Invoke-DataverseRequest "POST" "plugintypes" @{ name = "ExchangeLifecycleCommandPlugin"; friendlyname = "ExchangeLifecycleCommandPlugin"; typename = "Betinhos.DriverRecordSharing.ExchangeLifecycleCommandPlugin"; "pluginassemblyid@odata.bind" = (New-Bind "pluginassemblies" $assemblyId) }
+  $commandPluginTypeId = [string]$created.plugintypeid
+}
+
 $runAs = Get-RunAsUser
 foreach ($spec in $specs) {
   $stage = if ($spec.PSObject.Properties['Stage']) { [int]$spec.Stage } else { 40 }
@@ -411,4 +451,10 @@ foreach ($spec in $specs) {
 }
 
 Assert-Configuration
+if ($AddExistingToSolution) {
+  Add-PluginToSolution
+  Assert-PluginComponentInventory
+  Write-Step "PLUGIN ADICIONADO E VALIDADO NA SOLUCAO $SolutionUniqueName"
+}
+
 Write-Step "REGISTRO E VALIDACAO OK"
