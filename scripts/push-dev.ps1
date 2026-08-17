@@ -31,7 +31,7 @@ function Write-Step([string] $Message) {
 
 Write-Step "gate de higiene do repositorio"
 & (Join-Path $PSScriptRoot "check-repository-hygiene.ps1")
-if ($LASTEXITCODE -ne 0) { throw "Gate de higiene do repositorio falhou." }
+if (-not $?) { throw "Gate de higiene do repositorio falhou." }
 
 function Assert-SolutionArchiveExchangeLifecycle([string] $ZipPath) {
   $extractPath = Join-Path ([System.IO.Path]::GetTempPath()) ("exchange-lifecycle-solution-" + [guid]::NewGuid().ToString("N"))
