@@ -78,7 +78,7 @@ namespace Betinhos.DriverRecordSharing
                 if (HasAnyPossession(PluginConfig.VehiclePossessionVehicleLookup, vehicle.Id))
                 {
                     throw new InvalidPluginExecutionException(
-                        "Veículo da retirada possui histórico, mas nenhuma posse aberta na base. Reconcilie a sequência antes de concluir.");
+                        "[POSSESSION_CHAIN_GAP] Veículo da retirada possui histórico, mas nenhuma posse aberta na base. Reconcilie a sequência antes de concluir.");
                 }
                 Create(vehicle, null, exchange.Id, effectiveAt, effectiveAt);
                 Create(vehicle, driver, exchange.Id, effectiveAt);

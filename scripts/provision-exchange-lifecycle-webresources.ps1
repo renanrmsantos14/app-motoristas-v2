@@ -45,8 +45,10 @@ foreach ($resource in $resources) {
   if (-not $Apply) { Write-Step "DRY RUN atualizaria $($resource.Name)"; continue }
   $content = [Convert]::ToBase64String([IO.File]::ReadAllBytes($resource.File))
   if ($rows.Count -eq 0) {
-    $created = Request "POST" "webresourceset" @{ name = $resource.Name; displayname = $resource.DisplayName; webresourcetype = $resource.Type; content = $content }
-    $id = [guid]$created.webresourceid
+    Request "POST" "webresourceset" @{ name = $resource.Name; displayname = $resource.DisplayName; webresourcetype = $resource.Type; content = $content } | Out-Null
+    $createdRows = @((Request "GET" "webresourceset?`$select=webresourceid,name&`$filter=name eq '$(Escape-OData $resource.Name)'" $null).value)
+    if ($createdRows.Count -ne 1) { throw "WebResource $($resource.Name) criado, mas nao foi localizado de forma univoca." }
+    $id = [guid]$createdRows[0].webresourceid
   }
   else {
     $id = [guid]$rows[0].webresourceid

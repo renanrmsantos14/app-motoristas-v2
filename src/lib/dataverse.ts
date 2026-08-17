@@ -29,6 +29,7 @@ type XrmLike = {
     retrieveRecord: (entitySetName: string, id: string, options?: string) => Promise<DataverseRecord>;
     updateRecord: (entitySetName: string, id: string, data: Record<string, unknown>) => Promise<unknown>;
     createRecord: (entitySetName: string, data: Record<string, unknown>) => Promise<{ id: string }>;
+    online?: { execute: (request: Record<string, unknown>) => Promise<unknown> };
   };
 };
 
@@ -550,7 +551,7 @@ export async function getDriverContext(): Promise<DriverContext> {
 
   const result = await retrieveMultiple(
     DATAVERSE.funcionarios,
-    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado,cr40f_datadedemissao&$filter=statecode eq 0 and cr40f_datadedemissao eq null and cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=2`
+    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado&$filter=statecode eq 0 and cr40f_datadedemissao eq null and cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=2`
   );
   if (result.entities.length > 1) {
     throw new Error("Mais de um funcionario ativo usa o mesmo Email Microsoft. Corrija o cadastro antes de continuar.");
@@ -2811,7 +2812,7 @@ function mapMaintenance(geral: DataverseRecord, maintenance: DataverseRecord): A
     type: "MANUTENCAO",
     id: businessId,
     title: "Detalhes da Manutenção",
-    actions: ["cancel", "finalizar"],
+    actions: ["finalizar"],
     fields: buildMaintenanceFields(geral, maintenance),
     dataverse: {
       entitySetName: DATAVERSE.manutencoes,
@@ -2854,7 +2855,7 @@ function mapExchange(exchange: DataverseRecord, geral: DataverseRecord | undefin
     type: "TROCA",
     id: businessId,
     title: display.title,
-    actions: ["cancel", "finalizar"],
+    actions: ["finalizar"],
     fields: buildExchangeFields(exchange, geral, driver),
     dataverse: {
       entitySetName: DATAVERSE.trocas,
@@ -2945,23 +2946,21 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   const geralSelect =
     "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
 
-  const servicesResult = await retrieveMultiple(
+  const servicesResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
       geralSelect,
       `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
-      "$orderby=cr40f_dataehorriodesada asc",
-      "$top=80"
+      "$orderby=cr40f_dataehorriodesada asc"
     ].join("&")
   );
 
-  const maintenanceGeralResult = await retrieveMultiple(
+  const maintenanceGeralResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
       geralSelect,
       `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
-      "$orderby=cr40f_dataehorriodesada asc",
-      "$top=80"
+      "$orderby=cr40f_dataehorriodesada asc"
     ].join("&")
   );
 
@@ -2992,13 +2991,12 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     programmedExchangeGeralResult.entities.map((geral) => [getExchangeIdFromGeral(geral), geral] as const).filter(([id]) => Boolean(id))
   );
 
-  const exchangeResult = await retrieveMultiple(
+  const exchangeResult = await retrieveMultipleAll(
     DATAVERSE.trocas,
     [
       EXCHANGE_SELECT,
       `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada}`,
-      "$orderby=cr40f_iniciodajaneladetroca asc",
-      "$top=80"
+      "$orderby=cr40f_iniciodajaneladetroca asc"
     ].join("&")
   );
 
@@ -3018,23 +3016,21 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   ].sort((a, b) => getItemDateMs(a) - getItemDateMs(b));
 
   const agenda = addDateHeaders(items);
-  const historyServiceResult = await retrieveMultiple(
+  const historyServiceResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
       geralSelect,
       `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.servico} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
-      "$orderby=cr40f_dataehorriodesada desc",
-      "$top=80"
+      "$orderby=cr40f_dataehorriodesada desc"
     ].join("&")
   );
 
-  const historyMaintenanceGeralResult = await retrieveMultiple(
+  const historyMaintenanceGeralResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
       geralSelect,
       `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.manutencao} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
-      "$orderby=cr40f_dataehorriodesada desc",
-      "$top=80"
+      "$orderby=cr40f_dataehorriodesada desc"
     ].join("&")
   );
 
@@ -3063,13 +3059,12 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   const historyExchangeGeralById = new Map(
     historyExchangeGeralResult.entities.map((geral) => [getExchangeIdFromGeral(geral), geral] as const).filter(([id]) => Boolean(id))
   );
-  const historyExchangeResult = await retrieveMultiple(
+  const historyExchangeResult = await retrieveMultipleAll(
     DATAVERSE.trocas,
     [
       EXCHANGE_SELECT,
       `$filter=cr40f_iniciodajaneladetroca le ${historyEnd} and cr40f_fimdajaneladetroca ge ${historyStart} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.concluida}`,
-      "$orderby=cr40f_iniciodajaneladetroca desc",
-      "$top=80"
+      "$orderby=cr40f_iniciodajaneladetroca desc"
     ].join("&")
   );
 
@@ -3708,16 +3703,6 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
   if (!isDriver1 && !isDriver2) throw new Error("Motorista atual não pertence a esta troca.");
 
   const observation = getFieldValue(payload.fields, "Observações", "Observacoes", "Observação da Troca", "Observacao da Troca") || "Sem observação.";
-  const exchangePatch: Record<string, unknown> = {};
-  if (isDriver1) {
-    exchangePatch.new_concluidomotorista1 = true;
-    exchangePatch.new_observacaodomotorista1 = observation;
-  }
-  if (isDriver2) {
-    exchangePatch.new_concluidomotorista2 = true;
-    exchangePatch.new_observacaodomotorista2 = observation;
-  }
-
   const completion = getExchangeCompletionState(record, isDriver1, isDriver2);
   dataverseLog("Confirmação de troca iniciada.", {
     detailId: payload.detail.id,
@@ -3733,7 +3718,24 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
       ? "Confirmando e aplicando a troca no servidor."
       : "Registrando sua confirmação da troca."
   );
-  await updateOne(DATAVERSE.trocas, dv.id, exchangePatch);
+  const execute = getWebApi().online?.execute;
+  if (!execute) throw new Error("[FORBIDDEN_LIFECYCLE] API de confirmação indisponível neste contexto.");
+  const request: Record<string, unknown> = {
+    entity: { entityType: "cr40f_trocasdecarro", id: cleanGuid(dv.id) },
+    new_Motivo: observation,
+    new_VersaoEsperada: String(record["@odata.etag"] ?? "").replace(/^W\/\"|\"$/g, ""),
+    getMetadata: () => ({
+      boundParameter: "entity",
+      operationType: 0,
+      operationName: "new_ConfirmarTrocaMotorista",
+      parameterTypes: {
+        entity: { typeName: "mscrm.cr40f_trocasdecarro", structuralProperty: 5 },
+        new_Motivo: { typeName: "Edm.String", structuralProperty: 1 },
+        new_VersaoEsperada: { typeName: "Edm.String", structuralProperty: 1 }
+      }
+    })
+  };
+  await execute(request);
 }
 
 

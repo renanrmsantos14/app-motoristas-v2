@@ -120,7 +120,7 @@ export function redactSensitiveLogValue(value: unknown, key = "", depth = 0): un
       .replace(/data:[^;,]+;base64,[A-Za-z0-9+/=\s]{40,}/gi, `data:${REDACTED_BASE64}`)
       .replace(/\b[A-Za-z0-9+/]{160,}={0,2}\b/g, REDACTED_BASE64)
       .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_EMAIL)
-      .replace(/(^|[^\d])((?:\+?55[\s.-]?)?(?:\(?\d{2}\)?[\s.-]?)?9?\d{4}[\s.-]?\d{4})(?=$|[^\d])/g, (_match, prefix) => `${prefix}${REDACTED_PHONE}`)
+      .replace(/(^|[^\d])((?:\+?55[\s.-]?)?(?:\(?\d{2}\)?[\s.-]?)9?\d{4}[\s.-]?\d{4})(?=$|[^\d])/g, (_match, prefix) => `${prefix}${REDACTED_PHONE}`)
       .replace(/https?:\/\/[^\s"'<>)]*/gi, (url) => redactUrl(url));
   }
 

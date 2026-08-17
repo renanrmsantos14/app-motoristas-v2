@@ -19,14 +19,18 @@ namespace Betinhos.DriverRecordSharing
                 var handler = new ExchangeLifecycleCommandHandler(callerService, systemService, tracing, context);
                 handler.Execute();
             }
-            catch (InvalidPluginExecutionException)
+            catch (InvalidPluginExecutionException ex)
             {
+                new OperationalLogWriter(systemService, tracing).TryWriteError(context, ex);
                 throw;
             }
             catch (Exception ex)
             {
                 tracing?.Trace("ExchangeLifecycleCommandPlugin error: {0}", ex);
-                throw new InvalidPluginExecutionException("Nao foi possivel executar o comando da troca.", ex);
+                new OperationalLogWriter(systemService, tracing).TryWriteError(context, ex);
+                throw new InvalidPluginExecutionException(
+                    PluginErrorMessage.ForUser(ex, context.CorrelationId),
+                    ex);
             }
         }
     }

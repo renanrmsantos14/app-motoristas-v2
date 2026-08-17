@@ -1,6 +1,0 @@
-cr40f_idjuntado: |-
-    =If(
-        IsBlank(ThisRecord.cr40f_id),               // Se 'ID txt' estiver vazio
-        Int(ThisRecord.cr40f_idnovo),     // Tente usar 'num'; se der erro, use 0
-        Int(Value(ThisRecord.cr40f_id))             // Senão, use 'ID txt'
-    ) 

@@ -22,7 +22,7 @@ namespace Betinhos.DriverRecordSharing
             var startedAt = ResolveValue(target, preImage, PluginConfig.VehiclePossessionStartDate);
             if (startedAt is DateTime start && endedAt is DateTime end && end < start)
             {
-                throw new InvalidPluginExecutionException("Posse invÃ¡lida: o fim nÃ£o pode ser anterior ao inÃ­cio.");
+                throw new InvalidPluginExecutionException("Posse inválida: o fim não pode ser anterior ao início.");
             }
             if (endedAt != null)
             {

@@ -78,7 +78,7 @@ namespace Betinhos.DriverRecordSharing.Tests
 
             var pluginError = Assert.IsType<InvalidPluginExecutionException>(error.InnerException);
             Assert.Contains("fim", pluginError.Message);
-            Assert.Contains("inÃ­cio", pluginError.Message);
+            Assert.Contains("início", pluginError.Message);
         }
 
         private static Entity Possession(Guid? driverId, Guid vehicleId, DateTime? endedAt)

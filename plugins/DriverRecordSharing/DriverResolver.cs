@@ -125,14 +125,14 @@ namespace Betinhos.DriverRecordSharing
                 NoLock = true
             };
             employeeQuery.Criteria.AddCondition(PluginConfig.EmployeeMicrosoftEmail, ConditionOperator.Equal, email);
+            employeeQuery.Criteria.AddCondition("statecode", ConditionOperator.Equal, 0);
 
             var employees = _service.RetrieveMultiple(employeeQuery);
             if (employees.Entities.Count != 1)
             {
                 _tracing.Trace(
-                    "DriverResolver.ResolveFromUser skip userId={0} email={1} because employee matches={2}.",
+                    "DriverResolver.ResolveFromUser skip userId={0} because active employee matches={1}.",
                     userReference.Id,
-                    email,
                     employees.Entities.Count);
                 return new ResolvedDriver(null, email, new EntityReference(PluginConfig.UserTable, userReference.Id)
                 {

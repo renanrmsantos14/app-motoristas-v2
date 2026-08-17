@@ -11,10 +11,12 @@ namespace Betinhos.DriverRecordSharing
         public const string TargetParameterName = "Target";
         public const string ExchangeLifecycleAuthorizedVariable = "Betinhos.ExchangeLifecycleAuthorized";
         public const string ExchangeLifecycleReasonParameter = "new_Motivo";
+        public const string ExchangeExpectedVersionParameter = "new_VersaoEsperada";
+        public const string ExchangeLifecycleEffectiveAtParameter = "new_DataEfetiva";
         public const string ExchangeManualCompletionReason = "new_motivodeconclusaomanual";
         public const string ExchangeCancellationReason = "new_motivodecancelamento";
         public const string ExchangeReversalReason = "new_motivodereversao";
-        public const string ExchangeOriginalReversalLookup = "new_trocaoriginalrevertida";
+        public const string ExchangeOriginalReversalLookup = "cr40f_new_trocaoriginalrevertida";
         public const string ExchangeRevertedFlag = "new_revertida";
         public const string ExchangeActionExecutorLookup = "new_executadopor";
         public const string RevertCompensationOutput = "new_TrocaCompensatoriaId";
@@ -116,6 +118,7 @@ namespace Betinhos.DriverRecordSharing
         public const string QuoteRequestPriority = "cr40f_prioridade";
 
         public const string ExchangeTable = "cr40f_trocasdecarro";
+        public const string VehicleTable = "cr40f_veiculos";
         public const string ExchangePrimaryId = "cr40f_trocasdecarroid";
         public const string ExchangeBusinessId = "cr40f_id";
         public const string ExchangeDriver1Lookup = "cr40f_motorista1";
@@ -127,6 +130,8 @@ namespace Betinhos.DriverRecordSharing
         public const string ExchangeStatus = "cr40f_statusdatroca";
         public const string ExchangeType = "new_tipodetroca";
         public const string ExchangeObservation = "cr40f_observacao";
+        public const string ExchangeIdempotencyKey = "new_idempotencykey";
+        public const string ExchangeRequestHash = "new_requesthash";
         public const string ExchangeDriver1Completed = "new_concluidomotorista1";
         public const string ExchangeDriver2Completed = "new_concluidomotorista2";
         public const string ExchangeDriver1Observation = "new_observacaodomotorista1";

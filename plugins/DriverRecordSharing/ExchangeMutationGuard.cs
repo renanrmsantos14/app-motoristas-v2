@@ -8,6 +8,24 @@ namespace Betinhos.DriverRecordSharing
 {
     internal static class ExchangeMutationGuard
     {
+        private static readonly string[] ProtectedExchangeAttributes =
+        {
+            PluginConfig.ExchangeDriver1Lookup,
+            PluginConfig.ExchangeDriver2Lookup,
+            PluginConfig.ExchangeVehicle1Lookup,
+            PluginConfig.ExchangeVehicle2Lookup,
+            PluginConfig.ExchangeStartDate,
+            PluginConfig.ExchangeEndDate,
+            PluginConfig.ExchangeStatus,
+            PluginConfig.ExchangeType,
+            PluginConfig.ExchangeObservation,
+            PluginConfig.ExchangeIdempotencyKey,
+            PluginConfig.ExchangeRequestHash,
+            PluginConfig.ExchangeDriver1Completed,
+            PluginConfig.ExchangeDriver2Completed,
+            PluginConfig.ExchangeDriver1Observation,
+            PluginConfig.ExchangeDriver2Observation
+        };
         private static readonly string[] ProtectedGeneralAttributes =
         {
             PluginConfig.ServiceExchangeLookup,
@@ -80,13 +98,7 @@ namespace Betinhos.DriverRecordSharing
 
             if (context.MessageName == PluginConfig.CreateMessage)
             {
-                var createdStatus = target?.GetAttributeValue<OptionSetValue>(PluginConfig.ExchangeStatus)?.Value;
-                if (createdStatus == PluginConfig.ExchangeStatusCompleted ||
-                    createdStatus == PluginConfig.ExchangeStatusCanceled)
-                {
-                    throw new InvalidPluginExecutionException("Troca deve ser criada aberta; Concluir ou Cancelar exige o comando autorizado, com motivo.");
-                }
-                return;
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Troca deve ser criada pela acao oficial Registrar troca.");
             }
 
             if (context.MessageName != PluginConfig.UpdateMessage)
@@ -97,6 +109,12 @@ namespace Betinhos.DriverRecordSharing
             if (target == null)
             {
                 return;
+            }
+
+            if (target.Attributes.Keys.Any(attribute =>
+                ProtectedExchangeAttributes.Contains(attribute, StringComparer.OrdinalIgnoreCase)))
+            {
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Campos da troca devem ser alterados pela acao oficial.");
             }
 
             var current = service.Retrieve(

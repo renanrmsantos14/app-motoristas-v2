@@ -58,7 +58,7 @@ namespace Betinhos.DriverRecordSharing.Tests
         {
             var driverId = Guid.NewGuid();
             var serviceId = Guid.NewGuid();
-            var serviceRecord = new Entity("cr40f_reservadeveiculos", serviceId)
+        var serviceRecord = new Entity("cr40f_reservadeveculos", serviceId)
             {
                 ["cr40f_motorista"] = new EntityReference("cr40f_funcionarios", driverId),
                 ["cr40f_dataehorriodesada"] = new DateTime(2026, 7, 7, 12, 0, 0, DateTimeKind.Utc)

@@ -40,3 +40,7 @@ test("redactSensitiveLogValue remove campos sensiveis por chave", () => {
     anexos: [{ foto: "[redacted]" }]
   });
 });
+
+test("redactSensitiveLogValue preserva codigos operacionais de oito e nove digitos", () => {
+  assert.equal(redactSensitiveLogValue("OT 202410001 e código 12345678"), "OT 202410001 e código 12345678");
+});

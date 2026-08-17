@@ -62,6 +62,25 @@ import {
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
 import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
+import { clearMediaDraft, loadMediaDraft, saveMediaDraft } from "./lib/mediaDraftStore";
+
+const EXCHANGE_ERROR_MESSAGES: Record<string, string> = {
+  EXCHANGE_CONCURRENCY_CONFLICT: "A troca foi alterada por outra pessoa. Atualize a agenda e tente novamente.",
+  EXCHANGE_VERSION_REQUIRED: "Atualize a agenda antes de executar esta ação.",
+  EXCHANGE_INVALID_WINDOW: "O fim da troca deve ser posterior ao início.",
+  EXCHANGE_OVERLAP: "Existe outra troca para este motorista ou veículo no período.",
+  POSSESSION_CHAIN_GAP: "O histórico de posse precisa ser reconciliado pela operação antes desta troca.",
+  POSSESSION_OVERLAP: "Existe sobreposição no histórico de posse. Contate a operação.",
+  POSSESSION_NOT_OPEN: "A posse esperada do veículo não está aberta. Contate a operação.",
+  IDENTITY_NOT_MAPPED: "Seu usuário não está vinculado a um funcionário ativo. Contate a operação.",
+  FORBIDDEN_LIFECYCLE: "Você não tem permissão ou esta troca não aceita essa ação."
+};
+
+function exchangeUserError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String((error as { message?: unknown })?.message ?? error ?? "");
+  const code = Object.keys(EXCHANGE_ERROR_MESSAGES).find((candidate) => message.includes(candidate));
+  return code ? EXCHANGE_ERROR_MESSAGES[code] : APP_OPERATION_ERROR_MESSAGE;
+}
 import {
   cancelDetailLocally,
   clearMaintenancePhotos,
@@ -436,6 +455,20 @@ function App() {
   const [collisionPhotoIsVideo, setCollisionPhotoIsVideo] = useState(false);
   const [collisionPhotoKind, setCollisionPhotoKind] = useState<CollisionPhotoKind>("cena");
   const [collisionPreviewPhotoId, setCollisionPreviewPhotoId] = useState("");
+  useEffect(() => {
+    if (isButtonPreviewMode || isReceiptPreviewMode) return;
+    let active = true;
+    void loadMediaDraft<PersistedFinalizeDraftAssets>().then((saved) => {
+      if (!active || !saved) return;
+      setStore((current) => ({
+        ...current,
+        signatures: { ...current.signatures, ...saved.signatures },
+        photos: { ...current.photos, ...saved.photos }
+      }));
+      setReceiveProofs((current) => ({ ...current, ...saved.receiveProofs }));
+    }).catch((error) => reportAppError(error, { severity: "warning", source: "app", action: "loadFinalizeDraftAssets", phase: "indexedDB", screen }));
+    return () => { active = false; };
+  }, [isButtonPreviewMode, isReceiptPreviewMode]);
   const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = useState<MaintenanceRequestPhoto[]>([]);
   const [maintenanceRequestPhotoDraft, setMaintenanceRequestPhotoDraft] = useState("");
   const [maintenanceRequestPhotoPreviewUrl, setMaintenanceRequestPhotoPreviewUrl] = useState("");
@@ -549,7 +582,7 @@ function App() {
     if (isButtonPreviewMode || isReceiptPreviewMode) return;
     if (remoteMode) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...store, photos: {}, signatures: {} }));
     } catch (error) {
       reportAppError(error, {
         severity: "warning",
@@ -578,21 +611,21 @@ function App() {
 
   useEffect(() => {
     if (isButtonPreviewMode || isReceiptPreviewMode) return;
-    try {
-      localStorage.setItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY, JSON.stringify({
+    const payload = {
         signatures: store.signatures,
         photos: store.photos,
         receiveProofs: serializeReceiveProofs(receiveProofs)
-      } satisfies PersistedFinalizeDraftAssets));
-    } catch (error) {
+      } satisfies PersistedFinalizeDraftAssets;
+    void saveMediaDraft(payload).then(() => localStorage.removeItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY)).catch((error) => {
       reportAppError(error, {
         severity: "warning",
         source: "app",
         action: "persistFinalizeDraftAssets",
-        phase: "localStorage",
+        phase: "indexedDB",
         screen
       });
-    }
+      setToast(exchangeUserError(error), "warning");
+    });
   }, [isButtonPreviewMode, isReceiptPreviewMode, screen, store.photos, store.signatures, receiveProofs]);
 
   useEffect(() => {
@@ -1036,6 +1069,7 @@ function App() {
     localStorage.removeItem(VOUCHER_DRAFTS_STORAGE_KEY);
     localStorage.removeItem(FINALIZE_DRAFT_ASSETS_STORAGE_KEY);
     localStorage.removeItem(SERVICE_OBSERVATION_DRAFTS_KEY);
+    void clearMediaDraft();
 
     setStore(initialStore());
     setSelectedDetail(null);
@@ -1216,7 +1250,8 @@ function App() {
         if (isVoucher) {
           setVoucherDrafts((current) => ({ ...current, [voucherDraftKey]: finalFields }));
         }
-        setCriticalError(APP_OPERATION_ERROR_MESSAGE);
+        if (detailToFinalize.type === "TROCA") setToast(exchangeUserError(error), "error");
+        else setCriticalError(APP_OPERATION_ERROR_MESSAGE);
         return;
       }
 
@@ -1323,6 +1358,18 @@ function App() {
       return;
     }
     const detailToCancel = selectedDetail;
+    if (detailToCancel.type === "TROCA") {
+      reportAppError(new Error("[FORBIDDEN_LIFECYCLE] Motorista não pode cancelar troca."), {
+        severity: "warning",
+        source: "app",
+        action: "cancelSelected",
+        detailId: detailToCancel.id,
+        detailType: detailToCancel.type
+      });
+      setToast("Cancelamento de troca deve ser solicitado à Operação.", "warning");
+      setScreen("servicos");
+      return;
+    }
     if (remoteMode) {
       try {
         setRemoteOperation({

@@ -180,6 +180,30 @@ namespace Betinhos.DriverRecordSharing.Tests
         }
 
         [Fact]
+        public void PickupRejectsClosedHistoryGapWithoutSyntheticPossession()
+        {
+            var driver = Guid.NewGuid();
+            var vehicle = Guid.NewGuid();
+            var exchange = Exchange(100000002, driver, null, null, vehicle);
+            var closedDriverPossession = Possession(
+                Guid.NewGuid(),
+                vehicle,
+                new DateTime(2026, 8, 3, 10, 0, 0, DateTimeKind.Utc));
+            var latestEnd = new DateTime(2026, 8, 3, 12, 0, 0, DateTimeKind.Utc);
+            closedDriverPossession["new_fimdaposse"] = latestEnd;
+            var service = new MemoryService(exchange, closedDriverPossession);
+            var effectiveAt = new DateTime(2026, 8, 3, 14, 10, 0, DateTimeKind.Utc);
+
+            var error = Assert.Throws<TargetInvocationException>(() => InvokeFinalize(
+                service,
+                exchange.Id,
+                effectiveAt));
+
+            Assert.Contains("POSSESSION_CHAIN_GAP", error.InnerException?.Message ?? error.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Single(service.Records("new_possedeveiculo"));
+        }
+
+        [Fact]
         public void StructuralChangeCannotBeCompletedInTheSameUpdate()
         {
             var oldDriver = Guid.NewGuid();

@@ -66,6 +66,7 @@ namespace Betinhos.DriverRecordSharing
                 if (context.Stage == 10)
                 {
                     ExchangeMutationGuard.Validate(context, service, tracing);
+                    new ExchangeConflictValidator(systemService).Validate(context);
                     return;
                 }
 
@@ -161,15 +162,13 @@ namespace Betinhos.DriverRecordSharing
             catch (InvalidPluginExecutionException ex)
             {
                 tracing.Trace("ServiceDriverSharePlugin business error: {0}", ex);
-                new OperationalLogWriter(service, tracing).TryWriteError(context, ex);
                 throw;
             }
             catch (Exception ex)
             {
                 tracing.Trace("ServiceDriverSharePlugin error: {0}", ex);
-                new OperationalLogWriter(service, tracing).TryWriteError(context, ex);
                 throw new InvalidPluginExecutionException(
-                    "Falha ao sincronizar compartilhamento do registro com o motorista.",
+                    PluginErrorMessage.ForUser(ex, context.CorrelationId),
                     ex);
             }
         }
@@ -1342,19 +1341,11 @@ namespace Betinhos.DriverRecordSharing
                 return false;
             }
 
-            foreach (var attributeName in requiredAttributes)
-            {
-                if (!preImage.Attributes.Contains(attributeName))
-                {
-                    tracing.Trace(
-                        "EnsurePreImage warning entity={0} alias={1} missingAttribute={2}. Plugin will grant current access but skip revoke because previous values are incomplete.",
-                        context.PrimaryEntityName,
-                        PluginConfig.PreImageAlias,
-                        attributeName);
-                    return false;
-                }
-            }
-
+            tracing.Trace(
+                "EnsurePreImage resolved entity={0} alias={1} attributes={2}. Missing nullable values are treated as null.",
+                context.PrimaryEntityName,
+                PluginConfig.PreImageAlias,
+                string.Join(",", requiredAttributes));
             return true;
         }
 

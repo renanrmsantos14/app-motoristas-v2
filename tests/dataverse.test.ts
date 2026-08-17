@@ -18,6 +18,7 @@ import {
 test("identidade bloqueia email Microsoft duplicado entre funcionarios ativos", async () => {
   const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
   const previousWindow = (globalThis as any).window;
+  let funcionariosQuery = "";
   const windowMock: any = {
     location: { hostname: "org.crm2.dynamics.com" },
     Xrm: {
@@ -29,12 +30,15 @@ test("identidade bloqueia email Microsoft duplicado entre funcionarios ativos", 
       },
       WebApi: {
         retrieveRecord: async () => ({ internalemailaddress: "duplicado@betinhos.com.br", fullname: "Duplicado" }),
-        retrieveMultipleRecords: async () => ({
-          entities: [
-            { cr40f_funcionariosid: "11111111-1111-1111-1111-111111111111" },
-            { cr40f_funcionariosid: "22222222-2222-2222-2222-222222222222" }
-          ]
-        })
+        retrieveMultipleRecords: async (_entityName: string, options: string) => {
+          funcionariosQuery = options;
+          return {
+            entities: [
+              { cr40f_funcionariosid: "11111111-1111-1111-1111-111111111111" },
+              { cr40f_funcionariosid: "22222222-2222-2222-2222-222222222222" }
+            ]
+          };
+        }
       }
     }
   };
@@ -43,6 +47,9 @@ test("identidade bloqueia email Microsoft duplicado entre funcionarios ativos", 
 
   try {
     await assert.rejects(getDriverContext(), /Mais de um funcionario ativo usa o mesmo Email Microsoft/);
+    assert.match(funcionariosQuery, /cr40f_emailmicrosoft eq 'duplicado@betinhos\.com\.br'/);
+    assert.match(funcionariosQuery, /statecode eq 0/);
+    assert.match(funcionariosQuery, /cr40f_datadedemissao eq null/);
   } finally {
     (globalThis as any).window = previousWindow;
   }
@@ -233,8 +240,8 @@ test("app grava somente a confirmacao e deixa a transacao de posse para o plugin
   const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
   const driverId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
   const exchangeId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
-  const updates: Array<{ entityName: string; id: string; data: Record<string, unknown> }> = [];
-  let rejectUpdate = false;
+  const commands: any[] = [];
+  let rejectCommand = false;
 
   const previousWindow = (globalThis as any).window;
   const windowMock: any = {
@@ -258,7 +265,8 @@ test("app grava somente a confirmacao e deixa a transacao de posse para o plugin
               cr40f_id: "OT-1",
               cr40f_statusdatroca: 202410000,
               new_tipodetroca: 100000002,
-              _cr40f_motorista1_value: driverId
+              _cr40f_motorista1_value: driverId,
+              "@odata.etag": 'W/"42"'
             };
           }
           throw new Error(`retrieveRecord inesperado: ${entityName}`);
@@ -277,10 +285,13 @@ test("app grava somente a confirmacao e deixa a transacao de posse para o plugin
           }
           throw new Error(`retrieveMultipleRecords inesperado: ${entityName}`);
         },
-        updateRecord: async (entityName: string, id: string, data: Record<string, unknown>) => {
-          if (rejectUpdate) throw new Error("Posse divergente detectada pelo plugin.");
-          updates.push({ entityName, id, data });
-          return {};
+        updateRecord: async () => { throw new Error("O app não deve alterar flags diretamente."); },
+        online: {
+          execute: async (request: any) => {
+            if (rejectCommand) throw new Error("[POSSESSION_CHAIN_GAP] Posse divergente detectada pelo plugin.");
+            commands.push(request);
+            return {};
+          }
         },
         createRecord: async () => ({ id: "11111111-1111-1111-1111-111111111111" })
       }
@@ -305,7 +316,7 @@ test("app grava somente a confirmacao e deixa a transacao de posse para o plugin
       },
       fields: {}
     });
-    rejectUpdate = true;
+    rejectCommand = true;
     await assert.rejects(
       finalizeExchangeRemote({
         detail: {
@@ -322,22 +333,16 @@ test("app grava somente a confirmacao e deixa a transacao de posse para o plugin
         },
         fields: {}
       }),
-      /Posse divergente detectada pelo plugin/
+      /POSSESSION_CHAIN_GAP/
     );
   } finally {
     (globalThis as any).window = previousWindow;
   }
 
-  assert.deepEqual(updates, [
-    {
-      entityName: "cr40f_trocasdecarro",
-      id: exchangeId,
-      data: {
-        new_concluidomotorista1: true,
-        new_observacaodomotorista1: "Sem observação."
-      }
-    }
-  ]);
+  assert.equal(commands.length, 1);
+  assert.equal(commands[0].new_Motivo, "Sem observação.");
+  assert.equal(commands[0].new_VersaoEsperada, "42");
+  assert.equal(commands[0].getMetadata().operationName, "new_ConfirmarTrocaMotorista");
 });
 
 test("troca aberta aparece para motorista da troca sem depender da Geral", () => {

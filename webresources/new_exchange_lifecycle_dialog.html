@@ -57,22 +57,28 @@
         var confirmButton = document.getElementById("confirm");
         var cancelButton = document.getElementById("cancel");
         confirmButton.disabled = true; cancelButton.disabled = true; status.textContent = "Processando…";
-        var request = {
-          entity: { entityType: "cr40f_trocasdecarro", id: config.id },
-          new_Motivo: reason,
-          getMetadata: function () {
-            return {
-              boundParameter: "entity",
-              operationType: 0,
-              operationName: config.action,
-              parameterTypes: {
-                entity: { typeName: "mscrm.cr40f_trocasdecarro", structuralProperty: 5 },
-                new_Motivo: { typeName: "Edm.String", structuralProperty: 1 }
-              }
-            };
-          }
-        };
-        xrm().WebApi.online.execute(request).then(function () {
+        xrm().WebApi.retrieveRecord("cr40f_trocasdecarro", config.id, "?$select=cr40f_trocasdecarroid").then(function (record) {
+          var version = String(record["@odata.etag"] || "").replace(/^W\/\"|\"$/g, "");
+          if (!version) throw new Error("Não foi possível carregar a versão atual da troca.");
+          var request = {
+            entity: { entityType: "cr40f_trocasdecarro", id: config.id },
+            new_Motivo: reason,
+            new_VersaoEsperada: version,
+            getMetadata: function () {
+              return {
+                boundParameter: "entity",
+                operationType: 0,
+                operationName: config.action,
+                parameterTypes: {
+                  entity: { typeName: "mscrm.cr40f_trocasdecarro", structuralProperty: 5 },
+                  new_Motivo: { typeName: "Edm.String", structuralProperty: 1 },
+                  new_VersaoEsperada: { typeName: "Edm.String", structuralProperty: 1 }
+                }
+              };
+            }
+          };
+          return xrm().WebApi.online.execute(request);
+        }).then(function () {
           status.textContent = "Concluído.";
           close();
         }, function (error) {
