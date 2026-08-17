@@ -2949,7 +2949,7 @@
       "label": ".Resolve()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L80",
+      "source_location": "L87",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -2971,7 +2971,7 @@
       "label": ".HasSnapshot()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L86",
+      "source_location": "L93",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -2985,7 +2985,7 @@
       "label": ".AddParticipant()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L95",
+      "source_location": "L102",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -3331,7 +3331,7 @@
       "label": ".FindCompensation()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L418",
+      "source_location": "L417",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -3345,7 +3345,7 @@
       "label": ".RetrieveExchange()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L431",
+      "source_location": "L430",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -3359,7 +3359,7 @@
       "label": ".ValidateExpectedVersion()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L450",
+      "source_location": "L449",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -3373,7 +3373,7 @@
       "label": ".ReadReason()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L463",
+      "source_location": "L462",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -3387,7 +3387,7 @@
       "label": ".ReadEffectiveAt()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L480",
+      "source_location": "L479",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -3401,7 +3401,7 @@
       "label": ".GetStatus()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L508",
+      "source_location": "L507",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -3415,7 +3415,7 @@
       "label": ".UpdateWithConcurrency()",
       "file_type": "code",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L513",
+      "source_location": "L512",
       "metadata": {
         "namespace": "Betinhos.DriverRecordSharing",
         "scope_chain": [
@@ -11545,6 +11545,70 @@
       "file_type": "code",
       "source_file": "scripts/verify-driver-record-sharing-plugin-e2e.ps1",
       "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_full_e2e",
+      "label": "verify-exchange-lifecycle-full-e2e.ps1",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_full_e2e_get_exchange",
+      "label": "Get-Exchange()",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_full_e2e_get_version",
+      "label": "Get-Version()",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_full_e2e_invoke_bound",
+      "label": "Invoke-Bound()",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L23",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_full_e2e_get_openpossessions",
+      "label": "Get-OpenPossessions()",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_smoke",
+      "label": "verify-exchange-lifecycle-smoke.ps1",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-smoke.ps1",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_smoke_get_exchange",
+      "label": "Get-Exchange()",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-smoke.ps1",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "scripts_verify_exchange_lifecycle_smoke_get_version",
+      "label": "Get-Version()",
+      "file_type": "code",
+      "source_file": "scripts/verify-exchange-lifecycle-smoke.ps1",
+      "source_location": "L21",
       "_origin": "ast"
     },
     {
@@ -30694,7 +30758,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L80",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -30703,7 +30767,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L80",
+      "source_location": "L87",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -30716,7 +30780,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L86",
+      "source_location": "L93",
       "weight": 1.0
     },
     {
@@ -30725,7 +30789,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L86",
+      "source_location": "L93",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -30738,7 +30802,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L95",
+      "source_location": "L102",
       "weight": 1.0
     },
     {
@@ -30747,7 +30811,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L95",
+      "source_location": "L102",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -30760,7 +30824,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L95",
+      "source_location": "L102",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -30784,7 +30848,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeConflictValidator.cs",
-      "source_location": "L52",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -31305,7 +31369,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L418",
+      "source_location": "L417",
       "weight": 1.0
     },
     {
@@ -31314,7 +31378,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L418",
+      "source_location": "L417",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -31327,7 +31391,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L418",
+      "source_location": "L417",
       "weight": 1.0,
       "context": "return_type",
       "metadata": {
@@ -31340,7 +31404,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L431",
+      "source_location": "L430",
       "weight": 1.0
     },
     {
@@ -31349,7 +31413,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L431",
+      "source_location": "L430",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -31362,7 +31426,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L431",
+      "source_location": "L430",
       "weight": 1.0,
       "context": "return_type",
       "metadata": {
@@ -31375,7 +31439,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L450",
+      "source_location": "L449",
       "weight": 1.0
     },
     {
@@ -31384,7 +31448,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L450",
+      "source_location": "L449",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -31397,7 +31461,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L463",
+      "source_location": "L462",
       "weight": 1.0
     },
     {
@@ -31406,7 +31470,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L480",
+      "source_location": "L479",
       "weight": 1.0
     },
     {
@@ -31415,7 +31479,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L480",
+      "source_location": "L479",
       "weight": 1.0,
       "context": "return_type",
       "metadata": {
@@ -31428,7 +31492,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L508",
+      "source_location": "L507",
       "weight": 1.0
     },
     {
@@ -31437,7 +31501,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L508",
+      "source_location": "L507",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -31450,7 +31514,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L513",
+      "source_location": "L512",
       "weight": 1.0
     },
     {
@@ -31459,7 +31523,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L513",
+      "source_location": "L512",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -31472,7 +31536,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "plugins/DriverRecordSharing/ExchangeLifecycleCommandHandler.cs",
-      "source_location": "L513",
+      "source_location": "L512",
       "weight": 1.0,
       "context": "parameter_type",
       "metadata": {
@@ -53277,6 +53341,78 @@
       "confidence": "EXTRACTED",
       "source_file": "scripts/verify-driver-record-sharing-plugin-e2e.ps1",
       "source_location": "L278",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_full_e2e",
+      "target": "msal",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_full_e2e",
+      "target": "scripts_verify_exchange_lifecycle_full_e2e_get_exchange",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_full_e2e",
+      "target": "scripts_verify_exchange_lifecycle_full_e2e_get_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_full_e2e",
+      "target": "scripts_verify_exchange_lifecycle_full_e2e_invoke_bound",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_full_e2e",
+      "target": "scripts_verify_exchange_lifecycle_full_e2e_get_openpossessions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-full-e2e.ps1",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_smoke",
+      "target": "msal",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-smoke.ps1",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_smoke",
+      "target": "scripts_verify_exchange_lifecycle_smoke_get_exchange",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-smoke.ps1",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_verify_exchange_lifecycle_smoke",
+      "target": "scripts_verify_exchange_lifecycle_smoke_get_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-exchange-lifecycle-smoke.ps1",
+      "source_location": "L21",
       "weight": 1.0
     },
     {

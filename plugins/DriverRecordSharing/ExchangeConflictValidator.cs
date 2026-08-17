@@ -36,8 +36,15 @@ namespace Betinhos.DriverRecordSharing
             var start = Resolve<DateTime?>(target, preImage, PluginConfig.ExchangeStartDate);
             var end = Resolve<DateTime?>(target, preImage, PluginConfig.ExchangeEndDate);
             if (!start.HasValue || !end.HasValue) return;
-            if (end.Value <= start.Value)
+            if (end.Value < start.Value)
             {
+                throw new InvalidPluginExecutionException("[EXCHANGE_INVALID_WINDOW] O fim da troca deve ser posterior ao início.");
+            }
+            if (end.Value == start.Value)
+            {
+                var original = Resolve<EntityReference>(target, preImage, PluginConfig.ExchangeOriginalReversalLookup);
+                var status = Resolve<OptionSetValue>(target, preImage, PluginConfig.ExchangeStatus);
+                if (original != null && original.Id != Guid.Empty && status?.Value == PluginConfig.ExchangeStatusCompleted) return;
                 throw new InvalidPluginExecutionException("[EXCHANGE_INVALID_WINDOW] O fim da troca deve ser posterior ao início.");
             }
 

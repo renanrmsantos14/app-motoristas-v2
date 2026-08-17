@@ -410,7 +410,6 @@ namespace Betinhos.DriverRecordSharing
                 [PluginConfig.ExchangeDriver2Completed] = true,
                 [PluginConfig.ExchangeReversalReason] = reason,
                 [PluginConfig.ExchangeOriginalReversalLookup] = original.ToEntityReference(),
-                [PluginConfig.ExchangeActionExecutorLookup] = new EntityReference(PluginConfig.UserTable, _context.InitiatingUserId)
             };
             return compensation;
         }
