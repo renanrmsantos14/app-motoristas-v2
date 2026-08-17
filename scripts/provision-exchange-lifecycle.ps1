@@ -251,6 +251,18 @@ function Ensure-CustomApi([hashtable] $Spec, [guid] $PluginTypeId) {
     Invoke-Dataverse "POST" "customapiresponseproperties" @{ name = "$($Spec.UniqueName).new_TrocaCompensatoriaId"; uniquename = "new_TrocaCompensatoriaId"; displayname = "Troca compensatoria"; description = "Identificador da compensacao criada"; type = 12; "CustomAPIId@odata.bind" = "/customapis($apiId)" } | Out-Null
   }
   $parameters = @(Get-Rows "customapirequestparameters" "customapirequestparameterid,uniquename,type,isoptional" "_customapiid_value eq $apiId")
+  if ($Spec.ContainsKey("Update") -and $Spec.Update) {
+    $allowedUpdateParameters = @("new_Motivo", "new_VersaoEsperada", "new_Inicio", "new_Fim", "new_Observacao")
+    $obsoleteParameters = @($parameters | Where-Object { $_.uniquename -notin $allowedUpdateParameters })
+    foreach ($obsolete in $obsoleteParameters) {
+      if (-not $Apply) { Write-Step "DRY RUN removeria parametro obsoleto $($Spec.UniqueName).$($obsolete.uniquename)"; continue }
+      Invoke-Dataverse "DELETE" "customapirequestparameters($($obsolete.customapirequestparameterid))" | Out-Null
+      Write-Step "parametro obsoleto removido $($Spec.UniqueName).$($obsolete.uniquename)"
+    }
+    if ($obsoleteParameters.Count -gt 0 -and $Apply) {
+      $parameters = @(Get-Rows "customapirequestparameters" "customapirequestparameterid,uniquename,type,isoptional" "_customapiid_value eq $apiId")
+    }
+  }
   $motivo = @($parameters | Where-Object { $_.uniquename -eq "new_Motivo" })
   if ($motivo.Count -ne 1 -or [int]$motivo[0].type -ne 10 -or [bool]$motivo[0].isoptional) { throw "Parametro new_Motivo invalido na Custom API $($Spec.UniqueName)." }
   if ($Spec.ContainsKey("HasEffectiveAt") -and $Spec.HasEffectiveAt) {

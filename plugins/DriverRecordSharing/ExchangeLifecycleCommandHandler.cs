@@ -165,7 +165,8 @@ namespace Betinhos.DriverRecordSharing
         private int ReadRequiredInt(string name)
         {
             if (!_context.InputParameters.Contains(name)) throw new InvalidPluginExecutionException("Parâmetro obrigatório ausente: " + name + ".");
-            return Convert.ToInt32(_context.InputParameters[name]);
+            var option = _context.InputParameters[name] as OptionSetValue;
+            return option?.Value ?? Convert.ToInt32(_context.InputParameters[name]);
         }
 
         private EntityReference ReadRequiredReference(string name, string logicalName)
