@@ -283,7 +283,6 @@ function Add-PluginToSolution {
   if ($commandTypes.Count -ne 1) { throw "PluginType Betinhos.DriverRecordSharing.ExchangeLifecycleCommandPlugin: esperado 1, encontrado $($commandTypes.Count)." }
 
   Ensure-SolutionComponent $solution.solutionid $assembly[0].pluginassemblyid 91 "assembly Betinhos.DriverRecordSharing"
-  Ensure-SolutionComponent $solution.solutionid $commandTypes[0].plugintypeid 90 "plugin type ExchangeLifecycleCommandPlugin"
 
   $messages = Resolve-RegistrationContext
   foreach ($spec in $specs) {
