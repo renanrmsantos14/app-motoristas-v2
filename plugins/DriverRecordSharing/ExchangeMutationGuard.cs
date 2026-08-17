@@ -76,7 +76,7 @@ namespace Betinhos.DriverRecordSharing
                     ValidateExchange(context, service);
                     return;
                 case PluginConfig.VehiclePossessionTable:
-                    throw new InvalidPluginExecutionException("Posses de veiculo sao historico do sistema e nao podem ser criadas, editadas ou excluidas diretamente.");
+                    throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Posses de veiculo sao historico do sistema e nao podem ser criadas, editadas ou excluidas diretamente.");
                 case PluginConfig.ServiceTable:
                     ValidateGeneral(context, service);
                     return;
@@ -88,12 +88,12 @@ namespace Betinhos.DriverRecordSharing
             var target = context.InputParameters[PluginConfig.TargetParameterName] as Entity;
             if (target != null && ExchangeAuditAttributes.Any(target.Contains))
             {
-                throw new InvalidPluginExecutionException("Campos de auditoria da troca sao controlados pelo ciclo do sistema.");
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Campos de auditoria da troca sao controlados pelo ciclo do sistema.");
             }
 
             if (context.MessageName == PluginConfig.DeleteMessage)
             {
-                throw new InvalidPluginExecutionException("Trocas de carro nao podem ser excluidas. Use Cancelar ou Reverter troca.");
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Trocas de carro nao podem ser excluidas. Use Cancelar ou Reverter troca.");
             }
 
             if (context.MessageName == PluginConfig.CreateMessage)
@@ -127,13 +127,13 @@ namespace Betinhos.DriverRecordSharing
             if (requestedStatus == PluginConfig.ExchangeStatusCompleted ||
                 requestedStatus == PluginConfig.ExchangeStatusCanceled)
             {
-                throw new InvalidPluginExecutionException("Concluir ou cancelar troca deve ser feito pelo comando autorizado, com motivo.");
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Concluir ou cancelar troca deve ser feito pelo comando autorizado, com motivo.");
             }
 
             if (currentStatus == PluginConfig.ExchangeStatusCompleted ||
                 currentStatus == PluginConfig.ExchangeStatusCanceled)
             {
-                throw new InvalidPluginExecutionException("Troca concluida ou cancelada e imutavel. Use Reverter troca para criar um evento compensatorio.");
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Troca concluida ou cancelada e imutavel. Use Reverter troca para criar um evento compensatorio.");
             }
         }
 
@@ -146,7 +146,7 @@ namespace Betinhos.DriverRecordSharing
                 : reference?.Id ?? target?.Id ?? Guid.Empty;
 
             Entity current = null;
-            if (id != Guid.Empty)
+            if (context.MessageName != PluginConfig.CreateMessage && id != Guid.Empty)
             {
                 current = service.Retrieve(
                     PluginConfig.ServiceTable,
@@ -161,7 +161,7 @@ namespace Betinhos.DriverRecordSharing
             {
                 if (exchangeReference != null)
                 {
-                    throw new InvalidPluginExecutionException("O registro Geral vinculado a uma troca nao pode ser excluido.");
+                    throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] O registro Geral vinculado a uma troca nao pode ser excluido.");
                 }
 
                 return;
@@ -169,7 +169,7 @@ namespace Betinhos.DriverRecordSharing
 
             if (context.MessageName == PluginConfig.CreateMessage && exchangeReference != null)
             {
-                throw new InvalidPluginExecutionException("O Geral vinculado a troca e criado somente pelo ciclo da troca.");
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] O Geral vinculado a troca e criado somente pelo ciclo da troca.");
             }
 
             if (context.MessageName == PluginConfig.UpdateMessage &&
@@ -177,7 +177,7 @@ namespace Betinhos.DriverRecordSharing
                 target != null &&
                 target.Attributes.Keys.Any(attribute => ProtectedGeneralAttributes.Contains(attribute, StringComparer.OrdinalIgnoreCase)))
             {
-                throw new InvalidPluginExecutionException("Campos do Geral vinculado a troca sao projetados pela troca e nao podem ser editados diretamente.");
+                throw new InvalidPluginExecutionException("[FORBIDDEN_LIFECYCLE] Campos do Geral vinculado a troca sao projetados pela troca e nao podem ser editados diretamente.");
             }
         }
 
