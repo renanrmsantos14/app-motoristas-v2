@@ -126,7 +126,7 @@ namespace Betinhos.DriverRecordSharing
                 [PluginConfig.ExchangeRequestHash] = requestHash
             };
             var exchangeId = _systemService.Create(exchange);
-            if (ReadOptionalBool("new_ConcluirImediatamente")) Complete(exchangeId, reason);
+            if (ReadOptionalBool("new_ConcluirImediatamente")) Complete(exchangeId, reason, requireExpectedVersion: false);
             _context.OutputParameters["new_TrocaId"] = exchangeId;
         }
 
@@ -225,10 +225,10 @@ namespace Betinhos.DriverRecordSharing
             _tracing?.Trace("Driver exchange confirmation accepted exchangeId={0}.", exchangeId);
         }
 
-        private void Complete(Guid exchangeId, string reason)
+        private void Complete(Guid exchangeId, string reason, bool requireExpectedVersion = true)
         {
             var exchange = RetrieveExchange(exchangeId);
-            ValidateExpectedVersion(exchange);
+            ValidateExpectedVersion(exchange, requireExpectedVersion);
             var status = GetStatus(exchange);
             if (status == PluginConfig.ExchangeStatusCompleted)
             {
@@ -446,8 +446,9 @@ namespace Betinhos.DriverRecordSharing
                     PluginConfig.VersionNumber));
         }
 
-        private void ValidateExpectedVersion(Entity exchange)
+        private void ValidateExpectedVersion(Entity exchange, bool required = true)
         {
+            if (!required) return;
             if (!_context.InputParameters.Contains(PluginConfig.ExchangeExpectedVersionParameter))
                 throw new InvalidPluginExecutionException("[EXCHANGE_VERSION_REQUIRED] Atualize a troca antes de executar esta ação.");
             var expected = Convert.ToString(_context.InputParameters[PluginConfig.ExchangeExpectedVersionParameter])?.Trim();
@@ -498,6 +499,8 @@ namespace Betinhos.DriverRecordSharing
             {
                 throw new InvalidPluginExecutionException("Data efetiva inválida. Informe uma data e hora válidas.");
             }
+
+            if (parsed == DateTime.MinValue) return null;
 
             if (parsed.Kind == DateTimeKind.Local) parsed = parsed.ToUniversalTime();
             if (parsed.Kind == DateTimeKind.Unspecified) parsed = DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
