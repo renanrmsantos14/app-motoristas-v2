@@ -12007,7 +12007,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.661","builtAt":"2026-08-17T22:29:17.171Z","builtAtLabel":"17/08/2026, 19:29"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.662","builtAt":"2026-08-18T12:27:06.587Z","builtAtLabel":"18/08/2026, 09:27"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -61064,8 +61064,8 @@ ${text}`);
     payload.onProgress?.(
       completion.closesExchange ? "Confirmando e aplicando a troca no servidor." : "Registrando sua confirma\xE7\xE3o da troca."
     );
-    const execute = getWebApi().online?.execute;
-    if (!execute) throw new Error("[FORBIDDEN_LIFECYCLE] API de confirma\xE7\xE3o indispon\xEDvel neste contexto.");
+    const webApi = getWebApi();
+    if (!webApi.online?.execute) throw new Error("[FORBIDDEN_LIFECYCLE] API de confirma\xE7\xE3o indispon\xEDvel neste contexto.");
     const request = {
       entity: { entityType: "cr40f_trocasdecarro", id: cleanGuid2(dv.id) },
       new_Motivo: observation,
@@ -61081,7 +61081,7 @@ ${text}`);
         }
       })
     };
-    await execute(request);
+    await webApi.online.execute(request);
   }
 
   // src/lib/mediaDraftStore.ts

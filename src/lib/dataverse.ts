@@ -3718,8 +3718,8 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
       ? "Confirmando e aplicando a troca no servidor."
       : "Registrando sua confirmação da troca."
   );
-  const execute = getWebApi().online?.execute;
-  if (!execute) throw new Error("[FORBIDDEN_LIFECYCLE] API de confirmação indisponível neste contexto.");
+  const webApi = getWebApi();
+  if (!webApi.online?.execute) throw new Error("[FORBIDDEN_LIFECYCLE] API de confirmação indisponível neste contexto.");
   const request: Record<string, unknown> = {
     entity: { entityType: "cr40f_trocasdecarro", id: cleanGuid(dv.id) },
     new_Motivo: observation,
@@ -3735,7 +3735,7 @@ export async function finalizeExchangeRemote(payload: FinalizePayload) {
       }
     })
   };
-  await execute(request);
+  await webApi.online.execute(request);
 }
 
 

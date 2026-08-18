@@ -287,7 +287,8 @@ test("app grava somente a confirmacao e deixa a transacao de posse para o plugin
         },
         updateRecord: async () => { throw new Error("O app não deve alterar flags diretamente."); },
         online: {
-          execute: async (request: any) => {
+          execute: async function (this: any, request: any) {
+            if (this !== windowMock.Xrm.WebApi.online) throw new Error("execute chamado sem o contexto WebApi.online");
             if (rejectCommand) throw new Error("[POSSESSION_CHAIN_GAP] Posse divergente detectada pelo plugin.");
             commands.push(request);
             return {};
