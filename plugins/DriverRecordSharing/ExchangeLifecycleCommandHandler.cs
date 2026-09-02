@@ -396,7 +396,7 @@ namespace Betinhos.DriverRecordSharing
 
             var compensation = new Entity(PluginConfig.ExchangeTable)
             {
-                [PluginConfig.ExchangeBusinessId] = "REV-" + original.Id.ToString("N"),
+                [PluginConfig.ExchangeBusinessId] = BuildCompensationBusinessId(original),
                 [PluginConfig.ExchangeDriver1Lookup] = driver1,
                 [PluginConfig.ExchangeDriver2Lookup] = driver2,
                 [PluginConfig.ExchangeVehicle1Lookup] = vehicle1,
@@ -412,6 +412,23 @@ namespace Betinhos.DriverRecordSharing
                 [PluginConfig.ExchangeOriginalReversalLookup] = original.ToEntityReference(),
             };
             return compensation;
+        }
+
+        private static string BuildCompensationBusinessId(Entity original)
+        {
+            var originalBusinessId = original.GetAttributeValue<string>(PluginConfig.ExchangeBusinessId)?.Trim();
+            if (!string.IsNullOrWhiteSpace(originalBusinessId))
+            {
+                var separator = originalBusinessId.IndexOf('-');
+                if (separator > 0
+                    && separator < originalBusinessId.Length - 1
+                    && string.Equals(originalBusinessId.Substring(0, separator), "OT", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "REV-" + originalBusinessId.Substring(separator + 1);
+                }
+            }
+
+            return "REV-" + original.Id.ToString("N");
         }
 
         private Entity FindCompensation(Guid originalId)

@@ -33,6 +33,7 @@ type ServiceOptions = {
   actions: DetailAction[];
   searchText: string;
   canceled?: boolean;
+  returnForecast?: string;
   finalizationAt?: string;
   finalObservation?: string;
 };
@@ -90,6 +91,7 @@ function parseBrazilianDateTime(value: string) {
 function serviceDetail(options: ServiceOptions): DetailData {
   const fields = [
     { label: "Data e Horário de Saída", value: options.departureAt },
+    ...(options.returnForecast ? [{ label: "Previsão de retorno", value: options.returnForecast }] : []),
     ...(options.finalizationAt ? [{ label: "Data de Finalização", value: options.finalizationAt }] : []),
     { label: "Cliente", value: options.client },
     { label: "Receber", value: options.receive },
@@ -120,6 +122,7 @@ function serviceDetail(options: ServiceOptions): DetailData {
         cr40f_cotao: options.amountValue,
         cr40f_trajeto: options.route,
         cr40f_obsdeoperao: options.operationNotes,
+        cr40f_horrioprevistoderetorno: options.returnForecast ? parseBrazilianDateTime(options.returnForecast) : null,
         new_datadefinalizacao: options.finalizationAt ? parseBrazilianDateTime(options.finalizationAt) : null
       }
     }
@@ -235,6 +238,7 @@ export const agendaMock: AgendaItem[] = [
     amount: "R$ 380,00",
     amountValue: 380,
     departureAt: "01/07/2026 09:15",
+    returnForecast: "01/07/2026 13:15",
     route: "Base Betinhos -> Aeroporto de Guarulhos",
     passengersHtml: "Henrique Tavares<br />+55 (11) 99888-1100",
     departureAddress: "Rua das Acácias, 120 - Jardim Satélite, São José dos Campos - SP",

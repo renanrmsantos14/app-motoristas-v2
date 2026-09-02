@@ -76,8 +76,8 @@ test("identidade bloqueia email Microsoft duplicado entre funcionarios ativos", 
   try {
     await assert.rejects(getDriverContext(), /Mais de um funcionario ativo usa o mesmo Email Microsoft/);
     assert.match(funcionariosQuery, /cr40f_emailmicrosoft eq 'duplicado@betinhos\.com\.br'/);
-    assert.match(funcionariosQuery, /statecode eq 0/);
-    assert.match(funcionariosQuery, /cr40f_datadedemissao eq null/);
+    assert.match(funcionariosQuery, /cr40f_status eq 0/);
+    assert.doesNotMatch(funcionariosQuery, /cr40f_datadedemissao/);
   } finally {
     (globalThis as any).window = previousWindow;
   }

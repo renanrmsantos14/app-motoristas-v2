@@ -32,6 +32,61 @@ namespace Betinhos.DriverRecordSharing.Tests
             Assert.Null(exception);
         }
 
+        [Fact]
+        public void CompensationReusesOriginalOperationNumber()
+        {
+            var handler = CreateHandler(new RemoteExecutionContext());
+            var original = new Entity("cr40f_trocasdecarro", Guid.NewGuid())
+            {
+                ["cr40f_id"] = "OT-0001",
+                ["new_tipodetroca"] = new OptionSetValue(100000000),
+                ["cr40f_motorista1"] = new EntityReference("cr40f_funcionarios", Guid.NewGuid()),
+                ["cr40f_motorista2"] = new EntityReference("cr40f_funcionarios", Guid.NewGuid()),
+                ["cr40f_veiculo1antesdatroca"] = new EntityReference("cr40f_veiculos", Guid.NewGuid())
+            };
+
+            var compensation = InvokeBuildCompensation(handler, original);
+
+            Assert.Equal("REV-0001", compensation.GetAttributeValue<string>("cr40f_id"));
+        }
+
+        [Fact]
+        public void CompensationFallsBackToGuidWhenOriginalNumberIsMissing()
+        {
+            var originalId = Guid.NewGuid();
+            var handler = CreateHandler(new RemoteExecutionContext());
+            var original = new Entity("cr40f_trocasdecarro", originalId)
+            {
+                ["new_tipodetroca"] = new OptionSetValue(100000000),
+                ["cr40f_motorista1"] = new EntityReference("cr40f_funcionarios", Guid.NewGuid()),
+                ["cr40f_motorista2"] = new EntityReference("cr40f_funcionarios", Guid.NewGuid()),
+                ["cr40f_veiculo1antesdatroca"] = new EntityReference("cr40f_veiculos", Guid.NewGuid())
+            };
+
+            var compensation = InvokeBuildCompensation(handler, original);
+
+            Assert.Equal("REV-" + originalId.ToString("N"), compensation.GetAttributeValue<string>("cr40f_id"));
+        }
+
+        [Fact]
+        public void CompensationDoesNotReuseAReversalNumber()
+        {
+            var originalId = Guid.NewGuid();
+            var handler = CreateHandler(new RemoteExecutionContext());
+            var original = new Entity("cr40f_trocasdecarro", originalId)
+            {
+                ["cr40f_id"] = "REV-0001",
+                ["new_tipodetroca"] = new OptionSetValue(100000000),
+                ["cr40f_motorista1"] = new EntityReference("cr40f_funcionarios", Guid.NewGuid()),
+                ["cr40f_motorista2"] = new EntityReference("cr40f_funcionarios", Guid.NewGuid()),
+                ["cr40f_veiculo1antesdatroca"] = new EntityReference("cr40f_veiculos", Guid.NewGuid())
+            };
+
+            var compensation = InvokeBuildCompensation(handler, original);
+
+            Assert.Equal("REV-" + originalId.ToString("N"), compensation.GetAttributeValue<string>("cr40f_id"));
+        }
+
         private static object CreateHandler(IPluginExecutionContext context)
         {
             var type = typeof(ServiceDriverSharePlugin).Assembly.GetType(
@@ -56,6 +111,12 @@ namespace Betinhos.DriverRecordSharing.Tests
         {
             var method = handler.GetType().GetMethod("ValidateExpectedVersion", BindingFlags.Instance | BindingFlags.NonPublic);
             method.Invoke(handler, new object[] { exchange, required });
+        }
+
+        private static Entity InvokeBuildCompensation(object handler, Entity original)
+        {
+            var method = handler.GetType().GetMethod("BuildCompensation", BindingFlags.Instance | BindingFlags.NonPublic);
+            return (Entity)method.Invoke(handler, new object[] { original, "teste", DateTime.UtcNow });
         }
 
         private sealed class UnsupportedOrganizationService : IOrganizationService

@@ -12007,7 +12007,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.662","builtAt":"2026-08-18T12:27:06.587Z","builtAtLabel":"18/08/2026, 09:27"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.675","builtAt":"2026-09-02T13:33:59.046Z","builtAtLabel":"02/09/2026, 10:33"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -55981,6 +55981,7 @@ select,
   function serviceDetail(options) {
     const fields = [
       { label: "Data e Hor\xE1rio de Sa\xEDda", value: options.departureAt },
+      ...options.returnForecast ? [{ label: "Previs\xE3o de retorno", value: options.returnForecast }] : [],
       ...options.finalizationAt ? [{ label: "Data de Finaliza\xE7\xE3o", value: options.finalizationAt }] : [],
       { label: "Cliente", value: options.client },
       { label: "Receber", value: options.receive },
@@ -56010,6 +56011,7 @@ select,
           cr40f_cotao: options.amountValue,
           cr40f_trajeto: options.route,
           cr40f_obsdeoperao: options.operationNotes,
+          cr40f_horrioprevistoderetorno: options.returnForecast ? parseBrazilianDateTime(options.returnForecast) : null,
           new_datadefinalizacao: options.finalizationAt ? parseBrazilianDateTime(options.finalizationAt) : null
         }
       }
@@ -56119,6 +56121,7 @@ select,
       amount: "R$ 380,00",
       amountValue: 380,
       departureAt: "01/07/2026 09:15",
+      returnForecast: "01/07/2026 13:15",
       route: "Base Betinhos -> Aeroporto de Guarulhos",
       passengersHtml: "Henrique Tavares<br />+55 (11) 99888-1100",
       departureAddress: "Rua das Ac\xE1cias, 120 - Jardim Sat\xE9lite, S\xE3o Jos\xE9 dos Campos - SP",
@@ -58083,7 +58086,8 @@ select,
     [FLOW_URLS.salvarFotosManutencao]: "new_FlowURLFlowSalvarArquivosOnedrive",
     [FLOW_URLS.enviarReciboCliente]: "new_FlowURLFlowEnviarReciboCliente"
   };
-  var GERAL_SELECT = "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
+  var GERAL_SELECT = "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_horrioprevistoderetorno,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
+  var GERAL_SERVICE_SELECT = `${GERAL_SELECT},cr40f_valor_a_receber`;
   var MAINTENANCE_SELECT = "$select=cr40f_manutencoesid,cr40f_id,cr40f_descricao,cr40f_comentariosaomotorista,cr40f_graudamanutencao,cr40f_tipodoreparo,cr40f_status,cr40f_servicorealizado,cr40f_estabelecimento,cr40f_valor,cr40f_pagamento,_cr40f_placa_carro_value,_cr40f_realizado_por_nome_value,new_comentariosdocolaborador,cr40f_foto01,cr40f_linkdaevidencia,cr40f_foto03,new_linkdanotafiscal,new_linkdafotofinal1,new_linkdafotofinal2,new_linkdafotofinal3";
   var MAINTENANCE_REQUEST_PHOTO_FIELDS = ["cr40f_foto01", "cr40f_linkdaevidencia", "cr40f_foto03"];
   var EXCHANGE_SELECT = "$select=cr40f_trocasdecarroid,cr40f_id,cr40f_iniciodajaneladetroca,cr40f_fimdajaneladetroca,_cr40f_motorista1_value,_cr40f_motorista2_value,_cr40f_veiculo1antesdatroca_value,_cr40f_veiculo2antesdatroca_value,cr40f_observacao,cr40f_statusdatroca,new_tipodetroca,new_concluidomotorista1,new_concluidomotorista2,new_observacaodomotorista1,new_observacaodomotorista2";
@@ -58365,7 +58369,7 @@ select,
     if (!email) throw new Error("Email Microsoft do usuario atual nao foi encontrado no Dataverse.");
     const result = await retrieveMultiple(
       DATAVERSE.funcionarios,
-      `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado&$filter=statecode eq 0 and cr40f_datadedemissao eq null and cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=2`
+      `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado&$filter=cr40f_status eq 0 and cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=2`
     );
     if (result.entities.length > 1) {
       throw new Error("Mais de um funcionario ativo usa o mesmo Email Microsoft. Corrija o cadastro antes de continuar.");
@@ -60160,13 +60164,24 @@ ${text}`);
       return solicitanteName;
     }
   }
+  function formatReceiveDetailValue(record) {
+    const receiveValue = getFormatted(record, "cr40f_receber");
+    const amount = record.cr40f_valor_a_receber;
+    if (!getBooleanValue(record, "cr40f_receber") || typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+      return receiveValue;
+    }
+    const formattedAmount = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount).replace(/\u00a0/g, " ");
+    return `Sim - ${formattedAmount}`;
+  }
   function buildFields(record, passengerHtml = "", solicitanteHtml = "") {
     const date = toDate(record.cr40f_dataehorriodesada);
+    const returnForecast = toDate(record.cr40f_horrioprevistoderetorno);
     const finalizedAt = toDate(record.new_datadefinalizacao);
     return [
       { label: "Data e Hor\xE1rio de Sa\xEDda", value: formatDetailDateTime(date) },
+      { label: "Previs\xE3o de retorno", value: formatDetailDateTime(returnForecast) },
       { label: "Cliente", value: getLookupName(record, "cr40f_cliente") || getFormatted(record, "cr40f_cliente") },
-      { label: "Receber", value: getFormatted(record, "cr40f_receber") },
+      { label: "Receber", value: formatReceiveDetailValue(record) },
       { label: "Trajeto", value: String(record.cr40f_trajeto ?? "") },
       { label: "Passageiros e Telefones de Contato", value: passengerHtml || String(record.cr40f_passageirosetelefonedecontato ?? ""), html: true },
       { label: "Endere\xE7o de Sa\xEDda", value: String(record.cr40f_endereodesada ?? "") },
@@ -60376,11 +60391,11 @@ ${text}`);
     const historyStart = new Date(now2.getTime() - historyLookbackDays * 24 * 60 * 60 * 1e3).toISOString();
     const historyEnd = new Date(now2.getTime() + 3 * 60 * 60 * 1e3).toISOString();
     dataverseLog("Janela da agenda calculada.", { end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
-    const geralSelect = "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
+    const geralSelect = "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_horrioprevistoderetorno,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
     const servicesResult = await retrieveMultipleAll(
       DATAVERSE.geral,
       [
-        geralSelect,
+        GERAL_SERVICE_SELECT,
         `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
         "$orderby=cr40f_dataehorriodesada asc"
       ].join("&")
@@ -60437,7 +60452,7 @@ ${text}`);
     const historyServiceResult = await retrieveMultipleAll(
       DATAVERSE.geral,
       [
-        geralSelect,
+        GERAL_SERVICE_SELECT,
         `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.servico} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
         "$orderby=cr40f_dataehorriodesada desc"
       ].join("&")
@@ -60507,7 +60522,7 @@ ${text}`);
     dataverseLog("Busca direta por parametro iniciada.", { id: id3, tipo: normalizedType || "AUTO" });
     if (!normalizedType || normalizedType === "SERVICO") {
       try {
-        const geral = await retrieveOne(DATAVERSE.geral, id3, GERAL_SELECT);
+        const geral = await retrieveOne(DATAVERSE.geral, id3, GERAL_SERVICE_SELECT);
         if (getGeralId(geral)) return (await mapGeralServiceWithPassengers(geral, driver)).detail ?? null;
       } catch (error2) {
         dataverseWarn("Busca direta como SERVICO falhou.", { id: id3, error: error2 });

@@ -1,0 +1,59 @@
+- main "TelaDetalhes" [ref=e4]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - button "Voltar" [ref=e8] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Detalhes
+        - strong [ref=e13]: Detalhes do Serviço
+      - button "Copiar" [ref=e14] [cursor=pointer]
+    - article [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: 01/07/2026 09:15
+        - generic [ref=e23]: "#10240"
+      - generic [ref=e24]:
+        - status:
+          - strong: Puxe para atualizar
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e29]: "Previsão de retorno:"
+            - generic [ref=e30]: 01/07/2026 13:15
+          - generic [ref=e31]:
+            - generic [ref=e32]: "Cliente:"
+            - generic [ref=e33]: Particular
+          - generic [ref=e34]:
+            - generic [ref=e35]: "Receber:"
+            - generic [ref=e36]: Sim
+          - generic [ref=e37]:
+            - generic [ref=e38]: "Valor a Receber:"
+            - generic [ref=e39]: R$ 380,00
+          - generic [ref=e40]:
+            - generic [ref=e41]: "Trajeto:"
+            - generic [ref=e42]: Base Betinhos -> Aeroporto de Guarulhos
+          - generic [ref=e43]:
+            - generic [ref=e44]: Passageiros e Telefones de Contato
+            - generic [ref=e45]: Henrique Tavares+55 (11) 99888-1100
+          - generic [ref=e46]:
+            - generic [ref=e47]: "Endereço de Saída:"
+            - button "Abrir Endereço de Saída no Google Maps" [ref=e48] [cursor=pointer]: Rua das Acácias, 120 - Jardim Satélite, São José dos Campos - SP
+          - generic [ref=e49]:
+            - generic [ref=e50]: "Destino:"
+            - button "Abrir Destino no Google Maps" [ref=e51] [cursor=pointer]: GRU Airport - Terminal 3, Guarulhos - SP
+          - generic [ref=e52]:
+            - generic [ref=e53]: "Obs de Operação:"
+            - generic [ref=e54]: Receber em cartão na chegada. Passageiro com 2 malas e 1 bagagem de mão.
+          - generic [ref=e55]:
+            - generic [ref=e56]: "Perfil do Passageiro:"
+            - generic [ref=e57]: Família executiva. Confirmar carrinho de bagagem ao desembarque.
+          - generic [ref=e58]:
+            - generic [ref=e59]: "Solicitante:"
+            - generic [ref=e60]: Fernanda Lima
+          - generic [ref=e61]:
+            - generic [ref=e62]: "Veículo:"
+            - generic [ref=e63]: Spin Preta FGH4J21
+          - generic [ref=e64]:
+            - generic [ref=e65]: Observação do motorista
+            - textbox "Digite aqui" [ref=e69]
+      - generic: Mais detalhes abaixo
+      - generic [ref=e71]:
+        - button "Cancelar no local" [ref=e72] [cursor=pointer]
+        - button "Receber" [ref=e75] [cursor=pointer]

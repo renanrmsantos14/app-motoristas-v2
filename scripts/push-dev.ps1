@@ -21,6 +21,7 @@ $operationsRoot = $operationsCandidates[0].FullName
 Set-Location $root
 
 $environmentUrl = "https://org23b93544.crm2.dynamics.com/"
+$expectedDevHost = "org23b93544.crm2.dynamics.com"
 $solutionUniqueName = "AppBetinhos"
 $backupDir = Join-Path $root "backup\exchange-lifecycle"
 $backupPath = Join-Path $backupDir ("$solutionUniqueName-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".zip")
@@ -29,11 +30,35 @@ function Write-Step([string] $Message) {
   Write-Host "[push-dev] $Message"
 }
 
+function Export-SolutionBackup([string] $Path, [string] $Description) {
+  $environmentUri = [Uri] $environmentUrl
+  if ($environmentUri.Scheme -ne "https" -or $environmentUri.Host -ne $expectedDevHost) {
+    throw "Ambiente DEV invalido para export: $environmentUrl"
+  }
+
+  Write-Step "$Description unmanaged $Path"
+  pac solution export --environment $environmentUrl --name $solutionUniqueName --path $Path --overwrite
+  if ($LASTEXITCODE -ne 0) {
+    if (Test-Path -LiteralPath $Path) { Remove-Item -LiteralPath $Path -Force }
+    Write-Step "export unmanaged indisponivel; tentando backup managed"
+    pac solution export --environment $environmentUrl --name $solutionUniqueName --path $Path --managed --overwrite
+    if ($LASTEXITCODE -ne 0) { throw "$Description falhou com exit code $LASTEXITCODE" }
+  }
+
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+    throw "$Description nao gerou o ZIP esperado: $Path"
+  }
+  if ((Get-Item -LiteralPath $Path).Length -le 0) {
+    throw "$Description gerou ZIP vazio: $Path"
+  }
+}
+
 Write-Step "gate de higiene do repositorio"
 & (Join-Path $PSScriptRoot "check-repository-hygiene.ps1")
 if (-not $?) { throw "Gate de higiene do repositorio falhou." }
 
 function Assert-SolutionArchiveExchangeLifecycle([string] $ZipPath) {
+  if (-not (Test-Path -LiteralPath $ZipPath -PathType Leaf)) { throw "ZIP final nao encontrado: $ZipPath" }
   $extractPath = Join-Path ([System.IO.Path]::GetTempPath()) ("exchange-lifecycle-solution-" + [guid]::NewGuid().ToString("N"))
   try {
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $extractPath -Force
@@ -54,9 +79,7 @@ New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 if (-not (Get-Command pac -ErrorAction SilentlyContinue)) {
   throw "Power Platform CLI (pac) nao encontrado; exporte a solucao atual antes do deploy."
 }
-Write-Step "export unmanaged solution backup $backupPath"
-pac solution export --name $solutionUniqueName --path $backupPath --overwrite
-if ($LASTEXITCODE -ne 0) { throw "Export da solucao atual falhou com exit code $LASTEXITCODE" }
+Export-SolutionBackup $backupPath "export solution backup"
 
 Write-Step "gate App Motoristas: testes, TypeScript e build"
 npm test
@@ -124,9 +147,7 @@ Write-Step "publish exchange lifecycle command resources"
   -DeviceCode:$DeviceCode
 
 $finalBackupPath = Join-Path $backupDir ("$solutionUniqueName-final-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".zip")
-Write-Step "export final unmanaged solution $finalBackupPath"
-pac solution export --name $solutionUniqueName --path $finalBackupPath --overwrite
-if ($LASTEXITCODE -ne 0) { throw "Export final da solucao falhou com exit code $LASTEXITCODE" }
+Export-SolutionBackup $finalBackupPath "export final solution"
 Assert-SolutionArchiveExchangeLifecycle $finalBackupPath
 
 Write-Step "DEV publish complete"

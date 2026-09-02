@@ -238,7 +238,7 @@ const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> =
 };
 
 const GERAL_SELECT =
-  "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
+  "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_horrioprevistoderetorno,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
 
 const GERAL_SERVICE_SELECT = `${GERAL_SELECT},cr40f_valor_a_receber`;
 
@@ -553,7 +553,7 @@ export async function getDriverContext(): Promise<DriverContext> {
 
   const result = await retrieveMultiple(
     DATAVERSE.funcionarios,
-    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado&$filter=statecode eq 0 and cr40f_datadedemissao eq null and cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=2`
+    `$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,_cr40f_veiculoatual_value,cr40f_tipodevinculo,cr40f_gerarrecibopersonalizado&$filter=cr40f_status eq 0 and cr40f_emailmicrosoft eq '${escapeODataText(email)}'&$top=2`
   );
   if (result.entities.length > 1) {
     throw new Error("Mais de um funcionario ativo usa o mesmo Email Microsoft. Corrija o cadastro antes de continuar.");
@@ -2727,9 +2727,11 @@ export function formatReceiveDetailValue(record: DataverseRecord) {
 
 function buildFields(record: DataverseRecord, passengerHtml = "", solicitanteHtml = ""): DetailField[] {
   const date = toDate(record.cr40f_dataehorriodesada);
+  const returnForecast = toDate(record.cr40f_horrioprevistoderetorno);
   const finalizedAt = toDate(record.new_datadefinalizacao);
   return [
     { label: "Data e Horário de Saída", value: formatDetailDateTime(date) },
+    { label: "Previsão de retorno", value: formatDetailDateTime(returnForecast) },
     { label: "Cliente", value: getLookupName(record, "cr40f_cliente") || getFormatted(record, "cr40f_cliente") },
     { label: "Receber", value: formatReceiveDetailValue(record) },
     { label: "Trajeto", value: String(record.cr40f_trajeto ?? "") },
@@ -2959,7 +2961,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   dataverseLog("Janela da agenda calculada.", { end, historyStart, historyEnd, historyLookbackDays, driverId: driver.id });
 
   const geralSelect =
-    "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
+    "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_horrioprevistoderetorno,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
 
   const servicesResult = await retrieveMultipleAll(
     DATAVERSE.geral,
