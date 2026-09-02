@@ -8,12 +8,40 @@ import {
   buildMaintenanceRequestVehiclesQuery,
   buildReceiptEmailContent,
   finalizeExchangeRemote,
+  formatReceiveDetailValue,
   getDriverContext,
   getExchangeCompletionState,
   normalizeReceiptIdentifier,
   SERVICE_VEHICLE_ORIGIN,
   shouldShowOpenExchangeForDriver
 } from "../src/lib/dataverse.ts";
+
+test("receber exibe valor em reais somente quando marcado e positivo", () => {
+  assert.equal(
+    formatReceiveDetailValue({
+      cr40f_receber: true,
+      cr40f_valor_a_receber: 1234.5,
+      "cr40f_receber@OData.Community.Display.V1.FormattedValue": "Sim"
+    }),
+    "Sim - R$ 1.234,50"
+  );
+  assert.equal(
+    formatReceiveDetailValue({
+      cr40f_receber: false,
+      cr40f_valor_a_receber: 1234.5,
+      "cr40f_receber@OData.Community.Display.V1.FormattedValue": "Não"
+    }),
+    "Não"
+  );
+  assert.equal(
+    formatReceiveDetailValue({
+      cr40f_receber: true,
+      cr40f_valor_a_receber: 0,
+      "cr40f_receber@OData.Community.Display.V1.FormattedValue": "Sim"
+    }),
+    "Sim"
+  );
+});
 
 test("identidade bloqueia email Microsoft duplicado entre funcionarios ativos", async () => {
   const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";

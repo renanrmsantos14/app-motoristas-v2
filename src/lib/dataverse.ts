@@ -240,6 +240,8 @@ const FLOW_DATAVERSE_ENVIRONMENT_VARIABLES: Record<string, string | undefined> =
 const GERAL_SELECT =
   "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
 
+const GERAL_SERVICE_SELECT = `${GERAL_SELECT},cr40f_valor_a_receber`;
+
 const MAINTENANCE_SELECT =
   "$select=cr40f_manutencoesid,cr40f_id,cr40f_descricao,cr40f_comentariosaomotorista,cr40f_graudamanutencao,cr40f_tipodoreparo,cr40f_status,cr40f_servicorealizado,cr40f_estabelecimento,cr40f_valor,cr40f_pagamento,_cr40f_placa_carro_value,_cr40f_realizado_por_nome_value,new_comentariosdocolaborador,cr40f_foto01,cr40f_linkdaevidencia,cr40f_foto03,new_linkdanotafiscal,new_linkdafotofinal1,new_linkdafotofinal2,new_linkdafotofinal3";
 
@@ -2710,13 +2712,26 @@ async function buildSolicitanteHtml(record: DataverseRecord, serviceDate: Date |
   }
 }
 
+export function formatReceiveDetailValue(record: DataverseRecord) {
+  const receiveValue = getFormatted(record, "cr40f_receber");
+  const amount = record.cr40f_valor_a_receber;
+  if (!getBooleanValue(record, "cr40f_receber") || typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+    return receiveValue;
+  }
+
+  const formattedAmount = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
+    .format(amount)
+    .replace(/\u00a0/g, " ");
+  return `Sim - ${formattedAmount}`;
+}
+
 function buildFields(record: DataverseRecord, passengerHtml = "", solicitanteHtml = ""): DetailField[] {
   const date = toDate(record.cr40f_dataehorriodesada);
   const finalizedAt = toDate(record.new_datadefinalizacao);
   return [
     { label: "Data e Horário de Saída", value: formatDetailDateTime(date) },
     { label: "Cliente", value: getLookupName(record, "cr40f_cliente") || getFormatted(record, "cr40f_cliente") },
-    { label: "Receber", value: getFormatted(record, "cr40f_receber") },
+    { label: "Receber", value: formatReceiveDetailValue(record) },
     { label: "Trajeto", value: String(record.cr40f_trajeto ?? "") },
     { label: "Passageiros e Telefones de Contato", value: passengerHtml || String(record.cr40f_passageirosetelefonedecontato ?? ""), html: true },
     { label: "Endereço de Saída", value: String(record.cr40f_endereodesada ?? "") },
@@ -2949,7 +2964,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   const servicesResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
-      geralSelect,
+      GERAL_SERVICE_SELECT,
       `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc"
     ].join("&")
@@ -3019,7 +3034,7 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   const historyServiceResult = await retrieveMultipleAll(
     DATAVERSE.geral,
     [
-      geralSelect,
+      GERAL_SERVICE_SELECT,
       `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.servico} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada desc"
     ].join("&")
@@ -3099,7 +3114,7 @@ export async function loadRemoteDetailByParams(servicoId: string, tipo = ""): Pr
 
   if (!normalizedType || normalizedType === "SERVICO") {
     try {
-      const geral = await retrieveOne(DATAVERSE.geral, id, GERAL_SELECT);
+      const geral = await retrieveOne(DATAVERSE.geral, id, GERAL_SERVICE_SELECT);
       if (getGeralId(geral)) return (await mapGeralServiceWithPassengers(geral, driver)).detail ?? null;
     } catch (error) {
       dataverseWarn("Busca direta como SERVICO falhou.", { id, error });
