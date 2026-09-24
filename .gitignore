@@ -4,6 +4,7 @@ outputs/service-vehicle-tracker-*.json
 outputs/service-vehicle-tracker-*.csv
 scripts/update-service-vehicles-from-tracker.console.js
 backup/exchange-lifecycle/
+backup/comunicados/
 tmp/
 .tmp/
 .dev-backups/

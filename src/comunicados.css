@@ -1,0 +1,43 @@
+.comunicado-screen { width:100%; height:100%; min-height:0; overflow-y:auto; background:#f6f8fa; color:#07182f; padding:16px 12px 36px; }
+.comunicado-screen-header { display:flex; align-items:center; gap:16px; max-width:760px; margin:0 auto 24px; padding:6px 8px 16px; border-bottom:1px solid #e3e7ec; }
+.comunicado-screen-header > div { min-width:0; }
+.comunicado-screen-header h1 { margin:3px 0 0; font-size:clamp(1.5rem,5vw,2.2rem); line-height:1.15; letter-spacing:-.035em; overflow-wrap:anywhere; }
+.comunicado-eyebrow { color:#697587; font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.comunicado-back { flex:0 0 auto; padding:10px 13px; border:1px solid #e1e6ec; border-radius:12px; background:white; color:#07182f; font-size:.82rem; font-weight:800; cursor:pointer; }
+.comunicado-list,.comunicado-detail { max-width:760px; margin:0 auto; }
+.comunicado-list-intro { margin:0 0 22px; color:#657183; font-size:.9rem; }
+.comunicado-list h2 { display:flex; align-items:center; gap:8px; margin:25px 0 10px; font-size:.79rem; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }
+.comunicado-list h2 span { display:inline-grid; place-items:center; min-width:22px; height:22px; border-radius:6px; background:#e7ecf1; font-size:.73rem; }
+.comunicado-row { width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:17px; margin-bottom:12px; border:1px solid #e4e9ee; border-radius:16px; background:white; color:#07182f; text-align:left; cursor:pointer; box-shadow:0 7px 20px rgba(0,14,35,.045); }
+.comunicado-row:active,.comunicado-service-card:active { transform:scale(.99); }
+.comunicado-row span { display:grid; gap:4px; min-width:0; }
+.comunicado-row strong { font-size:.95rem; line-height:1.3; overflow-wrap:anywhere; }
+.comunicado-row small { color:#916d20; font-size:.75rem; font-weight:800; }
+.comunicado-row time { color:#728092; font-size:.73rem; white-space:nowrap; }
+.comunicado-row.is-read { background:#fbfbfa; }
+.comunicado-row.is-read small { color:#647787; }
+.comunicado-empty { padding:22px 16px; border:1px dashed #d7dce1; border-radius:9px; color:#697587; }
+.comunicado-detail { padding:22px; border:1px solid #e4e9ee; border-radius:16px; background:white; box-shadow:0 7px 20px rgba(0,14,35,.045); }
+.comunicado-detail-meta { display:flex; justify-content:space-between; gap:12px; color:#617087; font-size:.76rem; font-weight:800; }
+.comunicado-detail-meta span { color:#76581d; }
+.comunicado-body { margin:26px 0; color:#223247; font-size:1rem; line-height:1.75; white-space:pre-wrap; overflow-wrap:anywhere; }
+.comunicado-ack { padding-top:20px; border-top:1px solid #e6e8e9; }
+.comunicado-ack h2,.comunicado-signed h2 { margin:0 0 8px; font-size:1.1rem; }
+.comunicado-ack p,.comunicado-signed p { color:#5c697c; font-size:.88rem; line-height:1.5; }
+.comunicado-ack label { display:block; margin:20px 0 8px; font-size:.8rem; font-weight:850; }
+.comunicado-ack textarea { display:block; width:100%; min-height:100px; padding:12px; border:1px solid #cbd1d7; border-radius:7px; resize:vertical; color:#17263c; font:inherit; }
+.comunicado-signature-pad { width:100%; height:170px; border:1px solid #bdc6cf; border-radius:8px; background:#fff; touch-action:none; cursor:crosshair; overflow:hidden; }
+.comunicado-signature-pad svg,.comunicado-signed svg { width:100%; height:100%; color:#102139; }
+.comunicado-signed svg { height:160px; border:1px solid #e4e7e9; border-radius:8px; }
+.comunicado-text-button { display:block; margin:8px 0 16px auto; padding:6px 0; border:0; background:none; color:#334d69; font-size:.8rem; font-weight:800; cursor:pointer; }
+.comunicado-primary { width:100%; min-height:48px; padding:12px; border:0; border-radius:12px; background:#07182f; color:white; font-weight:900; cursor:pointer; }
+.comunicado-primary:disabled { opacity:.55; cursor:wait; }
+.comunicado-error { color:#a43a31; font-size:.85rem; font-weight:800; }
+.comunicado-read-state { color:#456a56; font-size:.85rem; }
+.comunicado-service-notices { width:100%; flex:0 0 auto; padding:12px 14px; max-height:38vh; overflow-y:auto; }
+.comunicado-service-notices h2 { margin:0 0 8px; color:#293b51; font-size:.75rem; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+.comunicado-service-card { width:100%; display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; padding:14px 16px; border:1px solid #e3e8ed; border-left:3px solid #bf8c36; border-radius:16px; background:#fff; color:#07182f; text-align:left; cursor:pointer; box-shadow:0 7px 20px rgba(0,14,35,.045); }
+.comunicado-service-card span:first-child { display:grid; gap:3px; }
+.comunicado-service-card strong { font-size:.84rem; }
+.comunicado-service-card small { color:#735e35; font-size:.72rem; }
+@media (max-width:480px) { .comunicado-row { align-items:flex-start; } .comunicado-row time { white-space:normal; text-align:right; } .comunicado-detail { padding:17px; } }

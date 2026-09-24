@@ -28,6 +28,15 @@ const baseModules = [
     disabled: false,
   },
   {
+    id: "comunicados",
+    label: "Comunicados",
+    detail: "Avisos da operação",
+    action: "Ver comunicados",
+    icon: "comunicados",
+    tone: "neutral",
+    disabled: false,
+  },
+  {
     id: "maintenancePhoto",
     label: "Manutenção",
     detail: "Solicitar reparo",
@@ -57,6 +66,7 @@ const baseModules = [
 ];
 
 const screenAliases: Record<string, string[]> = {
+  comunicados: ["comunicados"],
   services: ["servicos", "services", "Services", "serviços"],
   history: ["historico", "history", "History", "histórico"],
   maintenancePhoto: ["maintenancePhoto", "maintenance", "MaintenancePhoto", "manutencao", "manutenção"],
@@ -66,6 +76,7 @@ const screenAliases: Record<string, string[]> = {
 };
 
 const moduleHandlers: Record<string, string[]> = {
+  comunicados: [],
   services: [
     "onServices",
     "onService",
@@ -178,6 +189,7 @@ type InitialScreenProps = {
   nextServiceAt?: string | Date | null;
   proximoServicoEm?: string | Date | null;
   services?: AgendaItem[];
+  pendingComunicados?: number;
   canGeneratePersonalReceipt?: boolean;
   showLocalReset?: boolean;
   onResetLocalData?: () => void;
@@ -300,6 +312,10 @@ function getTodayAgendaCount(services: AgendaItem[] | undefined, now: number) {
 function ModuleIcon({ name }: { name: string }) {
   if (name === "services") {
     return <img src={carIcon} alt="" />;
+  }
+
+  if (name === "comunicados") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4V5Zm3 4h10M7 12h7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" /></svg>;
   }
 
   if (name === "history") {
@@ -429,6 +445,7 @@ export function InitialScreen(props: InitialScreenProps) {
               <small>
                 {module.detail}
                 {module.id === "services" && agendaCount > 0 ? <span className="concept-inline-count"> • {agendaCount}</span> : null}
+                {module.id === "comunicados" && (props.pendingComunicados ?? 0) > 0 ? <span className="concept-inline-count"> • {props.pendingComunicados} pendente{props.pendingComunicados === 1 ? "" : "s"}</span> : null}
               </small>
             </span>
             <span className="concept-module-action">{module.action}</span>

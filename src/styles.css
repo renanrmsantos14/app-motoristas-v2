@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900;1000&family=Montserrat:wght@400;500;600;700;800&display=swap");
+@import "./comunicados.css";
 @font-face {
   font-family: "Centabel Book Embedded";
   src: url("./assets/fonts/Centabel-Book.ttf") format("truetype");

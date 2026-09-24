@@ -62,6 +62,7 @@ import {
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
 import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
+import { COMUNICADO_TIPO, isComunicadoPending, loadDriverComunicados, type ComunicadoDestinatario } from "./lib/comunicados";
 import { clearMediaDraft, loadMediaDraft, saveMediaDraft } from "./lib/mediaDraftStore";
 
 const EXCHANGE_ERROR_MESSAGES: Record<string, string> = {
@@ -96,6 +97,7 @@ import {
 import { LocalToast, type ToastState, type ToastTone } from "./components/common/LocalToast";
 import { LoadingOverlay, type LoadingOverlayState } from "./components/common/LoadingOverlay";
 import { CollisionScreen } from "./screens/CollisionScreen";
+import { ComunicadosScreen } from "./screens/ComunicadosScreen";
 import { ButtonPreviewScreen } from "./screens/ButtonPreviewScreen";
 import { CollisionStartScreen } from "./screens/CollisionStartScreen";
 import { DetailsScreen } from "./screens/DetailsScreen";
@@ -417,6 +419,8 @@ function App() {
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
   const [remoteMode, setRemoteMode] = useState(false);
   const [driverContext, setDriverContext] = useState<DriverContext | null>(null);
+  const [comunicados, setComunicados] = useState<ComunicadoDestinatario[]>([]);
+  const [selectedComunicadoId, setSelectedComunicadoId] = useState("");
   const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>(() => loadVoucherDrafts());
   const [serviceObservationDrafts, setServiceObservationDrafts] = useState<Record<string, string>>(() => loadServiceObservationDrafts());
   const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
@@ -646,6 +650,10 @@ function App() {
         const hashRoute = initialHashRouteRef.current;
         const remoteInitialDetail = hashRoute ? findDetailFromHashRoute(remoteStore, hashRoute) : getInitialDetail(remoteStore);
         setDriverContext(remote.driver);
+        loadDriverComunicados().then(setComunicados).catch((error) => {
+          reportAppError(error, { severity: "warning", source: "app", action: "loadDriverComunicados", phase: "initial" });
+          setToast("Não foi possível carregar comunicados. Atualize o aplicativo.", "warning");
+        });
         setStore((current) => ({
           ...current,
           agenda: remote.agenda,
@@ -1116,6 +1124,12 @@ function App() {
         const remote = await loadRemoteStore();
         setDriverContext(remote.driver);
         setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history }));
+        try {
+          setComunicados(await loadDriverComunicados());
+        } catch (error) {
+          reportAppError(error, { severity: "warning", source: "app", action: "loadDriverComunicados", phase: "refresh" });
+          if (!silent) setToast("Não foi possível atualizar comunicados. Tente novamente.", "warning");
+        }
         if (detailToRefresh) {
           const refreshedDetail =
             findDetailByParams([...remote.agenda, ...remote.history], detailToRefresh.id, detailToRefresh.type) ??
@@ -1485,7 +1499,7 @@ function App() {
       openPersonalReceiptFromHome();
       return;
     }
-    if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos" || screenName === "colisoesInicio") {
+    if (screenName === "servicos" || screenName === "comunicados" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos" || screenName === "colisoesInicio") {
       setScreen(screenName);
     }
   };
@@ -2814,6 +2828,8 @@ function App() {
     return show(
       <ServicesScreen
         items={store.agenda}
+        pendingComunicados={comunicados.filter((item) => item.tipo === COMUNICADO_TIPO.ciencia && isComunicadoPending(item))}
+        onOpenComunicado={(id) => { setSelectedComunicadoId(id); setScreen("comunicados"); }}
         onHome={() => setScreen("inicio")}
         onRefresh={refreshLocal}
         completingDetailKey={completingDetailKey}
@@ -2840,6 +2856,19 @@ function App() {
     );
   }
 
+  if (screen === "comunicados") {
+    return show(
+      <ComunicadosScreen
+        items={comunicados}
+        selectedId={selectedComunicadoId}
+        onSelectedIdChange={setSelectedComunicadoId}
+        onBack={() => setScreen("inicio")}
+        onReload={async () => { setComunicados(await loadDriverComunicados()); }}
+        driverName={driverContext?.fullName ?? ""}
+      />
+    );
+  }
+
   return show(
     <InitialScreen
       onNavigate={navigateFromInitial}
@@ -2849,6 +2878,7 @@ function App() {
       onRefresh={refreshLocal}
       canGeneratePersonalReceipt={canGeneratePersonalReceipt}
       services={store.agenda}
+      pendingComunicados={comunicados.filter(isComunicadoPending).length}
       driverName={driverContext?.fullName}
       showLocalReset={isLocalhostRuntime && !remoteMode}
       onResetLocalData={resetLocalData}

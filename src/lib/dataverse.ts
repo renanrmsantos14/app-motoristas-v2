@@ -191,6 +191,8 @@ export const DATAVERSE = {
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
   posseVeiculos: "new_possedeveiculos",
   fotosManutencao: "new_fotomanutencao",
+  comunicados: "new_comunicadomotoristas",
+  comunicadoDestinatarios: "new_comunicadodestinatarios",
   systemusers: "systemusers"
 } as const;
 
@@ -218,6 +220,8 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
   [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
   [DATAVERSE.fotosManutencao]: "new_fotomanutencao",
+  [DATAVERSE.comunicados]: "new_comunicadomotorista",
+  [DATAVERSE.comunicadoDestinatarios]: "new_comunicadodestinatario",
   [DATAVERSE.systemusers]: "systemuser",
   environmentvariabledefinitions: "environmentvariabledefinition",
   environmentvariablevalues: "environmentvariablevalue"
