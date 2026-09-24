@@ -13,7 +13,7 @@ Este módulo permite que a operação escreva e dispare manualmente mensagens ao
 
 O aviso continua visível no app enquanto estiver pendente. O aplicativo atualiza a lista ao entrar nas telas e periodicamente. O push do Power Apps avisa sobre o novo comunicado; a pendência registrada no Dataverse é a referência caso o push falhe ou as notificações do aparelho estejam desligadas. Ciência não bloqueia toda a navegação nem conclui um serviço real: o card em Serviços leva à mesma tela do comunicado.
 
-O nome do assinante é derivado do cadastro do motorista associado ao usuário Microsoft autenticado; o motorista não edita esse nome. Uma ciência já registrada não pode ser alterada. Um comunicado disparado também não pode ser editado. A observação é opcional, com até 1.000 caracteres. O desenho da assinatura é obrigatório para ciência e guardado como traços normalizados em JSON.
+O nome do assinante é derivado do cadastro do motorista associado ao usuário Microsoft autenticado; o motorista não edita esse nome. Uma ciência já registrada não pode ser alterada. Um comunicado disparado não pode ter nome, título, mensagem, tipo, público ou estado editados: a gestão bloqueia os campos e um passo de plugin impede a atualização direta no Dataverse. A observação é opcional, com até 1.000 caracteres. O desenho da assinatura é obrigatório para ciência e guardado como traços normalizados em JSON.
 
 ## Fluxo operacional
 

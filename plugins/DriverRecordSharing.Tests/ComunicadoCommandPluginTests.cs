@@ -189,6 +189,33 @@ namespace Betinhos.DriverRecordSharing.Tests
             Assert.Contains("falhou", second.InnerException.Message);
         }
 
+        [Fact]
+        public void CabecalhoDisparadoNaoAceitaEdicaoDeConteudoOuEstado()
+        {
+            var service = new FakeService { Header = Header(Todos) };
+            service.Header["new_estado"] = new OptionSetValue(Disparado);
+            var target = new Entity("new_comunicadomotorista", service.Header.Id) { ["new_corpo"] = "Texto alterado" };
+            var context = new RemoteExecutionContext { MessageName = "Update", PrimaryEntityName = "new_comunicadomotorista" };
+            context.InputParameters["Target"] = target;
+
+            var error = Assert.Throws<TargetInvocationException>(() => Invoke("GuardDispatchedHeader", context, service));
+
+            Assert.Contains("não pode ser alterado", error.InnerException.Message);
+        }
+
+        [Fact]
+        public void CabecalhoRascunhoAceitaEdicaoEDisparo()
+        {
+            var service = new FakeService { Header = Header(Todos) };
+            var target = new Entity("new_comunicadomotorista", service.Header.Id) { ["new_estado"] = new OptionSetValue(Disparado) };
+            var context = new RemoteExecutionContext { MessageName = "Update", PrimaryEntityName = "new_comunicadomotorista" };
+            context.InputParameters["Target"] = target;
+
+            var error = Record.Exception(() => Invoke("GuardDispatchedHeader", context, service));
+
+            Assert.Null(error);
+        }
+
         private static void Invoke(string method, params object[] args)
         {
             typeof(ComunicadoCommandPlugin).GetMethod(method, BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, args);

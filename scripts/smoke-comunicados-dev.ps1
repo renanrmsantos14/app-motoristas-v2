@@ -32,3 +32,10 @@ if (@($flow.value).Count -ne 1 -or [int]$flow.value[0].statecode -ne 1) { throw 
 $definition = ($flow.value[0].clientdata | ConvertFrom-Json).properties.definition
 if ($definition.triggers.When_recipient_is_added_or_retried.inputs.parameters.'subscriptionRequest/entityname' -ne "new_comunicadodestinatario" -or $definition.actions.Send_push.inputs.host.operationId -ne "SendPushNotificationV2") { throw "Flow de push com contrato inesperado." }
 Write-Output "Flow de push ativo: $flowName"
+$pluginType = Invoke-RestMethod -Method Get -Uri "$api/plugintypes?`$select=plugintypeid&`$filter=typename eq 'Betinhos.DriverRecordSharing.ComunicadoCommandPlugin'" -Headers $headers
+if (@($pluginType.value).Count -ne 1) { throw "Plugin de comunicados ausente ou duplicado." }
+$typeId = [guid]$pluginType.value[0].plugintypeid
+$steps = Invoke-RestMethod -Method Get -Uri "$api/sdkmessageprocessingsteps?`$select=name,stage,mode,statecode,filteringattributes&`$filter=_eventhandler_value eq $typeId and stage eq 10" -Headers $headers
+$guard = @($steps.value | Where-Object { $_.name -eq 'Comunicados - bloquear edicao apos disparo' })
+if ($guard.Count -ne 1 -or [int]$guard[0].statecode -ne 0 -or [int]$guard[0].mode -ne 0 -or $guard[0].filteringattributes -notmatch 'new_corpo') { throw "Trava de edicao do comunicado ausente ou inativa." }
+Write-Output "Trava de edicao do comunicado ativa no DEV"

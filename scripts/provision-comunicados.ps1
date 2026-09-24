@@ -205,6 +205,38 @@ function Ensure-Api([string] $Name, [guid] $PluginTypeId, [string] $Privilege, $
   }
 }
 
+function Ensure-HeaderGuard([guid] $PluginTypeId) {
+  $messages = @(Get-Rows "sdkmessages" "sdkmessageid,name" "name eq 'Update'")
+  if ($messages.Count -ne 1) { throw "Mensagem Update ausente ou duplicada." }
+  $messageId = [guid]$messages[0].sdkmessageid
+  $metadata = @(Get-Rows "EntityDefinitions" "ObjectTypeCode" "LogicalName eq 'new_comunicadomotorista'")
+  if ($metadata.Count -ne 1) { throw "ObjectTypeCode do comunicado nao encontrado." }
+  $filters = @(Get-Rows "sdkmessagefilters" "sdkmessagefilterid,primaryobjecttypecode" "_sdkmessageid_value eq $messageId" | Where-Object { [string]$_.primaryobjecttypecode -eq "new_comunicadomotorista" -or [string]$_.primaryobjecttypecode -eq [string]$metadata[0].ObjectTypeCode })
+  if ($filters.Count -ne 1) { throw "Filtro Update do comunicado ausente ou duplicado." }
+  $filterId = [guid]$filters[0].sdkmessagefilterid
+  $steps = @(Get-Rows "sdkmessageprocessingsteps" "sdkmessageprocessingstepid,name,stage,mode,filteringattributes" "_eventhandler_value eq $PluginTypeId and _sdkmessageid_value eq $messageId and _sdkmessagefilterid_value eq $filterId and stage eq 10")
+  $attributes = "new_name,new_titulo,new_corpo,new_tipo,new_escopo,new_alvosjson,new_estado"
+  if ($steps.Count -eq 0) {
+    if (-not $Apply) { Write-Step "DRY RUN criaria trava de edicao do comunicado disparado"; return }
+    Invoke-Dv "POST" "sdkmessageprocessingsteps" @{
+      name = "Comunicados - bloquear edicao apos disparo"
+      description = "Impede alterar conteudo, publico ou estado de comunicado ja disparado"
+      "eventhandler_plugintype@odata.bind" = "/plugintypes($PluginTypeId)"
+      "sdkmessageid@odata.bind" = "/sdkmessages($messageId)"
+      "sdkmessagefilterid@odata.bind" = "/sdkmessagefilters($filterId)"
+      stage = 10
+      mode = 0
+      rank = 1
+      supporteddeployment = 0
+      asyncautodelete = $false
+      filteringattributes = $attributes
+    } | Out-Null
+    $steps = @(Get-Rows "sdkmessageprocessingsteps" "sdkmessageprocessingstepid,name,stage,mode,filteringattributes" "_eventhandler_value eq $PluginTypeId and _sdkmessageid_value eq $messageId and _sdkmessagefilterid_value eq $filterId and stage eq 10")
+  }
+  if ($steps.Count -ne 1 -or [int]$steps[0].mode -ne 0 -or [string]$steps[0].filteringattributes -ne $attributes) { throw "Trava do comunicado nao ficou unica ou tem contrato divergente." }
+  Add-SolutionComponent ([guid]$steps[0].sdkmessageprocessingstepid) 92 "trava de comunicado disparado"
+}
+
 Write-Step "alvo: $baseUrl, solucao: $SolutionUniqueName, apply: $Apply"
 Ensure-Table "new_ComunicadoMotorista" "Comunicado do motorista" "Comunicados dos motoristas" "OrganizationOwned"
 Ensure-Table "new_ComunicadoDestinatario" "Destinatario de comunicado" "Destinatarios de comunicados" "UserOwned"
@@ -252,6 +284,7 @@ if ($pluginTypes.Count -eq 1) {
   Ensure-Api "new_AbrirComunicadoMotorista" $typeId "prvReadnew_ComunicadoDestinatario" $idParameter
   Ensure-Api "new_RegistrarCienciaComunicado" $typeId "prvReadnew_ComunicadoDestinatario" @($idParameter + @(@{ Name = "new_AssinaturaJson"; Type = 10; Optional = $false }, @{ Name = "new_Observacao"; Type = 10; Optional = $true }))
   Ensure-Api "new_ReenviarPushComunicado" $typeId "prvWritenew_ComunicadoMotorista" $idParameter
+  Ensure-HeaderGuard $typeId
 }
 
 if ($Apply) {

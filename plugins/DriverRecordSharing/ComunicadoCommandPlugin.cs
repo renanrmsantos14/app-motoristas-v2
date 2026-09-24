@@ -44,6 +44,9 @@ namespace Betinhos.DriverRecordSharing
                     case "new_ReenviarPushComunicado":
                         RetryPush(context, caller, system);
                         break;
+                    case "Update" when context.PrimaryEntityName == HeaderTable:
+                        GuardDispatchedHeader(context, system);
+                        break;
                     default:
                         throw new InvalidPluginExecutionException("Ação de comunicado desconhecida.");
                 }
@@ -68,6 +71,16 @@ namespace Betinhos.DriverRecordSharing
         }
 
         private static int Choice(Entity entity, string name) => entity.GetAttributeValue<OptionSetValue>(name)?.Value ?? -1;
+
+        private static void GuardDispatchedHeader(IPluginExecutionContext context, IOrganizationService system)
+        {
+            var target = context.InputParameters.Contains("Target") ? context.InputParameters["Target"] as Entity : null;
+            if (target == null || target.LogicalName != HeaderTable) return;
+            var header = system.Retrieve(HeaderTable, target.Id, new ColumnSet("new_estado"));
+            if (Choice(header, "new_estado") != Disparado) return;
+            if (new[] { "new_name", "new_titulo", "new_corpo", "new_tipo", "new_escopo", "new_alvosjson", "new_estado" }.Any(target.Contains))
+                throw new InvalidPluginExecutionException("Comunicado disparado não pode ser alterado.");
+        }
 
         private static Entity RecipientForCaller(IPluginExecutionContext context, IOrganizationService system)
         {
