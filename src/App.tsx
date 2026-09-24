@@ -1152,13 +1152,23 @@ function App() {
   useEffect(() => {
     if (!remoteMode || remoteOperation || !shouldAutoRefreshScreen(screen)) return;
 
+    let refreshing = false;
     const autoRefresh = () => {
-      if (document.hidden) return;
-      void refreshLocal(selectedDetail ?? undefined, { silent: true });
+      if (document.hidden || refreshing) return;
+      refreshing = true;
+      void refreshLocal(selectedDetail ?? undefined, { silent: true }).finally(() => { refreshing = false; });
     };
 
     const timer = window.setInterval(autoRefresh, AUTO_REFRESH_INTERVAL_MS);
-    return () => window.clearInterval(timer);
+    window.addEventListener("focus", autoRefresh);
+    window.addEventListener("pageshow", autoRefresh);
+    document.addEventListener("visibilitychange", autoRefresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", autoRefresh);
+      window.removeEventListener("pageshow", autoRefresh);
+      document.removeEventListener("visibilitychange", autoRefresh);
+    };
   }, [remoteMode, remoteOperation, screen, selectedDetail]);
 
   const blockIfNotFirstPending = (detail: typeof selectedDetail = selectedDetail) => {

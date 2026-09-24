@@ -53,6 +53,22 @@
   font-weight: 800;
   cursor: pointer;
 }
+.comunicado-refresh {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: #e7ecf1;
+  color: #102139;
+  font-size: .78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.comunicado-refresh:disabled {
+  opacity: .6;
+  cursor: wait;
+}
 .comunicado-list,
 .comunicado-detail {
   max-width: 760px;
@@ -244,6 +260,10 @@
   font-size: .85rem;
   font-weight: 800;
 }
+.comunicado-page-error {
+  max-width: 760px;
+  margin: 0 auto 16px;
+}
 .comunicado-read-state {
   color: #456a56;
   font-size: .85rem;
@@ -292,6 +312,12 @@
   font-size: .72rem;
 }
 @media (max-width:480px) {
+  .comunicado-screen-header {
+    flex-wrap: wrap;
+  }
+  .comunicado-refresh {
+    margin-left: 0;
+  }
   .comunicado-row {
     align-items: flex-start;
   }
@@ -12305,7 +12331,7 @@ select,
   </head>
   <body>
     <div id="root"></div>
-    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.678","builtAt":"2026-09-24T22:34:07.025Z","builtAtLabel":"24/09/2026, 19:34"};</script>
+    <script>window.__APP_FLOW_ENV={"VITE_FLOW_GERAR_VOUCHER_URL":"","VITE_FLOW_SALVAR_FOTOS_MANUTENCAO_URL":""};window.__APP_BUILD_INFO={"version":"2.1.680","builtAt":"2026-09-24T23:37:34.197Z","builtAtLabel":"24/09/2026, 20:37"};</script>
     <script>"use strict";
 (() => {
   var __create = Object.create;
@@ -62888,6 +62914,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     const [strokes, setStrokes] = (0, import_react33.useState)([]);
     const [observacao, setObservacao] = (0, import_react33.useState)("");
     const [busy, setBusy] = (0, import_react33.useState)(false);
+    const [refreshing, setRefreshing] = (0, import_react33.useState)(false);
     const [error2, setError] = (0, import_react33.useState)("");
     const selected = items.find((item) => item.id === selectedId);
     const pending = items.filter(isComunicadoPending);
@@ -62895,8 +62922,13 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     (0, import_react33.useEffect)(() => {
       if (!selected || selected.abertoEm || selected.lidoEm) return;
       let active = true;
-      abrirComunicado(selected.id).then(() => {
-        if (active) void onReload();
+      abrirComunicado(selected.id).then(async () => {
+        if (!active) return;
+        try {
+          await onReload();
+        } catch {
+          if (active) setError("Visualiza\xE7\xE3o registrada, mas n\xE3o foi poss\xEDvel atualizar a lista. Tente novamente.");
+        }
       }).catch(() => {
         if (active) setError("N\xE3o foi poss\xEDvel registrar a visualiza\xE7\xE3o. Tente atualizar.");
       });
@@ -62914,13 +62946,27 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
       if (!selected || busy) return;
       setBusy(true);
       setError("");
+      let signed = false;
       try {
         await assinarComunicado(selected.id, strokes, observacao);
+        signed = true;
         await onReload();
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "N\xE3o foi poss\xEDvel salvar a ci\xEAncia.");
+        setError(signed ? "Ci\xEAncia registrada, mas n\xE3o foi poss\xEDvel atualizar a lista. Tente novamente." : cause instanceof Error ? cause.message : "N\xE3o foi poss\xEDvel salvar a ci\xEAncia.");
       } finally {
         setBusy(false);
+      }
+    };
+    const refresh = async () => {
+      if (refreshing) return;
+      setRefreshing(true);
+      setError("");
+      try {
+        await onReload();
+      } catch {
+        setError("N\xE3o foi poss\xEDvel atualizar os comunicados. Tente novamente.");
+      } finally {
+        setRefreshing(false);
       }
     };
     return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(AppShell, { screenLabel: "Comunicados", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "comunicado-screen", children: [
@@ -62929,8 +62975,10 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
         /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "comunicado-eyebrow", children: "Betinhos \xB7 Opera\xE7\xE3o" }),
           /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("h1", { children: selected ? selected.titulo : "Comunicados" })
-        ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: "comunicado-refresh", disabled: refreshing, onClick: () => void refresh(), children: refreshing ? "Atualizando..." : "Atualizar" })
       ] }),
+      error2 ? /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "comunicado-error comunicado-page-error", role: "alert", children: error2 }) : null,
       selected ? /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("article", { className: "comunicado-detail", children: [
         /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "comunicado-detail-meta", children: [
           /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { children: selected.tipo === COMUNICADO_TIPO.ciencia ? "Exige ci\xEAncia" : "Informativo" }),
@@ -62965,8 +63013,7 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
           "Leitura registrada em ",
           formatDate(selected.lidoEm),
           "."
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "comunicado-read-state", children: "Registrando leitura..." }),
-        error2 ? /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "comunicado-error", role: "alert", children: error2 }) : null
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "comunicado-read-state", children: "Registrando leitura..." })
       ] }) : /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "comunicado-list", children: [
         /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "comunicado-list-intro", children: "Informa\xE7\xF5es e avisos enviados pela opera\xE7\xE3o." }),
         /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("h2", { children: [
@@ -85555,12 +85602,24 @@ Esta mensagem tem finalidade exclusiva de coleta de dados e preserva\xE7\xE3o de
     };
     (0, import_react60.useEffect)(() => {
       if (!remoteMode || remoteOperation || !shouldAutoRefreshScreen(screen)) return;
+      let refreshing = false;
       const autoRefresh = () => {
-        if (document.hidden) return;
-        void refreshLocal(selectedDetail ?? void 0, { silent: true });
+        if (document.hidden || refreshing) return;
+        refreshing = true;
+        void refreshLocal(selectedDetail ?? void 0, { silent: true }).finally(() => {
+          refreshing = false;
+        });
       };
       const timer = window.setInterval(autoRefresh, AUTO_REFRESH_INTERVAL_MS);
-      return () => window.clearInterval(timer);
+      window.addEventListener("focus", autoRefresh);
+      window.addEventListener("pageshow", autoRefresh);
+      document.addEventListener("visibilitychange", autoRefresh);
+      return () => {
+        window.clearInterval(timer);
+        window.removeEventListener("focus", autoRefresh);
+        window.removeEventListener("pageshow", autoRefresh);
+        document.removeEventListener("visibilitychange", autoRefresh);
+      };
     }, [remoteMode, remoteOperation, screen, selectedDetail]);
     const blockIfNotFirstPending = (detail = selectedDetail) => {
       if (!detail) return true;

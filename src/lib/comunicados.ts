@@ -123,6 +123,10 @@ export async function allRows(entitySet: string, options: string) {
 
 export type MotoristaElegivel = { id: string; nome: string; email: string; userId: string; problema: string };
 
+function hasDriverLinkType(row: Record<string, unknown>) {
+  return row.cr40f_tipodevinculo != null && [0, 1].includes(Number(row.cr40f_tipodevinculo));
+}
+
 export async function loadMotoristasElegiveis(): Promise<MotoristaElegivel[]> {
   const [employees, users] = await Promise.all([
     allRows(DATAVERSE.funcionarios, "$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,cr40f_tipodevinculo&$filter=cr40f_status eq 0 and statecode eq 0"),
@@ -136,12 +140,11 @@ export async function loadMotoristasElegiveis(): Promise<MotoristaElegivel[]> {
     usersByEmail.set(email, [...(usersByEmail.get(email) ?? []), String(user.systemuserid ?? "")]);
   }
   for (const row of employees) {
-    if (![0, 1].includes(Number(row.cr40f_tipodevinculo))) continue;
+    if (!hasDriverLinkType(row)) continue;
     const email = String(row.cr40f_emailmicrosoft ?? "").trim().toLowerCase();
     if (email) employeesByEmail.set(email, (employeesByEmail.get(email) ?? 0) + 1);
   }
   return employees
-    .filter((row) => [0, 1].includes(Number(row.cr40f_tipodevinculo)))
     .map((row) => {
       const email = String(row.cr40f_emailmicrosoft ?? "").trim().toLowerCase();
       const matches = usersByEmail.get(email) ?? [];
@@ -150,7 +153,7 @@ export async function loadMotoristasElegiveis(): Promise<MotoristaElegivel[]> {
         nome: String(row.cr40f_nomecompleto ?? ""),
         email,
         userId: matches.length === 1 ? matches[0] : "",
-        problema: !email ? "Sem e-mail Microsoft" : (employeesByEmail.get(email) ?? 0) > 1 ? "E-mail usado por mais de um motorista" : matches.length === 0 ? "Sem usuário ativo" : matches.length > 1 ? "Usuário duplicado" : ""
+        problema: !hasDriverLinkType(row) ? "Tipo de vínculo não definido" : !email ? "Sem e-mail Microsoft" : (employeesByEmail.get(email) ?? 0) > 1 ? "E-mail usado por mais de um motorista" : matches.length === 0 ? "Sem usuário ativo" : matches.length > 1 ? "Usuário duplicado" : ""
       };
     })
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));

@@ -35,7 +35,7 @@ $sourceData = $source[0].clientdata | ConvertFrom-Json
 $dvReference = $sourceData.properties.connectionReferences.shared_commondataserviceforapps
 $pushReference = $sourceData.properties.connectionReferences.'shared_powerappsnotificationv2-1'
 if (-not $dvReference.connection.connectionReferenceLogicalName -or -not $pushReference.connection.connectionReferenceLogicalName) { throw "Referencias de conexao ausentes." }
-$app = @((Read-Dv "appmodules?`$select=appmoduleid,name&`$filter=uniquename eq 'new_AppMotoristasv2'").value)
+$app = @((Read-Dv "appmodules?`$select=appmoduleid,uniquename,name&`$filter=uniquename eq 'new_AppMotoristasv2'").value)
 if ($app.Count -ne 1) { throw "App Motoristas v2 ausente ou duplicado." }
 $solution = @((Read-Dv "solutions?`$select=solutionid,ismanaged&`$filter=uniquename eq '$solutionName'").value)
 if ($solution.Count -ne 1 -or $solution[0].ismanaged) { throw "Solucao AppBetinhos ausente ou gerenciada." }
@@ -79,11 +79,11 @@ $push = @{
     host = $pushHost
     parameters = @{
       "payload/playerType" = "PowerApps"
-      "payload/app" = (@{ appIdentifier = [string]$app[0].appmoduleid; displayName = "App Motoristas v2"; type = "AppModule" } | ConvertTo-Json -Compress)
+      "payload/app" = (@{ appIdentifier = [string]$app[0].uniquename; displayName = [string]$app[0].name; type = "AppModule" } | ConvertTo-Json -Compress)
       "payload/recipients" = @("@outputs('Get_owner')?['body/internalemailaddress']")
       "payload/message" = "Novo comunicado da operacao: @{triggerOutputs()?['body/new_titulo']}"
       "payload/openApp" = $true
-      "payload/dynamicParams" = @{ entityLogicalName = "new_comunicadodestinatario" }
+      "payload/dynamicParams/entityLogicalName" = "new_comunicadodestinatario"
     }
     authentication = $auth
   }
@@ -149,5 +149,7 @@ if ($component.Count -eq 0) { Write-Dv "POST" "AddSolutionComponent" @{ Componen
 Write-Dv "PATCH" "workflows($id)" @{ statecode = 1 } | Out-Null
 $verified = Read-Dv "workflows($id)?`$select=name,statecode,clientdata"
 $verifiedDefinition = ($verified.clientdata | ConvertFrom-Json).properties.definition
-if ($verified.statecode -ne 1 -or $verifiedDefinition.triggers.When_recipient_is_added_or_retried.inputs.parameters.'subscriptionRequest/entityname' -ne "new_comunicadodestinatario" -or $verifiedDefinition.actions.Send_push.inputs.host.operationId -ne "SendPushNotificationV2") { throw "Flow criado, mas ativacao ou configuracao divergente." }
+$verifiedPush = $verifiedDefinition.actions.Send_push.inputs
+$verifiedApp = $verifiedPush.parameters.'payload/app' | ConvertFrom-Json
+if ($verified.statecode -ne 1 -or $verifiedDefinition.triggers.When_recipient_is_added_or_retried.inputs.parameters.'subscriptionRequest/entityname' -ne "new_comunicadodestinatario" -or $verifiedPush.host.operationId -ne "SendPushNotificationV2" -or $verifiedApp.appIdentifier -ne $app[0].uniquename -or $verifiedPush.parameters.'payload/dynamicParams/entityLogicalName' -ne "new_comunicadodestinatario") { throw "Flow criado, mas ativacao ou configuracao divergente." }
 Write-Output "Flow de push ativo no DEV e adicionado a solucao: $flowName"

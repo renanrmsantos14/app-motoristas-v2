@@ -30,7 +30,9 @@ $flowName = "Flow Push Comunicados | Motoristas"
 $flow = Invoke-RestMethod -Method Get -Uri "$api/workflows?`$select=name,statecode,clientdata&`$filter=name eq '$flowName' and category eq 5" -Headers $headers
 if (@($flow.value).Count -ne 1 -or [int]$flow.value[0].statecode -ne 1) { throw "Flow de push ausente, duplicado ou inativo." }
 $definition = ($flow.value[0].clientdata | ConvertFrom-Json).properties.definition
-if ($definition.triggers.When_recipient_is_added_or_retried.inputs.parameters.'subscriptionRequest/entityname' -ne "new_comunicadodestinatario" -or $definition.actions.Send_push.inputs.host.operationId -ne "SendPushNotificationV2") { throw "Flow de push com contrato inesperado." }
+$push = $definition.actions.Send_push.inputs
+$app = $push.parameters.'payload/app' | ConvertFrom-Json
+if ($definition.triggers.When_recipient_is_added_or_retried.inputs.parameters.'subscriptionRequest/entityname' -ne "new_comunicadodestinatario" -or $push.host.operationId -ne "SendPushNotificationV2" -or $app.appIdentifier -ne "new_AppMotoristasv2" -or $push.parameters.'payload/dynamicParams/entityLogicalName' -ne "new_comunicadodestinatario") { throw "Flow de push com contrato inesperado." }
 Write-Output "Flow de push ativo: $flowName"
 $pluginType = Invoke-RestMethod -Method Get -Uri "$api/plugintypes?`$select=plugintypeid&`$filter=typename eq 'Betinhos.DriverRecordSharing.ComunicadoCommandPlugin'" -Headers $headers
 if (@($pluginType.value).Count -ne 1) { throw "Plugin de comunicados ausente ou duplicado." }

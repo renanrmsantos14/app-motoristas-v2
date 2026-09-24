@@ -32,6 +32,7 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
   const [strokes, setStrokes] = useState<SignatureStrokes>([]);
   const [observacao, setObservacao] = useState("");
   const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const selected = items.find((item) => item.id === selectedId);
   const pending = items.filter(isComunicadoPending);
@@ -41,7 +42,11 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
     if (!selected || selected.abertoEm || selected.lidoEm) return;
     let active = true;
     abrirComunicado(selected.id)
-      .then(() => { if (active) void onReload(); })
+      .then(async () => {
+        if (!active) return;
+        try { await onReload(); }
+        catch { if (active) setError("Visualização registrada, mas não foi possível atualizar a lista. Tente novamente."); }
+      })
       .catch(() => { if (active) setError("Não foi possível registrar a visualização. Tente atualizar."); });
     return () => { active = false; };
   }, [selected?.id, selected?.abertoEm, selected?.lidoEm]);
@@ -57,14 +62,25 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
     if (!selected || busy) return;
     setBusy(true);
     setError("");
+    let signed = false;
     try {
       await assinarComunicado(selected.id, strokes, observacao);
+      signed = true;
       await onReload();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Não foi possível salvar a ciência.");
+      setError(signed ? "Ciência registrada, mas não foi possível atualizar a lista. Tente novamente." : cause instanceof Error ? cause.message : "Não foi possível salvar a ciência.");
     } finally {
       setBusy(false);
     }
+  };
+
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setError("");
+    try { await onReload(); }
+    catch { setError("Não foi possível atualizar os comunicados. Tente novamente."); }
+    finally { setRefreshing(false); }
   };
 
   return (
@@ -78,7 +94,9 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
             <span className="comunicado-eyebrow">Betinhos · Operação</span>
             <h1>{selected ? selected.titulo : "Comunicados"}</h1>
           </div>
+          <button type="button" className="comunicado-refresh" disabled={refreshing} onClick={() => void refresh()}>{refreshing ? "Atualizando..." : "Atualizar"}</button>
         </header>
+        {error ? <p className="comunicado-error comunicado-page-error" role="alert">{error}</p> : null}
 
         {selected ? (
           <article className="comunicado-detail">
@@ -107,7 +125,6 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
                 {selected.observacao ? <p>Observação: {selected.observacao}</p> : null}
               </section>
             ) : selected.lidoEm ? <p className="comunicado-read-state">Leitura registrada em {formatDate(selected.lidoEm)}.</p> : <p className="comunicado-read-state">Registrando leitura...</p>}
-            {error ? <p className="comunicado-error" role="alert">{error}</p> : null}
           </article>
         ) : (
           <div className="comunicado-list">
