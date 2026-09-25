@@ -1,5 +1,5 @@
 import React from "react";
-import * as ReactDOM from "../node_modules/react-dom/cjs/react-dom.production.min.js";
+import * as ReactDOM from "react-dom";
 import App from "./App";
 import { AppErrorBoundary } from "./components/app/AppErrorBoundary";
 import { installGlobalAppErrorLogger } from "./lib/appErrorLogger";
