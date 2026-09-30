@@ -62,7 +62,7 @@ import {
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
 import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
-import { COMUNICADO_TIPO, isComunicadoPending, loadDriverComunicados, type ComunicadoDestinatario } from "./lib/comunicados";
+import { COMUNICADO_TIPO, isComunicadoPending, isMockComunicados, loadDriverComunicados, type ComunicadoDestinatario } from "./lib/comunicados";
 import { clearMediaDraft, loadMediaDraft, saveMediaDraft } from "./lib/mediaDraftStore";
 
 const EXCHANGE_ERROR_MESSAGES: Record<string, string> = {
@@ -631,6 +631,14 @@ function App() {
       setToast(exchangeUserError(error), "warning");
     });
   }, [isButtonPreviewMode, isReceiptPreviewMode, screen, store.photos, store.signatures, receiveProofs]);
+
+  useEffect(() => {
+    if (!isMockComunicados()) return;
+    loadDriverComunicados().then(setComunicados).catch((error) => {
+      reportAppError(error, { severity: "warning", source: "app", action: "loadMockComunicados" });
+      setToast("Inicie o painel de comunicados no localhost:5185 para testar os dados mock.", "warning");
+    });
+  }, []);
 
   useEffect(() => {
     if (isButtonPreviewMode || isReceiptPreviewMode) return;
@@ -2874,7 +2882,7 @@ function App() {
         onSelectedIdChange={setSelectedComunicadoId}
         onBack={() => setScreen("inicio")}
         onReload={async () => { setComunicados(await loadDriverComunicados()); }}
-        driverName={driverContext?.fullName ?? ""}
+        driverName={driverContext?.fullName ?? (isMockComunicados() ? "Renan" : "")}
       />
     );
   }

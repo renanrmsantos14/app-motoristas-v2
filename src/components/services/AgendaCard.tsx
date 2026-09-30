@@ -6,6 +6,7 @@ import { NotificationMarker } from "./NotificationMarker";
 
 type AgendaCardProps = {
   item: AgendaItem;
+  bodyLabel?: string;
   index?: number;
   isCompleting?: boolean;
   isQueueHighlight?: boolean;
@@ -41,7 +42,7 @@ function getTrajectory(item: AgendaItem) {
   return trajectoryField?.value || item.description || "";
 }
 
-export function AgendaCard({ item, index = 0, isCompleting = false, isQueueHighlight = false, onOpen }: AgendaCardProps) {
+export function AgendaCard({ item, bodyLabel, index = 0, isCompleting = false, isQueueHighlight = false, onOpen }: AgendaCardProps) {
   const className = `agenda-card ${item.tipo.toLowerCase()} ${isCompleting ? "is-completing" : ""} ${isQueueHighlight ? "is-queue-highlight" : ""}`;
   const time = formatAgendaTime(item.time);
   const trajectory = getTrajectory(item);
@@ -70,7 +71,7 @@ export function AgendaCard({ item, index = 0, isCompleting = false, isQueueHighl
 
         <div className="agenda-card-body">
           <div className="agenda-trajectory">
-            {item.tipo === "SERVICO" ? <span>Trajeto</span> : null}
+            {bodyLabel || item.tipo === "SERVICO" ? <span>{bodyLabel || "Trajeto"}</span> : null}
             <strong>{trajectory}</strong>
           </div>
         </div>

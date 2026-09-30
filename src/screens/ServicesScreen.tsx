@@ -5,6 +5,7 @@ import type { AgendaItem, DetailData } from "../types";
 import { AppShell } from "../components/layout/AppShell";
 import { ServicesMenu } from "../components/navigation/ServicesMenu";
 import { AgendaCard } from "../components/services/AgendaCard";
+import { ComunicadoAgendaCard } from "../components/comunicados/ComunicadoAgendaCard";
 import { PullToRefresh } from "../components/common/PullToRefresh";
 import type { ComunicadoDestinatario } from "../lib/comunicados";
 
@@ -41,13 +42,10 @@ export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey =
       <ServicesMenu onHome={onHome} onRefresh={onRefresh} />
       <section className="main-panel services-panel">
         {pendingComunicados.length ? (
-          <section className="comunicado-service-notices" aria-label="Comunicados que exigem ciência">
+          <section className="comunicado-service-notices" aria-label="Comunicados que exigem assinatura">
             <h2>Comunicados pendentes</h2>
             {pendingComunicados.map((item) => (
-              <button type="button" key={item.id} className="comunicado-service-card" onClick={() => onOpenComunicado?.(item.id)}>
-                <span><strong>{item.titulo}</strong><small>Abra e assine sua ciência</small></span>
-                <span aria-hidden="true">›</span>
-              </button>
+              <ComunicadoAgendaCard key={item.id} item={item} onOpen={(id) => onOpenComunicado?.(id)} />
             ))}
           </section>
         ) : null}

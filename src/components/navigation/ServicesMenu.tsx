@@ -7,9 +7,12 @@ type ServicesMenuProps = {
   onHome: () => void;
   onRefresh: () => void | Promise<void>;
   title?: string;
+  eyebrow?: string;
+  homeLabel?: string;
+  homeIcon?: "home" | "arrowLeft";
 };
 
-export function ServicesMenu({ onHome, onRefresh, title = "Seus Serviços" }: ServicesMenuProps) {
+export function ServicesMenu({ onHome, onRefresh, title = "Seus Serviços", eyebrow = "Agenda", homeLabel = "Início", homeIcon = "home" }: ServicesMenuProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const refresh = async () => {
@@ -38,17 +41,17 @@ export function ServicesMenu({ onHome, onRefresh, title = "Seus Serviços" }: Se
         <motion.div className="services-discovery-bar" layout transition={{ type: "spring", bounce: 0.18, duration: 0.42 }}>
           <motion.button
             className="services-nav-button services-nav-button--home"
-            aria-label="Início"
+            aria-label={homeLabel}
             onClick={onHome}
             whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 520, damping: 34 }}
           >
-            <SystemIcon name="home" />
-            <span>Início</span>
+            <SystemIcon name={homeIcon} />
+            <span>{homeLabel}</span>
           </motion.button>
 
           <motion.div className="services-title-block" layout>
-            <span>Agenda</span>
+            <span>{eyebrow}</span>
             <strong>{title}</strong>
           </motion.div>
 

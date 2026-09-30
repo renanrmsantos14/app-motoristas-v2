@@ -40,6 +40,19 @@ export type ComunicadoDestinatario = {
 export type SignaturePoint = [number, number];
 export type SignatureStrokes = SignaturePoint[][];
 
+const LOCAL_DRIVER_ID = "11111111-1111-4111-8111-111111111111";
+export const isMockComunicados = () => ["localhost", "127.0.0.1"].includes(window.location?.hostname ?? "");
+
+async function mockRequest<T>(path: string, data?: unknown): Promise<T> {
+  const port = new URLSearchParams(window.location.search).get("mockApiPort") || "5185";
+  const response = await fetch(`http://127.0.0.1:${port}/api/mock${path}`, data === undefined ? undefined : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || `Mock HTTP ${response.status}`);
+  return result as T;
+}
+
 const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function cleanGuid(value: string) {
@@ -162,16 +175,19 @@ export async function loadMotoristasElegiveis(): Promise<MotoristaElegivel[]> {
 const DESTINATARIO_SELECT = "$select=new_comunicadodestinatarioid,_new_comunicado_value,_new_motorista_value,new_titulo,new_corpo,new_tipo,new_enviadoem,new_abertoem,new_lidoem,new_cienteem,new_nomeassinante,new_observacao,new_assinaturajson,new_pushstatus,new_pusherro";
 
 export async function loadDriverComunicados() {
+  if (isMockComunicados()) return mockRequest<ComunicadoDestinatario[]>(`/recipients?driverId=${LOCAL_DRIVER_ID}`);
   const rows = await allRows(DATAVERSE.comunicadoDestinatarios, `${DESTINATARIO_SELECT}&$orderby=new_enviadoem desc`);
   return rows.map(mapDestinatario);
 }
 
 export async function loadGestaoComunicados() {
+  if (isMockComunicados()) return mockRequest<Comunicado[]>("/comunicados");
   const rows = await allRows(DATAVERSE.comunicados, "$select=new_comunicadomotoristaid,new_titulo,new_corpo,new_tipo,new_escopo,new_alvosjson,new_estado,new_disparadoem&$orderby=createdon desc");
   return rows.map(mapComunicado);
 }
 
 export async function loadGestaoDestinatarios(comunicadoId: string) {
+  if (isMockComunicados()) return mockRequest<ComunicadoDestinatario[]>(`/recipients?comunicadoId=${cleanGuid(comunicadoId)}`);
   const rows = await allRows(DATAVERSE.comunicadoDestinatarios, `${DESTINATARIO_SELECT}&$filter=_new_comunicado_value eq ${cleanGuid(comunicadoId)}&$orderby=new_enviadoem desc`);
   return rows.map(mapDestinatario);
 }
@@ -180,6 +196,7 @@ export async function saveDraft(draft: Comunicado) {
   const error = validateDraft(draft);
   if (error) throw new Error(error);
   if (draft.estado === COMUNICADO_ESTADO.disparado) throw new Error("Comunicado já disparado não pode ser editado.");
+  if (isMockComunicados()) return (await mockRequest<Comunicado>("/comunicados", draft)).id;
   const payload = {
     new_name: draft.titulo.trim(),
     new_titulo: draft.titulo.trim(),
@@ -199,6 +216,14 @@ export async function saveDraft(draft: Comunicado) {
 type XrmApi = { WebApi?: { online?: { execute?: (request: Record<string, unknown>) => Promise<Response> } } };
 
 export async function executeComunicadoAction(operationName: string, parameters: Record<string, string>) {
+  if (isMockComunicados()) {
+    if (operationName === "new_DispararComunicadoMotorista") { await mockRequest(`/comunicados/${parameters.new_ComunicadoId}/dispatch`, {}); return; }
+    const action = operationName === "new_AbrirComunicadoMotorista" ? "open" : operationName === "new_RegistrarCienciaComunicado" ? "sign" : "retry";
+    await mockRequest(`/recipients/${parameters.new_DestinatarioId}/${action}`, action === "sign" ? {
+      strokes: JSON.parse(parameters.new_AssinaturaJson), observacao: parameters.new_Observacao
+    } : {});
+    return;
+  }
   let xrm: XrmApi | undefined;
   try { xrm = (window.parent as Window & { Xrm?: XrmApi }).Xrm; } catch { /* Parent may be cross-origin. */ }
   xrm ??= (window as Window & { Xrm?: XrmApi }).Xrm;
