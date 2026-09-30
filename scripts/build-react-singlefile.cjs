@@ -32,6 +32,8 @@ async function run() {
     platform: "browser",
     target: ["es2020"],
     write: false,
+    minify: true,
+    define: { "process.env.NODE_ENV": '"production"' },
     loader: {
       ".png": "dataurl",
       ".jpg": "dataurl",
@@ -48,6 +50,7 @@ async function run() {
     entryPoints: [path.join(root, "src", "styles.css")],
     bundle: true,
     write: false,
+    minify: true,
     loader: {
       ".png": "dataurl",
       ".jpg": "dataurl",

@@ -16,6 +16,7 @@ import type { PersonalReceiptModel } from "./personalReceipt";
 import { normalizeReceiptLanguage, RECEIPT_LANGUAGE } from "./receiptLanguage.ts";
 
 import { getFieldValue } from "./fieldLookup.ts";
+import { createRemoteReadBatch } from "./remoteReadBatch.ts";
 
 type XrmLike = {
   Utility?: {
@@ -425,14 +426,14 @@ export async function retrieveMultiple(entitySetName: string, options = "") {
   }
 }
 
-async function retrieveMultipleAll(entitySetName: string, options = "") {
+async function retrieveMultipleAll(entitySetName: string, options = "", schedule?: <T>(request: () => Promise<T>) => Promise<T>) {
   const entities: DataverseRecord[] = [];
   let nextOptions = options;
   let page = 0;
 
   while (nextOptions) {
     page += 1;
-    const result = await retrieveMultiple(entitySetName, nextOptions);
+    const result = await (schedule ? schedule(() => retrieveMultiple(entitySetName, nextOptions)) : retrieveMultiple(entitySetName, nextOptions));
     entities.push(...result.entities);
     if (!result.nextLink) break;
     const queryIndex = result.nextLink.indexOf("?");
@@ -2330,7 +2331,7 @@ function getExchangeVehicleLabel(exchange: DataverseRecord, logicalName: string)
   return String(exchange[`__${logicalName}Label`] ?? getLookupName(exchange, logicalName));
 }
 
-async function hydrateExchangeVehicleLabels(exchanges: DataverseRecord[]) {
+async function hydrateExchangeVehicleLabels(exchanges: DataverseRecord[], readMultiple = retrieveMultiple) {
   const vehicleIds = Array.from(
     new Set(
       exchanges
@@ -2344,7 +2345,7 @@ async function hydrateExchangeVehicleLabels(exchanges: DataverseRecord[]) {
   if (vehicleIds.length === 0) return exchanges;
 
   try {
-    const vehicleResult = await retrieveMultiple(
+    const vehicleResult = await readMultiple(
       DATAVERSE.veiculos,
       [
         "$select=cr40f_veiculosid,cr40f_placa,cr40f_marca,cr40f_modelo,cr40f_cor",
@@ -2386,14 +2387,14 @@ function getDriverContactPhone(driver: DataverseRecord) {
   return String(driver.cr40f_telefonecorporativo ?? driver.cr40f_telefonepessoal ?? "").trim();
 }
 
-async function hydrateExchangeDriverContactPhones(exchanges: DataverseRecord[], driver: DriverContext) {
+async function hydrateExchangeDriverContactPhones(exchanges: DataverseRecord[], driver: DriverContext, readMultiple = retrieveMultiple) {
   const otherDriverIds = Array.from(
     new Set(exchanges.map((exchange) => getOtherExchangeDriverId(exchange, driver.id)).filter(Boolean))
   );
   if (otherDriverIds.length === 0) return exchanges;
 
   try {
-    const result = await retrieveMultiple(
+    const result = await readMultiple(
       DATAVERSE.funcionarios,
       [
         "$select=cr40f_funcionariosid,cr40f_telefonecorporativo,cr40f_telefonepessoal",
@@ -2646,9 +2647,9 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#039;");
 }
 
-async function buildPassengersHtml(geralId: string, serviceDate: Date | null, driverName: string) {
+async function buildPassengersHtml(geralId: string, serviceDate: Date | null, driverName: string, readMultiple = retrieveMultiple, readOne = retrieveOne) {
   if (!geralId) return "";
-  const rows = await retrieveMultiple(
+  const rows = await readMultiple(
     DATAVERSE.servicosPorPassageiro,
     [
       "$select=cr40f_servicosporpassageiroid,cr40f_ordemdeselecao,_cr40f_bancodedados_value,_cr40f_geral_value,new_enderecodesaidacolunaservicosporpassageiro",
@@ -2663,7 +2664,7 @@ async function buildPassengersHtml(geralId: string, serviceDate: Date | null, dr
     rows.entities.map(async (row) => {
       const passengerId = cleanODataGuid(row._cr40f_bancodedados_value);
       if (!passengerId) return null;
-      const passenger = await retrieveOne(
+      const passenger = await readOne(
         DATAVERSE.bancoDeDados,
         passengerId,
         "$select=cr40f_bancodedadosid,cr40f_nomedopassageiro,cr40f_telefone,cr40f_idioma"
@@ -2683,14 +2684,14 @@ async function buildPassengersHtml(geralId: string, serviceDate: Date | null, dr
   return passengers.filter(Boolean).join("<br>");
 }
 
-async function buildSolicitanteHtml(record: DataverseRecord, serviceDate: Date | null, driverName: string) {
+async function buildSolicitanteHtml(record: DataverseRecord, serviceDate: Date | null, driverName: string, readOne = retrieveOne) {
   const solicitanteId = cleanODataGuid(record._cr40f_solicitante_value);
   const solicitanteName = getLookupName(record, "cr40f_solicitante");
   const solicitanteType = String(record["_cr40f_solicitante_value@Microsoft.Dynamics.CRM.lookuplogicalname"] ?? "");
   if (!solicitanteId || solicitanteType !== "cr40f_bancodedados") return solicitanteName;
 
   try {
-    const solicitante = await retrieveOne(
+    const solicitante = await readOne(
       DATAVERSE.bancoDeDados,
       solicitanteId,
       "$select=cr40f_bancodedadosid,cr40f_nomedopassageiro,cr40f_telefone"
@@ -2789,16 +2790,16 @@ function mapGeralService(record: DataverseRecord, passengerHtml = "", solicitant
   };
 }
 
-async function mapGeralServiceWithPassengers(record: DataverseRecord, driver: DriverContext) {
+async function mapGeralServiceWithPassengers(record: DataverseRecord, driver: DriverContext, readMultiple = retrieveMultiple, readOne = retrieveOne) {
   const serviceId = getGeralId(record);
   let passengerHtml = "";
   let solicitanteHtml = "";
   try {
-    passengerHtml = await buildPassengersHtml(serviceId, toDate(record.cr40f_dataehorriodesada), driver.fullName);
+    passengerHtml = await buildPassengersHtml(serviceId, toDate(record.cr40f_dataehorriodesada), driver.fullName, readMultiple, readOne);
   } catch (error) {
     dataverseWarn("Falha ao enriquecer passageiros. Usando Pax - VIEW do Geral.", { serviceId, error });
   }
-  solicitanteHtml = await buildSolicitanteHtml(record, toDate(record.cr40f_dataehorriodesada), driver.fullName);
+  solicitanteHtml = await buildSolicitanteHtml(record, toDate(record.cr40f_dataehorriodesada), driver.fullName, readOne);
   return mapGeralService(record, passengerHtml || "", solicitanteHtml);
 }
 
@@ -2966,30 +2967,62 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
 
   const geralSelect =
     "$select=cr40f_reservadeveculosid,cr40f_id,cr40f_dataehorriodesada,cr40f_horrioprevistoderetorno,cr40f_trajeto,cr40f_passageirosetelefonedecontato,cr40f_endereodesada,cr40f_destino,cr40f_obsdeoperao,cr40f_perfildopassageiro,cr40f_receber,_cr40f_cliente_value,_cr40f_solicitante_value,_cr40f_veiculo_value,_cr40f_motorista_value,_cr40f_om_value,_cr40f_ot_value,cr40f_status,new_categoriadoitem,new_foiprogramado,new_datadefinalizacao,new_visualizacaodomotorista,new_rascunhovoucher,new_observacaofinal,new_origemveiculo,modifiedon";
+  const batch = createRemoteReadBatch();
+  const readMultiple = (entity: string, options = "") =>
+    batch.once(JSON.stringify(["multiple", entity, options]), () => retrieveMultiple(entity, options));
+  const readOne = (entity: string, id: string, options = "") =>
+    batch.once(JSON.stringify(["one", entity, cleanGuid(id), options]), () => retrieveOne(entity, id, options));
+  const readAll = (entity: string, options: string) => retrieveMultipleAll(entity, options, batch.run);
 
-  const servicesResult = await retrieveMultipleAll(
-    DATAVERSE.geral,
-    [
+  const [servicesResult, maintenanceGeralResult, programmedExchangeGeralResult, exchangeResult,
+    historyServiceResult, historyMaintenanceGeralResult, historyExchangeGeralResult, historyExchangeResult] = await Promise.all([
+    readAll(DATAVERSE.geral, [
       GERAL_SERVICE_SELECT,
       `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.servico} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc"
-    ].join("&")
-  );
-
-  const maintenanceGeralResult = await retrieveMultipleAll(
-    DATAVERSE.geral,
-    [
+    ].join("&")),
+    readAll(DATAVERSE.geral, [
       geralSelect,
       `$filter=cr40f_dataehorriodesada le ${end} and _cr40f_motorista_value eq ${driver.id} and new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.manutencao} and cr40f_status ne ${OPERATION_STATUS.concluido} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
       "$orderby=cr40f_dataehorriodesada asc"
-    ].join("&")
-  );
+    ].join("&")),
+    readAll(DATAVERSE.geral, [
+      geralSelect,
+      `$filter=new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.troca} and _cr40f_ot_value ne null`,
+      "$orderby=cr40f_dataehorriodesada asc"
+    ].join("&")),
+    readAll(DATAVERSE.trocas, [
+      EXCHANGE_SELECT,
+      `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada}`,
+      "$orderby=cr40f_iniciodajaneladetroca asc"
+    ].join("&")),
+    readAll(DATAVERSE.geral, [
+      GERAL_SERVICE_SELECT,
+      `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.servico} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
+      "$orderby=cr40f_dataehorriodesada desc"
+    ].join("&")),
+    readAll(DATAVERSE.geral, [
+      geralSelect,
+      `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.manutencao} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
+      "$orderby=cr40f_dataehorriodesada desc"
+    ].join("&")),
+    readAll(DATAVERSE.geral, [
+      geralSelect,
+      `$filter=new_categoriadoitem eq ${CATEGORY.troca} and _cr40f_ot_value ne null`,
+      "$orderby=cr40f_dataehorriodesada desc"
+    ].join("&")),
+    readAll(DATAVERSE.trocas, [
+      EXCHANGE_SELECT,
+      `$filter=cr40f_iniciodajaneladetroca le ${historyEnd} and cr40f_fimdajaneladetroca ge ${historyStart} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.concluida}`,
+      "$orderby=cr40f_iniciodajaneladetroca desc"
+    ].join("&"))
+  ]);
 
   const maintenanceRows = await Promise.all(
     maintenanceGeralResult.entities.map(async (geral) => {
       const maintenanceId = getMaintenanceIdFromGeral(geral);
       if (!maintenanceId) return null;
-      const maintenance = await retrieveOne(
+      const maintenance = await readOne(
         DATAVERSE.manutencoes,
         maintenanceId,
         MAINTENANCE_SELECT
@@ -2999,35 +3032,17 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     })
   );
 
-  const programmedExchangeGeralResult = await retrieveMultipleAll(
-    DATAVERSE.geral,
-    [
-      geralSelect,
-      `$filter=new_foiprogramado eq true and new_categoriadoitem eq ${CATEGORY.troca} and _cr40f_ot_value ne null`,
-      "$orderby=cr40f_dataehorriodesada asc"
-    ].join("&")
-  );
-
   const exchangeGeralById = new Map(
     programmedExchangeGeralResult.entities.map((geral) => [getExchangeIdFromGeral(geral), geral] as const).filter(([id]) => Boolean(id))
   );
 
-  const exchangeResult = await retrieveMultipleAll(
-    DATAVERSE.trocas,
-    [
-      EXCHANGE_SELECT,
-      `$filter=cr40f_iniciodajaneladetroca le ${end} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.programada}`,
-      "$orderby=cr40f_iniciodajaneladetroca asc"
-    ].join("&")
-  );
-
-  const exchangeRows = await hydrateExchangeDriverContactPhones(await hydrateExchangeVehicleLabels(exchangeResult.entities), driver);
+  const exchangeRows = await hydrateExchangeDriverContactPhones(await hydrateExchangeVehicleLabels(exchangeResult.entities, readMultiple), driver, readMultiple);
 
   const exchangeItems = exchangeRows
     .filter((exchange) => shouldShowOpenExchangeForDriver(exchange, driver.id))
     .map((exchange) => mapExchange(exchange, exchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver));
 
-  const serviceItems = (await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver))))
+  const serviceItems = (await Promise.all(servicesResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver, readMultiple, readOne))))
     .filter((item) => shouldKeepCanceledAgendaItem(item, now.getTime()));
 
   const items = [
@@ -3037,29 +3052,11 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
   ].sort((a, b) => getItemDateMs(a) - getItemDateMs(b));
 
   const agenda = addDateHeaders(items);
-  const historyServiceResult = await retrieveMultipleAll(
-    DATAVERSE.geral,
-    [
-      GERAL_SERVICE_SELECT,
-      `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.servico} and _cr40f_om_value eq null and _cr40f_ot_value eq null`,
-      "$orderby=cr40f_dataehorriodesada desc"
-    ].join("&")
-  );
-
-  const historyMaintenanceGeralResult = await retrieveMultipleAll(
-    DATAVERSE.geral,
-    [
-      geralSelect,
-      `$filter=cr40f_dataehorriodesada ge ${historyStart} and cr40f_dataehorriodesada lt ${historyEnd} and _cr40f_motorista_value eq ${driver.id} and cr40f_status eq ${OPERATION_STATUS.concluido} and new_categoriadoitem eq ${CATEGORY.manutencao} and _cr40f_om_value ne null and _cr40f_ot_value eq null`,
-      "$orderby=cr40f_dataehorriodesada desc"
-    ].join("&")
-  );
-
   const historyMaintenanceRows = await Promise.all(
     historyMaintenanceGeralResult.entities.map(async (geral) => {
       const maintenanceId = getMaintenanceIdFromGeral(geral);
       if (!maintenanceId) return null;
-      const maintenance = await retrieveOne(
+      const maintenance = await readOne(
         DATAVERSE.manutencoes,
         maintenanceId,
         MAINTENANCE_SELECT
@@ -3069,32 +3066,15 @@ export async function loadRemoteStore(): Promise<RemoteStore> {
     })
   );
 
-  const historyExchangeGeralResult = await retrieveMultipleAll(
-    DATAVERSE.geral,
-    [
-      geralSelect,
-      `$filter=new_categoriadoitem eq ${CATEGORY.troca} and _cr40f_ot_value ne null`,
-      "$orderby=cr40f_dataehorriodesada desc"
-    ].join("&")
-  );
   const historyExchangeGeralById = new Map(
     historyExchangeGeralResult.entities.map((geral) => [getExchangeIdFromGeral(geral), geral] as const).filter(([id]) => Boolean(id))
   );
-  const historyExchangeResult = await retrieveMultipleAll(
-    DATAVERSE.trocas,
-    [
-      EXCHANGE_SELECT,
-      `$filter=cr40f_iniciodajaneladetroca le ${historyEnd} and cr40f_fimdajaneladetroca ge ${historyStart} and (_cr40f_motorista1_value eq ${driver.id} or _cr40f_motorista2_value eq ${driver.id}) and cr40f_statusdatroca eq ${EXCHANGE_STATUS.concluida}`,
-      "$orderby=cr40f_iniciodajaneladetroca desc"
-    ].join("&")
-  );
-
-  const historyServiceItems = await Promise.all(historyServiceResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver)));
+  const historyServiceItems = await Promise.all(historyServiceResult.entities.map((record) => mapGeralServiceWithPassengers(record, driver, readMultiple, readOne)));
 
   const historyItems = [
     ...historyServiceItems,
     ...historyMaintenanceRows.filter((item): item is AgendaItem => Boolean(item)),
-    ...(await hydrateExchangeDriverContactPhones(await hydrateExchangeVehicleLabels(historyExchangeResult.entities), driver))
+    ...(await hydrateExchangeDriverContactPhones(await hydrateExchangeVehicleLabels(historyExchangeResult.entities, readMultiple), driver, readMultiple))
       .map((exchange) => mapExchange(exchange, historyExchangeGeralById.get(getRecordId(exchange, "cr40f_trocasdecarroid")), driver))
   ].sort((a, b) => getItemDateMs(b) - getItemDateMs(a)).map(asHistoryItem);
   const history = addHistoryDateHeaders(historyItems);

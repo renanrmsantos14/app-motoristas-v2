@@ -63,7 +63,7 @@ import {
 } from "./lib/dataverse";
 import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
 import { COMUNICADO_TIPO, isComunicadoPending, isMockComunicados, loadDriverComunicados, type ComunicadoDestinatario } from "./lib/comunicados";
-import { clearMediaDraft, loadMediaDraft, saveMediaDraft } from "./lib/mediaDraftStore";
+import { clearMediaDraft, loadMediaDraft, saveMediaDraft, touchMediaDraft } from "./lib/mediaDraftStore";
 
 const EXCHANGE_ERROR_MESSAGES: Record<string, string> = {
   EXCHANGE_CONCURRENCY_CONFLICT: "A troca foi alterada por outra pessoa. Atualize a agenda e tente novamente.",
@@ -91,7 +91,8 @@ import {
   findDetailByParams,
   removeAgendaDetail,
   saveMaintenancePhoto,
-  saveSignatureLocally,
+  saveSignatureLocally,
+
   type LocalStore
 } from "./lib/localWorkflow";
 import { LocalToast, type ToastState, type ToastTone } from "./components/common/LocalToast";
@@ -402,6 +403,8 @@ function App() {
     : (initialDetailRef.current ? "detalhes" : "inicio");
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const previousScreenRef = useRef<Screen>(initialScreen);
+  const lastMediaScreenRef = useRef<Screen>(initialScreen);
+  const [mediaDraftLoaded, setMediaDraftLoaded] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<DetailData | null>(() => initialDetailRef.current);
   const [receiptEntrySource, setReceiptEntrySource] = useState<ReceiptEntrySource>(
     () => initialScreen === "reciboPersonalizado" && initialHashDetail ? "service" : "home"
@@ -470,7 +473,8 @@ function App() {
         photos: { ...current.photos, ...saved.photos }
       }));
       setReceiveProofs((current) => ({ ...current, ...saved.receiveProofs }));
-    }).catch((error) => reportAppError(error, { severity: "warning", source: "app", action: "loadFinalizeDraftAssets", phase: "indexedDB", screen }));
+    }).catch((error) => reportAppError(error, { severity: "warning", source: "app", action: "loadFinalizeDraftAssets", phase: "indexedDB", screen }))
+      .finally(() => { if (active) setMediaDraftLoaded(true); });
     return () => { active = false; };
   }, [isButtonPreviewMode, isReceiptPreviewMode]);
   const [maintenanceRequestPhotos, setMaintenanceRequestPhotos] = useState<MaintenanceRequestPhoto[]>([]);
@@ -614,7 +618,7 @@ function App() {
   }, [isButtonPreviewMode, isReceiptPreviewMode, screen, voucherDrafts]);
 
   useEffect(() => {
-    if (isButtonPreviewMode || isReceiptPreviewMode) return;
+    if (isButtonPreviewMode || isReceiptPreviewMode || !mediaDraftLoaded) return;
     const payload = {
         signatures: store.signatures,
         photos: store.photos,
@@ -630,7 +634,17 @@ function App() {
       });
       setToast(exchangeUserError(error), "warning");
     });
-  }, [isButtonPreviewMode, isReceiptPreviewMode, screen, store.photos, store.signatures, receiveProofs]);
+  }, [isButtonPreviewMode, isReceiptPreviewMode, mediaDraftLoaded, store.photos, store.signatures, receiveProofs]);
+
+  useEffect(() => {
+    if (lastMediaScreenRef.current === screen) return;
+    lastMediaScreenRef.current = screen;
+    if (isButtonPreviewMode || isReceiptPreviewMode || !mediaDraftLoaded) return;
+    void touchMediaDraft().catch((error) => {
+      reportAppError(error, { severity: "warning", source: "app", action: "touchFinalizeDraftAssets", phase: "indexedDB", screen });
+      setToast(exchangeUserError(error), "warning");
+    });
+  }, [isButtonPreviewMode, isReceiptPreviewMode, mediaDraftLoaded, screen]);
 
   useEffect(() => {
     if (!isMockComunicados()) return;

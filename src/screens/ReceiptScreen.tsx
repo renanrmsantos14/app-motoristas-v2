@@ -14,6 +14,7 @@ import { createReceiptRecordRemote, hasDataverseRuntime, sendReceiptEmailRemote,
 import { buildPersonalReceiptDraft, buildPersonalReceiptModel, type PersonalReceiptEditableDraft, type PersonalReceiptModel } from "../lib/personalReceipt";
 import { getReceiptCopy, getReceiptDisplayClient, normalizeReceiptLanguage, RECEIPT_LANGUAGE, RECEIPT_LANGUAGE_OPTIONS } from "../lib/receiptLanguage";
 import { generateReceiptPdfBlob } from "../lib/receiptPdf";
+import { createReceiptPdfCache } from "../lib/receiptPdfCache.ts";
 import type { DetailData } from "../types";
 
 type ReceiptScreenProps = {
@@ -810,7 +811,8 @@ export function ReceiptScreen({
   const [generateState, setGenerateState] = useState<ActionButtonState>("idle");
   const [sendReceiptState, setSendReceiptState] = useState<ActionButtonState>("idle");
   const receiptDocumentRef = useRef<HTMLElement | null>(null);
-  const receiptPdfCacheRef = useRef<{ key: string; blob: Blob } | null>(null);
+  const receiptPdfCacheRef = useRef<ReturnType<typeof createReceiptPdfCache<PersonalReceiptModel>> | null>(null);
+  const receiptPdfCache = receiptPdfCacheRef.current ??= createReceiptPdfCache(generateReceiptPdfBlob);
   const localReceiptLinkRef = useRef<string | null>(null);
   const model = useMemo(
     () => buildPersonalReceiptModel(detail, draft, generatedIdentifier ? { receiptIdentifier: generatedIdentifier } : {}),
@@ -838,7 +840,7 @@ export function ReceiptScreen({
     setGeneratedIdentifier("");
     setGenerateState("idle");
     setSendReceiptState("idle");
-    receiptPdfCacheRef.current = null;
+    receiptPdfCache.clear();
   }, [detail]);
 
   useEffect(() => () => {
@@ -847,24 +849,15 @@ export function ReceiptScreen({
 
   useEffect(() => {
     if (Object.keys(validateReceiptDraft(draft)).length > 0) {
-      receiptPdfCacheRef.current = null;
+      receiptPdfCache.clear();
       return;
     }
 
-    let cancelled = false;
-    const cacheKey = JSON.stringify(model);
     const timeoutId = window.setTimeout(() => {
-      void generateReceiptPdfBlob(model)
-        .then((blob) => {
-          if (!cancelled) receiptPdfCacheRef.current = { key: cacheKey, blob };
-        })
-        .catch(() => {
-          if (!cancelled) receiptPdfCacheRef.current = null;
-        });
+      void receiptPdfCache.get(model).catch(() => undefined);
     }, 350);
 
     return () => {
-      cancelled = true;
       window.clearTimeout(timeoutId);
     };
   }, [draft, model]);
@@ -896,10 +889,7 @@ export function ReceiptScreen({
     void (async () => {
       if (!hasDataverseRuntime()) {
         onProgress?.({ message: "Montando recibo local para localhost", phase: "loading" });
-        const cacheKey = JSON.stringify(model);
-        const cachedBlob = receiptPdfCacheRef.current?.key === cacheKey ? receiptPdfCacheRef.current.blob : null;
-        const blob = cachedBlob ?? await generateReceiptPdfBlob(model);
-        receiptPdfCacheRef.current = { key: cacheKey, blob };
+        const blob = await receiptPdfCache.get(model);
         const localLink = URL.createObjectURL(blob);
         clearLocalReceiptLink();
         localReceiptLinkRef.current = localLink;
@@ -923,8 +913,7 @@ export function ReceiptScreen({
       });
       setGeneratedIdentifier(prepared.identifier);
       onProgress?.({ message: `Montando recibo ${prepared.identifier}`, phase: "loading" });
-      const blob = await generateReceiptPdfBlob(prepared.model);
-      receiptPdfCacheRef.current = { key: JSON.stringify(prepared.model), blob };
+      const blob = await receiptPdfCache.get(prepared.model);
       const result = await ensureReceiptUploaded(prepared, blob);
       setReceiptLink(result.link);
       setReceiptUploadResult(result);
@@ -964,10 +953,7 @@ export function ReceiptScreen({
     setSendReceiptState("loading");
     onProgress?.({ message: "Enviando recibo para o cliente", phase: "loading" });
     try {
-      const cacheKey = JSON.stringify(model);
-      const cachedBlob = receiptPdfCacheRef.current?.key === cacheKey ? receiptPdfCacheRef.current.blob : null;
-      const pdfBlob = cachedBlob ?? await generateReceiptPdfBlob(model);
-      receiptPdfCacheRef.current = { key: cacheKey, blob: pdfBlob };
+      const pdfBlob = await receiptPdfCache.get(model);
       await sendReceiptEmailRemote({
         email,
         receiptLink,
