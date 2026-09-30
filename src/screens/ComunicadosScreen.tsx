@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { reportAppError } from "../lib/appErrorLogger";
 import { AppShell } from "../components/layout/AppShell";
 import { ActionButton } from "../components/common/ActionButton";
 import { TextAreaControl } from "../components/common/FormFields";
@@ -49,9 +50,15 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
       .then(async () => {
         if (!active) return;
         try { await onReload(); }
-        catch { if (active) setError("Visualização registrada, mas não foi possível atualizar a lista. Tente novamente."); }
+        catch (cause) {
+          reportAppError(cause, { source: "comunicados", action: "abrirComunicado", phase: "reload-after-open", screen: "Comunicados", detailId: selected.id, detailType: "COMUNICADO", notifyUser: false });
+          if (active) setError("Visualização registrada, mas não foi possível atualizar a lista. Tente novamente.");
+        }
       })
-      .catch(() => { if (active) setError("Não foi possível registrar a visualização. Tente atualizar."); });
+      .catch((cause) => {
+        reportAppError(cause, { source: "comunicados", action: "abrirComunicado", phase: "execute", screen: "Comunicados", detailId: selected.id, detailType: "COMUNICADO", notifyUser: false });
+        if (active) setError("Não foi possível registrar a visualização. Tente atualizar.");
+      });
     return () => { active = false; };
   }, [selected?.id, selected?.tipo, selected?.abertoEm]);
 
@@ -66,6 +73,7 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
       await onReload();
       onSelectedIdChange("");
     } catch (cause) {
+      reportAppError(cause, { source: "comunicados", action: "acknowledge", phase: recorded ? "reload-after-acknowledge" : "execute", screen: "Comunicados", detailId: selected.id, detailType: "COMUNICADO", payload: { recorded }, notifyUser: false });
       setError(recorded ? "Ciência registrada, mas não foi possível atualizar a lista. Tente atualizar." : cause instanceof Error ? cause.message : "Não foi possível registrar a ciência. Tente novamente.");
     } finally {
       setBusy(false);
@@ -89,6 +97,7 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
       signed = true;
       await onReload();
     } catch (cause) {
+      reportAppError(cause, { source: "comunicados", action: "assinarComunicado", phase: signed ? "reload-after-sign" : "execute-or-validation", screen: "Comunicados", detailId: selected.id, detailType: "COMUNICADO", payload: { signed, strokeCount: strokes.length, observationLength: observacao.length }, notifyUser: false });
       setError(signed ? "Ciência registrada, mas não foi possível atualizar a lista. Tente novamente." : cause instanceof Error ? cause.message : "Não foi possível salvar a ciência.");
     } finally {
       setBusy(false);
@@ -98,7 +107,10 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
   const refresh = async () => {
     setError("");
     try { await onReload(); }
-    catch { setError("Não foi possível atualizar os comunicados. Tente novamente."); }
+    catch (cause) {
+      reportAppError(cause, { source: "comunicados", action: "refresh", phase: "reload", screen: "Comunicados", detailId: selectedId, detailType: "COMUNICADO", notifyUser: false });
+      setError("Não foi possível atualizar os comunicados. Tente novamente.");
+    }
   };
 
   return (

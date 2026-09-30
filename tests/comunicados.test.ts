@@ -79,11 +79,17 @@ test("gestão exclui motorista sem usuário único e e-mail duplicado", async ()
 
 test("falha da Custom API não confirma a ação local", async () => {
   const previousWindow = (globalThis as any).window;
-  const windowMock: any = { Xrm: { WebApi: { online: { execute: async () => ({ ok: false, status: 503 }) } } } };
+  const windowMock: any = { Xrm: { WebApi: { online: { execute: async () => new Response(JSON.stringify({ error: { code: "Unavailable", message: "Serviço indisponível" } }), { status: 503, headers: { "x-ms-service-request-id": "request-123" } }) } } } };
   windowMock.parent = windowMock;
   (globalThis as any).window = windowMock;
   try {
-    await assert.rejects(executeComunicadoAction("new_AbrirComunicadoMotorista", { new_DestinatarioId: driverId }), /503/);
+    await assert.rejects(executeComunicadoAction("new_AbrirComunicadoMotorista", { new_DestinatarioId: driverId }), (error: any) => {
+      assert.equal(error.code, 503);
+      assert.equal(error.requestId, "request-123");
+      assert.equal(error.operationName, "new_AbrirComunicadoMotorista");
+      assert.equal(error.responseBody.error.message, "Serviço indisponível");
+      return true;
+    });
   } finally {
     (globalThis as any).window = previousWindow;
   }

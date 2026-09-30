@@ -237,7 +237,19 @@ export async function executeComunicadoAction(operationName: string, parameters:
     ...parameters,
     getMetadata: () => ({ boundParameter: null, operationType: 0, operationName, parameterTypes })
   });
-  if (!response.ok) throw new Error(`Falha ao registrar ação (${response.status}).`);
+  if (!response.ok) {
+    // Guarda a resposta técnica no erro; o logger aplica a ocultação de dados sensíveis.
+    const responseBody = await response.text().catch(() => "Resposta indisponível.");
+    let responseDetail: unknown = responseBody.slice(0, 4000);
+    try { responseDetail = JSON.parse(responseBody); } catch { /* Response may be plain text. */ }
+    throw Object.assign(new Error(`Falha ao registrar ação (${response.status}).`), {
+      code: response.status,
+      operationName,
+      statusText: response.statusText,
+      requestId: response.headers.get("x-ms-service-request-id") ?? response.headers.get("REQ_ID") ?? "",
+      responseBody: responseDetail
+    });
+  }
 }
 
 export const abrirComunicado = (id: string) => executeComunicadoAction("new_AbrirComunicadoMotorista", { new_DestinatarioId: cleanGuid(id) });

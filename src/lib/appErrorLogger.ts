@@ -45,6 +45,7 @@ export type AppErrorLogContext = {
   detailId?: string;
   detailType?: string;
   payload?: unknown;
+  notifyUser?: boolean;
 };
 
 const LOGICAL_NAME = "new_appmotoristaslog";
@@ -53,9 +54,11 @@ export const APP_CONNECTION_LOST_MESSAGE = "A conexão com a internet foi perdid
 const QUEUE_KEY = "app-motoristas-error-log-queue-v1";
 const MAX_TEXT = 20000;
 const MAX_STACK = 100000;
-const MAX_QUEUE_ITEMS = 50;
 const SESSION_ID = createSessionId();
 let flushing = false;
+let memoryQueue: Record<string, unknown>[] | null = null;
+let retryTimer: number | null = null;
+let lastDeliveryError = "";
 let originalConsoleError: typeof console.error | null = null;
 let userContextPromise: Promise<RuntimeUserContext> | null = null;
 
@@ -119,6 +122,8 @@ export function redactSensitiveLogValue(value: unknown, key = "", depth = 0): un
     return value
       .replace(/data:[^;,]+;base64,[A-Za-z0-9+/=\s]{40,}/gi, `data:${REDACTED_BASE64}`)
       .replace(/\b[A-Za-z0-9+/]{160,}={0,2}\b/g, REDACTED_BASE64)
+      .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi, `Bearer ${REDACTED}`)
+      .replace(/((?:access_token|token|password|senha|secret|authorization)\s*[=:]\s*)[^\s,;]+/gi, `$1${REDACTED}`)
       .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_EMAIL)
       .replace(/(^|[^\d])((?:\+?55[\s.-]?)?(?:\(?\d{2}\)?[\s.-]?)9?\d{4}[\s.-]?\d{4})(?=$|[^\d])/g, (_match, prefix) => `${prefix}${REDACTED_PHONE}`)
       .replace(/https?:\/\/[^\s"'<>)]*/gi, (url) => redactUrl(url));
@@ -130,7 +135,10 @@ export function redactSensitiveLogValue(value: unknown, key = "", depth = 0): un
 
   if (typeof value === "object") {
     const redacted: Record<string, unknown> = {};
-    Object.entries(value as Record<string, unknown>).forEach(([entryKey, entryValue]) => {
+    const entries = value instanceof Error
+      ? Object.entries({ ...value, name: value.name, message: value.message, stack: value.stack, cause: (value as Error & { cause?: unknown }).cause })
+      : Object.entries(value as Record<string, unknown>);
+    entries.forEach(([entryKey, entryValue]) => {
       redacted[entryKey] = redactSensitiveLogValue(entryValue, entryKey, depth + 1);
     });
     return redacted;
@@ -157,24 +165,26 @@ function safeStringify(value: unknown, maxLength = MAX_TEXT) {
   }
 }
 
-function normalizeError(error: unknown) {
+function normalizeError(error: unknown, depth = 0): { name: string; message: string; stack: string; code: string; rawJson: string } {
   if (error instanceof Error) {
-    const record = error as Error & { code?: unknown; errorCode?: unknown };
+    const record = error as Error & { code?: unknown; errorCode?: unknown; cause?: unknown };
+    const cause = depth < 4 && record.cause ? normalizeError(record.cause, depth + 1) : null;
     return {
       name: error.name,
       message: String(redactSensitiveLogValue(error.message)),
       stack: String(redactSensitiveLogValue(error.stack ?? "")),
-      code: String(record.errorCode ?? record.code ?? ""),
-      rawJson: safeStringify(error, MAX_TEXT)
+      code: String(redactSensitiveLogValue(record.errorCode ?? record.code ?? cause?.code ?? "")),
+      rawJson: safeStringify({ ...record, name: error.name, message: error.message, stack: error.stack, cause: record.cause }, MAX_TEXT)
     };
   }
 
   const record = (error ?? {}) as Record<string, unknown>;
+  const nested = depth < 4 && record.error && typeof record.error === "object" ? normalizeError(record.error, depth + 1) : null;
   return {
-    name: String(record.name ?? typeof error),
-    message: String(redactSensitiveLogValue(record.message ?? error ?? "Erro desconhecido")),
-    stack: String(redactSensitiveLogValue(record.stack ?? "")),
-    code: String(record.errorCode ?? record.code ?? ""),
+    name: String(record.name ?? nested?.name ?? typeof error),
+    message: String(redactSensitiveLogValue(record.message ?? nested?.message ?? error ?? "Erro desconhecido")),
+    stack: String(redactSensitiveLogValue(record.stack ?? nested?.stack ?? "")),
+    code: String(redactSensitiveLogValue(record.errorCode ?? record.code ?? nested?.code ?? "")),
     rawJson: safeStringify(error, MAX_TEXT)
   };
 }
@@ -291,7 +301,7 @@ function getConnectionType(runtime: WindowWithRuntime | null) {
   return navigatorWithConnection?.connection?.effectiveType ?? navigatorWithConnection?.connection?.type ?? "";
 }
 
-async function getBaseRecord(context: AppErrorLogContext, error: ReturnType<typeof normalizeError>) {
+async function getBaseRecord(context: AppErrorLogContext, error: ReturnType<typeof normalizeError>, occurredAt: string, eventId: string) {
   const runtime = getWindowRuntime();
   const xrm = getXrm();
   const build = getBuildInfo();
@@ -301,7 +311,7 @@ async function getBaseRecord(context: AppErrorLogContext, error: ReturnType<type
 
   return {
     new_name: truncate(title, 160),
-    new_occurredat: new Date().toISOString(),
+    new_occurredat: occurredAt,
     new_severity: truncate(context.severity ?? "error", 30),
     new_source: truncate(context.source ?? "app", 120),
     new_action: truncate(context.action ?? "", 180),
@@ -333,25 +343,36 @@ async function getBaseRecord(context: AppErrorLogContext, error: ReturnType<type
     new_connectiontype: truncate(getConnectionType(runtime), 80),
     new_clienturl: truncate(clientUrl, 500),
     new_isoffline: runtime?.navigator?.onLine === false ? "true" : "false",
-    new_payloadjson: safeStringify(context.payload ?? {}, MAX_TEXT),
+    new_payloadjson: safeStringify({
+      eventId,
+      occurredAt,
+      context: { source: context.source, action: context.action, phase: context.phase, component: context.component, screen: context.screen, detailId: context.detailId, detailType: context.detailType },
+      payload: context.payload ?? {},
+      delivery: { pendingCount: readQueue().length, lastError: lastDeliveryError }
+    }, MAX_TEXT),
     new_rawjson: truncate(error.rawJson, MAX_TEXT)
   };
 }
 
 function readQueue(): Record<string, unknown>[] {
+  if (memoryQueue) return memoryQueue;
   try {
     const raw = localStorage.getItem(QUEUE_KEY);
-    return raw ? JSON.parse(raw) as Record<string, unknown>[] : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    memoryQueue = Array.isArray(parsed) ? parsed.filter((item) => item && typeof item === "object" && !Array.isArray(item)) : [];
   } catch {
-    return [];
+    memoryQueue = [];
   }
+  return memoryQueue;
 }
 
 function writeQueue(items: Record<string, unknown>[]) {
+  memoryQueue = items;
   try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(items.slice(-MAX_QUEUE_ITEMS)));
-  } catch {
-    // Sem armazenamento local. Ignora para nao derrubar o app.
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(items));
+  } catch (error) {
+    lastDeliveryError = `localStorage: ${normalizeError(error).message}`;
+    // Preserva os pendentes em memória durante esta sessão, sem recursão no logger.
   }
 }
 
@@ -363,45 +384,70 @@ export async function flushAppErrorLogQueue() {
   if (flushing) return;
   const xrm = getXrm();
   if (!xrm?.WebApi) return;
-  const items = readQueue();
+  const items = [...readQueue()];
   if (!items.length) return;
 
   flushing = true;
-  const failed: Record<string, unknown>[] = [];
-  for (const item of items) {
-    try {
-      await xrm.WebApi.createRecord(LOGICAL_NAME, item);
-    } catch {
-      failed.push(item);
+  try {
+    for (const item of items) {
+      try {
+        await xrm.WebApi.createRecord(LOGICAL_NAME, item);
+        writeQueue(readQueue().filter((pending) => pending !== item));
+        lastDeliveryError = "";
+      } catch (error) {
+        lastDeliveryError = normalizeError(error).message;
+        let diagnostic: Record<string, unknown> = {};
+        try {
+          const parsed: unknown = JSON.parse(String(item.new_payloadjson ?? "{}"));
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) diagnostic = parsed as Record<string, unknown>;
+        } catch { /* Legacy queue entry. */ }
+        const previousDelivery = diagnostic.delivery as { attempts?: number } | undefined;
+        item.new_payloadjson = safeStringify({ ...diagnostic, delivery: {
+          attempts: (previousDelivery?.attempts ?? 0) + 1,
+          lastAttemptAt: new Date().toISOString(),
+          lastError: lastDeliveryError,
+          pendingCount: readQueue().length
+        } });
+        writeQueue(readQueue());
+        break;
+      }
+    }
+  } finally {
+    flushing = false;
+    const runtime = getWindowRuntime();
+    if (readQueue().length && runtime && retryTimer === null) {
+      retryTimer = runtime.setTimeout(() => {
+        retryTimer = null;
+        void flushAppErrorLogQueue();
+      }, 30000);
     }
   }
-  writeQueue(failed);
-  flushing = false;
 }
 
 export function reportAppError(error: unknown, context: AppErrorLogContext = {}) {
+  const occurredAt = new Date().toISOString();
+  const eventId = createSessionId();
   const normalized = normalizeError(error);
-  dispatchErrorNotice(normalized, context);
-  void getBaseRecord(context, normalized).then((record) => {
-    const xrm = getXrm();
-    if (!xrm?.WebApi) {
-      enqueue(record);
-      return;
-    }
-
-    void xrm.WebApi.createRecord(LOGICAL_NAME, record)
-      .then(() => flushAppErrorLogQueue())
-      .catch(() => enqueue(record));
+  if (context.notifyUser !== false) dispatchErrorNotice(normalized, context);
+  void getBaseRecord(context, normalized, occurredAt, eventId).then((record) => {
+    enqueue(record);
+    void flushAppErrorLogQueue();
   }).catch(() => {
     enqueue({
       new_name: truncate(`error | logger | ${normalized.message}`, 160),
-      new_occurredat: new Date().toISOString(),
+      new_occurredat: occurredAt,
       new_severity: "error",
       new_source: "logger",
       new_message: truncate(normalized.message, MAX_TEXT),
       new_stack: truncate(normalized.stack, MAX_STACK),
-      new_sessionid: truncate(SESSION_ID, 120)
+      new_sessionid: truncate(SESSION_ID, 120),
+      new_action: truncate(context.action ?? "", 180),
+      new_phase: truncate(context.phase ?? "", 120),
+      new_screen: truncate(context.screen ?? "", 120),
+      new_detailid: truncate(context.detailId ?? "", 120),
+      new_payloadjson: safeStringify({ eventId, occurredAt, payload: context.payload ?? {} })
     });
+    void flushAppErrorLogQueue();
   });
 }
 

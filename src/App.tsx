@@ -295,7 +295,8 @@ function loadServiceObservationDrafts(storage: Storage = window.localStorage): R
       .filter(([key, value]) => key && typeof value === "string")
       .map(([key, value]) => [key, value] as const);
     return Object.fromEntries(entries) as Record<string, string>;
-  } catch {
+  } catch (error) {
+    reportAppError(error, { severity: "warning", source: "app", action: "loadServiceObservationDrafts", phase: "localStorage", notifyUser: false });
     return {};
   }
 }
@@ -317,7 +318,8 @@ function loadVoucherDrafts(storage: Storage = window.localStorage): Record<strin
     return Object.fromEntries(
       entries
     ) as Record<string, Record<string, string>>;
-  } catch {
+  } catch (error) {
+    reportAppError(error, { severity: "warning", source: "app", action: "loadVoucherDrafts", phase: "localStorage", notifyUser: false });
     return {};
   }
 }
@@ -332,7 +334,8 @@ function loadFinalizeDraftAssets(storage: Storage = window.localStorage): Persis
       photos: parsed.photos && typeof parsed.photos === "object" ? parsed.photos : {},
       receiveProofs: parsed.receiveProofs && typeof parsed.receiveProofs === "object" ? parsed.receiveProofs : {}
     };
-  } catch {
+  } catch (error) {
+    reportAppError(error, { severity: "warning", source: "app", action: "loadFinalizeDraftAssets", phase: "localStorage", notifyUser: false });
     return { signatures: {}, photos: {}, receiveProofs: {} };
   }
 }
@@ -1383,6 +1386,11 @@ function App() {
           });
         })
         .catch((error) => {
+          reportAppError(error, {
+            source: "app", action: "finalizeSelected", phase: "confirm-agenda-after-finalize", screen: "servicos",
+            detailId: detailToFinalize.id, detailType: detailToFinalize.type,
+            payload: { dataverseId: detailToFinalize.dataverse?.id, timeoutMs: 8000, restoredToAgenda: true }, notifyUser: false
+          });
           setStore((current) => ({
             ...current,
             agenda: current.agenda.some((item) => item.detail?.id === detailToFinalize.id && item.detail?.type === detailToFinalize.type)
