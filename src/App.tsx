@@ -33,6 +33,7 @@ import {
   cancelServiceRemote,
   assertCollisionSchemaReadyRemote,
   assertExpenseSchemaReadyRemote,
+  createIdeaRemote,
   createMaintenanceRequestRemote,
   createOne,
   DATAVERSE,
@@ -44,6 +45,7 @@ import {
   hasDataverseRuntime,
   loadCollisionLookupNavigationNamesRemote,
   loadExpenseReferenceDataRemote,
+  loadMyIdeasRemote,
   loadReceiptClienteOptionsRemote,
   loadExpenseLookupNavigationNamesRemote,
   loadMaintenanceRequestVehiclesRemote,
@@ -61,6 +63,7 @@ import {
   type DriverContext,
   type MaintenanceRequestVehicleOption
 } from "./lib/dataverse";
+import { IDEA_STATUS, type Idea, type IdeaDraft } from "./lib/ideas";
 import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
 import { clearMediaDraft, loadMediaDraft, saveMediaDraft, touchMediaDraft } from "./lib/mediaDraftStore";
 
@@ -91,6 +94,7 @@ import {
   removeAgendaDetail,
   saveMaintenancePhoto,
   saveSignatureLocally,
+
   type LocalStore
 } from "./lib/localWorkflow";
 import { LocalToast, type ToastState, type ToastTone } from "./components/common/LocalToast";
@@ -115,6 +119,7 @@ import {
   type MaintenanceRequestFields,
   type MaintenanceRequestPhoto
 } from "./screens/MaintenanceRequestScreen";
+import { IdeasScreen } from "./screens/IdeasScreen";
 import { ServicesScreen } from "./screens/ServicesScreen";
 import { SignatureScreen } from "./screens/SignatureScreen";
 import { VoucherScreen } from "./screens/VoucherScreen";
@@ -892,6 +897,19 @@ function App() {
     prefetchExpenseReferenceDataRemote();
   }, [driverContext, remoteMode]);
 
+  const localIdeasRef = useRef<Idea[]>([]);
+  const ideasGateway = useMemo(() => {
+    if (remoteMode) return { load: loadMyIdeasRemote, create: createIdeaRemote };
+    return {
+      load: async () => [...localIdeasRef.current],
+      create: async (draft: IdeaDraft) => {
+        const idea: Idea = { id: `local-idea-${Date.now()}`, title: draft.title.trim(), details: draft.details.trim(), status: IDEA_STATUS.nova, createdAt: new Date().toISOString() };
+        localIdeasRef.current = [idea, ...localIdeasRef.current];
+        return idea;
+      }
+    };
+  }, [remoteMode]);
+
   useEffect(() => {
     if ((screen !== "solicitarManutencao" && screen !== "gastos" && screen !== "colisoes") || !remoteMode) return;
     let alive = true;
@@ -1498,7 +1516,7 @@ function App() {
       openPersonalReceiptFromHome();
       return;
     }
-    if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos" || screenName === "colisoesInicio") {
+    if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos" || screenName === "colisoesInicio" || screenName === "boasIdeias") {
       setScreen(screenName);
     }
   };
@@ -2496,6 +2514,17 @@ function App() {
         vehicles={maintenanceVehicles}
         vehiclesLoading={maintenanceVehiclesLoading}
         currentVehicleId={maintenanceCurrentVehicleId}
+      />
+    );
+  }
+
+  if (screen === "boasIdeias") {
+    return show(
+      <IdeasScreen
+        onBack={() => setScreen("inicio")}
+        loadIdeas={ideasGateway.load}
+        createIdea={ideasGateway.create}
+        localNotice={remoteMode ? undefined : "Visualização local. Para enviar à equipe, abra o app publicado no Model-driven."}
       />
     );
   }

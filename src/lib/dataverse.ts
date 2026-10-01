@@ -17,6 +17,7 @@ import { normalizeReceiptLanguage, RECEIPT_LANGUAGE } from "./receiptLanguage.ts
 
 import { getFieldValue } from "./fieldLookup.ts";
 import { createRemoteReadBatch } from "./remoteReadBatch.ts";
+import { buildIdeaRecord, normalizeIdeaRecord, validateIdeaDraft, type Idea, type IdeaDraft } from "./ideas.ts";
 
 type XrmLike = {
   Utility?: {
@@ -192,6 +193,7 @@ export const DATAVERSE = {
   servicosPorPassageiro: "cr40f_servicosporpassageiros",
   posseVeiculos: "new_possedeveiculos",
   fotosManutencao: "new_fotomanutencao",
+  boasIdeias: "cr40f_boasideiases",
   systemusers: "systemusers"
 } as const;
 
@@ -219,6 +221,7 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.servicosPorPassageiro]: "cr40f_servicosporpassageiro",
   [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
   [DATAVERSE.fotosManutencao]: "new_fotomanutencao",
+  [DATAVERSE.boasIdeias]: "cr40f_boasideias",
   [DATAVERSE.systemusers]: "systemuser",
   environmentvariabledefinitions: "environmentvariabledefinition",
   environmentvariablevalues: "environmentvariablevalue"
@@ -831,6 +834,34 @@ export async function loadReceiptClienteOptionsRemote(): Promise<string[]> {
     .map((record) => String(record.cr40f_nomedocliente ?? "").trim())
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+function getCurrentUserId() {
+  return cleanGuid(getWindowXrm()?.Utility?.getGlobalContext?.().userSettings?.userId ?? "");
+}
+
+const IDEA_SELECT = "$select=cr40f_boasideiasid,cr40f_name,cr40f_detalhes,cr40f_status,createdon";
+
+export async function loadMyIdeasRemote(): Promise<Idea[]> {
+  const userId = getCurrentUserId();
+  if (!userId) throw new Error("Usuário atual não identificado no Dataverse.");
+  const result = await retrieveMultipleAll(
+    DATAVERSE.boasIdeias,
+    `${IDEA_SELECT}&$filter=statecode eq 0 and _createdby_value eq ${userId}&$orderby=createdon desc`
+  );
+  return result.entities.map(normalizeIdeaRecord);
+}
+
+export async function createIdeaRemote(draft: IdeaDraft): Promise<Idea> {
+  const errors = validateIdeaDraft(draft);
+  const firstError = errors.title ?? errors.details;
+  if (firstError) throw new Error(firstError);
+  const record = buildIdeaRecord(draft);
+  const created = await createOne(DATAVERSE.boasIdeias, record);
+  const id = cleanGuid(String(created?.id ?? ""));
+  if (!id) throw new Error("Dataverse criou a ideia sem retornar o ID.");
+  const saved = await retrieveOne(DATAVERSE.boasIdeias, id, IDEA_SELECT);
+  return normalizeIdeaRecord(saved);
 }
 
 export function buildMaintenanceRequestRecord(payload: MaintenanceRequestPayload) {

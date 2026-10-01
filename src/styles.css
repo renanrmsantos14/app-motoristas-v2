@@ -7585,6 +7585,247 @@ button:disabled {
   font-weight: 950;
 }
 
+/* Boas ideias: valores do Betinhos Design System (design-tokens.json). */
+.ideas-card {
+  background: transparent;
+}
+
+.ideas-form {
+  gap: 12px;
+  align-items: stretch;
+}
+
+.ideas-intro {
+  margin: 0;
+  color: #475569;
+  font-family: "Manrope", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.ideas-form .ideas-actions.finalize-actions {
+  position: static;
+  width: 100%;
+}
+
+.ideas-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: "Manrope", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.ideas-feedback--info {
+  background: #edf3ff;
+  color: #285db5;
+}
+
+.ideas-feedback--success {
+  background: #eaf8f1;
+  color: #147a4b;
+}
+
+.ideas-feedback--error {
+  border-color: #f2c2cc;
+  background: #fff0f3;
+  color: #9f2940;
+}
+
+.ideas-feedback button {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #001a3d;
+  font: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.ideas-feedback button:active {
+  transform: scale(0.97);
+}
+
+.ideas-feedback button:focus-visible {
+  outline: 0;
+  border-color: #6c91e8;
+  box-shadow: 0 0 0 3px rgba(33, 89, 210, 0.11);
+}
+
+.ideas-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ideas-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ideas-list-heading h2 {
+  margin: 0;
+  color: #001a3d;
+  font-family: "Manrope", sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.29;
+}
+
+.ideas-list-heading span {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #edf3ff;
+  color: #285db5;
+  display: inline-grid;
+  place-items: center;
+  font-family: "Manrope", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ideas-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.idea-item {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fcfcfb;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: "Manrope", sans-serif;
+}
+
+.idea-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.idea-item-head strong {
+  min-width: 0;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.idea-item p {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.idea-item small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.idea-status {
+  flex: none;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.idea-status--info {
+  background: #edf3ff;
+  color: #285db5;
+}
+
+.idea-status--process {
+  background: #f4efff;
+  color: #6b4b9b;
+}
+
+.idea-status--success {
+  background: #e9f8f0;
+  color: #147a4b;
+}
+
+.idea-status--brand {
+  background: #001a3d;
+  color: #ffffff;
+}
+
+.ideas-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ideas-skeleton span {
+  height: 72px;
+  border-radius: 12px;
+  background: #f7f9fc;
+  animation: ideas-skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes ideas-skeleton-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.55; }
+}
+
+.ideas-empty {
+  padding: 16px 12px;
+  border: 1px dashed #e2e8f0;
+  border-radius: 12px;
+  background: #fcfcfb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  font-family: "Manrope", sans-serif;
+}
+
+.ideas-empty strong {
+  color: #001a3d;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ideas-empty span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .expense-form input[type="date"] {
   width: 100%;
   max-width: 100%;

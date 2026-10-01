@@ -56,6 +56,17 @@ const baseModules = [
   }
 ];
 
+// Fica sempre por último na grade, depois dos módulos condicionais.
+const ideasModule = {
+  id: "ideas",
+  label: "Boas ideias",
+  detail: "Sugerir melhorias",
+  action: "Abrir",
+  icon: "ideas",
+  tone: "neutral",
+  disabled: false,
+};
+
 const screenAliases: Record<string, string[]> = {
   services: ["servicos", "services", "Services", "serviços"],
   history: ["historico", "history", "History", "histórico"],
@@ -63,6 +74,7 @@ const screenAliases: Record<string, string[]> = {
   collisions: ["collisions", "colisoes", "Collisions"],
   expenses: ["gastos", "expenses", "Expenses"],
   personalReceipt: ["reciboPersonalizado", "personalReceipt", "gerarReciboPersonalizado", "recibopersonalizado"],
+  ideas: ["boasIdeias", "ideas", "ideias"],
 };
 
 const moduleHandlers: Record<string, string[]> = {
@@ -314,6 +326,15 @@ function ModuleIcon({ name }: { name: string }) {
     return <img src={invoiceReceiptIcon} alt="" />;
   }
 
+  if (name === "ideas") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+        <path d="M9 18h6M10 22h4" />
+      </svg>
+    );
+  }
+
   if (name === "maintenance") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -353,7 +374,7 @@ export function InitialScreen(props: InitialScreenProps) {
           }
         ]
         : []
-    ),
+    ).concat([ideasModule]),
     [props.canGeneratePersonalReceipt]
   );
   const buildInfo = useMemo(() => getBuildInfo(), []);
