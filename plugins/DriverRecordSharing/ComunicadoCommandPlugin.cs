@@ -19,6 +19,7 @@ namespace Betinhos.DriverRecordSharing
         private const int Rascunho = 100000000;
         private const int Disparado = 100000001;
         private const int PushPendente = 100000000;
+        private const int PushEnviado = 100000001;
         private const int PushFalhou = 100000002;
 
         public void Execute(IServiceProvider serviceProvider)
@@ -46,6 +47,9 @@ namespace Betinhos.DriverRecordSharing
                         break;
                     case "Update" when context.PrimaryEntityName == HeaderTable:
                         GuardDispatchedHeader(context, system);
+                        break;
+                    case "Delete" when context.PrimaryEntityName == HeaderTable:
+                        GuardDispatchedHeaderDelete(context, system);
                         break;
                     default:
                         throw new InvalidPluginExecutionException("Ação de comunicado desconhecida.");
@@ -80,6 +84,15 @@ namespace Betinhos.DriverRecordSharing
             if (Choice(header, "new_estado") != Disparado) return;
             if (new[] { "new_name", "new_titulo", "new_corpo", "new_tipo", "new_escopo", "new_alvosjson", "new_estado" }.Any(target.Contains))
                 throw new InvalidPluginExecutionException("Comunicado disparado não pode ser alterado.");
+        }
+
+        private static void GuardDispatchedHeaderDelete(IPluginExecutionContext context, IOrganizationService system)
+        {
+            var target = context.InputParameters.Contains("Target") ? context.InputParameters["Target"] as EntityReference : null;
+            if (target == null || target.LogicalName != HeaderTable) return;
+            var header = system.Retrieve(HeaderTable, target.Id, new ColumnSet("new_estado"));
+            if (Choice(header, "new_estado") == Disparado)
+                throw new InvalidPluginExecutionException("Comunicado disparado não pode ser excluído.");
         }
 
         private static Entity RecipientForCaller(IPluginExecutionContext context, IOrganizationService system)
@@ -289,12 +302,15 @@ namespace Betinhos.DriverRecordSharing
         private static void RetryPush(IPluginExecutionContext context, IOrganizationService caller, IOrganizationService system)
         {
             var recipientId = InputGuid(context, "new_DestinatarioId");
-            var recipient = system.Retrieve(RecipientTable, recipientId, new ColumnSet("new_comunicado", "new_pushstatus"));
+            var recipient = system.Retrieve(RecipientTable, recipientId, new ColumnSet("new_comunicado", "new_pushstatus", "new_tipo", "new_lidoem", "new_cienteem"));
             var header = recipient.GetAttributeValue<EntityReference>("new_comunicado");
             if (header == null) throw new InvalidPluginExecutionException("Comunicado do destinatário não encontrado.");
             caller.Retrieve(HeaderTable, header.Id, new ColumnSet("new_estado"));
-            if (Choice(recipient, "new_pushstatus") != PushFalhou)
-                throw new InvalidPluginExecutionException("Somente um push que falhou pode ser reenviado.");
+            var pushStatus = Choice(recipient, "new_pushstatus");
+            var pending = Choice(recipient, "new_tipo") == Informativo ? !recipient.Contains("new_lidoem") : !recipient.Contains("new_cienteem");
+            // Falhou: reenvio. Enviado e ainda pendente: lembrete ao motorista.
+            if (pushStatus != PushFalhou && !(pushStatus == PushEnviado && pending))
+                throw new InvalidPluginExecutionException("Push só pode ser reenviado após falha ou como lembrete de comunicado pendente.");
             var update = new Entity(RecipientTable, recipientId);
             update["new_pushstatus"] = new OptionSetValue(PushPendente);
             update["new_pusherro"] = "";

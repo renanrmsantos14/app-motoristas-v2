@@ -31,6 +31,7 @@ type XrmLike = {
     retrieveRecord: (entitySetName: string, id: string, options?: string) => Promise<DataverseRecord>;
     updateRecord: (entitySetName: string, id: string, data: Record<string, unknown>) => Promise<unknown>;
     createRecord: (entitySetName: string, data: Record<string, unknown>) => Promise<{ id: string }>;
+    deleteRecord?: (entitySetName: string, id: string) => Promise<unknown>;
     online?: { execute: (request: Record<string, unknown>) => Promise<unknown> };
   };
 };
@@ -525,6 +526,20 @@ export async function createOne(entitySetName: string, data: Record<string, unkn
       durationMs: Math.round(performance.now() - startedAt),
       error: describeDataverseError(error)
     });
+    throw error;
+  }
+}
+
+export async function deleteOne(entitySetName: string, id: string) {
+  const cleanId = cleanGuid(id);
+  const entityName = getWebApiEntityName(entitySetName);
+  const api = getWebApi();
+  if (!api.deleteRecord) throw new Error("Exclusão indisponível neste runtime do Dataverse.");
+  dataverseLog("deleteRecord iniciado.", { entitySetName, entityName, id: cleanId });
+  try {
+    return await api.deleteRecord(entityName, cleanId);
+  } catch (error) {
+    dataverseError("deleteRecord falhou.", { entitySetName, entityName, id: cleanId, error: describeDataverseError(error) });
     throw error;
   }
 }

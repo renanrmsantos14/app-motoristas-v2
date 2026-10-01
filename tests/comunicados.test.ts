@@ -1,9 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildResultadosCsv,
+  canResendPush,
   COMUNICADO_ESCOPO,
+  COMUNICADO_ESTADO,
+  COMUNICADO_PUSH,
+  COMUNICADO_RESULTADO,
   COMUNICADO_TIPO,
+  duplicateComunicado,
   executeComunicadoAction,
+  getRecipientStatusLabel,
+  matchesRecipientFilter,
   isComunicadoPending,
   loadMotoristasElegiveis,
   mapDestinatario,
@@ -93,4 +101,45 @@ test("falha da Custom API não confirma a ação local", async () => {
   } finally {
     (globalThis as any).window = previousWindow;
   }
+});
+
+test("lembrete só vale para push falho ou destinatário ainda pendente", () => {
+  const row = mapDestinatario({ new_comunicadodestinatarioid: driverId, new_tipo: COMUNICADO_TIPO.ciencia, new_pushstatus: COMUNICADO_PUSH.enviado });
+  assert.equal(canResendPush(row), true);
+  assert.equal(canResendPush({ ...row, cienteEm: "2026-09-24T12:10:00Z" }), false);
+  assert.equal(canResendPush({ ...row, pushStatus: COMUNICADO_PUSH.pendente }), false);
+  assert.equal(canResendPush({ ...row, cienteEm: "2026-09-24T12:10:00Z", pushStatus: COMUNICADO_PUSH.falhou }), true);
+});
+
+test("filtros de resultado separam não aberto, visualizado, concluído e push falho", () => {
+  const base = mapDestinatario({ new_comunicadodestinatarioid: driverId, new_tipo: COMUNICADO_TIPO.ciencia, new_pushstatus: COMUNICADO_PUSH.enviado });
+  const aberto = { ...base, abertoEm: "2026-09-24T12:05:00Z" };
+  const assinado = { ...aberto, cienteEm: "2026-09-24T12:10:00Z" };
+  const falhou = { ...base, pushStatus: COMUNICADO_PUSH.falhou };
+  assert.deepEqual([base, aberto, assinado, falhou].map((row) => matchesRecipientFilter(row, COMUNICADO_RESULTADO.naoAberto)), [true, false, false, true]);
+  assert.deepEqual([base, aberto, assinado].map((row) => matchesRecipientFilter(row, COMUNICADO_RESULTADO.visualizado)), [false, true, false]);
+  assert.deepEqual([base, aberto, assinado].map((row) => matchesRecipientFilter(row, COMUNICADO_RESULTADO.concluido)), [false, false, true]);
+  assert.deepEqual([base, falhou].map((row) => matchesRecipientFilter(row, COMUNICADO_RESULTADO.pushFalhou)), [false, true]);
+  assert.equal(getRecipientStatusLabel(assinado), "Ciência assinada");
+  assert.equal(getRecipientStatusLabel({ ...base, tipo: COMUNICADO_TIPO.informativo, lidoEm: "2026-09-24T12:05:00Z" }), "Ciência registrada");
+});
+
+test("duplicar gera rascunho novo sem herdar disparo", () => {
+  const copy = duplicateComunicado({ id: driverId, titulo: "x".repeat(150), corpo: "Corpo", tipo: COMUNICADO_TIPO.ciencia, escopo: COMUNICADO_ESCOPO.selecionados, alvoIds: [driverId], estado: COMUNICADO_ESTADO.disparado, disparadoEm: "2026-09-24T12:00:00Z" });
+  assert.equal(copy.id, "");
+  assert.equal(copy.estado, COMUNICADO_ESTADO.rascunho);
+  assert.equal(copy.disparadoEm, null);
+  assert.equal(copy.titulo.length, 150);
+  assert.ok(copy.titulo.endsWith(" (cópia)"));
+  assert.equal(validateDraft(copy), "");
+});
+
+test("CSV de resultados usa BOM, ponto e vírgula e escapa campos", () => {
+  const row = { ...mapDestinatario({ new_comunicadodestinatarioid: driverId, _new_motorista_value: driverId, new_tipo: COMUNICADO_TIPO.ciencia, new_pushstatus: COMUNICADO_PUSH.falhou }), observacao: 'Disse "ok"; seguiu' };
+  const csv = buildResultadosCsv([row], new Map([[driverId, "Motorista A"]]), (value) => value ?? "");
+  assert.ok(csv.startsWith("\uFEFFMotorista;Status;"));
+  const line = csv.split("\r\n")[1];
+  assert.ok(line.startsWith("Motorista A;Não aberto;"));
+  assert.ok(line.includes('"Disse ""ok""; seguiu"'));
+  assert.ok(line.includes(";Falhou;"));
 });

@@ -1501,5 +1501,216 @@
         "targets": []
       }
     ]
+  },
+  {
+    "logicalName": "new_comunicadomotorista",
+    "entitySetName": "new_comunicadomotoristas",
+    "primaryIdAttribute": "new_comunicadomotoristaid",
+    "primaryNameAttribute": "new_name",
+    "displayName": "Comunicado do motorista",
+    "attributes": [
+      {
+        "logicalName": "new_alvosjson",
+        "schemaName": "new_AlvosJson",
+        "type": "Memo",
+        "displayName": "Motoristas selecionados",
+        "targets": []
+      },
+      {
+        "logicalName": "new_comunicadomotoristaid",
+        "schemaName": "new_ComunicadoMotoristaId",
+        "type": "Uniqueidentifier",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_corpo",
+        "schemaName": "new_Corpo",
+        "type": "Memo",
+        "displayName": "Mensagem",
+        "targets": []
+      },
+      {
+        "logicalName": "new_disparadoem",
+        "schemaName": "new_DisparadoEm",
+        "type": "DateTime",
+        "displayName": "Disparado em",
+        "targets": []
+      },
+      {
+        "logicalName": "new_disparadopor",
+        "schemaName": "new_DisparadoPor",
+        "type": "String",
+        "displayName": "Disparado por",
+        "targets": []
+      },
+      {
+        "logicalName": "new_escopo",
+        "schemaName": "new_Escopo",
+        "type": "Picklist",
+        "displayName": "Destinatarios",
+        "targets": []
+      },
+      {
+        "logicalName": "new_estado",
+        "schemaName": "new_Estado",
+        "type": "Picklist",
+        "displayName": "Estado",
+        "targets": []
+      },
+      {
+        "logicalName": "new_name",
+        "schemaName": "new_Name",
+        "type": "String",
+        "displayName": "Nome",
+        "targets": []
+      },
+      {
+        "logicalName": "new_tipo",
+        "schemaName": "new_Tipo",
+        "type": "Picklist",
+        "displayName": "Tipo",
+        "targets": []
+      },
+      {
+        "logicalName": "new_titulo",
+        "schemaName": "new_Titulo",
+        "type": "String",
+        "displayName": "Titulo",
+        "targets": []
+      }
+    ]
+  },
+  {
+    "logicalName": "new_comunicadodestinatario",
+    "entitySetName": "new_comunicadodestinatarios",
+    "primaryIdAttribute": "new_comunicadodestinatarioid",
+    "primaryNameAttribute": "new_name",
+    "displayName": "Destinatario de comunicado",
+    "attributes": [
+      {
+        "logicalName": "new_abertoem",
+        "schemaName": "new_AbertoEm",
+        "type": "DateTime",
+        "displayName": "Visualizado em",
+        "targets": []
+      },
+      {
+        "logicalName": "new_assinaturajson",
+        "schemaName": "new_AssinaturaJson",
+        "type": "Memo",
+        "displayName": "Assinatura desenhada",
+        "targets": []
+      },
+      {
+        "logicalName": "new_chaveunica",
+        "schemaName": "new_ChaveUnica",
+        "type": "String",
+        "displayName": "Chave unica",
+        "targets": []
+      },
+      {
+        "logicalName": "new_cienteem",
+        "schemaName": "new_CienteEm",
+        "type": "DateTime",
+        "displayName": "Ciente em",
+        "targets": []
+      },
+      {
+        "logicalName": "new_comunicado",
+        "schemaName": "new_Comunicado",
+        "type": "Lookup",
+        "displayName": "Comunicado",
+        "targets": [
+          "new_comunicadomotorista"
+        ]
+      },
+      {
+        "logicalName": "new_comunicadodestinatarioid",
+        "schemaName": "new_ComunicadoDestinatarioId",
+        "type": "Uniqueidentifier",
+        "displayName": "",
+        "targets": []
+      },
+      {
+        "logicalName": "new_corpo",
+        "schemaName": "new_Corpo",
+        "type": "Memo",
+        "displayName": "Mensagem",
+        "targets": []
+      },
+      {
+        "logicalName": "new_enviadoem",
+        "schemaName": "new_EnviadoEm",
+        "type": "DateTime",
+        "displayName": "Enviado em",
+        "targets": []
+      },
+      {
+        "logicalName": "new_lidoem",
+        "schemaName": "new_LidoEm",
+        "type": "DateTime",
+        "displayName": "Lido em",
+        "targets": []
+      },
+      {
+        "logicalName": "new_motorista",
+        "schemaName": "new_Motorista",
+        "type": "Lookup",
+        "displayName": "Motorista",
+        "targets": [
+          "cr40f_funcionarios"
+        ]
+      },
+      {
+        "logicalName": "new_name",
+        "schemaName": "new_Name",
+        "type": "String",
+        "displayName": "Nome",
+        "targets": []
+      },
+      {
+        "logicalName": "new_nomeassinante",
+        "schemaName": "new_NomeAssinante",
+        "type": "String",
+        "displayName": "Nome do motorista",
+        "targets": []
+      },
+      {
+        "logicalName": "new_observacao",
+        "schemaName": "new_Observacao",
+        "type": "Memo",
+        "displayName": "Observacao",
+        "targets": []
+      },
+      {
+        "logicalName": "new_pusherro",
+        "schemaName": "new_PushErro",
+        "type": "String",
+        "displayName": "Erro do push",
+        "targets": []
+      },
+      {
+        "logicalName": "new_pushstatus",
+        "schemaName": "new_PushStatus",
+        "type": "Picklist",
+        "displayName": "Estado do push",
+        "targets": []
+      },
+      {
+        "logicalName": "new_tipo",
+        "schemaName": "new_Tipo",
+        "type": "Picklist",
+        "displayName": "Tipo",
+        "targets": []
+      },
+      {
+        "logicalName": "new_titulo",
+        "schemaName": "new_Titulo",
+        "type": "String",
+        "displayName": "Titulo",
+        "targets": []
+      }
+    ]
   }
 ]

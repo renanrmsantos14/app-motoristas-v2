@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   findFirstPendingServiceDetail,
+  getInitialComunicadoId,
   getInitialDetail,
   getInitialParams,
   getVoucherDraftKey,
@@ -65,7 +66,8 @@ import {
 } from "./lib/dataverse";
 import { IDEA_STATUS, type Idea, type IdeaDraft } from "./lib/ideas";
 import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
-import { COMUNICADO_TIPO, isComunicadoPending, isMockComunicados, loadDriverComunicados, type ComunicadoDestinatario } from "./lib/comunicados";
+import { isComunicadoPending, isMockComunicados, loadDriverComunicados, type ComunicadoDestinatario } from "./lib/comunicados";
+import type { ComunicadosLoadStatus } from "./screens/ComunicadosScreen";
 import { clearMediaDraft, loadMediaDraft, saveMediaDraft, touchMediaDraft } from "./lib/mediaDraftStore";
 
 const EXCHANGE_ERROR_MESSAGES: Record<string, string> = {
@@ -430,7 +432,9 @@ function App() {
   const [remoteMode, setRemoteMode] = useState(false);
   const [driverContext, setDriverContext] = useState<DriverContext | null>(null);
   const [comunicados, setComunicados] = useState<ComunicadoDestinatario[]>([]);
+  const [comunicadosStatus, setComunicadosStatus] = useState<ComunicadosLoadStatus>(() => isMockComunicados() || hasDataverseRuntime() ? "loading" : "ready");
   const [selectedComunicadoId, setSelectedComunicadoId] = useState("");
+  const pendingComunicadoDeepLinkRef = useRef(getInitialComunicadoId());
   const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>(() => loadVoucherDrafts());
   const [serviceObservationDrafts, setServiceObservationDrafts] = useState<Record<string, string>>(() => loadServiceObservationDrafts());
   const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
@@ -653,9 +657,29 @@ function App() {
     });
   }, [isButtonPreviewMode, isReceiptPreviewMode, mediaDraftLoaded, screen]);
 
+  const reloadComunicados = useCallback(async () => {
+    try {
+      setComunicados(await loadDriverComunicados());
+      setComunicadosStatus("ready");
+    } catch (error) {
+      // Mantém a lista já carregada; só exibe o estado de erro quando nunca houve carga.
+      setComunicadosStatus((current) => current === "ready" ? current : "error");
+      throw error;
+    }
+  }, []);
+
+  useEffect(() => {
+    const deepLinkId = pendingComunicadoDeepLinkRef.current;
+    if (!deepLinkId || comunicadosStatus !== "ready") return;
+    pendingComunicadoDeepLinkRef.current = "";
+    if (!comunicados.some((item) => item.id.toLowerCase() === deepLinkId)) return;
+    setSelectedComunicadoId(comunicados.find((item) => item.id.toLowerCase() === deepLinkId)?.id ?? "");
+    setScreen("comunicados");
+  }, [comunicados, comunicadosStatus]);
+
   useEffect(() => {
     if (!isMockComunicados()) return;
-    loadDriverComunicados().then(setComunicados).catch((error) => {
+    reloadComunicados().catch((error) => {
       reportAppError(error, { severity: "warning", source: "app", action: "loadMockComunicados" });
       setToast("Inicie o painel de comunicados no localhost:5185 para testar os dados mock.", "warning");
     });
@@ -679,7 +703,7 @@ function App() {
         const hashRoute = initialHashRouteRef.current;
         const remoteInitialDetail = hashRoute ? findDetailFromHashRoute(remoteStore, hashRoute) : getInitialDetail(remoteStore);
         setDriverContext(remote.driver);
-        loadDriverComunicados().then(setComunicados).catch((error) => {
+        reloadComunicados().catch((error) => {
           reportAppError(error, { severity: "warning", source: "app", action: "loadDriverComunicados", phase: "initial" });
           setToast("Não foi possível carregar comunicados. Atualize o aplicativo.", "warning");
         });
@@ -1167,7 +1191,7 @@ function App() {
         setDriverContext(remote.driver);
         setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history }));
         try {
-          setComunicados(await loadDriverComunicados());
+          await reloadComunicados();
         } catch (error) {
           reportAppError(error, { severity: "warning", source: "app", action: "loadDriverComunicados", phase: "refresh" });
           if (!silent) setToast("Não foi possível atualizar comunicados. Tente novamente.", "warning");
@@ -2896,7 +2920,7 @@ function App() {
     return show(
       <ServicesScreen
         items={store.agenda}
-        pendingComunicados={comunicados.filter((item) => item.tipo === COMUNICADO_TIPO.ciencia && isComunicadoPending(item))}
+        pendingComunicados={comunicados.filter(isComunicadoPending)}
         onOpenComunicado={(id) => { setSelectedComunicadoId(id); setScreen("comunicados"); }}
         onHome={() => setScreen("inicio")}
         onRefresh={refreshLocal}
@@ -2931,7 +2955,8 @@ function App() {
         selectedId={selectedComunicadoId}
         onSelectedIdChange={setSelectedComunicadoId}
         onBack={() => setScreen("inicio")}
-        onReload={async () => { setComunicados(await loadDriverComunicados()); }}
+        onReload={reloadComunicados}
+        loadStatus={comunicadosStatus}
         driverName={driverContext?.fullName ?? (isMockComunicados() ? "Renan" : "")}
       />
     );

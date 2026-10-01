@@ -54,6 +54,20 @@ export function getInitialParams(search = window.location.search) {
   };
 }
 
+const COMUNICADO_ID_PATTERN = /^\{?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}?$/i;
+
+// Deep link de comunicado: ?comunicadoId=<id> ou ?data=comunicadoId%3D<id> (parâmetro que o Dynamics repassa ao web resource).
+export function getInitialComunicadoId(search = window.location.search) {
+  const params = new URLSearchParams(search);
+  let value = params.get("comunicadoId") ?? "";
+  if (!value) {
+    const data = params.get("data") ?? "";
+    value = new URLSearchParams(data).get("comunicadoId") ?? "";
+  }
+  value = value.trim();
+  return COMUNICADO_ID_PATTERN.test(value) ? value.replace(/[{}]/g, "").toLowerCase() : "";
+}
+
 export function getVoucherDraftKey(detail: DetailData) {
   return `${detail.type}:${detail.id}`;
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { filterAgendaGalleryItems, shouldShowAgendaItemInGallery } from "../src/app/agendaVisibility.ts";
-import { findFirstPendingDetail, findFirstPendingServiceDetail } from "../src/app/bootstrap.ts";
+import { findFirstPendingDetail, findFirstPendingServiceDetail, getInitialComunicadoId } from "../src/app/bootstrap.ts";
 import type { AgendaItem } from "../src/types.ts";
 
 const firstDetail = {
@@ -86,4 +86,12 @@ test("filterAgendaGalleryItems removes orphan date headers", () => {
   ];
 
   assert.deepEqual(filterAgendaGalleryItems(items, now), []);
+});
+
+test("deep link de comunicado aceita comunicadoId direto ou dentro de data", () => {
+  const id = "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA";
+  assert.equal(getInitialComunicadoId(`?comunicadoId=${id}`), id.toLowerCase());
+  assert.equal(getInitialComunicadoId(`?data=${encodeURIComponent(`comunicadoId={${id}}`)}`), id.toLowerCase());
+  assert.equal(getInitialComunicadoId("?comunicadoId=invalido"), "");
+  assert.equal(getInitialComunicadoId(""), "");
 });

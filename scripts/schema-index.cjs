@@ -17,7 +17,9 @@ const interestingTables = new Set([
   "cr40f_trocasdecarro",
   "cr40f_funcionarios",
   "cr40f_servicosporpassageiro",
-  "new_possedeveiculo"
+  "new_possedeveiculo",
+  "new_comunicadomotorista",
+  "new_comunicadodestinatario"
 ]);
 
 const index = tables
