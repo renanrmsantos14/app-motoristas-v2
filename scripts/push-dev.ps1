@@ -14,9 +14,15 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
+# Sobe pelos ancestrais para funcionar tambem em git worktrees (.claude\worktrees\<nome>).
 $workspaceParent = Split-Path $root -Parent
-$operationsCandidates = @(Get-ChildItem -LiteralPath $workspaceParent -Directory | Where-Object { $_.Name -like "Tela Fun*Operacionais" })
-if ($operationsCandidates.Count -ne 1) { throw "Repositorio Tela Funcoes Operacionais nao encontrado de forma unica em $workspaceParent." }
+$operationsCandidates = @()
+while ($workspaceParent) {
+  $operationsCandidates = @(Get-ChildItem -LiteralPath $workspaceParent -Directory | Where-Object { $_.Name -like "Tela Fun*Operacionais" })
+  if ($operationsCandidates.Count -gt 0) { break }
+  $workspaceParent = Split-Path $workspaceParent -Parent
+}
+if ($operationsCandidates.Count -ne 1) { throw "Repositorio Tela Funcoes Operacionais nao encontrado de forma unica acima de $root." }
 $operationsRoot = $operationsCandidates[0].FullName
 Set-Location $root
 
