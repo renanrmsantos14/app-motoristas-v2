@@ -50,8 +50,100 @@ export function configureComunicadosMock(base: string) {
   mockApiBase = base.replace(/\/$/, "");
 }
 
+// Sem servidor indicado (configureComunicadosMock ou ?mockApiPort=), o mock roda em memória no navegador.
+// Mesmo contrato de scripts/mock-api.cjs da Gestão; ?mockApiPort= compartilha os dados com a Gestão.
+type MockDriver = { id: string; nome: string; email: string; userId: string; problema: string };
+const MOCK_DRIVERS: MockDriver[] = [
+  { id: LOCAL_DRIVER_ID, nome: "Renan", email: "renan@betinhos.mock", userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", problema: "" },
+  { id: "22222222-2222-4222-8222-222222222222", nome: "Motorista de teste", email: "motorista@betinhos.mock", userId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", problema: "" }
+];
+let localMock: { comunicados: Comunicado[]; recipients: ComunicadoDestinatario[] } | null = null;
+
+function mockId() {
+  return globalThis.crypto?.randomUUID?.() ?? "xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx".replace(/x/g, () => Math.floor(Math.random() * 16).toString(16));
+}
+
+function mockRecipient(item: Comunicado, motoristaId: string, enviadoEm: string): ComunicadoDestinatario {
+  return {
+    id: mockId(), comunicadoId: item.id, motoristaId, titulo: item.titulo, corpo: item.corpo, tipo: item.tipo, enviadoEm,
+    abertoEm: null, lidoEm: null, cienteEm: null, nomeAssinante: "", observacao: "", assinaturaJson: "", pushStatus: COMUNICADO_PUSH.enviado, pushErro: ""
+  };
+}
+
+function getLocalMock() {
+  if (localMock) return localMock;
+  const seededAt = new Date().toISOString();
+  const seeds: Pick<Comunicado, "id" | "titulo" | "corpo" | "tipo">[] = [
+    { id: "33333333-3333-4333-8333-333333333333", titulo: "[Mock] Aviso operacional", corpo: "Este aviso serve para testar a leitura no aplicativo.", tipo: COMUNICADO_TIPO.informativo },
+    { id: "44444444-4444-4444-8444-444444444444", titulo: "[Mock] Ciência obrigatória", corpo: "Este comunicado serve para testar observação e assinatura.", tipo: COMUNICADO_TIPO.ciencia }
+  ];
+  const comunicados: Comunicado[] = seeds.map((item) => ({ ...item, escopo: COMUNICADO_ESCOPO.todos, alvoIds: [], estado: COMUNICADO_ESTADO.disparado, disparadoEm: seededAt }));
+  localMock = { comunicados, recipients: comunicados.flatMap((item) => MOCK_DRIVERS.map((driver) => mockRecipient(item, driver.id, seededAt))) };
+  return localMock;
+}
+
+function localMockRequest(path: string, data: unknown, method: string): unknown {
+  const store = getLocalMock();
+  const url = new URL(path, "http://mock.local");
+  const parts = url.pathname.split("/").filter(Boolean);
+  const now = new Date().toISOString();
+  const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+  if (method === "GET" && parts[0] === "drivers") return clone(MOCK_DRIVERS);
+  if (method === "GET" && parts[0] === "comunicados") return clone(store.comunicados.slice().reverse());
+  if (method === "GET" && parts[0] === "recipients") {
+    const driverId = url.searchParams.get("driverId");
+    const comunicadoId = url.searchParams.get("comunicadoId");
+    return clone(store.recipients.filter((row) => (!driverId || row.motoristaId === driverId) && (!comunicadoId || row.comunicadoId === comunicadoId)).reverse());
+  }
+  if (parts[0] === "comunicados" && parts.length === 1 && method === "POST") {
+    const draft = data as Comunicado;
+    const existing = store.comunicados.find((item) => item.id === draft.id);
+    if (existing?.estado === COMUNICADO_ESTADO.disparado) throw new Error("Comunicado disparado não pode ser editado.");
+    const item: Comunicado = { ...clone(draft), id: existing?.id || mockId(), estado: COMUNICADO_ESTADO.rascunho, disparadoEm: null };
+    if (existing) Object.assign(existing, item); else store.comunicados.push(item);
+    return clone(item);
+  }
+  if (parts[0] === "comunicados" && parts.length === 2 && method === "DELETE") {
+    store.comunicados = store.comunicados.filter((item) => !(item.id === parts[1] && item.estado === COMUNICADO_ESTADO.rascunho));
+    return {};
+  }
+  if (parts[0] === "comunicados" && parts[2] === "dispatch") {
+    const item = store.comunicados.find((row) => row.id === parts[1]);
+    if (!item) throw new Error("Comunicado não encontrado.");
+    if (item.estado === COMUNICADO_ESTADO.disparado) throw new Error("Comunicado já disparado.");
+    const targets = item.escopo === COMUNICADO_ESCOPO.todos ? MOCK_DRIVERS : MOCK_DRIVERS.filter((driver) => item.alvoIds.includes(driver.id));
+    if (!targets.length) throw new Error("Nenhum motorista selecionado.");
+    item.estado = COMUNICADO_ESTADO.disparado;
+    item.disparadoEm = now;
+    store.recipients.push(...targets.map((driver) => mockRecipient(item, driver.id, now)));
+    return clone(item);
+  }
+  if (parts[0] === "recipients" && parts.length === 3) {
+    const row = store.recipients.find((item) => item.id === parts[1]);
+    if (!row) throw new Error("Destinatário não encontrado.");
+    if (parts[2] === "open") {
+      row.abertoEm ||= now;
+      if (row.tipo === COMUNICADO_TIPO.informativo) row.lidoEm ||= now;
+    } else if (parts[2] === "sign") {
+      if (row.tipo !== COMUNICADO_TIPO.ciencia) throw new Error("Este comunicado não exige assinatura.");
+      const { strokes, observacao } = (data ?? {}) as { strokes?: SignatureStrokes; observacao?: string };
+      row.abertoEm ||= now;
+      row.cienteEm ||= now;
+      row.nomeAssinante = MOCK_DRIVERS.find((driver) => driver.id === row.motoristaId)?.nome || "Motorista";
+      row.observacao = String(observacao || "");
+      row.assinaturaJson = JSON.stringify(strokes || []);
+    } else if (parts[2] === "retry") {
+      row.pushStatus = COMUNICADO_PUSH.enviado;
+      row.pushErro = "";
+    } else throw new Error("Ação desconhecida.");
+    return clone(row);
+  }
+  throw new Error("Rota mock desconhecida.");
+}
+
 async function mockRequest<T>(path: string, data?: unknown, method = data === undefined ? "GET" : "POST"): Promise<T> {
-  const port = new URLSearchParams(window.location.search).get("mockApiPort") || "5185";
+  const port = new URLSearchParams(window.location.search).get("mockApiPort");
+  if (!mockApiBase && !port) return localMockRequest(path, data, method) as T;
   const base = mockApiBase || `http://127.0.0.1:${port}/api/mock`;
   const response = await fetch(`${base}${path}`, method === "GET" ? undefined : {
     method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data ?? {})

@@ -681,7 +681,7 @@ function App() {
     if (!isMockComunicados()) return;
     reloadComunicados().catch((error) => {
       reportAppError(error, { severity: "warning", source: "app", action: "loadMockComunicados" });
-      setToast("Inicie o painel de comunicados no localhost:5185 para testar os dados mock.", "warning");
+      setToast("Não foi possível carregar os comunicados de teste. Confira o painel de comunicados indicado em ?mockApiPort=.", "warning");
     });
   }, []);
 
