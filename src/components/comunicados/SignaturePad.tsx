@@ -11,6 +11,7 @@ export function SignatureDrawing({ value }: { value: SignatureStrokes }) {
         <polyline
           key={index}
           points={stroke.map(([x, y]) => `${Math.round(x * 1000)},${Math.round(y * 400)}`).join(" ")}
+          pathLength={1}
           fill="none"
           stroke="currentColor"
           strokeWidth="3.5"
