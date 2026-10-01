@@ -7,6 +7,7 @@ import { TextAreaField } from "../components/common/FormFields";
 import { PullToRefresh } from "../components/common/PullToRefresh";
 import { AppShell } from "../components/layout/AppShell";
 import { DetailsMenu } from "../components/navigation/DetailsMenu";
+import { reportAppError } from "../lib/appErrorLogger";
 
 type ObservationSaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -136,11 +137,12 @@ export function DetailsScreen({
         if (saveSequenceRef.current === sequence) setServiceObservationStatus("idle");
         statusResetTimerRef.current = null;
       }, SAVE_STATUS_VISIBLE_MS);
-    } catch {
+    } catch (error) {
+      reportAppError(error, { source: "details", action: "saveServiceObservation", phase: "autosave", screen: "detalhes", detailId: detail.id, detailType: detail.type, payload: { sequence, observationLength: nextObservation.length }, notifyUser: false });
       if (saveSequenceRef.current !== sequence) return;
       setServiceObservationStatus("error");
     }
-  }, [canAutosaveObservation, clearSaveTimer, clearStatusResetTimer, onServiceObservationChange]);
+  }, [canAutosaveObservation, clearSaveTimer, clearStatusResetTimer, onServiceObservationChange, detail.id, detail.type]);
 
   const scheduleServiceObservationSave = useCallback((nextObservation: string) => {
     if (!canAutosaveObservation) return;

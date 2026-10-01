@@ -194,6 +194,8 @@ export const DATAVERSE = {
   posseVeiculos: "new_possedeveiculos",
   fotosManutencao: "new_fotomanutencao",
   boasIdeias: "cr40f_boasideiases",
+  comunicados: "new_comunicadomotoristas",
+  comunicadoDestinatarios: "new_comunicadodestinatarios",
   systemusers: "systemusers"
 } as const;
 
@@ -222,6 +224,8 @@ const ENTITY_SET_TO_ENTITY_NAME: Record<string, string> = {
   [DATAVERSE.posseVeiculos]: "new_possedeveiculo",
   [DATAVERSE.fotosManutencao]: "new_fotomanutencao",
   [DATAVERSE.boasIdeias]: "cr40f_boasideias",
+  [DATAVERSE.comunicados]: "new_comunicadomotorista",
+  [DATAVERSE.comunicadoDestinatarios]: "new_comunicadodestinatario",
   [DATAVERSE.systemusers]: "systemuser",
   environmentvariabledefinitions: "environmentvariabledefinition",
   environmentvariablevalues: "environmentvariablevalue"
@@ -278,6 +282,9 @@ function dataverseLog(message: string, data?: unknown) {
 }
 
 function dataverseWarn(message: string, data?: unknown) {
+  (window as WindowWithFlowEnv).__APP_REPORT_ERROR?.(new Error(message), {
+    severity: "warning", source: "dataverse", action: message, phase: "fallback", payload: data, notifyUser: false
+  });
   if (data === undefined) {
     console.warn(DV_LOG_PREFIX, message);
     return;
@@ -296,7 +303,7 @@ function dataverseError(message: string, data?: unknown) {
     return;
   }
   console.error(DV_LOG_PREFIX, message, data);
-  (window as WindowWithFlowEnv).__APP_REPORT_ERROR?.(data, {
+  (window as WindowWithFlowEnv).__APP_REPORT_ERROR?.(Object.assign(new Error(message), { cause: data }), {
     severity: "error",
     source: "dataverse",
     action: message,

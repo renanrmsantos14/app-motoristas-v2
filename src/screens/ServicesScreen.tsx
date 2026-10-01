@@ -5,7 +5,9 @@ import type { AgendaItem, DetailData } from "../types";
 import { AppShell } from "../components/layout/AppShell";
 import { ServicesMenu } from "../components/navigation/ServicesMenu";
 import { AgendaCard } from "../components/services/AgendaCard";
+import { ComunicadoAgendaCard } from "../components/comunicados/ComunicadoAgendaCard";
 import { PullToRefresh } from "../components/common/PullToRefresh";
+import type { ComunicadoDestinatario } from "../lib/comunicados";
 
 type ServicesScreenProps = {
   items: AgendaItem[];
@@ -14,9 +16,11 @@ type ServicesScreenProps = {
   completingDetailKey?: string;
   queueHighlightDetailKey?: string;
   onOpenDetails: (detail: DetailData) => void;
+  pendingComunicados?: ComunicadoDestinatario[];
+  onOpenComunicado?: (id: string) => void;
 };
 
-export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", queueHighlightDetailKey = "", onOpenDetails }: ServicesScreenProps) {
+export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey = "", queueHighlightDetailKey = "", onOpenDetails, pendingComunicados = [], onOpenComunicado }: ServicesScreenProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const visibleItems = useMemo(() => filterAgendaGalleryItems(items, now), [items, now]);
@@ -37,6 +41,14 @@ export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey =
     <AppShell screenLabel="TelaServiços">
       <ServicesMenu onHome={onHome} onRefresh={onRefresh} />
       <section className="main-panel services-panel">
+        {pendingComunicados.length ? (
+          <section className="comunicado-service-notices" aria-label="Comunicados que exigem assinatura">
+            <h2>Comunicados pendentes</h2>
+            {pendingComunicados.map((item) => (
+              <ComunicadoAgendaCard key={item.id} item={item} onOpen={(id) => onOpenComunicado?.(id)} />
+            ))}
+          </section>
+        ) : null}
         <PullToRefresh scrollRef={listRef} onRefresh={onRefresh}>
         {visibleItems.length === 0 ? (
           <div className="empty-services">Nenhum serviço atribuído a você no momento</div>

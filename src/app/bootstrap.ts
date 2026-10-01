@@ -2,6 +2,7 @@ import { agendaMock, historyMock } from "../data/mockData.ts";
 import { shouldShowAgendaItemInGallery } from "./agendaVisibility.ts";
 import { findDetailByParams, type LocalStore } from "../lib/localWorkflow.ts";
 import type { DetailData } from "../types.ts";
+import { reportAppError } from "../lib/appErrorLogger.ts";
 
 export const STORAGE_KEY = "app-motoristas-local-v1";
 
@@ -30,7 +31,8 @@ export function loadStore(storage: Storage = window.localStorage): LocalStore {
   try {
     const raw = storage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw) as LocalStore;
-  } catch {
+  } catch (error) {
+    reportAppError(error, { severity: "warning", source: "bootstrap", action: "loadStore", phase: "localStorage", notifyUser: false });
     // fallback local
   }
 

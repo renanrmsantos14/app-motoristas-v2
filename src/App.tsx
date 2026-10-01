@@ -65,6 +65,7 @@ import {
 } from "./lib/dataverse";
 import { IDEA_STATUS, type Idea, type IdeaDraft } from "./lib/ideas";
 import { APP_CONNECTION_LOST_MESSAGE, APP_OPERATION_ERROR_MESSAGE, reportAppError, type AppErrorNotice } from "./lib/appErrorLogger";
+import { COMUNICADO_TIPO, isComunicadoPending, isMockComunicados, loadDriverComunicados, type ComunicadoDestinatario } from "./lib/comunicados";
 import { clearMediaDraft, loadMediaDraft, saveMediaDraft, touchMediaDraft } from "./lib/mediaDraftStore";
 
 const EXCHANGE_ERROR_MESSAGES: Record<string, string> = {
@@ -93,13 +94,14 @@ import {
   findDetailByParams,
   removeAgendaDetail,
   saveMaintenancePhoto,
-  saveSignatureLocally,
+  saveSignatureLocally,
 
   type LocalStore
 } from "./lib/localWorkflow";
 import { LocalToast, type ToastState, type ToastTone } from "./components/common/LocalToast";
 import { LoadingOverlay, type LoadingOverlayState } from "./components/common/LoadingOverlay";
 import { CollisionScreen } from "./screens/CollisionScreen";
+import { ComunicadosScreen } from "./screens/ComunicadosScreen";
 import { ButtonPreviewScreen } from "./screens/ButtonPreviewScreen";
 import { CollisionStartScreen } from "./screens/CollisionStartScreen";
 import { DetailsScreen } from "./screens/DetailsScreen";
@@ -297,7 +299,8 @@ function loadServiceObservationDrafts(storage: Storage = window.localStorage): R
       .filter(([key, value]) => key && typeof value === "string")
       .map(([key, value]) => [key, value] as const);
     return Object.fromEntries(entries) as Record<string, string>;
-  } catch {
+  } catch (error) {
+    reportAppError(error, { severity: "warning", source: "app", action: "loadServiceObservationDrafts", phase: "localStorage", notifyUser: false });
     return {};
   }
 }
@@ -319,7 +322,8 @@ function loadVoucherDrafts(storage: Storage = window.localStorage): Record<strin
     return Object.fromEntries(
       entries
     ) as Record<string, Record<string, string>>;
-  } catch {
+  } catch (error) {
+    reportAppError(error, { severity: "warning", source: "app", action: "loadVoucherDrafts", phase: "localStorage", notifyUser: false });
     return {};
   }
 }
@@ -334,7 +338,8 @@ function loadFinalizeDraftAssets(storage: Storage = window.localStorage): Persis
       photos: parsed.photos && typeof parsed.photos === "object" ? parsed.photos : {},
       receiveProofs: parsed.receiveProofs && typeof parsed.receiveProofs === "object" ? parsed.receiveProofs : {}
     };
-  } catch {
+  } catch (error) {
+    reportAppError(error, { severity: "warning", source: "app", action: "loadFinalizeDraftAssets", phase: "localStorage", notifyUser: false });
     return { signatures: {}, photos: {}, receiveProofs: {} };
   }
 }
@@ -424,6 +429,8 @@ function App() {
   const [remoteOperation, setRemoteOperation] = useState<RemoteOperation | null>(null);
   const [remoteMode, setRemoteMode] = useState(false);
   const [driverContext, setDriverContext] = useState<DriverContext | null>(null);
+  const [comunicados, setComunicados] = useState<ComunicadoDestinatario[]>([]);
+  const [selectedComunicadoId, setSelectedComunicadoId] = useState("");
   const [voucherDrafts, setVoucherDrafts] = useState<Record<string, Record<string, string>>>(() => loadVoucherDrafts());
   const [serviceObservationDrafts, setServiceObservationDrafts] = useState<Record<string, string>>(() => loadServiceObservationDrafts());
   const [maintenanceVehicles, setMaintenanceVehicles] = useState<MaintenanceRequestVehicleOption[]>([]);
@@ -647,6 +654,14 @@ function App() {
   }, [isButtonPreviewMode, isReceiptPreviewMode, mediaDraftLoaded, screen]);
 
   useEffect(() => {
+    if (!isMockComunicados()) return;
+    loadDriverComunicados().then(setComunicados).catch((error) => {
+      reportAppError(error, { severity: "warning", source: "app", action: "loadMockComunicados" });
+      setToast("Inicie o painel de comunicados no localhost:5185 para testar os dados mock.", "warning");
+    });
+  }, []);
+
+  useEffect(() => {
     if (isButtonPreviewMode || isReceiptPreviewMode) return;
     if (!hasDataverseRuntime()) return;
     let alive = true;
@@ -664,6 +679,10 @@ function App() {
         const hashRoute = initialHashRouteRef.current;
         const remoteInitialDetail = hashRoute ? findDetailFromHashRoute(remoteStore, hashRoute) : getInitialDetail(remoteStore);
         setDriverContext(remote.driver);
+        loadDriverComunicados().then(setComunicados).catch((error) => {
+          reportAppError(error, { severity: "warning", source: "app", action: "loadDriverComunicados", phase: "initial" });
+          setToast("Não foi possível carregar comunicados. Atualize o aplicativo.", "warning");
+        });
         setStore((current) => ({
           ...current,
           agenda: remote.agenda,
@@ -1147,6 +1166,12 @@ function App() {
         const remote = await loadRemoteStore();
         setDriverContext(remote.driver);
         setStore((current) => ({ ...current, agenda: remote.agenda, history: remote.history }));
+        try {
+          setComunicados(await loadDriverComunicados());
+        } catch (error) {
+          reportAppError(error, { severity: "warning", source: "app", action: "loadDriverComunicados", phase: "refresh" });
+          if (!silent) setToast("Não foi possível atualizar comunicados. Tente novamente.", "warning");
+        }
         if (detailToRefresh) {
           const refreshedDetail =
             findDetailByParams([...remote.agenda, ...remote.history], detailToRefresh.id, detailToRefresh.type) ??
@@ -1169,13 +1194,23 @@ function App() {
   useEffect(() => {
     if (!remoteMode || remoteOperation || !shouldAutoRefreshScreen(screen)) return;
 
+    let refreshing = false;
     const autoRefresh = () => {
-      if (document.hidden) return;
-      void refreshLocal(selectedDetail ?? undefined, { silent: true });
+      if (document.hidden || refreshing) return;
+      refreshing = true;
+      void refreshLocal(selectedDetail ?? undefined, { silent: true }).finally(() => { refreshing = false; });
     };
 
     const timer = window.setInterval(autoRefresh, AUTO_REFRESH_INTERVAL_MS);
-    return () => window.clearInterval(timer);
+    window.addEventListener("focus", autoRefresh);
+    window.addEventListener("pageshow", autoRefresh);
+    document.addEventListener("visibilitychange", autoRefresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", autoRefresh);
+      window.removeEventListener("pageshow", autoRefresh);
+      document.removeEventListener("visibilitychange", autoRefresh);
+    };
   }, [remoteMode, remoteOperation, screen, selectedDetail]);
 
   const blockIfNotFirstPending = (detail: typeof selectedDetail = selectedDetail) => {
@@ -1368,6 +1403,11 @@ function App() {
           });
         })
         .catch((error) => {
+          reportAppError(error, {
+            source: "app", action: "finalizeSelected", phase: "confirm-agenda-after-finalize", screen: "servicos",
+            detailId: detailToFinalize.id, detailType: detailToFinalize.type,
+            payload: { dataverseId: detailToFinalize.dataverse?.id, timeoutMs: 8000, restoredToAgenda: true }, notifyUser: false
+          });
           setStore((current) => ({
             ...current,
             agenda: current.agenda.some((item) => item.detail?.id === detailToFinalize.id && item.detail?.type === detailToFinalize.type)
@@ -1516,7 +1556,7 @@ function App() {
       openPersonalReceiptFromHome();
       return;
     }
-    if (screenName === "servicos" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos" || screenName === "colisoesInicio" || screenName === "boasIdeias") {
+    if (screenName === "servicos" || screenName === "comunicados" || screenName === "historico" || screenName === "solicitarManutencao" || screenName === "gastos" || screenName === "colisoesInicio" || screenName === "boasIdeias") {
       setScreen(screenName);
     }
   };
@@ -2856,6 +2896,8 @@ function App() {
     return show(
       <ServicesScreen
         items={store.agenda}
+        pendingComunicados={comunicados.filter((item) => item.tipo === COMUNICADO_TIPO.ciencia && isComunicadoPending(item))}
+        onOpenComunicado={(id) => { setSelectedComunicadoId(id); setScreen("comunicados"); }}
         onHome={() => setScreen("inicio")}
         onRefresh={refreshLocal}
         completingDetailKey={completingDetailKey}
@@ -2882,6 +2924,19 @@ function App() {
     );
   }
 
+  if (screen === "comunicados") {
+    return show(
+      <ComunicadosScreen
+        items={comunicados}
+        selectedId={selectedComunicadoId}
+        onSelectedIdChange={setSelectedComunicadoId}
+        onBack={() => setScreen("inicio")}
+        onReload={async () => { setComunicados(await loadDriverComunicados()); }}
+        driverName={driverContext?.fullName ?? (isMockComunicados() ? "Renan" : "")}
+      />
+    );
+  }
+
   return show(
     <InitialScreen
       onNavigate={navigateFromInitial}
@@ -2891,6 +2946,7 @@ function App() {
       onRefresh={refreshLocal}
       canGeneratePersonalReceipt={canGeneratePersonalReceipt}
       services={store.agenda}
+      pendingComunicados={comunicados.filter(isComunicadoPending).length}
       driverName={driverContext?.fullName}
       showLocalReset={isLocalhostRuntime && !remoteMode}
       onResetLocalData={resetLocalData}

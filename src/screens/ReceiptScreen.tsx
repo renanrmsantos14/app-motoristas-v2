@@ -854,7 +854,9 @@ export function ReceiptScreen({
     }
 
     const timeoutId = window.setTimeout(() => {
-      void receiptPdfCache.get(model).catch(() => undefined);
+      void receiptPdfCache.get(model).catch((error) => reportAppError(error, {
+        severity: "warning", source: "receipt", action: "prepare-pdf-cache", phase: "prefetch", screen: "TelaReciboPersonalizado", notifyUser: false
+      }));
     }, 350);
 
     return () => {
@@ -949,10 +951,10 @@ export function ReceiptScreen({
   };
 
   const handleSendReceiptToClient = async (email: string) => {
-    if (!receiptLink) throw new Error("Link do recibo não encontrado.");
     setSendReceiptState("loading");
     onProgress?.({ message: "Enviando recibo para o cliente", phase: "loading" });
     try {
+      if (!receiptLink) throw new Error("Link do recibo não encontrado.");
       const pdfBlob = await receiptPdfCache.get(model);
       await sendReceiptEmailRemote({
         email,

@@ -11,6 +11,7 @@ export type HashRoute = {
 const SCREEN_HASH_PATHS: Record<Screen, string> = {
   inicio: "inicio",
   servicos: "servicos",
+  comunicados: "comunicados",
   historico: "historico",
   detalhes: "detalhes",
   detalhesHistorico: "detalhes-historico",
@@ -42,6 +43,8 @@ const SCREEN_HASH_ALIASES: Record<string, Screen> = {
   home: "inicio",
   servicos: "servicos",
   services: "servicos",
+  comunicados: "comunicados",
+  communications: "comunicados",
   historico: "historico",
   history: "historico",
   detalhes: "detalhes",
@@ -181,6 +184,7 @@ export function buildHashRoute(screen: Screen, detail?: { id: string; type: stri
 const SCREEN_DEPTH: Record<Screen, number> = {
   inicio: 0,
   servicos: 1,
+  comunicados: 1,
   historico: 1,
   detalhes: 2,
   detalhesHistorico: 2,
@@ -240,7 +244,7 @@ const fastFade = {
   ease: "easeOut" as const
 };
 
-const isListScreen = (screenName: Screen) => screenName === "servicos" || screenName === "historico" || screenName === "gastos" || screenName === "colisoesInicio" || screenName === "boasIdeias";
+const isListScreen = (screenName: Screen) => screenName === "servicos" || screenName === "comunicados" || screenName === "historico" || screenName === "gastos" || screenName === "colisoesInicio" || screenName === "boasIdeias";
 const isDetailScreen = (screenName: Screen) => screenName === "detalhes" || screenName === "detalhesHistorico";
 const isTaskScreen = (screenName: Screen) =>
   screenName === "receber" || screenName === "voucher" || screenName === "finalizar" || screenName === "canceladoLocal";
@@ -259,6 +263,7 @@ const isCaptureScreen = (screenName: Screen) =>
 export const shouldAutoRefreshScreen = (screenName: Screen) =>
   screenName === "inicio" ||
   screenName === "servicos" ||
+  screenName === "comunicados" ||
   screenName === "historico" ||
   screenName === "detalhes" ||
   screenName === "detalhesHistorico";
