@@ -16,6 +16,7 @@ namespace Betinhos.DriverRecordSharing.Tests
         private const int Selecionados = 100000001;
         private const int Rascunho = 100000000;
         private const int Disparado = 100000001;
+        private const int PushEnviado = 100000001;
         private const int PushFalhou = 100000002;
 
         [Fact]
@@ -186,7 +187,62 @@ namespace Betinhos.DriverRecordSharing.Tests
             Assert.Equal(Rascunho, service.Recipient.GetAttributeValue<OptionSetValue>("new_pushstatus").Value);
             Assert.Empty(service.Created);
             var second = Assert.Throws<TargetInvocationException>(() => Invoke("RetryPush", context, service, service));
-            Assert.Contains("falhou", second.InnerException.Message);
+            Assert.Contains("após falha", second.InnerException.Message);
+        }
+
+        [Fact]
+        public void LembreteReenviaPushEnviadoSomenteEnquantoPendente()
+        {
+            var service = DriverService(Ciencia);
+            service.Header = Header(Todos);
+            service.Recipient["new_comunicado"] = new EntityReference("new_comunicadomotorista", service.Header.Id);
+            service.Recipient["new_pushstatus"] = new OptionSetValue(PushEnviado);
+            var context = Context("new_DestinatarioId", service.Recipient.Id);
+
+            Invoke("RetryPush", context, service, service);
+            Assert.Equal(Rascunho, service.Recipient.GetAttributeValue<OptionSetValue>("new_pushstatus").Value);
+
+            service.Recipient["new_pushstatus"] = new OptionSetValue(PushEnviado);
+            service.Recipient["new_cienteem"] = DateTime.UtcNow;
+            var concluded = Assert.Throws<TargetInvocationException>(() => Invoke("RetryPush", context, service, service));
+            Assert.Contains("pendente", concluded.InnerException.Message);
+        }
+
+        [Fact]
+        public void LembreteDeInformativoLidoEhRecusado()
+        {
+            var service = DriverService(Informativo);
+            service.Header = Header(Todos);
+            service.Recipient["new_comunicado"] = new EntityReference("new_comunicadomotorista", service.Header.Id);
+            service.Recipient["new_pushstatus"] = new OptionSetValue(PushEnviado);
+            service.Recipient["new_lidoem"] = DateTime.UtcNow;
+            var context = Context("new_DestinatarioId", service.Recipient.Id);
+
+            Assert.Throws<TargetInvocationException>(() => Invoke("RetryPush", context, service, service));
+            Assert.Empty(service.Updated);
+        }
+
+        [Fact]
+        public void CabecalhoDisparadoNaoPodeSerExcluido()
+        {
+            var service = new FakeService { Header = Header(Todos) };
+            service.Header["new_estado"] = new OptionSetValue(Disparado);
+            var context = new RemoteExecutionContext { MessageName = "Delete", PrimaryEntityName = "new_comunicadomotorista" };
+            context.InputParameters["Target"] = new EntityReference("new_comunicadomotorista", service.Header.Id);
+
+            var error = Assert.Throws<TargetInvocationException>(() => Invoke("GuardDispatchedHeaderDelete", context, service));
+
+            Assert.Contains("não pode ser excluído", error.InnerException.Message);
+        }
+
+        [Fact]
+        public void RascunhoPodeSerExcluido()
+        {
+            var service = new FakeService { Header = Header(Todos) };
+            var context = new RemoteExecutionContext { MessageName = "Delete", PrimaryEntityName = "new_comunicadomotorista" };
+            context.InputParameters["Target"] = new EntityReference("new_comunicadomotorista", service.Header.Id);
+
+            Assert.Null(Record.Exception(() => Invoke("GuardDispatchedHeaderDelete", context, service)));
         }
 
         [Fact]

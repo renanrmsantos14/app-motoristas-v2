@@ -1,4 +1,4 @@
-import { createOne, DATAVERSE, retrieveMultiple, updateOne } from "./dataverse.ts";
+import { createOne, DATAVERSE, deleteOne, retrieveMultiple, updateOne } from "./dataverse.ts";
 
 export const COMUNICADO_TIPO = { informativo: 100000000, ciencia: 100000001 } as const;
 export const COMUNICADO_ESCOPO = { todos: 100000000, selecionados: 100000001 } as const;
@@ -43,10 +43,18 @@ export type SignatureStrokes = SignaturePoint[][];
 const LOCAL_DRIVER_ID = "11111111-1111-4111-8111-111111111111";
 export const isMockComunicados = () => ["localhost", "127.0.0.1"].includes(window.location?.hostname ?? "");
 
-async function mockRequest<T>(path: string, data?: unknown): Promise<T> {
+// Arquivo canônico: a Tela Gestão de Comunicados copia este módulo via scripts/sync-shared.cjs.
+// A Gestão serve o mock na mesma origem e chama configureComunicadosMock("/api/mock").
+let mockApiBase = "";
+export function configureComunicadosMock(base: string) {
+  mockApiBase = base.replace(/\/$/, "");
+}
+
+async function mockRequest<T>(path: string, data?: unknown, method = data === undefined ? "GET" : "POST"): Promise<T> {
   const port = new URLSearchParams(window.location.search).get("mockApiPort") || "5185";
-  const response = await fetch(`http://127.0.0.1:${port}/api/mock${path}`, data === undefined ? undefined : {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
+  const base = mockApiBase || `http://127.0.0.1:${port}/api/mock`;
+  const response = await fetch(`${base}${path}`, method === "GET" ? undefined : {
+    method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data ?? {})
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || `Mock HTTP ${response.status}`);
@@ -79,6 +87,68 @@ export function validateDraft(draft: Pick<Comunicado, "titulo" | "corpo" | "esco
 
 export function isComunicadoPending(item: ComunicadoDestinatario) {
   return item.tipo === COMUNICADO_TIPO.informativo ? !item.lidoEm : !item.cienteEm;
+}
+
+export const COMUNICADO_RESULTADO = {
+  todos: "todos",
+  naoAberto: "naoAberto",
+  visualizado: "visualizado",
+  concluido: "concluido",
+  pushFalhou: "pushFalhou"
+} as const;
+export type ComunicadoResultadoFiltro = (typeof COMUNICADO_RESULTADO)[keyof typeof COMUNICADO_RESULTADO];
+
+export function getRecipientStatusLabel(row: ComunicadoDestinatario) {
+  if (row.cienteEm) return "Ciência assinada";
+  if (row.lidoEm) return "Ciência registrada";
+  if (row.abertoEm) return "Visualizado";
+  return "Não aberto";
+}
+
+export function matchesRecipientFilter(row: ComunicadoDestinatario, filter: ComunicadoResultadoFiltro) {
+  if (filter === COMUNICADO_RESULTADO.naoAberto) return !row.abertoEm && !row.lidoEm && !row.cienteEm;
+  if (filter === COMUNICADO_RESULTADO.visualizado) return Boolean(row.abertoEm) && isComunicadoPending(row);
+  if (filter === COMUNICADO_RESULTADO.concluido) return !isComunicadoPending(row);
+  if (filter === COMUNICADO_RESULTADO.pushFalhou) return row.pushStatus === COMUNICADO_PUSH.falhou;
+  return true;
+}
+
+// Espelha a regra do plugin: reenvio após falha ou lembrete enquanto o motorista não concluiu.
+export function canResendPush(row: ComunicadoDestinatario) {
+  if (row.pushStatus === COMUNICADO_PUSH.falhou) return true;
+  return row.pushStatus === COMUNICADO_PUSH.enviado && isComunicadoPending(row);
+}
+
+export function duplicateComunicado(item: Comunicado): Comunicado {
+  const suffix = " (cópia)";
+  return {
+    ...item,
+    id: "",
+    titulo: `${item.titulo.slice(0, 150 - suffix.length)}${suffix}`,
+    alvoIds: [...item.alvoIds],
+    estado: COMUNICADO_ESTADO.rascunho,
+    disparadoEm: null
+  };
+}
+
+const csvCell = (value: string) => /[";\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+
+export function buildResultadosCsv(rows: ComunicadoDestinatario[], driverNames: Map<string, string>, formatDate: (value: string | null) => string) {
+  const header = ["Motorista", "Status", "Enviado em", "Aberto em", "Lido em", "Ciência em", "Assinante", "Observação", "Push", "Erro do push"];
+  const pushLabel = (status: number) => status === COMUNICADO_PUSH.enviado ? "Enviado" : status === COMUNICADO_PUSH.falhou ? "Falhou" : "Pendente";
+  const lines = rows.map((row) => [
+    driverNames.get(row.motoristaId) || row.nomeAssinante || row.motoristaId,
+    getRecipientStatusLabel(row),
+    formatDate(row.enviadoEm || null),
+    formatDate(row.abertoEm),
+    formatDate(row.lidoEm),
+    formatDate(row.cienteEm),
+    row.nomeAssinante,
+    row.observacao,
+    pushLabel(row.pushStatus),
+    row.pushErro
+  ].map((value) => csvCell(String(value ?? ""))).join(";"));
+  return `﻿${[header.join(";"), ...lines].join("\r\n")}`;
 }
 
 export function validateSignature(strokes: SignatureStrokes) {
@@ -141,6 +211,7 @@ function hasDriverLinkType(row: Record<string, unknown>) {
 }
 
 export async function loadMotoristasElegiveis(): Promise<MotoristaElegivel[]> {
+  if (isMockComunicados()) return mockRequest<MotoristaElegivel[]>("/drivers");
   const [employees, users] = await Promise.all([
     allRows(DATAVERSE.funcionarios, "$select=cr40f_funcionariosid,cr40f_nomecompleto,cr40f_emailmicrosoft,cr40f_tipodevinculo&$filter=cr40f_status eq 0 and statecode eq 0"),
     allRows(DATAVERSE.systemusers, "$select=systemuserid,internalemailaddress,isdisabled&$filter=isdisabled eq false")
@@ -211,6 +282,12 @@ export async function saveDraft(draft: Comunicado) {
     return draft.id;
   }
   return (await createOne(DATAVERSE.comunicados, payload)).id;
+}
+
+export async function deleteDraft(item: Comunicado) {
+  if (item.estado !== COMUNICADO_ESTADO.rascunho) throw new Error("Somente rascunhos podem ser excluídos.");
+  if (isMockComunicados()) { await mockRequest(`/comunicados/${cleanGuid(item.id)}`, {}, "DELETE"); return; }
+  await deleteOne(DATAVERSE.comunicados, item.id);
 }
 
 type XrmApi = { WebApi?: { online?: { execute?: (request: Record<string, unknown>) => Promise<Response> } } };

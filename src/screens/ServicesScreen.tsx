@@ -42,7 +42,7 @@ export function ServicesScreen({ items, onHome, onRefresh, completingDetailKey =
       <ServicesMenu onHome={onHome} onRefresh={onRefresh} />
       <section className="main-panel services-panel">
         {pendingComunicados.length ? (
-          <section className="comunicado-service-notices" aria-label="Comunicados que exigem assinatura">
+          <section className="comunicado-service-notices" aria-label="Comunicados pendentes">
             <h2>Comunicados pendentes</h2>
             {pendingComunicados.map((item) => (
               <ComunicadoAgendaCard key={item.id} item={item} onOpen={(id) => onOpenComunicado?.(id)} />

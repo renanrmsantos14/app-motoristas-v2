@@ -8,12 +8,14 @@ type Props = {
 
 export function ComunicadoAgendaCard({ item, onOpen }: Props) {
   const pending = isComunicadoPending(item);
-  const label = pending
+  const unread = !item.abertoEm && !item.lidoEm && !item.cienteEm;
+  const typeLabel = pending
     ? item.tipo === COMUNICADO_TIPO.ciencia ? "ASSINATURA OBRIGATÓRIA" : "INFORMATIVO"
     : item.cienteEm ? "CIÊNCIA ASSINADA" : "CIÊNCIA REGISTRADA";
+  const label = unread ? `NOVO · ${typeLabel}` : typeLabel;
 
   return (
-    <div className="agenda-layout-item comunicado-service-item">
+    <div className="agenda-layout-item comunicado-service-item" data-comunicado-unread={unread ? "true" : undefined}>
       <AgendaCard
         item={{
           id: item.id,

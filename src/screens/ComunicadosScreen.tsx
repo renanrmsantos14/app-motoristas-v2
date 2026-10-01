@@ -16,8 +16,11 @@ import {
   type SignatureStrokes
 } from "../lib/comunicados";
 
+export type ComunicadosLoadStatus = "loading" | "ready" | "error";
+
 type Props = {
   items: ComunicadoDestinatario[];
+  loadStatus?: ComunicadosLoadStatus;
   selectedId: string;
   onSelectedIdChange: (id: string) => void;
   onBack: () => void;
@@ -34,7 +37,7 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(value));
 }
 
-export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBack, onReload, driverName }: Props) {
+export function ComunicadosScreen({ items, loadStatus = "ready", selectedId, onSelectedIdChange, onBack, onReload, driverName }: Props) {
   const [strokes, setStrokes] = useState<SignatureStrokes>([]);
   const [observacao, setObservacao] = useState("");
   const [busy, setBusy] = useState(false);
@@ -168,10 +171,21 @@ export function ComunicadosScreen({ items, selectedId, onSelectedIdChange, onBac
         ) : (
           <div className="comunicado-list services-panel">
             <div className="comunicado-list-intro"><span>Central de avisos</span><p>Informações e avisos enviados pela operação.</p></div>
+            {loadStatus === "loading" && !items.length ? (
+              <div className="comunicado-skeleton" role="status" aria-busy="true" aria-label="Carregando comunicados">
+                <span /><span /><span />
+              </div>
+            ) : loadStatus === "error" && !items.length ? (
+              <div className="comunicado-load-error" role="alert">
+                <p>Não foi possível carregar os comunicados. Verifique a conexão e tente novamente.</p>
+                <ActionButton variant="secondary" idleLabel="Tentar novamente" loadingLabel="Carregando" state={busy ? "loading" : "idle"} onClick={() => { setBusy(true); void refresh().finally(() => setBusy(false)); }} />
+              </div>
+            ) : <>
             <h2>Pendentes <span>{pending.length}</span></h2>
             {pending.length ? pending.map((item) => (
               <ComunicadoAgendaCard key={item.id} item={item} onOpen={openItem} />
             )) : <p className="comunicado-empty">Nenhum comunicado pendente.</p>}
+            </>}
             {completed.length ? <><h2>Concluídos</h2>{completed.map((item) => (
               <ComunicadoAgendaCard key={item.id} item={item} onOpen={openItem} />
             ))}</> : null}
